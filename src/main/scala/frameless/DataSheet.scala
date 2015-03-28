@@ -21,10 +21,8 @@ import shapeless.syntax.std.traversable._
   * All heavy-lifting is still being done by the backing DataFrame so this API will more or less
   * be 1-to-1 with that of the DataFrame's.
   */
-abstract class DataSheet[L <: HList] {
+final class DataSheet[L <: HList] private(val dataFrame: DataFrame) {
   import DataSheet._
-
-  val dataFrame: DataFrame
 
   def as(alias: Symbol): DataSheet[L] = DataSheet(dataFrame.as(alias))
 
@@ -176,8 +174,8 @@ abstract class DataSheet[L <: HList] {
 }
 
 object DataSheet {
-  private def apply[L <: HList](_dataFrame: DataFrame): DataSheet[L] =
-    new DataSheet[L] { val dataFrame = _dataFrame }
+  private def apply[L <: HList](dataFrame: DataFrame): DataSheet[L] =
+    new DataSheet[L](dataFrame)
 
   private def unsafeRowToHList[L <: HList : FromTraversable](row: Row): L =
     row.toSeq.toHList[L].get
