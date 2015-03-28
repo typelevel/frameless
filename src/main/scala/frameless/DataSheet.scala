@@ -1,5 +1,7 @@
 package frameless
 
+import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.api.java.function.{ Function => JFunction }
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{ DataFrame, Row, SaveMode, SQLContext }
@@ -20,6 +22,8 @@ import shapeless.syntax.std.traversable._
   * be 1-to-1 with that of the DataFrame's.
   */
 abstract class DataSheet[L <: HList] {
+  import DataSheet._
+
   val dataFrame: DataFrame
 
   def as(alias: Symbol): DataSheet[L] = DataSheet(dataFrame.as(alias))
@@ -127,37 +131,60 @@ abstract class DataSheet[L <: HList] {
   /////////////////////////
 
   def collect[P <: Product]()(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
-    dataFrame.collect().map(DataSheet.unsafeRowToHList[P, L])
+    dataFrame.collect().map(unsafeRowToProduct[P, L])
 
   def collectAsList[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): List[P] =
-    dataFrame.collectAsList().asScala.toList.map(DataSheet.unsafeRowToHList[P, L])
+    dataFrame.collectAsList().asScala.toList.map(unsafeRowToProduct[P, L])
 
   def collectAsJavaList[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): java.util.List[P] =
     collectAsList().asJava
 
   def first[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
-    DataSheet.unsafeRowToHList(dataFrame.first())
+    unsafeRowToProduct(dataFrame.first())
+
+  def flatMap[R](f: L => TraversableOnce[R])(implicit R: ClassTag[R], L: FromTraversable[L]): RDD[R] =
+    dataFrame.flatMap(f.compose(unsafeRowToHList[L]))
+
+  def foreach(f: L => Unit)(implicit L: FromTraversable[L]): Unit =
+    dataFrame.foreach(f.compose(unsafeRowToHList[L]))
+
+  def foreachPartition(f: Iterator[L] => Unit)(implicit L: FromTraversable[L]): Unit =
+    dataFrame.foreachPartition(f.compose(_.map(unsafeRowToHList[L])))
 
   def head[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
-    DataSheet.unsafeRowToHList(dataFrame.head())
+    unsafeRowToProduct(dataFrame.head())
 
   def head[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
-    dataFrame.head(n).map(DataSheet.unsafeRowToHList[P, L])
+    dataFrame.head(n).map(unsafeRowToProduct[P, L])
+
+  def javaRDD[P <: Product](implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): JavaRDD[P] = {
+    val f = new JFunction[Row, P] { def call(v1: Row): P = unsafeRowToProduct(v1) }
+    dataFrame.javaRDD.map(f)
+  }
+
+  def map[R](f: L => R)(implicit R: ClassTag[R], L: FromTraversable[L]): RDD[R] =
+    dataFrame.map(f.compose(unsafeRowToHList[L]))
+
+  def mapPartitions[R](f: Iterator[L] => Iterator[R])(implicit R: ClassTag[R], L: FromTraversable[L]): RDD[R] =
+    dataFrame.mapPartitions(f.compose(_.map(unsafeRowToHList[L])))
 
   def rdd[P <: Product](implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): RDD[P] =
-    dataFrame.rdd.map(DataSheet.unsafeRowToHList[P, L])
+    dataFrame.rdd.map(unsafeRowToProduct[P, L])
 
   def take[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
-    dataFrame.take(n).map(DataSheet.unsafeRowToHList[P, L])
+    dataFrame.take(n).map(unsafeRowToProduct[P, L])
 }
 
 object DataSheet {
   private def apply[L <: HList](_dataFrame: DataFrame): DataSheet[L] =
     new DataSheet[L] { val dataFrame = _dataFrame }
 
-  private def unsafeRowToHList[P <: Product, L <: HList](row: Row)(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
-    Gen.from(row.toSeq.toHList[L].get)
+  private def unsafeRowToHList[L <: HList : FromTraversable](row: Row): L =
+    row.toSeq.toHList[L].get
 
-  def fromRdd[P <: Product : TypeTag, L <: HList](rdd: RDD[P])(implicit Gen: Generic.Aux[P, L]): DataSheet[L] =
+  private def unsafeRowToProduct[P <: Product, L <: HList](row: Row)(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
+    Gen.from(unsafeRowToHList(row))
+
+  def fromRDD[P <: Product : TypeTag, L <: HList](rdd: RDD[P])(implicit Gen: Generic.Aux[P, L]): DataSheet[L] =
     DataSheet(new SQLContext(rdd.sparkContext).implicits.rddToDataFrameHolder(rdd).toDF())
 }
