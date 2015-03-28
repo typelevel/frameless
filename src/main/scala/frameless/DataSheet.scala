@@ -2,13 +2,17 @@ package frameless
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{ DataFrame, SaveMode, SQLContext }
+import org.apache.spark.sql.{ DataFrame, Row, SaveMode, SQLContext }
 import org.apache.spark.storage.StorageLevel
 
+import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
 import shapeless.{ Generic, HList }
 import shapeless.ops.hlist.Prepend
+import shapeless.ops.traversable.FromTraversable
+import shapeless.syntax.std.traversable._
 
 /** Wrapper around [[org.apache.spark.sql.DataFrame]] using [[shapeless.HList]]s to track schema.
   *
@@ -122,22 +126,37 @@ abstract class DataSheet[L <: HList] {
 
   /////////////////////////
 
-  def collect[P <: Product](implicit Gen: Generic.Aux[P, L]): Array[P] = ???
+  def collect[P <: Product]()(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
+    dataFrame.collect().map(DataSheet.unsafeRowToHList[P, L])
 
-  def collectAsList[P <: Product](implicit Gen: Generic.Aux[P, L]): java.util.List[P] = ???
+  def collectAsList[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): List[P] =
+    dataFrame.collectAsList().asScala.toList.map(DataSheet.unsafeRowToHList[P, L])
 
-  def head[P <: Product](implicit Gen: Generic.Aux[P, L]): P = ???
+  def collectAsJavaList[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): java.util.List[P] =
+    collectAsList().asJava
 
-  def head[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L]): Array[P] = ???
+  def first[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
+    DataSheet.unsafeRowToHList(dataFrame.first())
 
-  def rdd[P <: Product](implicit Gen: Generic.Aux[P, L]): RDD[P] = ???
+  def head[P <: Product]()(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
+    DataSheet.unsafeRowToHList(dataFrame.head())
 
-  def take[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L]): Array[P] = ???
+  def head[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
+    dataFrame.head(n).map(DataSheet.unsafeRowToHList[P, L])
+
+  def rdd[P <: Product](implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): RDD[P] =
+    dataFrame.rdd.map(DataSheet.unsafeRowToHList[P, L])
+
+  def take[P <: Product](n: Int)(implicit Gen: Generic.Aux[P, L], P: ClassTag[P], L: FromTraversable[L]): Array[P] =
+    dataFrame.take(n).map(DataSheet.unsafeRowToHList[P, L])
 }
 
 object DataSheet {
   private def apply[L <: HList](_dataFrame: DataFrame): DataSheet[L] =
     new DataSheet[L] { val dataFrame = _dataFrame }
+
+  private def unsafeRowToHList[P <: Product, L <: HList](row: Row)(implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
+    Gen.from(row.toSeq.toHList[L].get)
 
   def fromRdd[P <: Product : TypeTag, L <: HList](rdd: RDD[P])(implicit Gen: Generic.Aux[P, L]): DataSheet[L] =
     DataSheet(new SQLContext(rdd.sparkContext).implicits.rddToDataFrameHolder(rdd).toDF())
