@@ -12,9 +12,9 @@ import scala.collection.JavaConverters.{ asScalaBufferConverter, seqAsJavaListCo
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-import shapeless.{ Generic, HList, LabelledGeneric }
-import shapeless.ops.hlist.{ Prepend, ZipWithKeys }
-import shapeless.ops.record.{ Keys, Values }
+import shapeless.{ Generic, HList, LabelledGeneric, Nat, Witness }
+import shapeless.ops.hlist.{ Length, Prepend, ToList, ZipWithKeys }
+import shapeless.ops.record.{ Keys, Renamer, Values }
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 
@@ -226,7 +226,20 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   def schema: StructType = dataFrame.schema
 
+  def toDF[V <: HList, L <: HList, N <: Nat, NewSchema <: HList](colNames: L)(
+                                                                 implicit SchemaLen: Length.Aux[Schema, N],
+                                                                 LLen: Length.Aux[L, N],
+                                                                 Val: Values.Aux[Schema, V],
+                                                                 ZWK: ZipWithKeys.Aux[L, V, NewSchema],
+                                                                 ToList: ToList[L, Symbol]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.toDF(colNames.toList.map(_.name): _*))
+
+
   def toJSON: RDD[String] = dataFrame.toJSON
+
+  def withColumnRenamed(existingName: Witness.Lt[Symbol], newName: Witness.Lt[Symbol])(
+                        implicit renamer: Renamer[Schema, existingName.T, newName.T]): DataSheet[renamer.Out] =
+    DataSheet(dataFrame.withColumnRenamed(existingName.value.name, newName.value.name))
 
   /////////////////////////
 
@@ -270,15 +283,9 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   def sort(sortCol: String, sortCols: String*): DataFrame = ???
 
-  def toDF(colNames: String*): DataFrame = ???
-
-  def toDF(): DataFrame = ???
-
   def where(condition: Column): DataFrame = ???
 
   def withColumn(colName: String, col: Column): DataFrame = ???
-
-  def withColumnRenamed(existingName: String, newName: String) = ???
 }
 
 object DataSheet {
