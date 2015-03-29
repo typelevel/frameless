@@ -142,9 +142,9 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
     * dataSheet.get[Foo].head(10): Array[Foo]
     * }}}
     */
-  def get[P <: Product]: GetProxy[P] = new GetProxy[P] {}
+  def get[P <: Product]: GetProxy[P] = new GetProxy[P]
 
-  sealed abstract class GetProxy[P <: Product] {
+  final class GetProxy[P <: Product] private[frameless] {
     def collect[V <: HList]()(implicit Val: Values.Aux[Schema, V], Gen: Generic.Aux[P, V],
                               P: ClassTag[P], V: FromTraversable[V]): Array[P] =
       dataFrame.collect().map(unsafeRowToProduct[P, V])
@@ -194,9 +194,9 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
     * }}}
     */
   def combinator[V <: HList](implicit Val: Values.Aux[Schema, V]): CombinatorProxy[V] =
-    new CombinatorProxy[V] {}
+    new CombinatorProxy[V]
 
-  sealed abstract class CombinatorProxy[V <: HList] {
+  final class CombinatorProxy[V <: HList] private[frameless] {
     def flatMap[R](f: V => TraversableOnce[R])(implicit R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
       dataFrame.flatMap(f.compose(unsafeRowToHList[V]))
 
