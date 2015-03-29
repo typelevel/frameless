@@ -4,7 +4,8 @@ import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.api.java.function.{ Function => JFunction }
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{ DataFrame, Row, SaveMode, SQLContext }
+import org.apache.spark.sql.{ Column, DataFrame, GroupedData, Row, SaveMode, SQLContext }
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
 
 import scala.collection.JavaConverters.{ asScalaBufferConverter, seqAsJavaListConverter }
@@ -212,6 +213,78 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
     def mapPartitions[R](f: Iterator[V] => Iterator[R])(implicit R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
       dataFrame.mapPartitions(f.compose(_.map(unsafeRowToHList[V])))
   }
+
+  /////////////////////////
+
+  def createJDBCTable(url: String, table: String, allowExisting: Boolean): Unit =
+    dataFrame.createJDBCTable(url, table, allowExisting)
+
+  def columns: Array[String] = dataFrame.columns
+
+  def dtypes: Array[(String, String)] = dataFrame.dtypes
+
+  def insertInto(tableName: String): Unit = dataFrame.insertInto(tableName)
+
+  def insertInto(tableName: String, overwrite: Boolean): Unit = dataFrame.insertInto(tableName, overwrite)
+
+  def insertIntoJDBC(url: String, table: String, overwrite: Boolean): Unit =
+    dataFrame.insertIntoJDBC(url, table, overwrite)
+
+  def schema: StructType = dataFrame.schema
+
+  def toJSON: RDD[String] = dataFrame.toJSON
+
+  /////////////////////////
+
+  def agg(expr: Column, exprs: Column*): DataFrame = ???
+
+  def agg(exprs: Map[String, String]): DataFrame = ???
+
+  def agg(aggExpr: (String, String), aggExprs: (String, String)*): DataFrame = ???
+
+  def apply(colName: String): Column = ???
+
+  def col(colName: String): Column = ???
+
+  def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = ???
+
+  def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame = ???
+
+  def filter(conditionExpr: String): DataFrame = ???
+
+  def filter(condition: Column): DataFrame = ???
+
+  def groupBy(col1: String, cols: String*): GroupedData = ???
+
+  def groupBy(cols: Column*): GroupedData = ???
+
+  def join(right: DataFrame, joinExprs: Column, joinType: String): DataFrame = ???
+
+  def join(right: DataFrame, joinExprs: Column): DataFrame = ???
+
+  def orderBy(sortExprs: Column*): DataFrame = ???
+
+  def orderBy(sortCol: String, sortCols: String*): DataFrame = ???
+
+  def select(col: String, cols: String*): DataFrame = ???
+
+  def select(cols: Column*): DataFrame = ???
+
+  def selectExpr(exprs: String*): DataFrame = ???
+
+  def sort(sortExprs: Column*): DataFrame = ???
+
+  def sort(sortCol: String, sortCols: String*): DataFrame = ???
+
+  def toDF(colNames: String*): DataFrame = ???
+
+  def toDF(): DataFrame = ???
+
+  def where(condition: Column): DataFrame = ???
+
+  def withColumn(colName: String, col: Column): DataFrame = ???
+
+  def withColumnRenamed(existingName: String, newName: String) = ???
 }
 
 object DataSheet {
