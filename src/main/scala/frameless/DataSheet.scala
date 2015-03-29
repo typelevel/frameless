@@ -13,8 +13,8 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
 import shapeless.{ Generic, HList, LabelledGeneric }
-import shapeless.ops.hlist.Prepend
-import shapeless.ops.record.Values
+import shapeless.ops.hlist.{ Prepend, ZipWithKeys }
+import shapeless.ops.record.{ Keys, Values }
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 
@@ -183,36 +183,30 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
       dataFrame.take(n).map(unsafeRowToProduct[P, V])
   }
 
-  /** Proxy that allows using combinators through [[shapeless.HList]] interface.
-    *
-    * Example usage:
-    * {{{
-    * val dataSheet: DataSheet[Int :: Double :: List[Byte] :: HNil] = ...
-    *
-    * def foo(i: Int, bs: List[Byte]): Long = ...
-    *
-    * dataSheet.combinator.map(hl => foo(hl(0), hl(2)))
-    * }}}
-    */
-  def combinator[V <: HList](implicit Val: Values.Aux[Schema, V]): CombinatorProxy[V] =
-    new CombinatorProxy[V]
+  def flatMap[K <: HList, V <: HList, R](f: Schema => TraversableOnce[R])(
+                                         implicit Key: Keys.Aux[Schema, K], Val: Values.Aux[Schema, V],
+                                         ZWK: ZipWithKeys.Aux[K, V, Schema], R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
+    dataFrame.flatMap(f.compose(unsafeRowToRecord[Schema, K, V]))
 
-  final class CombinatorProxy[V <: HList] private[frameless] {
-    def flatMap[R](f: V => TraversableOnce[R])(implicit R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
-      dataFrame.flatMap(f.compose(unsafeRowToHList[V]))
+  def foreach[K <: HList, V <: HList](f: Schema => Unit)(
+                                      implicit Key: Keys.Aux[Schema, K], Val: Values.Aux[Schema, V],
+                                      ZWK: ZipWithKeys.Aux[K, V, Schema], V: FromTraversable[V]): Unit =
+    dataFrame.foreach(f.compose(unsafeRowToRecord[Schema, K, V]))
 
-    def foreach[R](f: V => Unit)(implicit V: FromTraversable[V]): Unit =
-      dataFrame.foreach(f.compose(unsafeRowToHList[V]))
+  def foreachPartition[K <: HList, V <: HList](f: Iterator[Schema] => Unit)(
+                                               implicit Key: Keys.Aux[Schema, K], Val: Values.Aux[Schema, V],
+                                               ZWK: ZipWithKeys.Aux[K, V, Schema], V: FromTraversable[V]): Unit =
+    dataFrame.foreachPartition(f.compose(_.map(unsafeRowToRecord[Schema, K, V])))
 
-    def foreachPartition(f: Iterator[V] => Unit)(implicit V: FromTraversable[V]): Unit =
-      dataFrame.foreachPartition(f.compose(_.map(unsafeRowToHList[V])))
+  def map[K <: HList, V <: HList, R](f: Schema => R)(
+                                     implicit Key: Keys.Aux[Schema, K], Val: Values.Aux[Schema, V],
+                                     ZWK: ZipWithKeys.Aux[K, V, Schema], R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
+    dataFrame.map(f.compose(unsafeRowToRecord[Schema, K, V]))
 
-    def map[R](f: V => R)(implicit R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
-      dataFrame.map(f.compose(unsafeRowToHList[V]))
-
-    def mapPartitions[R](f: Iterator[V] => Iterator[R])(implicit R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
-      dataFrame.mapPartitions(f.compose(_.map(unsafeRowToHList[V])))
-  }
+  def mapPartitions[K <: HList, V <: HList, R](f: Iterator[Schema] => Iterator[R])(
+                                               implicit Key: Keys.Aux[Schema, K], Val: Values.Aux[Schema, V],
+                                               ZWK: ZipWithKeys.Aux[K, V, Schema], R: ClassTag[R], V: FromTraversable[V]): RDD[R] =
+    dataFrame.mapPartitions(f.compose(_.map(unsafeRowToRecord[Schema, K, V])))
 
   /////////////////////////
 
@@ -297,6 +291,11 @@ object DataSheet {
   private def unsafeRowToProduct[P <: Product, L <: HList](row: Row)(
                                                            implicit Gen: Generic.Aux[P, L], L: FromTraversable[L]): P =
     Gen.from(unsafeRowToHList(row))
+
+  private def unsafeRowToRecord[R <: HList, K <: HList, V <: HList](row: Row)(
+                                                                    implicit Key: Keys.Aux[R, K], Val: Values.Aux[R, V],
+                                                                    ZWK: ZipWithKeys.Aux[K, V, R], V: FromTraversable[V]): R =
+    unsafeRowToHList[V](row).zipWithKeys(Key())
 
   def fromRDD[P <: Product : TypeTag, Schema <: HList](rdd: RDD[P])(
                                                        implicit Gen: LabelledGeneric.Aux[P, Schema]): DataSheet[Schema] =
