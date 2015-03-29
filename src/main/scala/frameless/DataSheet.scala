@@ -139,12 +139,12 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
     * val dataSheet = ...
     *
     * // Assuming dataSheet schema matches Foo
-    * dataSheet.as[Foo].head(10): Array[Foo]
+    * dataSheet.get[Foo].head(10): Array[Foo]
     * }}}
     */
-  def as[P <: Product]: ProductProxy[P] = new ProductProxy[P] {}
+  def get[P <: Product]: GetProxy[P] = new GetProxy[P] {}
 
-  sealed abstract class ProductProxy[P <: Product] {
+  sealed abstract class GetProxy[P <: Product] {
     def collect[V <: HList]()(implicit Val: Values.Aux[Schema, V], Gen: Generic.Aux[P, V],
                               P: ClassTag[P], V: FromTraversable[V]): Array[P] =
       dataFrame.collect().map(unsafeRowToProduct[P, V])
