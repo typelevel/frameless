@@ -7,7 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{ DataFrame, Row, SaveMode, SQLContext }
 import org.apache.spark.storage.StorageLevel
 
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.{ asScalaBufferConverter, seqAsJavaListConverter }
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
@@ -15,7 +15,7 @@ import shapeless.{ Generic, HList, LabelledGeneric }
 import shapeless.ops.hlist.Prepend
 import shapeless.ops.record.Values
 import shapeless.ops.traversable.FromTraversable
-import shapeless.syntax.std.traversable._
+import shapeless.syntax.std.traversable.traversableOps
 
 /** Wrapper around [[org.apache.spark.sql.DataFrame]] where the type parameter tracks the schema.
   *
