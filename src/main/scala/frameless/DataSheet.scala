@@ -229,9 +229,9 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
   def toDF[V <: HList, L <: HList, N <: Nat, NewSchema <: HList](colNames: L)(
                                                                  implicit SchemaLen: Length.Aux[Schema, N],
                                                                  LLen: Length.Aux[L, N],
+                                                                 ToList: ToList[L, Symbol],
                                                                  Val: Values.Aux[Schema, V],
-                                                                 ZWK: ZipWithKeys.Aux[L, V, NewSchema],
-                                                                 ToList: ToList[L, Symbol]): DataSheet[NewSchema] =
+                                                                 ZWK: ZipWithKeys.Aux[L, V, NewSchema]): DataSheet[NewSchema] =
     DataSheet(dataFrame.toDF(colNames.toList.map(_.name): _*))
 
 
