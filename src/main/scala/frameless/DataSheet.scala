@@ -12,9 +12,9 @@ import scala.collection.JavaConverters.{ asScalaBufferConverter, seqAsJavaListCo
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-import shapeless.{ Generic, HList, LabelledGeneric, Nat, Witness }
+import shapeless.{ ::, Generic, HList, HNil, LabelledGeneric, Nat, Witness }
 import shapeless.ops.hlist.{ Length, Prepend, ToList, ZipWithKeys }
-import shapeless.ops.record.{ Keys, Renamer, Values }
+import shapeless.ops.record.{ Keys, Renamer, Selector, Values }
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 
@@ -238,7 +238,7 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
   def toJSON: RDD[String] = dataFrame.toJSON
 
   def withColumnRenamed(existingName: Witness.Lt[Symbol], newName: Witness.Lt[Symbol])(
-                        implicit renamer: Renamer[Schema, existingName.T, newName.T]): DataSheet[renamer.Out] =
+                        implicit Rename: Renamer[Schema, existingName.T, newName.T]): DataSheet[Rename.Out] =
     DataSheet(dataFrame.withColumnRenamed(existingName.value.name, newName.value.name))
 
   /////////////////////////
@@ -249,17 +249,19 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   def agg(aggExpr: (String, String), aggExprs: (String, String)*): DataFrame = ???
 
-  def apply(colName: String): Column = ???
+  def apply[Out](colName: Witness.Lt[Symbol])(
+                 implicit Select: Selector.Aux[Schema, colName.T, Out]): DataColumn[colName.T, Out] =
+    DataColumn(dataFrame(colName.value.name))
 
-  def col(colName: String): Column = ???
+  def col[Out](colName: Witness.Lt[Symbol])(
+               implicit Select: Selector.Aux[Schema, colName.T, Out]):DataColumn[colName.T, Out] =
+    DataColumn(dataFrame.col(colName.value.name))
 
   def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = ???
 
   def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame = ???
 
-  def filter(conditionExpr: String): DataFrame = ???
-
-  def filter(condition: Column): DataFrame = ???
+  def filter(condition: DataColumn[_, Boolean]): DataSheet[Schema] = DataSheet(dataFrame.filter(condition.column))
 
   def groupBy(col1: String, cols: String*): GroupedData = ???
 
@@ -283,9 +285,16 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   def sort(sortCol: String, sortCols: String*): DataFrame = ???
 
-  def where(condition: Column): DataFrame = ???
+  def where(condition: DataColumn[_, Boolean]): DataSheet[Schema] = DataSheet(dataFrame.where(condition.column))
 
-  def withColumn(colName: String, col: Column): DataFrame = ???
+  def withColumn[A, K <: HList, V <: HList, NewKeys <: HList, NewValues <: HList, NewSchema <: HList](
+      colName: Witness.Lt[Symbol], col: DataColumn[_, A])(
+      implicit Key: Keys.Aux[Schema, K],
+      Val: Values.Aux[Schema, V],
+      P1: Prepend.Aux[K, colName.T :: HNil, NewKeys],
+      P2: Prepend.Aux[V, A :: HNil, NewValues],
+      ZWK: ZipWithKeys.Aux[NewKeys, NewValues, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.withColumn(colName.value.name, col.as(colName).column))
 }
 
 object DataSheet {
