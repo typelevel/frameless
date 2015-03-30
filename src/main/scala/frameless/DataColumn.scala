@@ -72,19 +72,11 @@ final class DataColumn[K, A] private[frameless](val column: Column) {
 
   def explain(extended: Boolean): Unit = column.explain(extended)
 
-  def getField(fieldName: String): Column = ???
-
-  def getItem(ordinal: Int): Column = ???
-
   def in(list: DataColumn[_, A]*): TempDataColumn[Boolean] = DataColumn(column.in(list.map(_.column): _*))
 
   def isNotNull: TempDataColumn[Boolean] = DataColumn(column.isNotNull)
 
   def isNull: TempDataColumn[Boolean] = DataColumn(column.isNull)
-
-  def like(literal: String): Column = ???
-
-  def rlike(literal: String): Column = ???
 
   def startsWith(literal: String)(implicit ev: A =:= String): TempDataColumn[Boolean] =
     DataColumn(column.startsWith(literal))
