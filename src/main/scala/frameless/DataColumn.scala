@@ -4,69 +4,71 @@ import org.apache.spark.sql.Column
 
 import scala.math.Ordering
 
-final class DataColumn[A] private[frameless](val column: Column) {
-  def !==(other: A): DataColumn[Boolean] = DataColumn(column !== other)
-  def !==(other: DataColumn[A]): DataColumn[Boolean] = DataColumn(column !== other)
+import shapeless.Witness
 
-  def %(other: A)(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column % other)
-  def %(other: DataColumn[A])(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column % other)
+final class DataColumn[K, A] private[frameless](val column: Column) {
+  import DataColumn._
 
-  def &&(other: Boolean)(implicit ev: A =:= Boolean): DataColumn[Boolean] = DataColumn(column && other)
-  def &&(other: DataColumn[Boolean])(implicit ev: A =:= Boolean): DataColumn[Boolean] = DataColumn(column && other)
+  def !==(other: A): TempDataColumn[Boolean] = DataColumn(column !== other)
+  def !==(other: DataColumn[_, A]): TempDataColumn[Boolean] = DataColumn(column !== other)
 
-  def *(other: A)(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column * other)
-  def *(other: DataColumn[A])(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column * other)
+  def %(other: A)(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column % other)
+  def %(other: DataColumn[_, A])(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column % other)
 
-  def +(other: A)(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column + other)
-  def +(other: DataColumn[A])(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column + other)
+  def &&(other: Boolean)(implicit ev: A =:= Boolean): TempDataColumn[Boolean] = DataColumn(column && other)
+  def &&(other: DataColumn[_, Boolean])(implicit ev: A =:= Boolean): TempDataColumn[Boolean] = DataColumn(column && other)
 
-  def -(other: A)(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column - other)
-  def -(other: DataColumn[A])(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column - other)
+  def *(other: A)(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column * other)
+  def *(other: DataColumn[_, A])(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column * other)
+
+  def +(other: A)(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column + other)
+  def +(other: DataColumn[_, A])(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column + other)
+
+  def -(other: A)(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column - other)
+  def -(other: DataColumn[_, A])(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column - other)
 
   // Need to look into this
-  def /(other: A)(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column / other)
-  def /(other: DataColumn[A])(implicit A: Numeric[A]): DataColumn[A] = DataColumn(column / other)
+  def /(other: A)(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column / other)
+  def /(other: DataColumn[_, A])(implicit A: Numeric[A]): TempDataColumn[A] = DataColumn(column / other)
 
-  def <(other: A)(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column < other)
-  def <(other: DataColumn[A])(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column < other)
+  def <(other: A)(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column < other)
+  def <(other: DataColumn[_, A])(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column < other)
 
-  def <=(other: A)(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column <= other)
-  def <=(other: DataColumn[A])(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column <= other)
+  def <=(other: A)(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column <= other)
+  def <=(other: DataColumn[_, A])(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column <= other)
 
-  def <=>(other: A): DataColumn[Boolean] = DataColumn(column <=> other)
-  def <=>(other: DataColumn[A]): DataColumn[Boolean] = DataColumn(column <=> other)
+  def <=>(other: A): TempDataColumn[Boolean] = DataColumn(column <=> other)
+  def <=>(other: DataColumn[_, A]): TempDataColumn[Boolean] = DataColumn(column <=> other)
 
-  def ===(other: A): DataColumn[Boolean] = DataColumn(column === other)
-  def ===(other: DataColumn[A]): DataColumn[Boolean] = DataColumn(column === other)
+  def ===(other: A): TempDataColumn[Boolean] = DataColumn(column === other)
+  def ===(other: DataColumn[_, A]): TempDataColumn[Boolean] = DataColumn(column === other)
 
-  def >(other: A)(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column > other)
-  def >(other: DataColumn[A])(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column > other)
+  def >(other: A)(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column > other)
+  def >(other: DataColumn[_, A])(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column > other)
 
-  def >=(other: A)(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column >= other)
-  def >=(other: DataColumn[A])(implicit A: Ordering[A]): DataColumn[Boolean] = DataColumn(column >= other)
+  def >=(other: A)(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column >= other)
+  def >=(other: DataColumn[_, A])(implicit A: Ordering[A]): TempDataColumn[Boolean] = DataColumn(column >= other)
 
-  def as(alias: Symbol): Column = ???
+  def as(alias: Witness.Lt[Symbol]): DataColumn[alias.T, A] = DataColumn(column.as(alias.value.name))
 
-  def as(alias: String): Column = ???
+  def asc(implicit A: Ordering[A]): TempDataColumn[A] = DataColumn(column.asc)
 
-  def asc(implicit A: Ordering[A]): DataColumn[A] = DataColumn(column.asc)
+  def cast[B >: A]: TempDataColumn[B] = DataColumn(column)
 
-  def cast[B >: A]: DataColumn[B] = DataColumn(column)
+  def cast[B <% A]: TempDataColumn[B] = DataColumn(column)
 
-  def cast[B <% A]: DataColumn[B] = DataColumn(column)
+  def contains(other: A): TempDataColumn[Boolean] = DataColumn(column.contains(other))
 
-  def contains(other: Any): Column = ???
+  def desc(implicit A: Ordering[A]): TempDataColumn[A] = DataColumn(column.desc)
 
-  def desc(implicit A: Ordering[A]): DataColumn[A] = DataColumn(column.desc)
-
-  def endsWith(literal: String)(implicit ev: A =:= String): DataColumn[Boolean] =
+  def endsWith(literal: String)(implicit ev: A =:= String): TempDataColumn[Boolean] =
     DataColumn(column.endsWith(literal))
 
-  def endsWith(other: DataColumn[A])(implicit ev: A =:= String): DataColumn[Boolean] =
+  def endsWith(other: DataColumn[_, A])(implicit ev: A =:= String): TempDataColumn[Boolean] =
     DataColumn(column.endsWith(other.column))
 
-  def equalTo(other: A): DataColumn[Boolean] = DataColumn(column.equalTo(other))
-  def equalTo(other: DataColumn[A]): DataColumn[Boolean] = DataColumn(column.equalTo(other))
+  def equalTo(other: A): TempDataColumn[Boolean] = DataColumn(column.equalTo(other))
+  def equalTo(other: DataColumn[_, A]): TempDataColumn[Boolean] = DataColumn(column.equalTo(other))
 
   def explain(extended: Boolean): Unit = column.explain(extended)
 
@@ -74,38 +76,41 @@ final class DataColumn[A] private[frameless](val column: Column) {
 
   def getItem(ordinal: Int): Column = ???
 
-  def in(list: DataColumn[A]*): DataColumn[Boolean] = DataColumn(column.in(list.map(_.column): _*))
+  def in(list: DataColumn[_, A]*): TempDataColumn[Boolean] = DataColumn(column.in(list.map(_.column): _*))
 
-  def isNotNull: DataColumn[Boolean] = DataColumn(column.isNotNull)
+  def isNotNull: TempDataColumn[Boolean] = DataColumn(column.isNotNull)
 
-  def isNull: DataColumn[Boolean] = DataColumn(column.isNull)
+  def isNull: TempDataColumn[Boolean] = DataColumn(column.isNull)
 
   def like(literal: String): Column = ???
 
   def rlike(literal: String): Column = ???
 
-  def startsWith(literal: String)(implicit ev: A =:= String): DataColumn[Boolean] =
+  def startsWith(literal: String)(implicit ev: A =:= String): TempDataColumn[Boolean] =
     DataColumn(column.startsWith(literal))
 
-  def startsWith(other: DataColumn[A])(implicit ev: A =:= String): DataColumn[Boolean] =
+  def startsWith(other: DataColumn[_, A])(implicit ev: A =:= String): TempDataColumn[Boolean] =
     DataColumn(column.startsWith(other.column))
 
-  def substr(startPos: Int, len: Int)(implicit ev: A =:= String): DataColumn[String] =
+  def substr(startPos: Int, len: Int)(implicit ev: A =:= String): TempDataColumn[String] =
     DataColumn(column.substr(startPos, len))
 
-  def substr(startPos: DataColumn[Int], len: DataColumn[Int])(implicit ev: A =:= String): DataColumn[String] =
+  def substr(startPos: DataColumn[_, Int], len: DataColumn[_, Int])(implicit ev: A =:= String): TempDataColumn[String] =
     DataColumn(column.substr(startPos.column, len.column))
 
   override def toString(): String = s"DataColumn:\n${column.toString}"
 
-  def unary_!(implicit ev: A =:= Boolean): DataColumn[Boolean] = DataColumn(!column)
+  def unary_!(implicit ev: A =:= Boolean): TempDataColumn[Boolean] = DataColumn(!column)
 
-  def unary_-(implicit ev: Numeric[A]): DataColumn[A] = DataColumn(-column)
+  def unary_-(implicit ev: Numeric[A]): TempDataColumn[A] = DataColumn(-column)
 
-  def ||(other: Boolean)(implicit ev: A =:= Boolean): DataColumn[Boolean] = DataColumn(column || other)
-  def ||(other: DataColumn[Boolean])(implicit ev: A =:= Boolean): DataColumn[Boolean] = DataColumn(column || other)
+  def ||(other: Boolean)(implicit ev: A =:= Boolean): TempDataColumn[Boolean] = DataColumn(column || other)
+  def ||(other: DataColumn[_, Boolean])(implicit ev: A =:= Boolean): TempDataColumn[Boolean] = DataColumn(column || other)
 }
 
 object DataColumn {
-  def apply[A](column: Column): DataColumn[A] = new DataColumn(column)
+  val TempDataColumn = Witness('TempColumn)
+  type TempDataColumn[A] = DataColumn[TempDataColumn.T, A]
+
+  def apply[K, A](column: Column): DataColumn[K, A] = new DataColumn(column)
 }
