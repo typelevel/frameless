@@ -23,7 +23,7 @@ import shapeless.syntax.std.traversable.traversableOps
   * All heavy-lifting is still being done by the backing DataFrame so this API will more or less
   * be 1-to-1 with that of the DataFrame's.
   */
-final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
+final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends Serializable {
   import DataSheet._
 
   def as(alias: Symbol): DataSheet[Schema] = DataSheet(dataFrame.as(alias))
@@ -226,6 +226,7 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   def schema: StructType = dataFrame.schema
 
+  // ProductArgs
   def toDF[V <: HList, L <: HList, N <: Nat, NewSchema <: HList](colNames: L)(
                                                                  implicit SchemaLen: Length.Aux[Schema, N],
                                                                  LLen: Length.Aux[L, N],
@@ -243,11 +244,8 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
 
   /////////////////////////
 
+  // Product Args
   def agg(expr: Column, exprs: Column*): DataFrame = ???
-
-  def agg(exprs: Map[String, String]): DataFrame = ???
-
-  def agg(aggExpr: (String, String), aggExprs: (String, String)*): DataFrame = ???
 
   def apply[Out](colName: Witness.Lt[Symbol])(
                  implicit Select: Selector.Aux[Schema, colName.T, Out]): DataColumn[colName.T, Out] =
@@ -257,33 +255,40 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) {
                implicit Select: Selector.Aux[Schema, colName.T, Out]):DataColumn[colName.T, Out] =
     DataColumn(dataFrame.col(colName.value.name))
 
-  def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = ???
+  def explode[A : TypeTag, Out, K <: HList, V <: HList, NewKeys <: HList, NewValues <: HList, NewSchema <: HList](
+      inputColumn: Witness.Lt[Symbol], outputColumn: Witness.Lt[Symbol])(
+      f: Out => TraversableOnce[A])(
+      implicit Select: Selector.Aux[Schema, inputColumn.T, Out],
+      Key: Keys.Aux[Schema, K],
+      Val: Values.Aux[Schema, V],
+      P1: Prepend.Aux[K, outputColumn.T :: HNil, NewKeys],
+      P2: Prepend.Aux[V, Out :: HNil, NewValues],
+      ZWK: ZipWithKeys.Aux[NewKeys, NewValues, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.explode(inputColumn.value.name, outputColumn.value.name)(f))
 
+  // Product Args
   def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame = ???
 
   def filter(condition: DataColumn[_, Boolean]): DataSheet[Schema] = DataSheet(dataFrame.filter(condition.column))
 
-  def groupBy(col1: String, cols: String*): GroupedData = ???
-
+  // Product Args
   def groupBy(cols: Column*): GroupedData = ???
 
-  def join(right: DataFrame, joinExprs: Column, joinType: String): DataFrame = ???
+  // Product Args
+  def join(right: DataFrame, joinExprs: Column, joinType: JoinType): DataFrame = ???
 
-  def join(right: DataFrame, joinExprs: Column): DataFrame = ???
+  def join[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                     implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column))
 
+  // Product Args
   def orderBy(sortExprs: Column*): DataFrame = ???
 
-  def orderBy(sortCol: String, sortCols: String*): DataFrame = ???
-
-  def select(col: String, cols: String*): DataFrame = ???
-
+  // Product Args
   def select(cols: Column*): DataFrame = ???
 
-  def selectExpr(exprs: String*): DataFrame = ???
-
+  // Product Args
   def sort(sortExprs: Column*): DataFrame = ???
-
-  def sort(sortCol: String, sortCols: String*): DataFrame = ???
 
   def where(condition: DataColumn[_, Boolean]): DataSheet[Schema] = DataSheet(dataFrame.where(condition.column))
 
@@ -316,4 +321,14 @@ object DataSheet {
   def fromRDD[P <: Product : TypeTag, Schema <: HList](rdd: RDD[P])(
                                                        implicit Gen: LabelledGeneric.Aux[P, Schema]): DataSheet[Schema] =
     DataSheet(new SQLContext(rdd.sparkContext).implicits.rddToDataFrameHolder(rdd).toDF())
+}
+
+sealed abstract class JoinType(string: String) extends Product with Serializable
+
+object JoinType {
+  final case object Inner extends JoinType("inner")
+  final case object Outer extends JoinType("outer")
+  final case object LeftOuter extends JoinType("left_outer")
+  final case object RightOuter extends JoinType("right_outer")
+  final case object Semijoin extends JoinType("semijoin")
 }
