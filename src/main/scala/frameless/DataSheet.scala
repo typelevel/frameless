@@ -12,9 +12,9 @@ import scala.collection.JavaConverters.{ asScalaBufferConverter, seqAsJavaListCo
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-import shapeless.{ ::, Generic, HList, HNil, LabelledGeneric, Nat, Witness }
-import shapeless.ops.hlist.{ Length, Prepend, ToList, ZipWithKeys }
-import shapeless.ops.record.{ Keys, Renamer, Selector, Values }
+import shapeless.{ ::, Generic, HList, HNil, LabelledGeneric, Nat, SingletonProductArgs, Witness }
+import shapeless.ops.hlist.{ IsHCons, Length, Prepend, ToList, ZipWithKeys }
+import shapeless.ops.record.{ Keys, Renamer, SelectAll, Selector, Values }
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 
@@ -23,7 +23,7 @@ import shapeless.syntax.std.traversable.traversableOps
   * All heavy-lifting is still being done by the backing DataFrame so this API will more or less
   * be 1-to-1 with that of the DataFrame's.
   */
-final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends Serializable {
+final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends Serializable with SingletonProductArgs {
   import DataSheet._
 
   def as(alias: Symbol): DataSheet[Schema] = DataSheet(dataFrame.as(alias))
@@ -226,15 +226,14 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
 
   def schema: StructType = dataFrame.schema
 
-  // ProductArgs
-  def toDF[V <: HList, L <: HList, N <: Nat, NewSchema <: HList](colNames: L)(
-                                                                 implicit SchemaLen: Length.Aux[Schema, N],
-                                                                 LLen: Length.Aux[L, N],
-                                                                 ToList: ToList[L, Symbol],
-                                                                 Val: Values.Aux[Schema, V],
-                                                                 ZWK: ZipWithKeys.Aux[L, V, NewSchema]): DataSheet[NewSchema] =
+  def toDFProduct[V <: HList, L <: HList, N <: Nat, NewSchema <: HList](
+      colNames: L)(
+      implicit SchemaLen: Length.Aux[Schema, N],
+      LLen: Length.Aux[L, N],
+      ToList: ToList[L, Symbol],
+      Val: Values.Aux[Schema, V],
+      ZWK: ZipWithKeys.Aux[L, V, NewSchema]): DataSheet[NewSchema] =
     DataSheet(dataFrame.toDF(colNames.toList.map(_.name): _*))
-
 
   def toJSON: RDD[String] = dataFrame.toJSON
 
@@ -274,8 +273,27 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
   // Product Args
   def groupBy(cols: Column*): GroupedData = ???
 
-  // Product Args
-  def join(right: DataFrame, joinExprs: Column, joinType: JoinType): DataFrame = ???
+  def groupByProduct[L <: HList](cols: L): GroupedData = ???
+
+  def innerJoin[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                          implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column, "inner"))
+
+  def outerJoin[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                          implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column, "outer"))
+
+  def leftOuterJoin[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                              implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column, "left_outer"))
+
+  def rightOuterJoin[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                               implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column, "right_outer"))
+
+  def semiJoin[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
+                                                         implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
+    DataSheet(dataFrame.join(right.dataFrame, joinExprs.column, "semijoin"))
 
   def join[OtherSchema <: HList, NewSchema <: HList](right: DataSheet[OtherSchema], joinExprs: DataColumn[_, Boolean])(
                                                      implicit P: Prepend.Aux[Schema, OtherSchema, NewSchema]): DataSheet[NewSchema] =
@@ -284,11 +302,26 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
   // Product Args
   def orderBy(sortExprs: Column*): DataFrame = ???
 
+  def orderByProduct[L <: HList](sortCols: L): DataFrame = ???
+
   // Product Args
-  def select(cols: Column*): DataFrame = ???
+  // def select(cols: Column*): DataFrame = ???
+
+  def selectProduct[L <: HList, S <: HList, NewSchema <: HList](
+      cols: L)(
+      implicit Cons: IsHCons[L],
+      Sel: SelectAll.Aux[Schema, L, S],
+      ZWK: ZipWithKeys.Aux[L, S, NewSchema],
+      ToList: ToList[L, Symbol]): DataSheet[NewSchema] = {
+
+    val colNames = cols.toList.map(_.name)
+    DataSheet(dataFrame.select(colNames.head, colNames.tail: _*))
+  }
 
   // Product Args
   def sort(sortExprs: Column*): DataFrame = ???
+
+  def sortProduct[L <: HList](sortCols: L): DataFrame = ???
 
   def where(condition: DataColumn[_, Boolean]): DataSheet[Schema] = DataSheet(dataFrame.where(condition.column))
 
@@ -321,14 +354,4 @@ object DataSheet {
   def fromRDD[P <: Product : TypeTag, Schema <: HList](rdd: RDD[P])(
                                                        implicit Gen: LabelledGeneric.Aux[P, Schema]): DataSheet[Schema] =
     DataSheet(new SQLContext(rdd.sparkContext).implicits.rddToDataFrameHolder(rdd).toDF())
-}
-
-sealed abstract class JoinType(string: String) extends Product with Serializable
-
-object JoinType {
-  final case object Inner extends JoinType("inner")
-  final case object Outer extends JoinType("outer")
-  final case object LeftOuter extends JoinType("left_outer")
-  final case object RightOuter extends JoinType("right_outer")
-  final case object Semijoin extends JoinType("semijoin")
 }

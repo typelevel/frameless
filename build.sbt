@@ -15,7 +15,7 @@ val sparkVersion = "1.3.0"
 libraryDependencies ++= Seq(
   compilerPlugin("org.scalamacros"  % "paradise_2.10.5" % "2.0.1"),
 
-  "com.chuusai"       %  "shapeless_2.10.5"   % "2.2.0-RC1",
+  "com.chuusai"       %% "shapeless"          % "2.2.0-RC4",
   "org.apache.spark"  %% "spark-core"         % sparkVersion    % "provided",
   "org.apache.spark"  %% "spark-sql"          % sparkVersion    % "provided"
 )
