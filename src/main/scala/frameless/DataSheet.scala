@@ -307,15 +307,15 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
   // Product Args
   // def select(cols: Column*): DataFrame = ???
 
-  def selectProduct[L <: HList, S <: HList, NewSchema <: HList](
+  def selectProduct[L <: HList, S <: HList, NewSchema <: HList, H, T <: HList](
       cols: L)(
-      implicit Cons: IsHCons[L],
+      implicit Cons: IsHCons.Aux[L, H, T],
       Sel: SelectAll.Aux[Schema, L, S],
       ZWK: ZipWithKeys.Aux[L, S, NewSchema],
-      ToList: ToList[L, Symbol]): DataSheet[NewSchema] = {
+      HSym : H <:< Symbol,
+      ToList: ToList[T, Symbol]): DataSheet[NewSchema] = {
 
-    val colNames = cols.toList.map(_.name)
-    DataSheet(dataFrame.select(colNames.head, colNames.tail: _*))
+    DataSheet(dataFrame.select(cols.head.name, cols.tail.toList.map(_.name): _*))
   }
 
   // Product Args
