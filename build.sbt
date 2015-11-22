@@ -35,4 +35,3 @@ scalacOptions ++= Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard"
 )
-
