@@ -4,108 +4,217 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
+import scala.util.Random
 
-class TypedFrame[Schema](df: DataFrame) {
-  def toDF(): DataFrame = df.toDF()
-  def toDF(colNames: String*): DataFrame = df.toDF(colNames: _*)
-  def schema: StructType = df.schema
-  def dtypes: Array[(String, String)] = df.dtypes
-  def columns: Array[String] = df.columns
-  def printSchema(): Unit = df.printSchema()
-  def explain(extended: Boolean): Unit = df.explain(extended: Boolean)
-  def explain(): Unit = df.explain()
-  def isLocal: Boolean = df.isLocal
-  def show(numRows: Int): Unit = df.show(numRows: Int)
-  def show(): Unit = df.show()
-  def show(truncate: Boolean): Unit = df.show(truncate: Boolean)
-  def show(numRows: Int, truncate: Boolean): Unit = df.show(numRows: Int, truncate: Boolean)
-  def na: DataFrameNaFunctions = df.na
-  def stat: DataFrameStatFunctions = df.stat
-  def join(right: DataFrame): DataFrame = df.join(right)
-  def join(right: DataFrame, usingColumn: String): DataFrame = df.join(right, usingColumn)
-  def join(right: DataFrame, usingColumns: Seq[String]): DataFrame = df.join(right, usingColumns)
-  def join(right: DataFrame, joinExprs: Column): DataFrame = df.join(right, joinExprs)
-  def join(right: DataFrame, joinExprs: Column, joinType: String): DataFrame = df.join(right, joinExprs, joinType)
-  def sort(sortCol: String, sortCols: String*): DataFrame = df.sort(sortCol, sortCols: _*)
-  def sort(sortExprs: Column*): DataFrame = df.sort(sortExprs: _*)
-  def orderBy(sortCol: String, sortCols: String*): DataFrame = df.orderBy(sortCol, sortCols: _*)
-  def orderBy(sortExprs: Column*): DataFrame = df.orderBy(sortExprs: _*)
-  def apply(colName: String): Column = df.apply(colName)
-  def col(colName: String): Column = df.col(colName)
-  def as(alias: String): DataFrame = df.as(alias)
-  def as(alias: Symbol): DataFrame = df.as(alias)
-  def select(cols: Column*): DataFrame = df.select(cols: _*)
-  def select(col: String, cols: String*): DataFrame = df.select(col, cols: _*)
-  def selectExpr(exprs: String*): DataFrame = df.selectExpr(exprs: _*)
-  def filter(condition: Column): DataFrame = df.filter(condition)
-  def filter(conditionExpr: String): DataFrame = df.filter(conditionExpr)
-  def where(condition: Column): DataFrame = df.where(condition)
-  def where(conditionExpr: String): DataFrame = df.where(conditionExpr)
-  def groupBy(cols: Column*): GroupedData = df.groupBy(cols: _*)
-  def rollup(cols: Column*): GroupedData = df.rollup(cols: _*)
-  def cube(cols: Column*): GroupedData = df.cube(cols: _*)
-  def groupBy(col1: String, cols: String*): GroupedData = df.groupBy(col1, cols: _*)
-  def rollup(col1: String, cols: String*): GroupedData = df.rollup(col1, cols: _*)
-  def cube(col1: String, cols: String*): GroupedData = df.cube(col1, cols: _*)
-  def agg(aggExpr: (String, String), aggExprs: (String, String)*): DataFrame = df.agg(aggExpr, aggExprs: _*)
-  def agg(exprs: Map[String, String]): DataFrame = df.agg(exprs)
-  def agg(exprs: java.util.Map[String, String]): DataFrame = df.agg(exprs)
-  def agg(expr: Column, exprs: Column*): DataFrame = df.agg(expr, exprs: _*)
-  def limit(n: Int): DataFrame = df.limit(n)
-  def unionAll(other: DataFrame): DataFrame = df.unionAll(other)
-  def intersect(other: DataFrame): DataFrame = df.intersect(other)
-  def except(other: DataFrame): DataFrame = df.except(other)
-  def sample(withReplacement: Boolean, fraction: Double, seed: Long): DataFrame = df.sample(withReplacement, fraction, seed)
-  def sample(withReplacement: Boolean, fraction: Double): DataFrame = df.sample(withReplacement, fraction)
-  def randomSplit(weights: Array[Double], seed: Long): Array[DataFrame] = df.randomSplit(weights, seed)
-  def randomSplit(weights: Array[Double]): Array[DataFrame] = df.randomSplit(weights)
-  def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame = df.explode(input: _*)(f)
-  def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = df.explode(inputColumn, outputColumn)(f)
-  def withColumn(colName: String, col: Column): DataFrame = df.withColumn(colName, col)
-  def withColumnRenamed(existingName: String, newName: String): DataFrame = df.withColumnRenamed(existingName, newName)
-  def drop(colName: String): DataFrame = df.drop(colName)
-  def drop(col: Column): DataFrame = df.drop(col)
-  def dropDuplicates(): DataFrame = df.dropDuplicates()
-  def dropDuplicates(colNames: Seq[String]): DataFrame = df.dropDuplicates(colNames)
-  def dropDuplicates(colNames: Array[String]): DataFrame = df.dropDuplicates(colNames)
-  def describe(cols: String*): DataFrame = df.describe(cols: _*)
-  def head(n: Int): Array[Row] = df.head(n)
-  def head(): Row = df.head()
-  def first(): Row = df.first()
-  def map[R: ClassTag](f: Row => R): RDD[R] = df.map(f)
-  def flatMap[R: ClassTag](f: Row => TraversableOnce[R]): RDD[R] = df.flatMap(f)
-  def mapPartitions[R: ClassTag](f: Iterator[Row] => Iterator[R]): RDD[R] = df.mapPartitions(f)
-  def foreach(f: Row => Unit): Unit = df.foreach(f)
-  def foreachPartition(f: Iterator[Row] => Unit): Unit = df.foreachPartition(f)
-  def take(n: Int): Array[Row] = df.take(n)
-  def collect(): Array[Row] = df.collect()
-  def collectAsList(): java.util.List[Row] = df.collectAsList()
-  def count(): Long = df.count()
-  def repartition(numPartitions: Int): DataFrame = df.repartition(numPartitions)
-  def coalesce(numPartitions: Int): DataFrame = df.coalesce(numPartitions)
-  def distinct(): DataFrame = df.distinct()
-  def persist(): DataFrame = df.persist()
-  def cache(): DataFrame = df.cache()
-  def persist(newLevel: StorageLevel): DataFrame = df.persist(newLevel)
-  def unpersist(blocking: Boolean): DataFrame = df.unpersist(blocking)
-  def unpersist(): DataFrame = df.unpersist()
-  def registerTempTable(tableName: String): Unit = df.registerTempTable(tableName)
-  def write: DataFrameWriter = df.write
-  def toJSON: RDD[String] = df.toJSON
-  def inputFiles: Array[String] = df.inputFiles
-  // Deprecated:
-  // def toSchemaRDD: DataFrame = df.toSchemaRDD
-  // def createJDBCTable(url: String, table: String, allowExisting: Boolean): Unit = df.createJDBCTable(url, table, allowExisting)
-  // def insertIntoJDBC(url: String, table: String, overwrite: Boolean): Unit = df.insertIntoJDBC(url, table, overwrite)
-  // def saveAsParquetFile(path: String): Unit = df.saveAsParquetFile(path)
-  // def saveAsTable(tableName: String): Unit = df.saveAsTable(tableName)
-  // def saveAsTable(tableName: String, mode: SaveMode): Unit = df.saveAsTable(tableName, mode)
-  // def saveAsTable(tableName: String, source: String): Unit = df.saveAsTable(tableName, source)
-  // def saveAsTable(tableName: String, source: String, mode: SaveMode): Unit = df.saveAsTable(tableName, source, mode)
-  // def save(path: String): Unit = df.save(path)
-  // def save(path: String, mode: SaveMode): Unit = df.save(path, mode)
-  // def save(path: String, source: String): Unit = df.save(path, source)
-  // def save(path: String, source: String, mode: SaveMode): Unit = df.save(path, source, mode)
-  // def insertInto(tableName: String, overwrite: Boolean): Unit = df.insertInto(tableName, overwrite)
-  // def insertInto(tableName: String): Unit = df.insertInto(tableName)
+import shapeless._
+import shapeless.ops.record._
+import shapeless.ops.hlist.{Selector => _, _}
+
+case class TypedFrame[Schema](df: DataFrame) {
+  def as[NewSchema] = new FieldRenamer[Schema, NewSchema](df)
+  
+  def toDF(): DataFrame = df
+  
+  def cartesianJoin[OtherSchema, L <: HList, R <: HList, P <: HList, M <: HList, V <: HList]
+    (other: TypedFrame[OtherSchema])
+    (implicit
+      l: LabelledGeneric.Aux[Schema, L],
+      r: LabelledGeneric.Aux[OtherSchema, R],
+      P: Prepend.Aux[L, R, P],
+      v: Values.Aux[P, V],
+      t: Tupler[V]
+    ): TypedFrame[t.Out] =
+      TypedFrame(df.join(other.df))
+  
+  // def innerJoin[OtherSchema]
+  // def outerJoin[OtherSchema]
+  // def leftOuterJoin[OtherSchema]
+  // def rightOuterJoin[OtherSchema]
+  // def semiJoin[OtherSchema]
+  
+  def sort[G <: HList]
+    (column: Witness.Lt[Symbol])
+    (implicit
+      g: LabelledGeneric.Aux[Schema, G],
+      s: Selector[G, column.T]
+    ): TypedFrame[Schema] =
+      TypedFrame(df.sort(column.value.name))
+  
+  def orderBy[G <: HList]
+    (column: Witness.Lt[Symbol])
+    (implicit
+      g: LabelledGeneric.Aux[Schema, G],
+      s: Selector[G, column.T]
+    ): TypedFrame[Schema] =
+      sort(column)
+    
+  // TODO: select(column: Witness.Lt[Symbol], column2: Witness.Lt[Symbol]))...
+  def select[G <: HList]
+    (column: Witness.Lt[Symbol])
+    (implicit
+      l: MkFieldLens[Schema, column.T]
+    ): TypedFrame[Tuple1[l.Elem]] =
+      TypedFrame(df.select(column.value.name))
+    
+  // def selectExpr(exprs: String*): DataFrame =
+  //   df.selectExpr(exprs: _*)
+  // def filter(condition: Column): DataFrame =
+  //   df.filter(condition)
+  // def where(condition: Column): DataFrame =
+  //   df.where(condition)
+  // def agg(expr: Column, exprs: Column*): DataFrame =
+  //   df.agg(expr, exprs: _*)
+  
+  def limit(n: Int): TypedFrame[Schema] =
+    TypedFrame(df.limit(n))
+  
+  def unionAll[OtherSchema, L <: HList, R <: HList, M <: HList, V <: HList]
+    (other: TypedFrame[OtherSchema])
+    (implicit
+      l: LabelledGeneric.Aux[Schema, L],
+      r: LabelledGeneric.Aux[OtherSchema, R],
+      u: Merger.Aux[L, R, M],
+      v: Values.Aux[M, V],
+      t: Tupler[V]
+    ): TypedFrame[t.Out] =
+      TypedFrame(df.unionAll(other.df))
+  
+  def intersect[OtherSchema, L <: HList, R <: HList, I <: HList, V <: HList]
+    (other: TypedFrame[OtherSchema])
+    (implicit
+      l: LabelledGeneric.Aux[Schema, L],
+      r: LabelledGeneric.Aux[OtherSchema, R],
+      i: Intersection.Aux[L, R, I],
+      v: Values.Aux[I, V],
+      t: Tupler[V]
+    ): TypedFrame[t.Out] =
+      TypedFrame(df.intersect(other.df))
+  
+  def except[OtherSchema, L <: HList, R <: HList, D <: HList, V <: HList]
+    (other: TypedFrame[OtherSchema])
+    (implicit
+      l: LabelledGeneric.Aux[Schema, L],
+      r: LabelledGeneric.Aux[OtherSchema, R],
+      d: Diff.Aux[L, R, D],
+      v: Values.Aux[D, V],
+      t: Tupler[V]
+    ): TypedFrame[t.Out] =
+      TypedFrame(df.except(other.df))
+      
+  def sample(withReplacement: Boolean, fraction: Double, seed: Long = Random.nextLong): TypedFrame[Schema] =
+    TypedFrame(df.sample(withReplacement, fraction, seed))
+  
+  def randomSplit(weights: Array[Double], seed: Long = Random.nextLong): Array[TypedFrame[Schema]] =
+    df.randomSplit(weights, seed).map(TypedFrame[Schema])
+  
+  def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame =
+    df.explode(input: _*)(f)
+  def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = 
+    df.explode(inputColumn, outputColumn)(f)
+  
+  // def drop(column: Column): DataFrame =
+  //   df.drop(column)
+  // def dropDuplicates(colNames: Column*): DataFrame =
+  //   df.dropDuplicates(colNames)
+  // def describe(cols: Column*): DataFrame =
+  //   df.describe(cols: _*)
+  def repartition(numPartitions: Int): DataFrame =
+    df.repartition(numPartitions)
+  def coalesce(numPartitions: Int): DataFrame =
+    df.coalesce(numPartitions)
+  def distinct(): DataFrame =
+    df.distinct()
+  def persist(): DataFrame =
+    df.persist()
+  def cache(): DataFrame =
+    df.cache()
+  def persist(newLevel: StorageLevel): DataFrame =
+    df.persist(newLevel)
+  def unpersist(blocking: Boolean): DataFrame =
+    df.unpersist(blocking)
+  def unpersist(): DataFrame =
+    df.unpersist()
+  def schema: StructType =
+    df.schema
+  def dtypes: Array[(String, String)] =
+    df.dtypes
+  def columns: Array[String] =
+    df.columns
+  def printSchema(): Unit =
+    df.printSchema()
+  def explain(extended: Boolean): Unit =
+    df.explain(extended: Boolean)
+  def explain(): Unit =
+    df.explain()
+  def isLocal: Boolean =
+    df.isLocal
+  def show(numRows: Int): Unit =
+    df.show(numRows: Int)
+  def show(): Unit =
+    df.show()
+  def show(truncate: Boolean): Unit =
+    df.show(truncate: Boolean)
+  def show(numRows: Int, truncate: Boolean): Unit =
+    df.show(numRows: Int, truncate: Boolean)
+  def na: DataFrameNaFunctions =
+    df.na
+  def stat: DataFrameStatFunctions =
+    df.stat
+  def apply(colName: String): Column =
+    df.apply(colName)
+  def col(colName: String): Column =
+    df.col(colName)
+  def groupBy(cols: Column*): GroupedData =
+    df.groupBy(cols: _*)
+  def rollup(cols: Column*): GroupedData =
+    df.rollup(cols: _*)
+  def cube(cols: Column*): GroupedData =
+    df.cube(cols: _*)
+  def groupBy(col1: String, cols: String*): GroupedData =
+    df.groupBy(col1, cols: _*)
+  def rollup(col1: String, cols: String*): GroupedData =
+    df.rollup(col1, cols: _*)
+  def cube(col1: String, cols: String*): GroupedData =
+    df.cube(col1, cols: _*)
+  def head(n: Int): Array[Row] =
+    df.head(n)
+  def head(): Row =
+    df.head()
+  def first(): Row =
+    df.first()
+  def map[R: ClassTag](f: Row => R): RDD[R] =
+    df.map(f)
+  def flatMap[R: ClassTag](f: Row => TraversableOnce[R]): RDD[R] =
+    df.flatMap(f)
+  def mapPartitions[R: ClassTag](f: Iterator[Row] => Iterator[R]): RDD[R] =
+    df.mapPartitions(f)
+  def foreach(f: Row => Unit): Unit =
+    df.foreach(f)
+  def foreachPartition(f: Iterator[Row] => Unit): Unit =
+    df.foreachPartition(f)
+  def take(n: Int): Array[Row] =
+    df.take(n)
+  def collect(): Array[Row] =
+    df.collect()
+  def collectAsList(): java.util.List[Row] =
+    df.collectAsList()
+  def count(): Long =
+    df.count()
+  def registerTempTable(tableName: String): Unit =
+    df.registerTempTable(tableName)
+  def write: DataFrameWriter =
+    df.write
+  def toJSON: RDD[String] =
+    df.toJSON
+  def inputFiles: Array[String] =
+    df.inputFiles
+}
+
+class FieldRenamer[Schema, NewSchema](df: DataFrame) {
+  def apply[S <: HList]()
+    (implicit
+      l: Generic.Aux[Schema, S],
+      r: Generic.Aux[NewSchema, S]
+    ): TypedFrame[NewSchema] =
+     TypedFrame(df)
 }
