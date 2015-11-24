@@ -2,8 +2,11 @@ import org.apache.spark.sql.DataFrameNaFunctions
 
 import shapeless._
 import shapeless.ops.nat.{ToInt, LT, LTEq}
-import shapeless.ops.record.{Selector, SelectAll, Values}
-import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill}
+import shapeless.ops.record.{SelectAll, Values}
+import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill, Selector}
+
+import shapeless.tag.@@
+import eu.timepit.refined.numeric.Positive
 
 case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
   def dropAny = new DropHowPartial("any")
@@ -24,24 +27,18 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         })
   }
   
-  def drop(minNonNulls: Nat) = new DropMinNNPartial(minNonNulls)
+  def drop(minNonNulls: Int @@ Positive) = new DropMinNNPartial(minNonNulls)
   
-  class DropMinNNPartial(minNonNulls: Nat) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, NC <: Nat]
+  class DropMinNNPartial(minNonNulls: Int @@ Positive) extends SingletonProductArgs {
+    def applyProduct[C <: HList, G <: HList, S <: HList]
       (columnTuple: C)
       (implicit
+        h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll.Aux[G, C, S],
-        n: Length.Aux[C, NC],
-        z: LT[_0, minNonNulls.N],
-        m: LTEq[minNonNulls.N, NC],
-        i: ToInt[minNonNulls.N]
+        s: SelectAll.Aux[G, C, S]
       ): TypedFrame[Schema] =
-        TypedFrame(columnTuple match {
-          case HNil => dfn.drop(i())
-          case _ => dfn.drop(i(), l(columnTuple).map(_.name))
-        })
+        TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
   }
   
   def fillAll(value: Double): TypedFrame[Schema] = TypedFrame(dfn.fill(value))
@@ -53,7 +50,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
   type CanFill = Int :: Long :: Float :: Double :: String :: Boolean :: HNil
   
   class FillPartial[T](value: T) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, V <: HList, F <: HList, NC <: Nat]
+    def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
@@ -61,7 +58,6 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         t: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         a: SelectAll.Aux[G, C, S],
-        v: Values.Aux[S, V],
         l: Length.Aux[S, NC],
         f: Fill.Aux[NC, T, F],
         e: S =:= F
@@ -83,7 +79,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
   def replace[T](replacement: Map[T, T]) = new ReplacePartial[T](replacement)
   
   class ReplacePartial[T](replacement: Map[T, T]) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, V <: HList, F <: HList, NC <: Nat]
+    def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
@@ -91,7 +87,6 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         t: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         a: SelectAll.Aux[G, C, S],
-        v: Values.Aux[S, V],
         l: Length.Aux[S, NC],
         f: Fill.Aux[NC, T, F],
         e: S =:= F

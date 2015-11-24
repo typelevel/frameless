@@ -10,13 +10,12 @@ import scala.util.Random.{nextLong => randomLong}
 
 import shapeless._
 import shapeless.nat._1
-import shapeless.ops.record.{Selector, SelectAll, Values}
-import shapeless.ops.hlist.{ToList, IsHCons, Tupler, Prepend, RemoveAll}
+import shapeless.ops.record.{SelectAll, Values}
+import shapeless.ops.hlist.{ToList, IsHCons, Tupler, Prepend}
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 import shapeless.tag.@@
-
-import eu.timepit.refined.numeric.NonNegative
+import eu.timepit.refined.numeric.{NonNegative, Positive}
 import eu.timepit.refined.numeric.Interval.{Closed => ClosedInterval}
 import eu.timepit.refined.auto._
 
@@ -128,8 +127,13 @@ case class TypedFrame[Schema](df: DataFrame) {
   ): TypedFrame[Schema] =
     TypedFrame(df.sample(withReplacement, fraction, seed))
   
-  def randomSplit(weights: Array[Double], seed: Long = randomLong): Array[TypedFrame[Schema]] =
-    df.randomSplit(weights, seed).map(TypedFrame[Schema])
+  def randomSplit(
+    weights: Array[Double @@ NonNegative],
+    seed: Long = randomLong
+  ): Array[TypedFrame[Schema]] = {
+    val a: Array[Double] = weights.map(identity)
+    df.randomSplit(a, seed).map(TypedFrame[Schema])
+  }
   
   def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame =
     df.explode(input: _*)(f)
@@ -138,14 +142,15 @@ case class TypedFrame[Schema](df: DataFrame) {
     df.explode(inputColumn, outputColumn)(f)
   
   object drop extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
+    def applyProduct[C <: HList, G <: HList, R <: HList, V <: HList]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
-        r: RemoveAll.Aux[G, C, R],
-        t: Tupler[R]
+        r: AllRemover.Aux[G, C, R],
+        v: Values.Aux[R, V],
+        t: Tupler[V]
       ): TypedFrame[t.Out] =
         TypedFrame(l(columnTuple).map(_.name).foldLeft(df)(_ drop _))
   }
@@ -176,10 +181,10 @@ case class TypedFrame[Schema](df: DataFrame) {
         TypedFrame(df.describe(l(columnTuple).map(_.name): _*))
   }
   
-  def repartition(numPartitions: Int @@ NonNegative): TypedFrame[Schema] =
+  def repartition(numPartitions: Int @@ Positive): TypedFrame[Schema] =
     TypedFrame(df.repartition(numPartitions))
   
-  def coalesce(numPartitions: Int @@ NonNegative): TypedFrame[Schema] =
+  def coalesce(numPartitions: Int @@ Positive): TypedFrame[Schema] =
     TypedFrame(df.coalesce(numPartitions))
   
   def distinct(): TypedFrame[Schema] = TypedFrame(df.distinct())
@@ -208,7 +213,7 @@ case class TypedFrame[Schema](df: DataFrame) {
   
   def isLocal: Boolean = df.isLocal
   
-  def show(numRows: Int @@ NonNegative = 20, truncate: Boolean = true): Unit =
+  def show(numRows: Int @@ Positive = 20, truncate: Boolean = true): Unit =
     df.show(numRows, truncate)
   
   def na: TypedFrameNaFunctions[Schema] = TypedFrameNaFunctions[Schema](df.na)

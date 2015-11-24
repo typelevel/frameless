@@ -1,7 +1,6 @@
 import org.apache.spark.sql.{DataFrameStatFunctions, DataFrame}
 
 import shapeless._
-import shapeless.labelled.FieldType
 import shapeless.nat._1
 import shapeless.ops.record.{Selector, SelectAll}
 import shapeless.ops.hlist.{ToList, IsHCons, Tupler}
@@ -15,8 +14,8 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
       g: LabelledGeneric.Aux[Schema, G],
-      s: Selector.Aux[G, column1.T, FieldType[_, C1]],
-      c: Selector.Aux[G, column2.T, FieldType[_, C2]],
+      s: Selector.Aux[G, column1.T, C1],
+      c: Selector.Aux[G, column2.T, C2],
       n: Numeric[C1],
       m: Numeric[C2]
     ): Double =
@@ -26,8 +25,8 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
       g: LabelledGeneric.Aux[Schema, G],
-      s: Selector.Aux[G, column1.T, FieldType[_, C1]],
-      c: Selector.Aux[G, column2.T, FieldType[_, C2]],
+      s: Selector.Aux[G, column1.T, C1],
+      c: Selector.Aux[G, column2.T, C2],
       n: Numeric[C1],
       m: Numeric[C2]
     ): Double =
@@ -57,11 +56,12 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
         TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
   }
   
-  def sampleBy[T, G <: HList]
+  def sampleBy[T, G <: HList, C]
     (column: Witness.Lt[Symbol], fractions: Map[T, Double @@ ClosedInterval[_0, _1]], seed: Long)
     (implicit
       g: LabelledGeneric.Aux[Schema, G],
-      s: Selector[G, column.T]
+      s: Selector.Aux[G, column.T, C],
+      e: T =:= C
     ): TypedFrame[Schema] =
       TypedFrame(dfs.sampleBy(column.value.name, fractions, seed))
 }
