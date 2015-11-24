@@ -1,4 +1,4 @@
-import org.apache.spark.sql.{DataFrame, Column, Row, DataFrameWriter, GroupedData}
+import org.apache.spark.sql.{DataFrame, Column, Row, DataFrameWriter, GroupedData, SQLContext}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.functions.col
 import org.apache.spark.rdd.RDD
@@ -33,6 +33,14 @@ case class TypedFrame[Schema](df: DataFrame) {
 
   def toDF(): DataFrame = df
   
+  def rdd[L <: HList]
+    (implicit
+      c: ClassTag[Schema],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L]
+    ): RDD[Schema] =
+      df.map(rowToSchema[L])
+  
   def cartesianJoin[OtherSchema, L <: HList, R <: HList, P <: HList, M <: HList, V <: HList]
     (other: TypedFrame[OtherSchema])
     (implicit
@@ -44,6 +52,7 @@ case class TypedFrame[Schema](df: DataFrame) {
     ): TypedFrame[t.Out] =
       TypedFrame(df.join(other.df))
   
+  // TODO
   // def innerJoin[OtherSchema]
   // def outerJoin[OtherSchema]
   // def leftOuterJoin[OtherSchema]
@@ -75,12 +84,22 @@ case class TypedFrame[Schema](df: DataFrame) {
       ): TypedFrame[t.Out] =
         TypedFrame(df.select(l(columnTuple).map(c => col(c.name)): _*))
   }
-   
+  
+  // TODO
   def selectExpr(exprs: String*): DataFrame =
     df.selectExpr(exprs: _*)
+  
   // def where(condition: Column) = filter(condition)
-  def filter(condition: Column): DataFrame =
-    df.filter(condition)
+  def filter[L <: HList]
+    (f: Schema => Boolean)
+    (implicit
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L],
+      s: SQLContext
+    ): TypedFrame[Schema] =
+      TypedFrame(s.createDataFrame(df.rdd.filter(r => f(rowToSchema[L](r))), df.schema))
+  
+  // TODO
   def agg(expr: Column, exprs: Column*): DataFrame =
     df.agg(expr, exprs: _*)
   
@@ -135,11 +154,9 @@ case class TypedFrame[Schema](df: DataFrame) {
     df.randomSplit(a, seed).map(TypedFrame[Schema])
   }
   
+  // TODO
   def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame =
     df.explode(input: _*)(f)
-  
-  def explode[A, B : TypeTag](inputColumn: String, outputColumn: String)(f: A => TraversableOnce[B]): DataFrame = 
-    df.explode(inputColumn, outputColumn)(f)
   
   object drop extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, R <: HList, V <: HList]
@@ -220,6 +237,7 @@ case class TypedFrame[Schema](df: DataFrame) {
   
   def stat: TypedFrameStatFunctions[Schema] = TypedFrameStatFunctions[Schema](df.stat)
   
+  // TODO
   object groupBy extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, R <: HList]
       (columnTuple: C)
@@ -228,10 +246,11 @@ case class TypedFrame[Schema](df: DataFrame) {
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
-      ): GroupedData = // Tricky
+      ): GroupedData =
         df.groupBy(l(columnTuple).map(c => col(c.name)): _*)
   }
   
+  // TODO
   object rollup extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, R <: HList]
       (columnTuple: C)
@@ -240,10 +259,11 @@ case class TypedFrame[Schema](df: DataFrame) {
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
-      ): GroupedData = // Tricky
+      ): GroupedData =
         df.rollup(l(columnTuple).map(c => col(c.name)): _*)
   }
   
+  // TODO
   object cube extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, R <: HList]
       (columnTuple: C)
@@ -252,7 +272,7 @@ case class TypedFrame[Schema](df: DataFrame) {
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
-      ): GroupedData = // Tricky
+      ): GroupedData =
         df.cube(l(columnTuple).map(c => col(c.name)): _*)
   }
   
@@ -272,18 +292,73 @@ case class TypedFrame[Schema](df: DataFrame) {
       f: FromTraversable[G]
     ): Seq[Schema] =
       df.head(n).map(r => g.from(r.toSeq.toHList[G].get))
-
-  def map[R: ClassTag](f: Row => R): RDD[R] =
-    df.map(f)
-  def flatMap[R: ClassTag](f: Row => TraversableOnce[R]): RDD[R] =
-    df.flatMap(f)
-  def mapPartitions[R: ClassTag](f: Iterator[Row] => Iterator[R]): RDD[R] =
-    df.mapPartitions(f)
-  def foreach(f: Row => Unit): Unit =
-    df.foreach(f)
-  def foreachPartition(f: Iterator[Row] => Unit): Unit =
-    df.foreachPartition(f)
   
+  def reduce[L <: HList]
+    (f: (Schema, Schema) => Schema)
+    (implicit
+      c: ClassTag[Schema],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L]
+    ): Schema =
+      rdd.reduce(f)
+
+  def map[NewSchema <: Product, L <: HList]
+    (f: Schema => NewSchema)
+    (implicit
+      c: ClassTag[NewSchema],
+      t: TypeTag[NewSchema],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L],
+      s: SQLContext
+    ): TypedFrame[NewSchema] =
+      TypedFrame(s.createDataFrame(df.map(r => f(rowToSchema[L](r)))))
+  
+  def flatMap[NewSchema <: Product, L <: HList]
+    (f: Schema => TraversableOnce[NewSchema])
+    (implicit
+      c: ClassTag[NewSchema],
+      t: TypeTag[NewSchema],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L],
+      s: SQLContext
+    ): TypedFrame[NewSchema] =
+      TypedFrame(s.createDataFrame(df.flatMap(r => f(rowToSchema[L](r)))))
+  
+  def mapPartitions[NewSchema <: Product, L <: HList]
+    (f: Iterator[Schema] => Iterator[NewSchema])
+    (implicit
+      c: ClassTag[NewSchema],
+      t: TypeTag[NewSchema],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L],
+      s: SQLContext
+    ): TypedFrame[NewSchema] =
+      TypedFrame(s.createDataFrame(df.mapPartitions(i => f(i.map(rowToSchema[L])))))
+  
+  def foreach[L <: HList]
+    (f: Schema => Unit)
+    (implicit
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L]
+    ): Unit =
+      df.foreach(r => f(rowToSchema[L](r)))
+  
+  def foreachPartition[L <: HList]
+    (f: Iterator[Schema] => Unit)
+    (implicit
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L]
+    ): Unit =
+      df.foreachPartition(i => f(i.map(rowToSchema[L])))
+  
+  private def rowToSchema[L <: HList]
+    (row: Row)
+    (implicit
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L]
+    ): Schema =
+      g.from(row.toSeq.toHList[L].get)
+
   def collect[G <: HList]()
     (implicit
       g: Generic.Aux[Schema, G],

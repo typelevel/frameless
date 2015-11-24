@@ -1,9 +1,10 @@
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import shapeless.test._
 import eu.timepit.refined.auto._
 
 object Usage {
   val df: DataFrame = null
+  implicit val s: SQLContext = null
   
   case class Foo(a: Int, b: String)
   
@@ -43,6 +44,11 @@ object Usage {
     illTyped("foo.select()")
     illTyped("foo.select('c)")
     illTyped("foo.select('a, 'c)")
+  }
+  
+  def testFilter() = {
+    foo.filter(_.a > 2): TypedFrame[Foo]
+    foo.filter(_.b.startsWith("+")): TypedFrame[Foo]
   }
   
   def testLimit() = {
@@ -213,11 +219,35 @@ object Usage {
     illTyped("foo.take(-1)")
   }
   
+  def testReduce() = {
+    foo.reduce({ case (f1, f2) => Foo(f1.a + f2.a, f1.b) }): Foo
+  }
+  
+  def testMap() = {
+    foo.map(_.b -> 12): TypedFrame[(String, Int)]
+  }
+  
+  def testFlatMap() = {
+    foo.flatMap(f => List.fill(f.a)(f.b -> f.b.isEmpty)): TypedFrame[(String, Boolean)]
+  }
+  
+  def testMapPartitions() = {
+    foo.mapPartitions(_.map(_.b -> 12)): TypedFrame[(String, Int)]
+  }
+  
+  def testForeach() = {
+    foo.foreach(f => println(f.a))
+  }
+  
+  def testForeachPartition() = {
+    foo.foreachPartition(i => println(i.map(_.b).mkString(":")))
+  }
+
   def testCollect() = {
     foo.collect(): Seq[Foo]
   }
   
-  def dropAny() = {
+  def testDropAny() = {
     foo.na.dropAny(): TypedFrame[Foo]
     foo.na.dropAny('a): TypedFrame[Foo]
     foo.na.dropAny('b): TypedFrame[Foo]
@@ -225,7 +255,7 @@ object Usage {
     illTyped("foo.na.dropAny('c)")
   }
   
-  def dropAll() = {
+  def testDropAll() = {
     foo.na.dropAll(): TypedFrame[Foo]
     foo.na.dropAll('a): TypedFrame[Foo]
     foo.na.dropAll('b): TypedFrame[Foo]
@@ -233,7 +263,7 @@ object Usage {
     illTyped("foo.na.dropAll('c)")
   }
   
-  def drop() = {
+  def testNaDrop() = {
     foo.na.drop(1)('a)
     foo.na.drop(1)('a, 'b)
     illTyped("foo.na.drop(0)('a)")
@@ -241,7 +271,7 @@ object Usage {
     illTyped("foo.na.drop(1)('c)")
   }
   
-  def fill() = {
+  def testFill() = {
     case class Ts(i: Int, l: Long, f: Float, d: Double, s: String, b: Boolean, c: Char)
     val ts = TypedFrame[Ts](df)
     
@@ -267,7 +297,7 @@ object Usage {
     illTyped("ts.na.fill(1)()")
   }
   
-  def replaceAll() = {
+  def testReplaceAll() = {
     case class Ts(d: Double, s: String, b: Boolean, c: Char)
     val ts = TypedFrame[Ts](df)
     
@@ -279,7 +309,7 @@ object Usage {
     illTyped("foo.na.replaceAll(Map(true -> false))")
   }
   
-  def replace() = {
+  def testReplace() = {
     case class Ts(d: Double, s: String, b: Boolean, c: Char)
     val ts = TypedFrame[Ts](df)
 
