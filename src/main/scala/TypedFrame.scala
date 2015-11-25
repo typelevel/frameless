@@ -41,15 +41,15 @@ case class TypedFrame[Schema](df: DataFrame) {
     ): RDD[Schema] =
       df.map(rowToSchema[L])
   
-  def cartesianJoin[OtherSchema, L <: HList, R <: HList, P <: HList, M <: HList, V <: HList]
+  def cartesianJoin[OtherSchema, L <: HList, R <: HList, P <: HList, M <: HList, V <: HList, Out]
     (other: TypedFrame[OtherSchema])
     (implicit
       l: LabelledGeneric.Aux[Schema, L],
       r: LabelledGeneric.Aux[OtherSchema, R],
       P: Prepend.Aux[L, R, P],
       v: Values.Aux[P, V],
-      t: Tupler[V]
-    ): TypedFrame[t.Out] =
+      t: Tupler.Aux[V, Out]
+    ): TypedFrame[Out] =
       TypedFrame(df.join(other.df))
   
   // TODO
@@ -73,15 +73,15 @@ case class TypedFrame[Schema](df: DataFrame) {
   }
   
   object select extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList]
+    def applyProduct[C <: HList, G <: HList, S <: HList, Out]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S],
-        t: Tupler[S]
-      ): TypedFrame[t.Out] =
+        t: Tupler.Aux[S, Out]
+      ): TypedFrame[Out] =
         TypedFrame(df.select(l(columnTuple).map(c => col(c.name)): _*))
   }
   
@@ -106,37 +106,37 @@ case class TypedFrame[Schema](df: DataFrame) {
   def limit(n: Int @@ NonNegative): TypedFrame[Schema] =
     TypedFrame(df.limit(n))
   
-  def unionAll[OtherSchema, L <: HList, R <: HList, M <: HList, V <: HList]
+  def unionAll[OtherSchema, L <: HList, R <: HList, M <: HList, V <: HList, Out]
     (other: TypedFrame[OtherSchema])
     (implicit
       l: LabelledGeneric.Aux[Schema, L],
       r: LabelledGeneric.Aux[OtherSchema, R],
       u: Union.Aux[L, R, M],
       v: Values.Aux[M, V],
-      t: Tupler[V]
-    ): TypedFrame[t.Out] =
+      t: Tupler.Aux[V, Out]
+    ): TypedFrame[Out] =
       TypedFrame(df.unionAll(other.df))
   
-  def intersect[OtherSchema, L <: HList, R <: HList, I <: HList, V <: HList]
+  def intersect[OtherSchema, L <: HList, R <: HList, I <: HList, V <: HList, Out]
     (other: TypedFrame[OtherSchema])
     (implicit
       l: LabelledGeneric.Aux[Schema, L],
       r: LabelledGeneric.Aux[OtherSchema, R],
       i: Intersection.Aux[L, R, I],
       v: Values.Aux[I, V],
-      t: Tupler[V]
-    ): TypedFrame[t.Out] =
+      t: Tupler.Aux[V, Out]
+    ): TypedFrame[Out] =
       TypedFrame(df.intersect(other.df))
   
-  def except[OtherSchema, L <: HList, R <: HList, D <: HList, V <: HList]
+  def except[OtherSchema, L <: HList, R <: HList, D <: HList, V <: HList, Out]
     (other: TypedFrame[OtherSchema])
     (implicit
       l: LabelledGeneric.Aux[Schema, L],
       r: LabelledGeneric.Aux[OtherSchema, R],
       d: Diff.Aux[L, R, D],
       v: Values.Aux[D, V],
-      t: Tupler[V]
-    ): TypedFrame[t.Out] =
+      t: Tupler.Aux[V, Out]
+    ): TypedFrame[Out] =
       TypedFrame(df.except(other.df))
       
   def sample(
@@ -159,7 +159,7 @@ case class TypedFrame[Schema](df: DataFrame) {
     df.explode(input: _*)(f)
   
   object drop extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList, V <: HList]
+    def applyProduct[C <: HList, G <: HList, R <: HList, V <: HList, Out]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
@@ -167,8 +167,8 @@ case class TypedFrame[Schema](df: DataFrame) {
         g: LabelledGeneric.Aux[Schema, G],
         r: AllRemover.Aux[G, C, R],
         v: Values.Aux[R, V],
-        t: Tupler[V]
-      ): TypedFrame[t.Out] =
+        t: Tupler.Aux[V, Out]
+      ): TypedFrame[Out] =
         TypedFrame(l(columnTuple).map(_.name).foldLeft(df)(_ drop _))
   }
   

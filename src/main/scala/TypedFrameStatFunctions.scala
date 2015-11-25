@@ -45,15 +45,15 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
   def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsPartial(support)
   
   class FreqItemsPartial(support: Double) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList]
+    def applyProduct[C <: HList, G <: HList, S <: HList, Out]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S],
-        t: Tupler[S]
-      ): TypedFrame[t.Out] =
+        t: Tupler.Aux[S, Out]
+      ): TypedFrame[Out] =
         TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
   }
   

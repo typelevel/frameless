@@ -22,8 +22,7 @@ object Usage {
   
   def testCartesianJoin() = {
     case class Bar(i: Double, j: String)
-    val p = foo.cartesianJoin(TypedFrame[Bar](df))
-    p: TypedFrame[(Int, String, Double, String)]
+    val p = foo.cartesianJoin(TypedFrame[Bar](df)): TypedFrame[(Int, String, Double, String)]
   }
   
   def testOrderBy() = {
@@ -60,66 +59,42 @@ object Usage {
   }
   
   def testUnionAll() = {
-    val f = foo.unionAll(foo)
-    val ff: TypedFrame[(Int, String)] = f
-    
     case class ABar(a: Int, i: Double)
-    val a = foo.unionAll(TypedFrame[ABar](df))
-    val aa: TypedFrame[(Int, String, Double)] = a
-    
     case class BBar(a: Int, b: String, i: Double)
-    val b = foo.unionAll(TypedFrame[BBar](df))
-    val bb: TypedFrame[(Int, String, Double)] = b
-    
     case class CBar(u: Boolean, b: String, a: Int)
-    val c = foo.unionAll(TypedFrame[CBar](df))
-    val cc: TypedFrame[(Int, String, Boolean)] = c
-    
     case class DBar(u: Boolean)
-    val d = foo.unionAll(TypedFrame[DBar](df))
-    val dd: TypedFrame[(Int, String, Boolean)] = d
+
+    foo.unionAll(foo): TypedFrame[(Int, String)]
+    foo.unionAll(TypedFrame[ABar](df)): TypedFrame[(Int, String, Double)]
+    foo.unionAll(TypedFrame[BBar](df)): TypedFrame[(Int, String, Double)]
+    foo.unionAll(TypedFrame[CBar](df)): TypedFrame[(Int, String, Boolean)]
+    foo.unionAll(TypedFrame[DBar](df)): TypedFrame[(Int, String, Boolean)]
   }
   
   def testIntersect() = {
-    val f = foo.intersect(foo)
-    val ff: TypedFrame[(Int, String)] = f
-    
     case class ABar(a: Int, i: Double)
-    val a = foo.intersect(TypedFrame[ABar](df))
-    val aa: TypedFrame[Tuple1[Int]] = a
-    
     case class BBar(a: Int, b: String, i: Double)
-    val b = foo.intersect(TypedFrame[BBar](df))
-    val bb: TypedFrame[(Int, String)] = b
-    
     case class CBar(u: Boolean, b: String, a: Int)
-    val c = foo.intersect(TypedFrame[CBar](df))
-    val cc: TypedFrame[(Int, String)] = c
-    
     case class DBar(u: Boolean)
-    val d = foo.intersect(TypedFrame[DBar](df))
-    val dd: TypedFrame[Unit] = d
+    
+    foo.intersect(foo): TypedFrame[(Int, String)]
+    foo.intersect(TypedFrame[ABar](df)): TypedFrame[Tuple1[Int]]
+    foo.intersect(TypedFrame[BBar](df)): TypedFrame[(Int, String)]
+    foo.intersect(TypedFrame[CBar](df)): TypedFrame[(Int, String)]
+    foo.intersect(TypedFrame[DBar](df)): TypedFrame[Unit]
   }
   
   def testExcept() = {
-    val f = foo.except(foo)
-    val ff: TypedFrame[Unit] = f
-    
     case class ABar(a: Int, i: Double)
-    val a = foo.except(TypedFrame[ABar](df))
-    val aa: TypedFrame[Tuple1[String]] = a
-    
     case class BBar(a: Int, b: String, i: Double)
-    val b = foo.except(TypedFrame[BBar](df))
-    val bb: TypedFrame[Unit] = b
-    
     case class CBar(u: Boolean, b: String, a: Int)
-    val c = foo.except(TypedFrame[CBar](df))
-    val cc: TypedFrame[Unit] = c
-    
     case class DBar(u: Boolean)
-    val d = foo.except(TypedFrame[DBar](df))
-    val dd: TypedFrame[(Int, String)] = d
+    
+    foo.except(foo): TypedFrame[Unit]
+    foo.except(TypedFrame[ABar](df)): TypedFrame[Tuple1[String]]
+    foo.except(TypedFrame[BBar](df)): TypedFrame[Unit]
+    foo.except(TypedFrame[CBar](df)): TypedFrame[Unit]
+    foo.except(TypedFrame[DBar](df)): TypedFrame[(Int, String)]
   }
   
   def testSample() = {
@@ -137,14 +112,9 @@ object Usage {
   }
   
   def testDrop() = {
-    val a = foo.drop('a)
-    val aa: TypedFrame[Tuple1[String]] = a
-
-    val b = foo.drop('b)
-    val bb: TypedFrame[Tuple1[Int]] = b
-
-    val ab = foo.drop('a, 'b)
-    val abab: TypedFrame[Unit] = ab
+    foo.drop('a): TypedFrame[Tuple1[String]]
+    foo.drop('b): TypedFrame[Tuple1[Int]]
+    foo.drop('a, 'b): TypedFrame[Unit] 
     
     illTyped("foo.drop()")
     illTyped("foo.drop('c)")
