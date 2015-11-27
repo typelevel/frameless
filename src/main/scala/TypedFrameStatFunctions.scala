@@ -20,7 +20,7 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
       m: Numeric[C2]
     ): Double =
       dfs.cov(column1.value.name, column2.value.name)
-
+  
   def corr[G <: HList, C1, C2]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
@@ -32,7 +32,6 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
     ): Double =
       dfs.corr(column1.value.name, column2.value.name)
   
-  // TODO?
   def crosstab[G <: HList]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
@@ -41,7 +40,7 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
       c: Selector[G, column2.T]
     ): DataFrame =
       dfs.crosstab(column1.value.name, column2.value.name)
-
+  
   def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsPartial(support)
   
   class FreqItemsPartial(support: Double) extends SingletonProductArgs {

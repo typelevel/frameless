@@ -154,10 +154,18 @@ case class TypedFrame[Schema](df: DataFrame) {
     df.randomSplit(a, seed).map(TypedFrame[Schema])
   }
   
-  // TODO
-  def explode[A <: Product : TypeTag](input: Column*)(f: Row => TraversableOnce[A]): DataFrame =
-    df.explode(input: _*)(f)
-  
+  def explode[NewSchema <: Product, N <: HList, L <: HList, P <: HList, Out <: Product]
+    (f: Schema => TraversableOnce[NewSchema])
+    (implicit
+      y: TypeTag[NewSchema],
+      n: Generic.Aux[NewSchema, N],
+      g: Generic.Aux[Schema, L],
+      V: FromTraversable[L],
+      p: Prepend.Aux[L, N, P],
+      t: Tupler.Aux[P, Out]
+    ): TypedFrame[Out] =
+      TypedFrame(df.explode(df.columns.map(col): _*)(r => f(rowToSchema[L](r))))
+      
   object drop extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, R <: HList, V <: HList, Out]
       (columnTuple: C)

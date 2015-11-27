@@ -12,7 +12,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
   def dropAny = new DropHowPartial("any")
   
   def dropAll = new DropHowPartial("all")
-
+  
   class DropHowPartial(how: String) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList]
       (columnTuple: C)

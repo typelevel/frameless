@@ -1,4 +1,4 @@
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import  org.apache.spark.sql.{DataFrame, SQLContext}
 import shapeless.test._
 import eu.timepit.refined.auto._
 
@@ -63,7 +63,7 @@ object Usage {
     case class BBar(a: Int, b: String, i: Double)
     case class CBar(u: Boolean, b: String, a: Int)
     case class DBar(u: Boolean)
-
+  
     foo.unionAll(foo): TypedFrame[(Int, String)]
     foo.unionAll(TypedFrame[ABar](df)): TypedFrame[(Int, String, Double)]
     foo.unionAll(TypedFrame[BBar](df)): TypedFrame[(Int, String, Double)]
@@ -109,6 +109,13 @@ object Usage {
   def testRandomSplit() = {
     foo.randomSplit(Array(0.1, 0.2, 0.7))
     illTyped("foo.randomSplit(Array(0.1, 0.2, -0.7))")
+  }
+  
+  def testExplode() = {
+    foo.explode { case Foo(a, b) => b.split(" ").map(_ -> a.toString) }
+      : TypedFrame[(Int, String, String, String)]
+    foo.explode(f => List.fill(f.a)(f.b -> f.b.isEmpty))
+      : TypedFrame[(Int, String, String, Boolean)]
   }
   
   def testDrop() = {
@@ -212,7 +219,7 @@ object Usage {
   def testForeachPartition() = {
     foo.foreachPartition(i => println(i.map(_.b).mkString(":")))
   }
-
+  
   def testCollect() = {
     foo.collect(): Seq[Foo]
   }
@@ -282,7 +289,7 @@ object Usage {
   def testReplace() = {
     case class Ts(d: Double, s: String, b: Boolean, c: Char)
     val ts = TypedFrame[Ts](df)
-
+  
     ts.na.replace(Map(1d -> 2d, 3d -> 4d))('d)
     ts.na.replace(Map("s" -> "S", "c" -> "C", "a" -> "A"))('s)
     ts.na.replace(Map(true -> false))('b)
