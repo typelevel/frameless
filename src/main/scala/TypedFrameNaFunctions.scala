@@ -9,11 +9,11 @@ import shapeless.tag.@@
 import eu.timepit.refined.numeric.Positive
 
 case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
-  def dropAny = new DropHowPartial("any")
+  def dropAny = new DropHowCurried("any")
   
-  def dropAll = new DropHowPartial("all")
+  def dropAll = new DropHowCurried("all")
   
-  class DropHowPartial(how: String) extends SingletonProductArgs {
+  class DropHowCurried(how: String) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList]
       (columnTuple: C)
       (implicit
@@ -27,9 +27,9 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         })
   }
   
-  def drop(minNonNulls: Int @@ Positive) = new DropMinNNPartial(minNonNulls)
+  def drop(minNonNulls: Int @@ Positive) = new DropMinNNCurried(minNonNulls)
   
-  class DropMinNNPartial(minNonNulls: Int @@ Positive) extends SingletonProductArgs {
+  class DropMinNNCurried(minNonNulls: Int @@ Positive) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, S <: HList]
       (columnTuple: C)
       (implicit
@@ -45,11 +45,11 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
   
   def fillAll(value: String): TypedFrame[Schema] = TypedFrame(dfn.fill(value))
   
-  def fill[T](value: T) = new FillPartial[T](value)
+  def fill[T](value: T) = new FillCurried[T](value)
   
   type CanFill = Int :: Long :: Float :: Double :: String :: Boolean :: HNil
   
-  class FillPartial[T](value: T) extends SingletonProductArgs {
+  class FillCurried[T](value: T) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
       (columnTuple: C)
       (implicit
@@ -76,9 +76,9 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
     ): TypedFrame[Schema] =
       TypedFrame(dfn.replace("*", replacement))
   
-  def replace[T](replacement: Map[T, T]) = new ReplacePartial[T](replacement)
+  def replace[T](replacement: Map[T, T]) = new ReplaceCurried[T](replacement)
   
-  class ReplacePartial[T](replacement: Map[T, T]) extends SingletonProductArgs {
+  class ReplaceCurried[T](replacement: Map[T, T]) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
       (columnTuple: C)
       (implicit

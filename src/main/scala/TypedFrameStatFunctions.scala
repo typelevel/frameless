@@ -41,9 +41,9 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
     ): DataFrame =
       dfs.crosstab(column1.value.name, column2.value.name)
   
-  def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsPartial(support)
+  def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsCurried(support)
   
-  class FreqItemsPartial(support: Double) extends SingletonProductArgs {
+  class FreqItemsCurried(support: Double) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, S <: HList, Out]
       (columnTuple: C)
       (implicit
