@@ -25,6 +25,55 @@ object Usage {
     val p = foo.cartesianJoin(TypedFrame[Bar](df)): TypedFrame[(Int, String, Double, String)]
   }
   
+  def testJoinUsing() = {
+    case class Schema1(a: Int, b: Int, c: String)
+    val s1 = TypedFrame[Schema1](df)
+    
+    foo.innerJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
+    foo.outerJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
+    foo.leftOuterJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
+    foo.rightOuterJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
+    foo.semiJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
+    
+    illTyped("foo.innerJoin(s1).using('b)")
+    illTyped("foo.innerJoin(s1).using('c)")
+    
+    case class Schema2(a: Int, b: String, c: String)
+    val s2 = TypedFrame[Schema2](df)
+    
+    foo.innerJoin(s2).using('a): TypedFrame[(Int, String, String, String)]
+    foo.innerJoin(s2).using('b): TypedFrame[(Int, String, Int, String)]
+    foo.innerJoin(s2).using('a, 'b): TypedFrame[(Int, String, String)]
+    
+    illTyped("foo.innerJoin(s2).using('a, 'c)")
+    illTyped("foo.innerJoin(s2).using('c, 'b)")
+  }
+  
+  def testJoinOn() = {
+    case class Schema1(a: Int, b: Int, c: String)
+    val s1 = TypedFrame[Schema1](df)
+    
+    foo.innerJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
+    foo.outerJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
+    foo.leftOuterJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
+    foo.rightOuterJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
+    foo.semiJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
+    
+    case class Schema2(w: String, x: Int, y: Int, z: String)
+    val s2 = TypedFrame[Schema2](df)
+    
+    foo.innerJoin(s2).on('a).and('x)
+    foo.innerJoin(s2).on('a).and('y)
+    foo.innerJoin(s2).on('b).and('w)
+    foo.innerJoin(s2).on('b).and('z)
+    foo.innerJoin(s2).on('a, 'b).and('x, 'z)
+    foo.innerJoin(s2).on('a, 'b).and('y, 'w)
+    
+    illTyped("foo.innerJoin(s2).on('a, 'b).and('z, 'x)")
+    illTyped("foo.innerJoin(s2).on('a).and('w)")
+    illTyped("foo.innerJoin(s2).on('x).and('a)")
+  }
+  
   def testOrderBy() = {
     foo.orderBy('a): TypedFrame[Foo]
     foo.orderBy('a, 'b): TypedFrame[Foo]

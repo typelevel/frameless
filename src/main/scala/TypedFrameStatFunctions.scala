@@ -32,6 +32,8 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
     ): Double =
       dfs.corr(column1.value.name, column2.value.name)
   
+  // This can't a TypedFrame since the output columns depend on the dataframe
+  // content: there is one column for each different value accross all rows.
   def crosstab[G <: HList]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit

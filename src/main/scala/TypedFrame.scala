@@ -11,7 +11,7 @@ import scala.util.Random.{nextLong => randomLong}
 import shapeless._
 import shapeless.nat._1
 import shapeless.ops.record.{SelectAll, Values}
-import shapeless.ops.hlist.{ToList, IsHCons, Tupler, Prepend}
+import shapeless.ops.hlist.{ToList, IsHCons, Tupler, Prepend, RemoveAll}
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 import shapeless.tag.@@
@@ -52,12 +52,74 @@ case class TypedFrame[Schema](df: DataFrame) {
     ): TypedFrame[Out] =
       TypedFrame(df.join(other.df))
   
-  // TODO
-  // def innerJoin[OtherSchema]
-  // def outerJoin[OtherSchema]
-  // def leftOuterJoin[OtherSchema]
-  // def rightOuterJoin[OtherSchema]
-  // def semiJoin[OtherSchema]
+  def innerJoin[OtherSchema](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "inner")
+  
+  def outerJoin[OtherSchema](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "outer")
+  
+  def leftOuterJoin[OtherSchema](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "left_outer")
+  
+  def rightOuterJoin[OtherSchema](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "right_outer")
+  
+  def semiJoin[OtherSchema](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "semi")
+  
+  class JoinPartial[OtherSchema](other: TypedFrame[OtherSchema], joinType: String) extends SingletonProductArgs {
+    def usingProduct[C <: HList, L <: HList, R <: HList, S <: HList, T <: HList, A <: HList, V <: HList, D <: HList, P <: HList, Out<: Product]
+      (columnTuple: C)
+      (implicit
+        hc: IsHCons[C],
+        tc: ToList[C, Symbol],
+        gc: LabelledGeneric.Aux[Schema, L],
+        gd: LabelledGeneric.Aux[OtherSchema, R],
+        sc: SelectAll.Aux[L, C, S],
+        sd: SelectAll.Aux[R, C, T],
+        ev: S =:= T,
+        rc: AllRemover.Aux[R, C, A],
+        vc: Values.Aux[L, V],
+        vd: Values.Aux[A, D],
+        p: Prepend.Aux[V, D, P],
+        t: Tupler.Aux[P, Out]
+      ): TypedFrame[Out] = {
+        val columns = tc(columnTuple).map(_.name)
+        val expr = columns.map(n => df(n) === other.df(n)).reduce(_ && _)
+        val joined = df.join(other.df, expr, joinType)
+        TypedFrame(columns.map(other.df(_)).foldLeft(joined)(_ drop _))
+      }
+    
+    def onProduct[C <: HList](columnTuple: C): JoinOnPartial[C, OtherSchema] =
+      new JoinOnPartial[C, OtherSchema](columnTuple: C, other: TypedFrame[OtherSchema], joinType: String)
+  }
+  
+  class JoinOnPartial[C <: HList, OtherSchema](columnTuple: C, other: TypedFrame[OtherSchema], joinType: String)
+      extends SingletonProductArgs {
+    def andProduct[D <: HList, L <: HList, R <: HList, S <: HList, T <: HList, V <: HList, W <: HList, P <: HList, Out <: Product]
+      (otherColumnTuple: D)
+      (implicit
+        hc: IsHCons[C],
+        tc: ToList[C, Symbol],
+        td: ToList[D, Symbol],
+        gc: LabelledGeneric.Aux[Schema, L],
+        gd: LabelledGeneric.Aux[OtherSchema, R],
+        sc: SelectAll.Aux[L, C, S],
+        sd: SelectAll.Aux[R, D, T],
+        ev: S =:= T,
+        vc: Values.Aux[L, V],
+        vd: Values.Aux[R, W],
+        p: Prepend.Aux[V, W, P],
+        t: Tupler.Aux[P, Out]
+      ): TypedFrame[Out] = {
+        val expr = tc(columnTuple).map(_.name).map(df(_))
+          .zip(td(otherColumnTuple).map(_.name).map(other.df(_)))
+          .map(z => z._1 === z._2)
+          .reduce(_ && _)
+        TypedFrame(df.join(other.df, expr, joinType))
+      }
+        
+  }
   
   // val sort = orderBy
   object orderBy extends SingletonProductArgs {
@@ -85,7 +147,6 @@ case class TypedFrame[Schema](df: DataFrame) {
         TypedFrame(df.select(l(columnTuple).map(c => col(c.name)): _*))
   }
   
-  // TODO
   def selectExpr(exprs: String*): DataFrame =
     df.selectExpr(exprs: _*)
   
@@ -98,10 +159,6 @@ case class TypedFrame[Schema](df: DataFrame) {
       s: SQLContext
     ): TypedFrame[Schema] =
       TypedFrame(s.createDataFrame(df.rdd.filter(r => f(rowToSchema[L](r))), df.schema))
-  
-  // TODO
-  def agg(expr: Column, exprs: Column*): DataFrame =
-    df.agg(expr, exprs: _*)
   
   def limit(n: Int @@ NonNegative): TypedFrame[Schema] =
     TypedFrame(df.limit(n))
