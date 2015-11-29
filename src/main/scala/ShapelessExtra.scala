@@ -4,13 +4,11 @@ import shapeless.ops.record.Remover
 
 // https://github.com/milessabin/shapeless/pull/502
 
-/**
- * Type class supporting `HList` union. In case of duplicate types, this operation is a order-preserving multi-set union.
- * If type `T` appears n times in this `HList` and m > n times in `M`, the resulting `HList` contains the first n elements
- * of type `T` in this `HList`, followed by the last m - n element of type `T` in `M`.
- * 
- * @author Olivier Blanvillain
- */
+/** Type class supporting `HList` union. In case of duplicate types, this
+  * operation is a order-preserving multi-set union. If type `T` appears n
+  * times in this `HList` and m > n times in `M`, the resulting `HList`
+  * contains the first n elements of type `T` in this `HList`, followed by the
+  * last m - n element of type `T` in `M`. */
 trait Union[L <: HList, M <: HList] extends DepFn2[L, M] with Serializable { type Out <: HList }
 
 trait LowPriorityUnion {
@@ -44,15 +42,12 @@ object Union extends LowPriorityUnion {
       }
 }
 
-/**
- * Type class supporting `HList` intersection. In case of duplicate types, this operation is a multiset intersection.
- * If type `T` appears n times in this `HList` and m < n times in `M`, the resulting `HList` contains the first m
- * elements of type `T` in this `HList`.
- *
- * Also available if `M` contains types absent in this `HList`.
- *
- * @author Olivier Blanvillain
- */
+/** Type class supporting `HList` intersection. In case of duplicate types,
+  * this operation is a multiset intersection. If type `T` appears n times in
+  * this `HList` and m < n times in `M`, the resulting `HList` contains the
+  * first m elements of type `T` in this `HList`.
+  *
+  * Also available if `M` contains types absent in this `HList`. */
 trait Intersection[L <: HList, M <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 
 trait LowPriorityIntersection {
@@ -86,15 +81,12 @@ object Intersection extends LowPriorityIntersection {
       }
 }
 
-/**
- * Type class supporting `HList` subtraction. In case of duplicate types, this operation is a multiset difference.
- * If type `T` appears n times in this `HList` and m < n times in `M`, the resulting `HList` contains the last n - m
- * elements of type `T` in this `HList`.
- *
- * Also available if `M` contains types absent in this `HList`.
- *
- * @author Olivier Blanvillain
- */
+/** Type class supporting `HList` subtraction. In case of duplicate types, this
+  * operation is a multiset difference. If type `T` appears n times in this
+  * `HList` and m < n times in `M`, the resulting `HList` contains the last
+  * n - m elements of type `T` in this `HList`.
+  *
+  * Also available if `M` contains types absent in this `HList`. */
 trait Diff[L <: HList, M <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 
 trait LowPriorityDiff {
@@ -128,11 +120,7 @@ object Diff extends LowPriorityDiff {
       }
 }
 
-/**
- * Type class supporting multiple record field removal.
- *
- * @author Olivier Blanvillain
- */
+/** Type class supporting multiple record field removal. */
 @annotation.implicitNotFound(msg = "No fields ${K} in record ${L}")
 trait AllRemover[L <: HList, K <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 
@@ -156,4 +144,17 @@ object AllRemover {
         type Out = i.Out
         def apply(l: L): Out = i(r(l)._2)
       }
+}
+
+/** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
+trait ManyTupler[L <: HList] extends DepFn1[L] with Serializable
+
+object ManyTupler extends ManyTuplerInstances {
+  def apply[L <: HList](implicit tupler: ManyTupler[L]): Aux[L, tupler.Out] = tupler
+
+  implicit val hnilTupler: Aux[HNil, Unit] =
+    new ManyTupler[HNil] {
+      type Out = Unit
+      def apply(l: HNil): Out = ()
+    }
 }

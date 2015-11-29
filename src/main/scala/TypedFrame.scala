@@ -11,7 +11,7 @@ import scala.util.Random.{nextLong => randomLong}
 import shapeless._
 import shapeless.nat._1
 import shapeless.ops.record.{SelectAll, Values}
-import shapeless.ops.hlist.{ToList, IsHCons, Tupler, Prepend, RemoveAll}
+import shapeless.ops.hlist.{ToList, IsHCons, Prepend, RemoveAll}
 import shapeless.ops.traversable.FromTraversable
 import shapeless.syntax.std.traversable.traversableOps
 import shapeless.tag.@@
@@ -48,7 +48,7 @@ case class TypedFrame[Schema](df: DataFrame) {
       r: LabelledGeneric.Aux[OtherSchema, R],
       P: Prepend.Aux[L, R, P],
       v: Values.Aux[P, V],
-      t: Tupler.Aux[V, Out]
+      t: ManyTupler.Aux[V, Out]
     ): TypedFrame[Out] =
       TypedFrame(df.join(other.df))
   
@@ -82,7 +82,7 @@ case class TypedFrame[Schema](df: DataFrame) {
         vc: Values.Aux[L, V],
         vd: Values.Aux[A, D],
         p: Prepend.Aux[V, D, P],
-        t: Tupler.Aux[P, Out]
+        t: ManyTupler.Aux[P, Out]
       ): TypedFrame[Out] = {
         val columns = tc(columnTuple).map(_.name)
         val expr = columns.map(n => df(n) === other.df(n)).reduce(_ && _)
@@ -110,7 +110,7 @@ case class TypedFrame[Schema](df: DataFrame) {
         vc: Values.Aux[L, V],
         vd: Values.Aux[R, W],
         p: Prepend.Aux[V, W, P],
-        t: Tupler.Aux[P, Out]
+        t: ManyTupler.Aux[P, Out]
       ): TypedFrame[Out] = {
         val expr = tc(columnTuple).map(_.name).map(df(_))
           .zip(td(otherColumnTuple).map(_.name).map(other.df(_)))
@@ -142,7 +142,7 @@ case class TypedFrame[Schema](df: DataFrame) {
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S],
-        t: Tupler.Aux[S, Out]
+        t: ManyTupler.Aux[S, Out]
       ): TypedFrame[Out] =
         TypedFrame(df.select(l(columnTuple).map(c => col(c.name)): _*))
   }
@@ -170,7 +170,7 @@ case class TypedFrame[Schema](df: DataFrame) {
       r: LabelledGeneric.Aux[OtherSchema, R],
       u: Union.Aux[L, R, M],
       v: Values.Aux[M, V],
-      t: Tupler.Aux[V, Out]
+      t: ManyTupler.Aux[V, Out]
     ): TypedFrame[Out] =
       TypedFrame(df.unionAll(other.df))
   
@@ -181,7 +181,7 @@ case class TypedFrame[Schema](df: DataFrame) {
       r: LabelledGeneric.Aux[OtherSchema, R],
       i: Intersection.Aux[L, R, I],
       v: Values.Aux[I, V],
-      t: Tupler.Aux[V, Out]
+      t: ManyTupler.Aux[V, Out]
     ): TypedFrame[Out] =
       TypedFrame(df.intersect(other.df))
   
@@ -192,7 +192,7 @@ case class TypedFrame[Schema](df: DataFrame) {
       r: LabelledGeneric.Aux[OtherSchema, R],
       d: Diff.Aux[L, R, D],
       v: Values.Aux[D, V],
-      t: Tupler.Aux[V, Out]
+      t: ManyTupler.Aux[V, Out]
     ): TypedFrame[Out] =
       TypedFrame(df.except(other.df))
       
@@ -219,7 +219,7 @@ case class TypedFrame[Schema](df: DataFrame) {
       g: Generic.Aux[Schema, L],
       V: FromTraversable[L],
       p: Prepend.Aux[L, N, P],
-      t: Tupler.Aux[P, Out]
+      t: ManyTupler.Aux[P, Out]
     ): TypedFrame[Out] =
       TypedFrame(df.explode(df.columns.map(col): _*)(r => f(rowToSchema[L](r))))
       
@@ -232,7 +232,7 @@ case class TypedFrame[Schema](df: DataFrame) {
         g: LabelledGeneric.Aux[Schema, G],
         r: AllRemover.Aux[G, C, R],
         v: Values.Aux[R, V],
-        t: Tupler.Aux[V, Out]
+        t: ManyTupler.Aux[V, Out]
       ): TypedFrame[Out] =
         TypedFrame(l(columnTuple).map(_.name).foldLeft(df)(_ drop _))
   }

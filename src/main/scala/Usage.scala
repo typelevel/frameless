@@ -394,4 +394,24 @@ object Usage {
     illTyped("foo.stat.sampleBy('b, Map(1 -> 0.5), 10l)")
     illTyped("foo.stat.sampleBy('a, Map(1 -> 1.1), 10l)")
   }
+  
+  def testManyTuples() = {
+    type T = Tuple23[
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int]
+    
+    val t: T = Tuple23(
+      1, 2, 3, 4, 5, 6, 7, 8,
+      9, 10, 11, 12, 13, 14, 15, 16,
+      17, 18, 19, 20, 21, 22, 23)
+    
+    TypedFrame[T](df).cartesianJoin(TypedFrame[T](df)): TypedFrame[Tuple46[
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int, Int,
+      Int, Int, Int, Int, Int, Int, Int]]
+  }
 }
