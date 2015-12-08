@@ -1,3 +1,5 @@
+package typedframe
+
 import org.apache.spark.sql.DataFrameNaFunctions
 
 import shapeless._
@@ -8,7 +10,7 @@ import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill, Selector}
 import shapeless.tag.@@
 import eu.timepit.refined.numeric.Positive
 
-case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
+case class TypedFrameNaFunctions[Schema <: Product](dfn: DataFrameNaFunctions) {
   def dropAny = new DropHowCurried("any")
   
   def dropAll = new DropHowCurried("all")
@@ -21,7 +23,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
       ): TypedFrame[Schema] =
-        TypedFrame(columnTuple match {
+        new TypedFrame(columnTuple match {
           case HNil => dfn.drop(how)
           case _ => dfn.drop(how, l(columnTuple).map(_.name))
         })
@@ -38,12 +40,12 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S]
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
+        new TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
   }
   
-  def fillAll(value: Double): TypedFrame[Schema] = TypedFrame(dfn.fill(value))
+  def fillAll(value: Double): TypedFrame[Schema] = new TypedFrame(dfn.fill(value))
   
-  def fillAll(value: String): TypedFrame[Schema] = TypedFrame(dfn.fill(value))
+  def fillAll(value: String): TypedFrame[Schema] = new TypedFrame(dfn.fill(value))
   
   def fill[T](value: T) = new FillCurried[T](value)
   
@@ -62,7 +64,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
+        new TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
   }
   
   type CanReplace = Double :: String :: Boolean :: HNil
@@ -74,7 +76,7 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
       g: Generic.Aux[Schema, G],
       s: Selector[G, T]
     ): TypedFrame[Schema] =
-      TypedFrame(dfn.replace("*", replacement))
+      new TypedFrame(dfn.replace("*", replacement))
   
   def replace[T](replacement: Map[T, T]) = new ReplaceCurried[T](replacement)
   
@@ -91,6 +93,6 @@ case class TypedFrameNaFunctions[Schema](dfn: DataFrameNaFunctions) {
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
+        new TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
   }
 }

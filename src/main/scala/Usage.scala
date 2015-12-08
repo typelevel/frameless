@@ -1,4 +1,6 @@
-import  org.apache.spark.sql.{DataFrame, SQLContext}
+package typedframe
+
+import org.apache.spark.sql.{DataFrame, SQLContext}
 import shapeless.test._
 import eu.timepit.refined.auto._
 
@@ -8,7 +10,7 @@ object Usage {
   
   case class Foo(a: Int, b: String)
   
-  val foo = TypedFrame[Foo](df)
+  val foo: TypedFrame[Foo] = TypedFrame(df)
   
   def testAs() = {
     case class Bar(i: Int, j: String)
@@ -22,12 +24,13 @@ object Usage {
   
   def testCartesianJoin() = {
     case class Bar(i: Double, j: String)
-    val p = foo.cartesianJoin(TypedFrame[Bar](df)): TypedFrame[(Int, String, Double, String)]
+    val bar: TypedFrame[Bar] = TypedFrame(df)
+    val p = foo.cartesianJoin(bar): TypedFrame[(Int, String, Double, String)]
   }
   
   def testJoinUsing() = {
     case class Schema1(a: Int, b: Int, c: String)
-    val s1 = TypedFrame[Schema1](df)
+    val s1: TypedFrame[Schema1] = TypedFrame(df)
     
     foo.innerJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
     foo.outerJoin(s1).using('a): TypedFrame[(Int, String, Int, String)]
@@ -39,7 +42,7 @@ object Usage {
     illTyped("foo.innerJoin(s1).using('c)")
     
     case class Schema2(a: Int, b: String, c: String)
-    val s2 = TypedFrame[Schema2](df)
+    val s2: TypedFrame[Schema2] = TypedFrame(df)
     
     foo.innerJoin(s2).using('a): TypedFrame[(Int, String, String, String)]
     foo.innerJoin(s2).using('b): TypedFrame[(Int, String, Int, String)]
@@ -51,7 +54,7 @@ object Usage {
   
   def testJoinOn() = {
     case class Schema1(a: Int, b: Int, c: String)
-    val s1 = TypedFrame[Schema1](df)
+    val s1: TypedFrame[Schema1] = TypedFrame(df)
     
     foo.innerJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
     foo.outerJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
@@ -60,7 +63,7 @@ object Usage {
     foo.semiJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
     
     case class Schema2(w: String, x: Int, y: Int, z: String)
-    val s2 = TypedFrame[Schema2](df)
+    val s2: TypedFrame[Schema2] = TypedFrame(df)
     
     foo.innerJoin(s2).on('a).and('x)
     foo.innerJoin(s2).on('a).and('y)
@@ -112,38 +115,43 @@ object Usage {
     case class BBar(a: Int, b: String, i: Double)
     case class CBar(u: Boolean, b: String, a: Int)
     case class DBar(u: Boolean)
+    
+    val aBar: TypedFrame[ABar] = TypedFrame(df)
+    val bBar: TypedFrame[BBar] = TypedFrame(df)
+    val cBar: TypedFrame[CBar] = TypedFrame(df)
+    val dBar: TypedFrame[DBar] = TypedFrame(df)
   
     foo.unionAll(foo): TypedFrame[(Int, String)]
-    foo.unionAll(TypedFrame[ABar](df)): TypedFrame[(Int, String, Double)]
-    foo.unionAll(TypedFrame[BBar](df)): TypedFrame[(Int, String, Double)]
-    foo.unionAll(TypedFrame[CBar](df)): TypedFrame[(Int, String, Boolean)]
-    foo.unionAll(TypedFrame[DBar](df)): TypedFrame[(Int, String, Boolean)]
+    foo.unionAll(aBar): TypedFrame[(Int, String, Double)]
+    foo.unionAll(bBar): TypedFrame[(Int, String, Double)]
+    foo.unionAll(cBar): TypedFrame[(Int, String, Boolean)]
+    foo.unionAll(dBar): TypedFrame[(Int, String, Boolean)]
   }
   
   def testIntersect() = {
     case class ABar(a: Int, i: Double)
     case class BBar(a: Int, b: String, i: Double)
     case class CBar(u: Boolean, b: String, a: Int)
-    case class DBar(u: Boolean)
+    
+    val aBar: TypedFrame[ABar] = TypedFrame(df)
+    val bBar: TypedFrame[BBar] = TypedFrame(df)
+    val cBar: TypedFrame[CBar] = TypedFrame(df)
     
     foo.intersect(foo): TypedFrame[(Int, String)]
-    foo.intersect(TypedFrame[ABar](df)): TypedFrame[Tuple1[Int]]
-    foo.intersect(TypedFrame[BBar](df)): TypedFrame[(Int, String)]
-    foo.intersect(TypedFrame[CBar](df)): TypedFrame[(Int, String)]
-    foo.intersect(TypedFrame[DBar](df)): TypedFrame[Unit]
+    foo.intersect(aBar): TypedFrame[Tuple1[Int]]
+    foo.intersect(bBar): TypedFrame[(Int, String)]
+    foo.intersect(cBar): TypedFrame[(Int, String)]
   }
   
   def testExcept() = {
     case class ABar(a: Int, i: Double)
-    case class BBar(a: Int, b: String, i: Double)
-    case class CBar(u: Boolean, b: String, a: Int)
     case class DBar(u: Boolean)
     
-    foo.except(foo): TypedFrame[Unit]
-    foo.except(TypedFrame[ABar](df)): TypedFrame[Tuple1[String]]
-    foo.except(TypedFrame[BBar](df)): TypedFrame[Unit]
-    foo.except(TypedFrame[CBar](df)): TypedFrame[Unit]
-    foo.except(TypedFrame[DBar](df)): TypedFrame[(Int, String)]
+    val aBar: TypedFrame[ABar] = TypedFrame(df)
+    val dBar: TypedFrame[DBar] = TypedFrame(df)
+    
+    foo.except(aBar): TypedFrame[Tuple1[String]]
+    foo.except(dBar): TypedFrame[(Int, String)]
   }
   
   def testSample() = {
@@ -170,7 +178,6 @@ object Usage {
   def testDrop() = {
     foo.drop('a): TypedFrame[Tuple1[String]]
     foo.drop('b): TypedFrame[Tuple1[Int]]
-    foo.drop('a, 'b): TypedFrame[Unit] 
     
     illTyped("foo.drop()")
     illTyped("foo.drop('c)")
@@ -299,7 +306,7 @@ object Usage {
   
   def testFill() = {
     case class Ts(i: Int, l: Long, f: Float, d: Double, s: String, b: Boolean, c: Char)
-    val ts = TypedFrame[Ts](df)
+    val ts: TypedFrame[Ts] = TypedFrame(df)
     
     ts.na.fill(1)('i)
     ts.na.fill(1l)('l)
@@ -312,7 +319,7 @@ object Usage {
     illTyped("ts.na.fill('c')('c)")
     
     case class Fs(i: Int, j: Int, s: String, k: Int, t: String)
-    val fs = TypedFrame[Fs](df)
+    val fs: TypedFrame[Fs] = TypedFrame(df)
     
     fs.na.fill(1)('i)
     fs.na.fill(1)('i, 'j)
@@ -325,7 +332,7 @@ object Usage {
   
   def testReplaceAll() = {
     case class Ts(d: Double, s: String, b: Boolean, c: Char)
-    val ts = TypedFrame[Ts](df)
+    val ts: TypedFrame[Ts] = TypedFrame(df)
     
     ts.na.replaceAll(Map(1d -> 2d, 3d -> 4d))
     ts.na.replaceAll(Map("s" -> "S", "c" -> "C", "a" -> "A"))
@@ -337,7 +344,7 @@ object Usage {
   
   def testReplace() = {
     case class Ts(d: Double, s: String, b: Boolean, c: Char)
-    val ts = TypedFrame[Ts](df)
+    val ts: TypedFrame[Ts] = TypedFrame(df)
   
     ts.na.replace(Map(1d -> 2d, 3d -> 4d))('d)
     ts.na.replace(Map("s" -> "S", "c" -> "C", "a" -> "A"))('s)
@@ -345,7 +352,7 @@ object Usage {
     illTyped("foo.na.replace(Map('c' -> 'd'))('c)")
     
     case class Fs(i: Double, j: Double, s: String, k: Double, t: String)
-    val fs = TypedFrame[Fs](df)
+    val fs: TypedFrame[Fs] = TypedFrame(df)
     
     fs.na.replace(Map(0d -> 1d))('i)
     fs.na.replace(Map(0d -> 1d))('i, 'j)
@@ -357,7 +364,7 @@ object Usage {
   
   def testCov() = {
     case class Ns(i: Int, j: Int, d: Double, s: String)
-    val ns = TypedFrame[Ns](df)
+    val ns: TypedFrame[Ns] = TypedFrame(df)
     ns.stat.cov('i, 'j)
     ns.stat.cov('i, 'd)
     illTyped("ns.stat.cov('i, 's)")
@@ -365,7 +372,7 @@ object Usage {
   
   def testCorr() = {
     case class Ns(i: Int, j: Int, d: Double, s: String)
-    val ns = TypedFrame[Ns](df)
+    val ns: TypedFrame[Ns] = TypedFrame(df)
     ns.stat.corr('i, 'j)
     ns.stat.corr('i, 'd)
     illTyped("ns.stat.corr('i, 's)")
@@ -373,7 +380,7 @@ object Usage {
   
   def testCrosstab() = {
     case class Ns(i: Int, j: Int, d: Double, s: String)
-    val ns = TypedFrame[Ns](df)
+    val ns: TypedFrame[Ns] = TypedFrame(df)
     ns.stat.crosstab('i, 'j)
     ns.stat.crosstab('i, 'd)
     ns.stat.crosstab('i, 's)
@@ -406,7 +413,9 @@ object Usage {
       9, 10, 11, 12, 13, 14, 15, 16,
       17, 18, 19, 20, 21, 22, 23)
     
-    TypedFrame[T](df).cartesianJoin(TypedFrame[T](df)): TypedFrame[Tuple46[
+    val tdf: TypedFrame[T] = TypedFrame(df)
+    
+    tdf.cartesianJoin(tdf): TypedFrame[Tuple46[
       Int, Int, Int, Int, Int, Int, Int, Int,
       Int, Int, Int, Int, Int, Int, Int, Int,
       Int, Int, Int, Int, Int, Int, Int,

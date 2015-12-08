@@ -1,3 +1,5 @@
+package typedframe
+
 import shapeless._
 import shapeless.ops.hlist._
 import shapeless.ops.record.Remover
@@ -151,10 +153,4 @@ trait ManyTupler[L <: HList] extends DepFn1[L] with Serializable
 
 object ManyTupler extends ManyTuplerInstances {
   def apply[L <: HList](implicit tupler: ManyTupler[L]): Aux[L, tupler.Out] = tupler
-
-  implicit val hnilTupler: Aux[HNil, Unit] =
-    new ManyTupler[HNil] {
-      type Out = Unit
-      def apply(l: HNil): Out = ()
-    }
 }

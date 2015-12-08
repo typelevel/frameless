@@ -93,6 +93,8 @@ object Boilerplate {
     def content(tv: TemplateVals) = {
       import tv._
       block"""
+        |package typedframe
+        |
         |import shapeless._
         |
         |trait ManyTuplerInstances {

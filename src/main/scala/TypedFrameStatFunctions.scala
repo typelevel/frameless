@@ -1,15 +1,17 @@
+package typedframe
+
 import org.apache.spark.sql.{DataFrameStatFunctions, DataFrame}
 
 import shapeless._
 import shapeless.nat._1
-import shapeless.ops.record.{Selector, SelectAll}
+import shapeless.ops.record.{Selector, SelectAll, Keys}
 import shapeless.ops.hlist.{ToList, IsHCons, Tupler}
 import shapeless.tag.@@
 
 import eu.timepit.refined.numeric.Interval.{Closed => ClosedInterval}
 import eu.timepit.refined.auto._
 
-case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
+case class TypedFrameStatFunctions[Schema <: Product](dfs: DataFrameStatFunctions) {
   def cov[G <: HList, C1, C2]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
@@ -46,14 +48,17 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
   def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsCurried(support)
   
   class FreqItemsCurried(support: Double) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, Out]
+    def applyProduct[Out <: Product, C <: HList, G <: HList, S <: HList, B <: HList, Y <: HList]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S],
-        t: Tupler.Aux[S, Out]
+        t: Tupler.Aux[S, Out],
+        b: LabelledGeneric.Aux[Out, B],
+        y: Keys.Aux[B, Y],
+        o: ToList[Y, Symbol]
       ): TypedFrame[Out] =
         TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
   }
@@ -65,5 +70,5 @@ case class TypedFrameStatFunctions[Schema](dfs: DataFrameStatFunctions) {
       s: Selector.Aux[G, column.T, C],
       e: T =:= C
     ): TypedFrame[Schema] =
-      TypedFrame(dfs.sampleBy(column.value.name, fractions, seed))
+      new TypedFrame(dfs.sampleBy(column.value.name, fractions, seed))
 }
