@@ -49,7 +49,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
   
   def fill[T](value: T) = new FillCurried[T](value)
   
-  type CanFill = Int :: Long :: Float :: Double :: String :: Boolean :: HNil
+  type CanFill = Int :: Long :: Float :: Double :: String :: HNil
   
   class FillCurried[T](value: T) extends SingletonProductArgs {
     def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
@@ -67,7 +67,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
         new TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
   }
   
-  type CanReplace = Double :: String :: Boolean :: HNil
+  type CanReplace = Double :: String :: HNil
   
   def replaceAll[T, G <: HList]
     (replacement: Map[T, T])
