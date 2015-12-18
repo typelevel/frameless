@@ -9,6 +9,7 @@ import org.apache.spark.storage.StorageLevel
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import scala.util.Random.{nextLong => randomLong}
+import scala.spores._
 
 import shapeless._
 import shapeless.nat._1
@@ -32,7 +33,7 @@ object TypedFrame {
       new TypedFrame[S](dataFrame.toDF(y().toList.map(_.name): _*))
 }
 
-final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame) {
+final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame) extends Serializable {
   
   def as[NewSchema <: Product] = new FieldRenamer[NewSchema]
   
@@ -82,8 +83,8 @@ final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame
   def rightOuterJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
     new JoinPartial(other, "right_outer")
   
-  def semiJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
-    new JoinPartial(other, "semi")
+  def leftsemiJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
+    new JoinPartial(other, "leftsemi")
   
   class JoinPartial[OtherSchema <: Product](other: TypedFrame[OtherSchema], joinType: String) extends SingletonProductArgs {
     def usingProduct[C <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, T <: HList, A <: HList, V <: HList, D <: HList, P <: HList, B <: HList, Y <: HList]
@@ -305,8 +306,8 @@ final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
-      ): TypedFrame[Schema] =
-        new TypedFrame(df.describe(l(columnTuple).map(_.name): _*))
+      ): DataFrame =
+        df.describe(l(columnTuple).map(_.name): _*)
   }
   
   def repartition(numPartitions: Int @@ Positive): TypedFrame[Schema] =
@@ -344,47 +345,44 @@ final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame
   def show(numRows: Int @@ Positive = 20, truncate: Boolean = true): Unit =
     df.show(numRows, truncate)
   
-  def na: TypedFrameNaFunctions[Schema] = TypedFrameNaFunctions[Schema](df.na)
+  def na: TypedFrameNaFunctions[Schema] = new TypedFrameNaFunctions(df.na)
   
-  def stat: TypedFrameStatFunctions[Schema] = TypedFrameStatFunctions[Schema](df.stat)
+  def stat: TypedFrameStatFunctions[Schema] = new TypedFrameStatFunctions(df.stat)
   
-  // TODO
   object groupBy extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
+    def applyProduct[C <: HList, G <: HList, V <: HList, R <: HList]
       (columnTuple: C)
       (implicit
-        h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
-        r: SelectAll[G, C]
-      ): GroupedData =
-        df.groupBy(l(columnTuple).map(c => col(c.name)): _*)
+        v: Values.Aux[G, V],
+        r: AllRemover.Aux[G, C, R]
+      ): GroupedTypedFrame[V, R] =
+        new GroupedTypedFrame(df.groupBy(l(columnTuple).map(c => col(c.name)): _*))
   }
   
-  // TODO
   object rollup extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
+    def applyProduct[C <: HList, G <: HList, V <: HList, R <: HList]
       (columnTuple: C)
       (implicit
-        h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
-        r: SelectAll[G, C]
-      ): GroupedData =
-        df.rollup(l(columnTuple).map(c => col(c.name)): _*)
+        v: Values.Aux[G, V],
+        r: AllRemover.Aux[G, C, R]
+      ): GroupedTypedFrame[V, R] =
+        new GroupedTypedFrame(df.rollup(l(columnTuple).map(c => col(c.name)): _*))
   }
   
-  // TODO
   object cube extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
+    def applyProduct[C <: HList, G <: HList, V <: HList, R <: HList]
       (columnTuple: C)
       (implicit
-        h: IsHCons[C],
         l: ToList[C, Symbol],
         g: LabelledGeneric.Aux[Schema, G],
-        r: SelectAll[G, C]
-      ): GroupedData =
-        df.cube(l(columnTuple).map(c => col(c.name)): _*)
+        v: Values.Aux[G, V],
+        r: AllRemover.Aux[G, C, R]
+      ): GroupedTypedFrame[V, R] =
+        new GroupedTypedFrame(df.cube(l(columnTuple).map(c => col(c.name)): _*))
   }
   
   // def first = head

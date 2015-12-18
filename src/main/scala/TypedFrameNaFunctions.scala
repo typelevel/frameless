@@ -10,7 +10,7 @@ import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill, Selector}
 import shapeless.tag.@@
 import eu.timepit.refined.numeric.Positive
 
-case class TypedFrameNaFunctions[Schema <: Product](dfn: DataFrameNaFunctions) {
+final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: DataFrameNaFunctions) extends Serializable {
   def dropAny = new DropHowCurried("any")
   
   def dropAll = new DropHowCurried("all")

@@ -11,7 +11,7 @@ import shapeless.tag.@@
 import eu.timepit.refined.numeric.Interval.{Closed => ClosedInterval}
 import eu.timepit.refined.auto._
 
-case class TypedFrameStatFunctions[Schema <: Product](dfs: DataFrameStatFunctions) {
+final class TypedFrameStatFunctions[Schema <: Product] private[typedframe] (dfs: DataFrameStatFunctions) extends Serializable {
   def cov[G <: HList, C1, C2]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit

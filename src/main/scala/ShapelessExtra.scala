@@ -3,6 +3,7 @@ package typedframe
 import shapeless._
 import shapeless.ops.hlist._
 import shapeless.ops.record.Remover
+import scala.language.higherKinds
 
 // https://github.com/milessabin/shapeless/pull/502
 
@@ -146,6 +147,31 @@ object AllRemover {
         type Out = i.Out
         def apply(l: L): Out = i(r(l)._2)
       }
+}
+
+// https://github.com/milessabin/shapeless/pull/503
+
+/** Typeclass witnessing that all the elements of an HList have instances of the given typeclass. */
+sealed trait LiftAll[F[_], In <: HList] {
+  type Out <: HList
+  def instances: Out
+}
+
+object LiftAll {
+  type Aux[F[_], In0 <: HList, Out0 <: HList] = LiftAll[F, In0] {type Out = Out0}
+  class Curried[F[_]] {def apply[In <: HList](in: In)(implicit ev: LiftAll[F, In]) = ev}
+  def apply[F[_]] = new Curried[F]
+  def apply[F[_], In <: HList](implicit ev: LiftAll[F, In]) = ev
+  implicit def hnil[F[_]]: LiftAll.Aux[F, HNil, HNil] = new LiftAll[F, HNil] {
+    type Out = HNil
+    def instances = HNil
+  }
+  implicit def hcons[F[_], H, T <: HList]
+    (implicit headInstance: F[H], tailInstances: LiftAll[F, T]): Aux[F, H :: T, F[H] :: tailInstances.Out] =
+      new LiftAll[F, H :: T] {
+        type Out = F[H] :: tailInstances.Out
+        def instances = headInstance :: tailInstances.instances
+  }
 }
 
 /** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
