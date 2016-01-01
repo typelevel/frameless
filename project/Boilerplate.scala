@@ -17,8 +17,8 @@ object Boilerplate {
   val header = "// Auto-generated boilerplate"
 
   val templates: Seq[Template] = List(
-    GenManyTuples,
-    GenManyTuplerInstances
+    GenXLTuples,
+    GenXLTuplerInstances
   )
 
   def gen(dir: File) =
@@ -56,8 +56,8 @@ object Boilerplate {
     }
   }
 
-  object GenManyTuples extends Template(23, 64) {
-    def filename(root: File) = root / "ManyTuples.scala"
+  object GenXLTuples extends Template(23, 64) {
+    def filename(root: File) = root / "XLTuples.scala"
     
     def content(tv: TemplateVals) = {
       import tv._
@@ -88,8 +88,8 @@ object Boilerplate {
     }
   }
   
-  object GenManyTuplerInstances extends Template(1, 64) {
-    def filename(root: File) = root / "ManyTuplerInstances.scala"
+  object GenXLTuplerInstances extends Template(1, 64) {
+    def filename(root: File) = root / "XLTuplerInstances.scala"
     def content(tv: TemplateVals) = {
       import tv._
       block"""
@@ -97,11 +97,11 @@ object Boilerplate {
         |
         |import shapeless._
         |
-        |trait ManyTuplerInstances {
-        |  type Aux[L <: HList, Out0] = ManyTupler[L] { type Out = Out0 }
+        |trait XLTuplerInstances {
+        |  type Aux[L <: HList, Out0] = XLTupler[L] { type Out = Out0 }
         -
         -  implicit def hlistTupler${arity}[${`A..N`}]: Aux[${`A::N`}, ${`(A..N)`}] =
-        -    new ManyTupler[${`A::N`}] {
+        -    new XLTupler[${`A::N`}] {
         -      type Out = ${`(A..N)`}
         -      def apply(l : ${`A::N`}): Out = l match { case ${`a::n`} => ${`(a..n)`} }
         -    }        

@@ -36,18 +36,29 @@ class Usage extends SpecWithContext {
   case class Schema1(a: Int, b: Int, c: String)
   def s1: TypedFrame[Schema1] = TypedFrame(Seq((1, 10, "c"), (2, 20, "d"), (4, 40, "e")).toDF)
   
-  // test("joinUsing") {
-  //   val inner: TypedFrame[(Int, String, Int, String)] = fooTF.innerJoin(s1).using('a)
-  //   checkAnswer(inner, Set((1, "id1", 10, "c"), (4, "id3", 40, "e")))
+  def nullInstance[T] = null.asInstanceOf[T]
+  
+  test("joinUsing") {
+    // val inner: TypedFrame[(Int, String, Int, String)] = fooTF.innerJoin(s1).using('a)
+    // checkAnswer(inner, Set((1, "id1", 10, "c"), (4, "id3", 40, "e")))
     
-  //   val outer: TypedFrame[(Int, String, Int, String)] = fooTF.outerJoin(s1).using('a)
-  //   outer.collect() // Fuck nulls, gotta change this to (Option[A], Option[B]) :()
-  //   ()
-    // checkAnswer(outer, Set(
-    //   (1, "id1", 10, "c"),
-    //   (2, null, 20, "d"),
-    //   (4, "id3", 40, "e"),
-    //   (5, "id2", null.asInstanceOf[Int], null)))
+    import shapeless._
+    implicit val lol: Typeable[Any] = Typeable.anyTypeable
+    
+    val outer: TypedFrame[(Int, String, Int, String)] = fooTF.outerJoin(s1).using('a)
+    
+    println("outer.show()")
+    outer.show()
+    println("outer.collect()")
+    println(outer.collect())
+    
+    checkAnswer(outer, Set(
+      (1, "id1", 10, "c"),
+      (2, null, 20, "d"),
+      (4, "id3", 40, "e"),
+      (5, "id2", null.asInstanceOf[Int], null)))
+      
+    
     // val leftOuter: TypedFrame[(Int, String, Int, String)] = fooTF.leftOuterJoin(s1).using('a)
     // val rightOuter: TypedFrame[(Int, String, Int, String)] = fooTF.rightOuterJoin(s1).using('a)
     // // TODO:
@@ -66,7 +77,7 @@ class Usage extends SpecWithContext {
     
     // illTyped("fooTF.innerJoin(s2).using('a, 'c)")
     // illTyped("fooTF.innerJoin(s2).using('c, 'b)")
-  // }
+  }
   
   // test("joinOn") {
   //   // TODO: checkAnswer
@@ -312,123 +323,146 @@ class Usage extends SpecWithContext {
   def fFloatTF: TypedFrame[FooFloat] = TypedFrame(Seq((1.toFloat, "a"), (2.toFloat, "a")).toDF)
   def fDoubleTF: TypedFrame[FooDouble] = TypedFrame(Seq((1.toDouble, "a"), (2.toDouble, "a")).toDF)
   
-  test("groupBy.sum") {
-    val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
-    val summed: TypedFrame[(String, Long)] = toSumTF.groupBy('b).sum('a)
-    checkAnswer(summed, Seq(("id1", 1l), ("id2", 5l), ("id3", 6l)))
+  // test("groupBy.sum") {
+  //   val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
+  //   val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+  //   val summed: TypedFrame[(String, Long)] = toSumTF.groupBy('b).sum('a)
+  //   checkAnswer(summed, Seq(("id1", 1l), ("id2", 5l), ("id3", 6l)))
     
-    val sByte: TypedFrame[(String, Long)] = fByteTF.groupBy('b).sum('a)
-    val sShort: TypedFrame[(String, Long)] = fShortTF.groupBy('b).sum('a)
-    val sInt: TypedFrame[(String, Long)] = fIntTF.groupBy('b).sum('a)
-    val sLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).sum('a)
-    val sFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).sum('a)
-    val sDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).sum('a)
+  //   val sByte: TypedFrame[(String, Long)] = fByteTF.groupBy('b).sum('a)
+  //   val sShort: TypedFrame[(String, Long)] = fShortTF.groupBy('b).sum('a)
+  //   val sInt: TypedFrame[(String, Long)] = fIntTF.groupBy('b).sum('a)
+  //   val sLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).sum('a)
+  //   val sFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).sum('a)
+  //   val sDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).sum('a)
     
-    checkAnswer(sByte, Seq(("a", 3.toLong)))
-    checkAnswer(sShort, Seq(("a", 3.toLong)))
-    checkAnswer(sInt, Seq(("a", 3.toLong)))
-    checkAnswer(sLong, Seq(("a", 3.toLong)))
-    checkAnswer(sFloat, Seq(("a", 3.toDouble)))
-    checkAnswer(sDouble, Seq(("a", 3.toDouble)))
+  //   checkAnswer(sByte, Seq(("a", 3.toLong)))
+  //   checkAnswer(sShort, Seq(("a", 3.toLong)))
+  //   checkAnswer(sInt, Seq(("a", 3.toLong)))
+  //   checkAnswer(sLong, Seq(("a", 3.toLong)))
+  //   checkAnswer(sFloat, Seq(("a", 3.toDouble)))
+  //   checkAnswer(sDouble, Seq(("a", 3.toDouble)))
     
-    illTyped("toSumTF.groupBy('b).sum('a, 'b)")
-    illTyped("toSumTF.groupBy('b).sum('b)")
-    illTyped("toSumTF.groupBy('b).sum()")
-  }
+  //   illTyped("toSumTF.groupBy('b).sum('a, 'b)")
+  //   illTyped("toSumTF.groupBy('b).sum('b)")
+  //   illTyped("toSumTF.groupBy('b).sum()")
+  // }
   
-  test("groupBy.avg") {
-    val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
-    val avged: TypedFrame[(String, Double)] = toSumTF.groupBy('b).avg('a)
-    checkAnswer(avged, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
+  // test("groupBy.avg") {
+  //   val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
+  //   val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+  //   val avged: TypedFrame[(String, Double)] = toSumTF.groupBy('b).avg('a)
+  //   checkAnswer(avged, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
     
-    val aByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).avg('a)
-    val aShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).avg('a)
-    val aInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).avg('a)
-    val aLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).avg('a)
-    val aFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).avg('a)
-    val aDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).avg('a)
+  //   val aByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).avg('a)
+  //   val aShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).avg('a)
+  //   val aInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).avg('a)
+  //   val aLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).avg('a)
+  //   val aFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).avg('a)
+  //   val aDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).avg('a)
     
-    checkAnswer(aByte, Seq(("a", 1.5d)))
-    checkAnswer(aShort, Seq(("a", 1.5d)))
-    checkAnswer(aInt, Seq(("a", 1.5d)))
-    checkAnswer(aLong, Seq(("a", 1.5d)))
-    checkAnswer(aFloat, Seq(("a", 1.5d)))
-    checkAnswer(aDouble, Seq(("a", 1.5d)))
+  //   checkAnswer(aByte, Seq(("a", 1.5d)))
+  //   checkAnswer(aShort, Seq(("a", 1.5d)))
+  //   checkAnswer(aInt, Seq(("a", 1.5d)))
+  //   checkAnswer(aLong, Seq(("a", 1.5d)))
+  //   checkAnswer(aFloat, Seq(("a", 1.5d)))
+  //   checkAnswer(aDouble, Seq(("a", 1.5d)))
     
-    illTyped("toSumTF.groupBy('b).avg('a, 'b)")
-    illTyped("toSumTF.groupBy('b).avg('b)")
-    illTyped("toSumTF.groupBy('b).avg()")
-  }
+  //   illTyped("toSumTF.groupBy('b).avg('a, 'b)")
+  //   illTyped("toSumTF.groupBy('b).avg('b)")
+  //   illTyped("toSumTF.groupBy('b).avg()")
+  // }
 
-  test("groupBy.mean") {
-    val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
-    val meaned: TypedFrame[(String, Double)] = toSumTF.groupBy('b).mean('a)
-    checkAnswer(meaned, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
+  // test("groupBy.mean") {
+  //   val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
+  //   val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+  //   val meaned: TypedFrame[(String, Double)] = toSumTF.groupBy('b).mean('a)
+  //   checkAnswer(meaned, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
     
-    val mByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).mean('a)
-    val mShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).mean('a)
-    val mInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).mean('a)
-    val mLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).mean('a)
-    val mFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).mean('a)
-    val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).mean('a)
+  //   val mByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).mean('a)
+  //   val mShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).mean('a)
+  //   val mInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).mean('a)
+  //   val mLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).mean('a)
+  //   val mFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).mean('a)
+  //   val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).mean('a)
     
-    checkAnswer(mByte, Seq(("a", 1.5d)))
-    checkAnswer(mShort, Seq(("a", 1.5d)))
-    checkAnswer(mInt, Seq(("a", 1.5d)))
-    checkAnswer(mLong, Seq(("a", 1.5d)))
-    checkAnswer(mFloat, Seq(("a", 1.5d)))
-    checkAnswer(mDouble, Seq(("a", 1.5d)))
+  //   checkAnswer(mByte, Seq(("a", 1.5d)))
+  //   checkAnswer(mShort, Seq(("a", 1.5d)))
+  //   checkAnswer(mInt, Seq(("a", 1.5d)))
+  //   checkAnswer(mLong, Seq(("a", 1.5d)))
+  //   checkAnswer(mFloat, Seq(("a", 1.5d)))
+  //   checkAnswer(mDouble, Seq(("a", 1.5d)))
     
-    illTyped("toSumTF.groupBy('b).mean('a, 'b)")
-    illTyped("toSumTF.groupBy('b).mean('b)")
-    illTyped("toSumTF.groupBy('b).mean()")
-  }
+  //   illTyped("toSumTF.groupBy('b).mean('a, 'b)")
+  //   illTyped("toSumTF.groupBy('b).mean('b)")
+  //   illTyped("toSumTF.groupBy('b).mean()")
+  // }
   
-  test("groupBy.max") {
-    val toMax = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toMaxTF: TypedFrame[Foo] = TypedFrame(toMax.toDF)
-    val maxed: TypedFrame[(String, Int)] = toMaxTF.groupBy('b).max('a)
-    checkAnswer(maxed, Seq(("id1", 1), ("id2", 5), ("id3", 4)))
+  // test("groupBy.max") {
+  //   val toMax = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
+  //   val toMaxTF: TypedFrame[Foo] = TypedFrame(toMax.toDF)
+  //   val maxed: TypedFrame[(String, Int)] = toMaxTF.groupBy('b).max('a)
+  //   checkAnswer(maxed, Seq(("id1", 1), ("id2", 5), ("id3", 4)))
     
-    val mByte: TypedFrame[(String, Byte)] = fByteTF.groupBy('b).max('a)
-    val mShort: TypedFrame[(String, Short)] = fShortTF.groupBy('b).max('a)
-    val mInt: TypedFrame[(String, Int)] = fIntTF.groupBy('b).max('a)
-    val mLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).max('a)
-    val mFloat: TypedFrame[(String, Float)] = fFloatTF.groupBy('b).max('a)
-    val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).max('a)
+  //   val mByte: TypedFrame[(String, Byte)] = fByteTF.groupBy('b).max('a)
+  //   val mShort: TypedFrame[(String, Short)] = fShortTF.groupBy('b).max('a)
+  //   val mInt: TypedFrame[(String, Int)] = fIntTF.groupBy('b).max('a)
+  //   val mLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).max('a)
+  //   val mFloat: TypedFrame[(String, Float)] = fFloatTF.groupBy('b).max('a)
+  //   val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).max('a)
     
-    checkAnswer(mByte, Seq(("a", 2.toByte)))
-    checkAnswer(mShort, Seq(("a", 2.toShort)))
-    checkAnswer(mInt, Seq(("a", 2.toInt)))
-    checkAnswer(mLong, Seq(("a", 2.toLong)))
-    checkAnswer(mFloat, Seq(("a", 2.toFloat)))
-    checkAnswer(mDouble, Seq(("a", 2.toDouble)))
+  //   checkAnswer(mByte, Seq(("a", 2.toByte)))
+  //   checkAnswer(mShort, Seq(("a", 2.toShort)))
+  //   checkAnswer(mInt, Seq(("a", 2.toInt)))
+  //   checkAnswer(mLong, Seq(("a", 2.toLong)))
+  //   checkAnswer(mFloat, Seq(("a", 2.toFloat)))
+  //   checkAnswer(mDouble, Seq(("a", 2.toDouble)))
     
-    illTyped("toSumTF.groupBy('b).max('a, 'b)")
-    illTyped("toSumTF.groupBy('b).max('b)")
-    illTyped("toSumTF.groupBy('b).max()")
-  }
+  //   illTyped("toSumTF.groupBy('b).max('a, 'b)")
+  //   illTyped("toSumTF.groupBy('b).max('b)")
+  //   illTyped("toSumTF.groupBy('b).max()")
+  // }
   
-  // min
+  // test("groupBy.min") {
+  //   val toMin = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
+  //   val toMinTF: TypedFrame[Foo] = TypedFrame(toMin.toDF)
+  //   val mined: TypedFrame[(String, Int)] = toMinTF.groupBy('b).min('a)
+  //   checkAnswer(mined, Seq(("id1", 1), ("id2", 5), ("id3", 1)))
+    
+  //   val mByte: TypedFrame[(String, Byte)] = fByteTF.groupBy('b).min('a)
+  //   val mShort: TypedFrame[(String, Short)] = fShortTF.groupBy('b).min('a)
+  //   val mInt: TypedFrame[(String, Int)] = fIntTF.groupBy('b).min('a)
+  //   val mLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).min('a)
+  //   val mFloat: TypedFrame[(String, Float)] = fFloatTF.groupBy('b).min('a)
+  //   val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).min('a)
+    
+  //   checkAnswer(mByte, Seq(("a", 1.toByte)))
+  //   checkAnswer(mShort, Seq(("a", 1.toShort)))
+  //   checkAnswer(mInt, Seq(("a", 1.toInt)))
+  //   checkAnswer(mLong, Seq(("a", 1.toLong)))
+  //   checkAnswer(mFloat, Seq(("a", 1.toFloat)))
+  //   checkAnswer(mDouble, Seq(("a", 1.toDouble)))
+    
+  //   illTyped("toSumTF.groupBy('b).min('a, 'b)")
+  //   illTyped("toSumTF.groupBy('b).min('b)")
+  //   illTyped("toSumTF.groupBy('b).min()")
+  // }
   
-  // // TODO
-  // // test("rollup") {
-  // //   fooTF.rollup('a)
-  // //   fooTF.rollup('b)
-  // //   fooTF.rollup('a, 'b)
-  // //   illTyped("fooTF.rollup('c)")
-  // // }
+  // TODO
+  // test("rollup") {
+  //   fooTF.rollup('a)
+  //   fooTF.rollup('b)
+  //   fooTF.rollup('a, 'b)
+  //   illTyped("fooTF.rollup('c)")
+  // }
   
-  // // TODO
-  // // test("cube") {
-  // //   fooTF.cube('a)
-  // //   fooTF.cube('b)
-  // //   fooTF.cube('a, 'b)
-  // //   illTyped("fooTF.cube('c)")
-  // // }
+  // TODO
+  // test("cube") {
+  //   fooTF.cube('a)
+  //   fooTF.cube('b)
+  //   fooTF.cube('a, 'b)
+  //   illTyped("fooTF.cube('c)")
+  // }
   
   // test("head") {
   //   fooTF.head() shouldBe fooSeq.head

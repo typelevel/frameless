@@ -6,8 +6,8 @@ import shapeless._
 import shapeless.ops.nat.{ToInt, LT, LTEq}
 import shapeless.ops.record.{SelectAll, Values}
 import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill, Selector}
-
 import shapeless.tag.@@
+
 import eu.timepit.refined.numeric.Positive
 
 final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: DataFrameNaFunctions) extends Serializable {

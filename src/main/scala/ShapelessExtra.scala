@@ -3,6 +3,7 @@ package typedframe
 import shapeless._
 import shapeless.ops.hlist._
 import shapeless.ops.record.Remover
+import scala.collection.GenTraversable
 import scala.language.higherKinds
 
 /** Type class supporting multiple record field removal. */
@@ -31,9 +32,8 @@ object AllRemover {
       }
 }
 
-// https://github.com/milessabin/shapeless/pull/503
-
-/** Typeclass witnessing that all the elements of an HList have instances of the given typeclass. */
+/** Typeclass witnessing that all the elements of an HList have instances of the given typeclass.
+  * (To be removed when https://github.com/milessabin/shapeless/pull/503 is published) */
 sealed trait LiftAll[F[_], In <: HList] {
   type Out <: HList
   def instances: Out
@@ -57,8 +57,101 @@ object LiftAll {
 }
 
 /** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
-trait ManyTupler[L <: HList] extends DepFn1[L] with Serializable
+trait XLTupler[L <: HList] extends DepFn1[L] with Serializable
 
-object ManyTupler extends ManyTuplerInstances {
-  def apply[L <: HList](implicit tupler: ManyTupler[L]): Aux[L, tupler.Out] = tupler
+object XLTupler extends XLTuplerInstances {
+  def apply[L <: HList](implicit tupler: XLTupler[L]): Aux[L, tupler.Out] = tupler
+}
+
+/** Type class supporting type safe cast.
+  * Differs from shapeless.Typeable for it's null support.*/
+trait NullTypeable[T] extends Serializable {
+  def cast(t: Any): Option[T]
+}
+
+object NullTypeable {
+  // implicit val nullTypeableany: NullTypeable[Any] = nullTypeableFromTypeable(Typeable.anyTypeable)
+  
+  implicit def nullTypeableFromTypeable[T](implicit typeable: Typeable[T]): NullTypeable[T] =
+    new NullTypeable[T] {
+      def cast(t: Any): Option[T] =
+        if(t == null) Some(null.asInstanceOf[T]) else typeable.cast(t)
+    }
+}
+
+/** Type class supporting type safe conversion of `Traversables` to `HLists`.
+  * Differs from shapeless.ops.traversable.FromTraversable for it's null support. */
+trait FromTraversableNullable[Out <: HList] extends Serializable {
+  def apply(l: GenTraversable[_]): Option[Out]
+}
+
+object FromTraversableNullable {
+  def apply[Out <: HList](implicit from: FromTraversableNullable[Out]) = from
+  
+  implicit def hnilFromTraversableNullable[T]: FromTraversableNullable[HNil] =
+    new FromTraversableNullable[HNil] {
+      def apply(l: GenTraversable[_]) =
+        if(l.isEmpty) Some(HNil) else None 
+    }
+  
+  implicit def hlistFromTraversableNullable[OutH, OutT <: HList]
+    (implicit
+      flt: FromTraversableNullable[OutT],
+      oc: NullTypeable[OutH]
+    ): FromTraversableNullable[OutH :: OutT] =
+      new FromTraversableNullable[OutH :: OutT] {
+        def apply(l: GenTraversable[_]): Option[OutH :: OutT] =
+          if(l.isEmpty) None else for(h <- oc.cast(l.head); t <- flt(l.tail)) yield h :: t
+      }
+}
+
+import scala.language.experimental.macros
+import scala.reflect.macros.whitebox
+
+trait IsXLTuple[T]
+
+object IsXLTuple {
+  implicit def apply[T]: IsXLTuple[T] = macro IsXLTupleMacro.mk[T]
+}
+
+class IsXLTupleMacro(val c: whitebox.Context) {
+  import c.universe._
+  import internal.constantType
+  import Flag._
+  
+  def abort(msg: String) =
+    c.abort(c.enclosingPosition, msg)
+  
+  def mk[T: WeakTypeTag]: Tree = {
+    val tTpe = weakTypeOf[T]
+    if(!isTuple(tTpe))
+      abort(s"Unable to materialize IsXLTuple for non-tuple type $tTpe")
+    
+    q"""new IsXLTuple[$tTpe] {}"""
+  }
+  
+  def isTuple(tpe: Type): Boolean =
+    tpe <:< typeOf[Unit] ||
+    tpe <:< typeOf[Tuple1[_]] ||
+    tpe <:< typeOf[(_, _)] ||
+    tpe <:< typeOf[(_, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)] ||
+    tpe <:< typeOf[(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _)]
 }

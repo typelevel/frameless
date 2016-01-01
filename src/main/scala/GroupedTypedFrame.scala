@@ -23,7 +23,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList](gd: G
         n: Length.Aux[C, N],
         f: Fill.Aux[N, Double, F],
         p: Prepend.Aux[S, F, E],
-        t: ManyTupler.Aux[E, Out],
+        t: XLTupler.Aux[E, Out],
         b: LabelledGeneric.Aux[Out, B],
         y: Keys.Aux[B, Y],
         o: ToList[Y, Symbol]
@@ -47,7 +47,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList](gd: G
         r: SelectAll.Aux[G, GroupingColumns, S],
         m: Mapper.Aux[ToPreciseNumeric.type, U, O],
         p: Prepend.Aux[S, O, E],
-        t: ManyTupler.Aux[E, Out],
+        t: XLTupler.Aux[E, Out],
         b: LabelledGeneric.Aux[Out, B],
         y: Keys.Aux[B, Y],
         o: ToList[Y, Symbol]
@@ -69,7 +69,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList](gd: G
         r: SelectAll.Aux[G, GroupingColumns, S],
         n: Length.Aux[C, N],
         p: Prepend.Aux[S, U, E],
-        t: ManyTupler.Aux[E, Out],
+        t: XLTupler.Aux[E, Out],
         b: LabelledGeneric.Aux[Out, B],
         y: Keys.Aux[B, Y],
         o: ToList[Y, Symbol]
@@ -85,7 +85,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList](gd: G
       g: LabelledGeneric.Aux[Schema, G],
       s: SelectAll.Aux[G, GroupingColumns, S],
       p: Prepend.Aux[S, Long :: HNil, P],
-      t: ManyTupler.Aux[P, Out],
+      t: XLTupler.Aux[P, Out],
       b: LabelledGeneric.Aux[Out, B],
       y: Keys.Aux[B, Y],
       o: ToList[Y, Symbol]
