@@ -3,8 +3,7 @@ package org.apache.spark.sql
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FunSuite, BeforeAndAfterAll}
 import scala.reflect.runtime.universe.TypeTag
-import typedframe.{TypedFrame, FromTraversableNullable}
-import typedframe.TypeableRow
+import typedframe.{TypedFrame, FromTraversableNullable, TypeableRow}
 
 trait SpecWithContext extends FunSuite with BeforeAndAfterAll {
   implicit var implicitContext: SQLContext = null

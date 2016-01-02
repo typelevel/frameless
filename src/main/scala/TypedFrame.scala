@@ -31,6 +31,9 @@ object TypedFrame {
       o: ToList[Y, Symbol]
     ): TypedFrame[S] =
       new TypedFrame[S](dataFrame.toDF(y().toList.map(_.name): _*))
+
+  def mk[S <: Product](dataFrame: DataFrame)(implicit l: LabelledGenericListable[S]): TypedFrame[S] =
+    new TypedFrame[S](dataFrame.toDF(l.list: _*))
 }
 
 final class TypedFrame[Schema <: Product] private[typedframe] (val df: DataFrame) extends Serializable {

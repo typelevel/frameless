@@ -5,7 +5,7 @@ import shapeless.ops.hlist.{Length, Fill}
 import scala.reflect.runtime.universe.TypeTag
 import org.apache.spark.sql.Row
 
-trait TypeableRow[S <: Product] {
+trait TypeableRow[S <: Product] extends Serializable {
   def apply(row: Row): S
 }
 
@@ -25,6 +25,8 @@ trait LowPriorityTypeableRow {
 }
 
 object TypeableRow extends LowPriorityTypeableRow {
+  def apply[S <: Product](implicit t: TypeableRow[S]): TypeableRow[S] = t
+  
   implicit def typeableRowTuple[S <: Product, G <: HList, N <: Nat, F <: HList, T <: Product]
     (implicit
       c: TypeTag[G],

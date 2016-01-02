@@ -18,7 +18,8 @@ object Boilerplate {
 
   val templates: Seq[Template] = List(
     GenXLTuples,
-    GenXLTuplerInstances
+    GenXLTuplerInstances,
+    GenIsXLTupleBoilerplate
   )
 
   def gen(dir: File) =
@@ -108,6 +109,36 @@ object Boilerplate {
         |}
       """
     }      
+  }
+  
+  object GenIsXLTupleBoilerplate extends Template(1, 64) {
+    def filename(root: File) = root / "IsXLTupleBoilerplate.scala"
+    def content(tv: TemplateVals) = {
+      import tv._
+      block"""
+        |package typedframe
+        |
+        |import scala.reflect.macros.whitebox
+        |
+        |class IsXLTupleMacro(val c: whitebox.Context) {
+        |  import c.universe._
+        |  import internal.constantType
+        |  
+        |  def mk[T: WeakTypeTag]: Tree = {
+        |    val tTpe = weakTypeOf[T]
+        |    if(!isTuple(tTpe))
+        |      c.abort(c.enclosingPosition, s"Unable to materialize IsXLTuple for non-tuple type $$tTpe")
+        |    
+        |    q"new IsXLTuple[$$tTpe] {}"
+        |  }
+        |  
+        |  def isTuple(tpe: Type): Boolean = {
+        -    tpe <:< typeOf[Tuple${arity}[${`_.._`}]] ||
+        |    tpe <:< typeOf[Unit]
+        |  }
+        |}
+      """
+    }
   }
 
 }
