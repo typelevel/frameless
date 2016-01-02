@@ -3,7 +3,9 @@ package org.apache.spark.sql
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FunSuite, BeforeAndAfterAll}
 import scala.reflect.runtime.universe.TypeTag
-import typedframe.{TypedFrame, FromTraversableNullable, TypeableRow}
+import typedframe.{TypedFrame, TypeableRow}
+import org.apache.log4j.LogManager
+import org.apache.log4j.Logger
 
 trait SpecWithContext extends FunSuite with BeforeAndAfterAll {
   implicit var implicitContext: SQLContext = null

@@ -6,11 +6,11 @@ import shapeless.test.illTyped
 class TestStatFunctions extends SpecWithContext {
   import testImplicits._
   
-  def fooTF: TypedFrame[Foo] = TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
+  def fooTF: TypedFrame[Foo] = new TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
   
   case class Ns(i: Int, j: Int, d: Double, s: String)
   val nsSeq = Seq((1, 2, 3.0, "s"), (2, 2, 8.0, "S"), (4, 4, 6.0, "c"))
-  def ns: TypedFrame[Ns] = TypedFrame(nsSeq.toDF)
+  def ns: TypedFrame[Ns] = new TypedFrame(nsSeq.toDF)
   
   test("cov") {
     ns.stat.cov('i, 'j)

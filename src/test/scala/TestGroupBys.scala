@@ -6,11 +6,11 @@ import shapeless.test.illTyped
 class TestGroupBys extends SpecWithContext {
   import testImplicits._
   
-  def fooTF: TypedFrame[Foo] = TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
+  def fooTF: TypedFrame[Foo] = new TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
 
   test("count") {
     val toCount = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toCountTF: TypedFrame[Foo] = TypedFrame(toCount.toDF)
+    val toCountTF: TypedFrame[Foo] = new TypedFrame(toCount.toDF)
     
     val grouped: TypedFrame[Tuple1[Long]] = toCountTF.groupBy().count()
     checkAnswer(grouped, Seq(Tuple1(5l)))
@@ -34,16 +34,16 @@ class TestGroupBys extends SpecWithContext {
   case class FooFloat(a: Float, b: String)
   case class FooDouble(a: Double, b: String)
   
-  def fByteTF: TypedFrame[FooByte] = TypedFrame(Seq((1.toByte, "a"), (2.toByte, "a")).toDF)
-  def fShortTF: TypedFrame[FooShort] = TypedFrame(Seq((1.toShort, "a"), (2.toShort, "a")).toDF)
-  def fIntTF: TypedFrame[FooInt] = TypedFrame(Seq((1.toInt, "a"), (2.toInt, "a")).toDF)
-  def fLongTF: TypedFrame[FooLong] = TypedFrame(Seq((1.toLong, "a"), (2.toLong, "a")).toDF)
-  def fFloatTF: TypedFrame[FooFloat] = TypedFrame(Seq((1.toFloat, "a"), (2.toFloat, "a")).toDF)
-  def fDoubleTF: TypedFrame[FooDouble] = TypedFrame(Seq((1.toDouble, "a"), (2.toDouble, "a")).toDF)
+  def fByteTF: TypedFrame[FooByte] = new TypedFrame(Seq((1.toByte, "a"), (2.toByte, "a")).toDF)
+  def fShortTF: TypedFrame[FooShort] = new TypedFrame(Seq((1.toShort, "a"), (2.toShort, "a")).toDF)
+  def fIntTF: TypedFrame[FooInt] = new TypedFrame(Seq((1.toInt, "a"), (2.toInt, "a")).toDF)
+  def fLongTF: TypedFrame[FooLong] = new TypedFrame(Seq((1.toLong, "a"), (2.toLong, "a")).toDF)
+  def fFloatTF: TypedFrame[FooFloat] = new TypedFrame(Seq((1.toFloat, "a"), (2.toFloat, "a")).toDF)
+  def fDoubleTF: TypedFrame[FooDouble] = new TypedFrame(Seq((1.toDouble, "a"), (2.toDouble, "a")).toDF)
   
   test("sum") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+    val toSumTF: TypedFrame[Foo] = new TypedFrame(toSum.toDF)
     val summed: TypedFrame[(String, Long)] = toSumTF.groupBy('b).sum('a)
     checkAnswer(summed, Seq(("id1", 1l), ("id2", 5l), ("id3", 6l)))
     
@@ -68,7 +68,7 @@ class TestGroupBys extends SpecWithContext {
   
   test("avg") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+    val toSumTF: TypedFrame[Foo] = new TypedFrame(toSum.toDF)
     val avged: TypedFrame[(String, Double)] = toSumTF.groupBy('b).avg('a)
     checkAnswer(avged, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
     
@@ -93,7 +93,7 @@ class TestGroupBys extends SpecWithContext {
 
   test("mean") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = TypedFrame(toSum.toDF)
+    val toSumTF: TypedFrame[Foo] = new TypedFrame(toSum.toDF)
     val meaned: TypedFrame[(String, Double)] = toSumTF.groupBy('b).mean('a)
     checkAnswer(meaned, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
     
@@ -118,7 +118,7 @@ class TestGroupBys extends SpecWithContext {
   
   test("max") {
     val toMax = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toMaxTF: TypedFrame[Foo] = TypedFrame(toMax.toDF)
+    val toMaxTF: TypedFrame[Foo] = new TypedFrame(toMax.toDF)
     val maxed: TypedFrame[(String, Int)] = toMaxTF.groupBy('b).max('a)
     checkAnswer(maxed, Seq(("id1", 1), ("id2", 5), ("id3", 4)))
     
@@ -143,7 +143,7 @@ class TestGroupBys extends SpecWithContext {
   
   test("min") {
     val toMin = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toMinTF: TypedFrame[Foo] = TypedFrame(toMin.toDF)
+    val toMinTF: TypedFrame[Foo] = new TypedFrame(toMin.toDF)
     val mined: TypedFrame[(String, Int)] = toMinTF.groupBy('b).min('a)
     checkAnswer(mined, Seq(("id1", 1), ("id2", 5), ("id3", 1)))
     

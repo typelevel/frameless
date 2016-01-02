@@ -6,7 +6,7 @@ import shapeless.test.illTyped
 class TestNaFunctions extends SpecWithContext {
   import testImplicits._
   
-  def fooTF: TypedFrame[Foo] = TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
+  def fooTF: TypedFrame[Foo] = new TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
   
   test("dropAny") {
     fooTF.na.dropAny(): TypedFrame[Foo]
@@ -37,7 +37,7 @@ class TestNaFunctions extends SpecWithContext {
   test("fill") {
     case class Ls(i: Int, l: Long, f: Float, d: Double, s: String, b: Boolean)
     val lsSeq = Seq((1, 1l, 1f, 1d, "s", true), (2, 2l, 2f, 2d, "t", false))
-    val ls: TypedFrame[Ls] = TypedFrame(lsSeq.toDF)
+    val ls: TypedFrame[Ls] = new TypedFrame(lsSeq.toDF)
     
     ls.na.fill(4)('i)
     ls.na.fill(4l)('l)
@@ -49,7 +49,7 @@ class TestNaFunctions extends SpecWithContext {
     
     case class Fs(i: Int, j: Int, s: String, k: Int, t: String)
     val fsSeq = Seq((1, 1, "s", 10, "ss"), (2, 2, "t", 20, "tt"))
-    val fs: TypedFrame[Fs] = TypedFrame(fsSeq.toDF)
+    val fs: TypedFrame[Fs] = new TypedFrame(fsSeq.toDF)
     
     fs.na.fill(1)('i)
     fs.na.fill(1)('i, 'j)
@@ -63,7 +63,7 @@ class TestNaFunctions extends SpecWithContext {
   test("replaceAll") {
     case class Ts(d: Double, s: String, b: Boolean)
     val tsSeq = Seq((1d, "s", true), (3d, "c", true), (0d, "a", false))
-    val ts: TypedFrame[Ts] = TypedFrame(tsSeq.toDF)
+    val ts: TypedFrame[Ts] = new TypedFrame(tsSeq.toDF)
     
     checkAnswer(
       ts.na.replaceAll(Map(1d -> 2d, 3d -> 4d)),
@@ -80,7 +80,7 @@ class TestNaFunctions extends SpecWithContext {
   test("replace") {
     case class Ts(d: Double, s: String, b: Boolean)
     val tsSeq = Seq((1d, "s", true), (3d, "c", true), (0d, "a", false))
-    val ts: TypedFrame[Ts] = TypedFrame(tsSeq.toDF)
+    val ts: TypedFrame[Ts] = new TypedFrame(tsSeq.toDF)
     
     checkAnswer(
       ts.na.replace(Map(1d -> 2d, 3d -> 4d))('d),
@@ -97,7 +97,7 @@ class TestNaFunctions extends SpecWithContext {
       (0d, 1.1d, "s", 0d, "s"),
       (0d, 0d, "c", 0d, "c"),
       (1.2d, 1.3d, "d", 1.4d, "d"))
-    val fs: TypedFrame[Fs] = TypedFrame(fsSeq.toDF)
+    val fs: TypedFrame[Fs] = new TypedFrame(fsSeq.toDF)
     
     checkAnswer(
       fs.na.replace(Map(0d -> 1d))('i),

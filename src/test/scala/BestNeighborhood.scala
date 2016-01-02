@@ -21,8 +21,8 @@
 //   import testImplicits._
   
 //   test("BestNeighborhood") {
-//     val phoneBook: TypedFrame[ParisPhoneBookEntry] = TypedFrame(Seq((1, 2)).toDF)
-//     val cityMap: TypedFrame[CityMapEntry] = TypedFrame(Seq((1, 2)).toDF)
+//     val phoneBook: TypedFrame[ParisPhoneBookEntry] = new TypedFrame(Seq((1, 2)).toDF)
+//     val cityMap: TypedFrame[CityMapEntry] = new TypedFrame(Seq((1, 2)).toDF)
 
 //     val bestNeighborhood: String =          ((((((((((
 //       phoneBook

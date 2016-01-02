@@ -21,15 +21,12 @@ import eu.timepit.refined.numeric.{NonNegative, Positive}
 import eu.timepit.refined.numeric.Interval.{Closed => ClosedInterval}
 import eu.timepit.refined.auto._
 
-object TypedFrame {
-  def apply[S <: Product](dataFrame: DataFrame)(implicit fields: Fields[S]): TypedFrame[S] =
-    TypedFrame[S](dataFrame.toDF(fields(): _*))
-}
-
-final class TypedFrame[Schema <: Product]
-  (val df: DataFrame)
+final class TypedFrame[Schema <: Product] private[typedframe]
+  (_df: DataFrame)
   (implicit val fields: Fields[Schema])
     extends Serializable {
+  
+  val df = _df.toDF(fields(): _*)
   
   def as[NewSchema <: Product] = new FieldRenamer[NewSchema]
   
@@ -40,9 +37,9 @@ final class TypedFrame[Schema <: Product]
         r: Generic.Aux[NewSchema, S],
         g: Fields[NewSchema]
       ): TypedFrame[NewSchema] =
-       TypedFrame(df)
+       new TypedFrame(df)
   }
-
+  
   def rdd(implicit t: TypeableRow[Schema], l: ClassTag[Schema]): RDD[Schema] = df.map(t.apply)
   
   def cartesianJoin[OtherSchema <: Product, Out <: Product, L <: HList, R <: HList, P <: HList, V <: HList]
@@ -55,7 +52,7 @@ final class TypedFrame[Schema <: Product]
       t: XLTupler.Aux[V, Out],
       g: Fields[Out]
     ): TypedFrame[Out] =
-      TypedFrame(df.join(other.df))
+      new TypedFrame(df.join(other.df))
   
   def innerJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
     new JoinPartial(other, "inner")
@@ -111,7 +108,7 @@ final class TypedFrame[Schema <: Product]
         val otherColumns: Seq[Column] =
           other.df.columns.filterNot(joinColumns.contains).map(c => prefixed(othrCol(c)))
         
-        TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))
+        new TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))
       }
     
     def onProduct[C <: HList](columnTuple: C): JoinOnPartial[C, OtherSchema] =
@@ -141,7 +138,7 @@ final class TypedFrame[Schema <: Product]
           .zip(td(otherColumnTuple).map(_.name).map(other.df(_)))
           .map(z => z._1 === z._2)
           .reduce(_ && _)
-        TypedFrame(df.join(other.df, expr, joinType))
+        new TypedFrame(df.join(other.df, expr, joinType))
       }
   }
   
@@ -155,7 +152,7 @@ final class TypedFrame[Schema <: Product]
         g: LabelledGeneric.Aux[Schema, G], // TODO: Optimizable
         s: SelectAll[G, C]
       ): TypedFrame[Schema] =
-        TypedFrame(df.sort(columnTuple.toList.map(c => col(c.name)): _*))
+        new TypedFrame(df.sort(columnTuple.toList.map(c => col(c.name)): _*))
   }
   
   object select extends SingletonProductArgs {
@@ -169,7 +166,7 @@ final class TypedFrame[Schema <: Product]
         t: XLTupler.Aux[S, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        TypedFrame(df.select(columnTuple.toList.map(c => col(c.name)): _*))
+        new TypedFrame(df.select(columnTuple.toList.map(c => col(c.name)): _*))
   }
   
   def selectExpr(exprs: String*): DataFrame =
@@ -182,10 +179,10 @@ final class TypedFrame[Schema <: Product]
       s: SQLContext,
       t: TypeableRow[Schema]
     ): TypedFrame[Schema] =
-      TypedFrame(s.createDataFrame(df.rdd.filter(r => f(t(r))), df.schema))
+      new TypedFrame(s.createDataFrame(df.rdd.filter(r => f(t(r))), df.schema))
   
   def limit(n: Int @@ NonNegative): TypedFrame[Schema] =
-    TypedFrame(df.limit(n))
+    new TypedFrame(df.limit(n))
   
   def unionAll[OtherSchema <: Product, S <: HList]
     (other: TypedFrame[OtherSchema])
@@ -193,7 +190,7 @@ final class TypedFrame[Schema <: Product]
       l: Generic.Aux[Schema, S],
       r: Generic.Aux[OtherSchema, S]
     ): TypedFrame[Schema] =
-      TypedFrame(df.unionAll(other.df))
+      new TypedFrame(df.unionAll(other.df))
   
   def intersect[OtherSchema <: Product, S <: HList]
     (other: TypedFrame[OtherSchema])
@@ -201,7 +198,7 @@ final class TypedFrame[Schema <: Product]
       l: Generic.Aux[Schema, S],
       r: Generic.Aux[OtherSchema, S]
     ): TypedFrame[Schema] =
-      TypedFrame(df.intersect(other.df))
+      new TypedFrame(df.intersect(other.df))
   
   def except[OtherSchema <: Product, S <: HList]
     (other: TypedFrame[OtherSchema])
@@ -209,21 +206,21 @@ final class TypedFrame[Schema <: Product]
       l: Generic.Aux[Schema, S],
       r: Generic.Aux[OtherSchema, S]
     ): TypedFrame[Schema] =
-      TypedFrame(df.except(other.df))
+      new TypedFrame(df.except(other.df))
       
   def sample(
     withReplacement: Boolean,
     fraction: Double @@ ClosedInterval[_0, _1],
     seed: Long = randomLong
   ): TypedFrame[Schema] =
-    TypedFrame(df.sample(withReplacement, fraction, seed))
+    new TypedFrame(df.sample(withReplacement, fraction, seed))
   
   def randomSplit(
     weights: Array[Double @@ NonNegative],
     seed: Long = randomLong
   ): Array[TypedFrame[Schema]] = {
     val a: Array[Double] = weights.map(identity)
-    df.randomSplit(a, seed).map(d => TypedFrame[Schema](d))
+    df.randomSplit(a, seed).map(d => new TypedFrame[Schema](d))
   }
   
   def explode[NewSchema <: Product, Out <: Product, N <: HList, G <: HList, P <: HList]
@@ -236,7 +233,7 @@ final class TypedFrame[Schema <: Product]
       m: XLTupler.Aux[P, Out],
       g: Fields[Out]
     ): TypedFrame[Out] =
-      TypedFrame(df.explode(df.columns.map(col): _*)(r => f(t(r))))
+      new TypedFrame(df.explode(df.columns.map(col): _*)(r => f(t(r))))
       
   object drop extends SingletonProductArgs {
     def applyProduct[C <: HList, Out <: Product, G <: HList, R <: HList, V <: HList]
@@ -250,7 +247,7 @@ final class TypedFrame[Schema <: Product]
         t: XLTupler.Aux[V, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        TypedFrame(columnTuple.toList.map(_.name).foldLeft(df)(_ drop _))
+        new TypedFrame(columnTuple.toList.map(_.name).foldLeft(df)(_ drop _))
   }
   
   object dropDuplicates extends SingletonProductArgs {
@@ -261,7 +258,7 @@ final class TypedFrame[Schema <: Product]
         g: LabelledGeneric.Aux[Schema, G], // TODO: Optimizable
         r: SelectAll[G, C]
       ): TypedFrame[Schema] =
-        TypedFrame(columnTuple match {
+        new TypedFrame(columnTuple match {
           case HNil => df.dropDuplicates()
           case _ => df.dropDuplicates(columnTuple.toList.map(_.name))
         })
@@ -280,22 +277,22 @@ final class TypedFrame[Schema <: Product]
   }
   
   def repartition(numPartitions: Int @@ Positive): TypedFrame[Schema] =
-    TypedFrame(df.repartition(numPartitions))
+    new TypedFrame(df.repartition(numPartitions))
   
   def coalesce(numPartitions: Int @@ Positive): TypedFrame[Schema] =
-    TypedFrame(df.coalesce(numPartitions))
+    new TypedFrame(df.coalesce(numPartitions))
   
-  def distinct(): TypedFrame[Schema] = TypedFrame(df.distinct())
+  def distinct(): TypedFrame[Schema] = new TypedFrame(df.distinct())
   
-  def persist(): TypedFrame[Schema] = TypedFrame(df.persist())
+  def persist(): TypedFrame[Schema] = new TypedFrame(df.persist())
   
-  def cache(): TypedFrame[Schema] = TypedFrame(df.cache())
+  def cache(): TypedFrame[Schema] = new TypedFrame(df.cache())
   
-  def persist(newLevel: StorageLevel): TypedFrame[Schema] = TypedFrame(df.persist(newLevel))
+  def persist(newLevel: StorageLevel): TypedFrame[Schema] = new TypedFrame(df.persist(newLevel))
   
-  def unpersist(blocking: Boolean): TypedFrame[Schema] = TypedFrame(df.unpersist(blocking))
+  def unpersist(blocking: Boolean): TypedFrame[Schema] = new TypedFrame(df.unpersist(blocking))
   
-  def unpersist(): TypedFrame[Schema] = TypedFrame(df.unpersist())
+  def unpersist(): TypedFrame[Schema] = new TypedFrame(df.unpersist())
   
   def schema: StructType = df.schema
   
@@ -370,7 +367,7 @@ final class TypedFrame[Schema <: Product]
       t: TypeTag[NewSchema],
       b: Fields[NewSchema]
     ): TypedFrame[NewSchema] =
-      TypedFrame(s.createDataFrame(df.map(r => f(w(r)))))
+      new TypedFrame(s.createDataFrame(df.map(r => f(w(r)))))
   
   def flatMap[NewSchema <: Product]
     (f: Schema => TraversableOnce[NewSchema])
@@ -381,7 +378,7 @@ final class TypedFrame[Schema <: Product]
       t: TypeTag[NewSchema],
       b: Fields[NewSchema]
     ): TypedFrame[NewSchema] =
-      TypedFrame(s.createDataFrame(df.flatMap(r => f(w(r)))))
+      new TypedFrame(s.createDataFrame(df.flatMap(r => f(w(r)))))
   
   def mapPartitions[NewSchema <: Product]
     (f: Iterator[Schema] => Iterator[NewSchema])
@@ -392,7 +389,7 @@ final class TypedFrame[Schema <: Product]
       t: TypeTag[NewSchema],
       b: Fields[NewSchema]
     ): TypedFrame[NewSchema] =
-      TypedFrame(s.createDataFrame(df.mapPartitions(i => f(i.map(w.apply)))))
+      new TypedFrame(s.createDataFrame(df.mapPartitions(i => f(i.map(w.apply)))))
   
   def foreach(f: Schema => Unit)(implicit t: TypeableRow[Schema]): Unit =
     df.foreach(r => f(t(r)))

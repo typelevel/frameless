@@ -11,7 +11,7 @@ import shapeless.tag.@@
 import eu.timepit.refined.numeric.Interval.{Closed => ClosedInterval}
 import eu.timepit.refined.auto._
 
-final class TypedFrameStatFunctions[Schema <: Product]
+final class TypedFrameStatFunctions[Schema <: Product] private[typedframe]
   (dfs: DataFrameStatFunctions)
   (implicit val fields: Fields[Schema])
     extends Serializable {
@@ -52,7 +52,7 @@ final class TypedFrameStatFunctions[Schema <: Product]
   def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsCurried(support)
   
   class FreqItemsCurried(support: Double) extends SingletonProductArgs {
-    def applyProduct[Out <: Product, C <: HList, G <: HList, S <: HList, B <: HList, Y <: HList]
+    def applyProduct[Out <: Product, C <: HList, G <: HList, S <: HList]
       (columnTuple: C)
       (implicit
         h: IsHCons[C],
@@ -60,11 +60,9 @@ final class TypedFrameStatFunctions[Schema <: Product]
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S],
         t: Tupler.Aux[S, Out],
-        b: LabelledGeneric.Aux[Out, B],
-        y: Keys.Aux[B, Y],
-        o: ToList[Y, Symbol]
+        b: Fields[Out]
       ): TypedFrame[Out] =
-        TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
+        new TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
   }
   
   def sampleBy[T, G <: HList, C]

@@ -10,7 +10,7 @@ import shapeless.tag.@@
 
 import eu.timepit.refined.numeric.Positive
 
-final class TypedFrameNaFunctions[Schema <: Product]
+final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
   (dfn: DataFrameNaFunctions)
   (implicit val fields: Fields[Schema])
     extends Serializable {
@@ -27,7 +27,7 @@ final class TypedFrameNaFunctions[Schema <: Product]
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
       ): TypedFrame[Schema] =
-        TypedFrame(columnTuple match {
+        new TypedFrame(columnTuple match {
           case HNil => dfn.drop(how)
           case _ => dfn.drop(how, l(columnTuple).map(_.name))
         })
@@ -44,7 +44,7 @@ final class TypedFrameNaFunctions[Schema <: Product]
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S]
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
+        new TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
   }
   
   def fillAll(value: Double): TypedFrame[Schema] = new TypedFrame(dfn.fill(value))
@@ -68,7 +68,7 @@ final class TypedFrameNaFunctions[Schema <: Product]
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
+        new TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
   }
   
   type CanReplace = Double :: String :: HNil
@@ -80,7 +80,7 @@ final class TypedFrameNaFunctions[Schema <: Product]
       g: Generic.Aux[Schema, G],
       s: Selector[G, T]
     ): TypedFrame[Schema] =
-      TypedFrame(dfn.replace("*", replacement))
+      new TypedFrame(dfn.replace("*", replacement))
   
   def replace[T](replacement: Map[T, T]) = new ReplaceCurried[T](replacement)
   
@@ -97,7 +97,7 @@ final class TypedFrameNaFunctions[Schema <: Product]
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
+        new TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
   }
   
 }
