@@ -1,11 +1,36 @@
 package typedframe
 
 import shapeless._
-import shapeless.ops.record.Remover
+import shapeless.ops.record.{Remover, Keys}
+import shapeless.ops.hlist.ToList
 import scala.collection.GenTraversable
-import scala.language.experimental.macros
-import scala.language.higherKinds // TODO: Needed?
-import scala.reflect.macros.whitebox
+import scala.language.higherKinds
+
+/** Type class aggregating LabelledGeneric, `record.Keys` and `hlist.ToList`
+  * to extract the name of all fields of a product. */
+trait Fields[S <: Product] extends Serializable {
+  type Repr <: HList
+  def cachedLabelledGeneric: LabelledGeneric.Aux[S, Repr]
+  def apply(): Seq[String]
+}
+
+object Fields {
+  def apply[S <: Product](implicit t: Fields[S]): Fields[S] = t
+  
+  type Aux[S <: Product, R <: HList] = Fields[S] { type Repr = R }
+  
+  implicit def mkFields[S <: Product, R <: HList, K <: HList]
+    (implicit
+      g: LabelledGeneric.Aux[S, R],
+      k: Keys.Aux[R, K],
+      t: ToList[K, Symbol]
+    ): Aux[S, R] =
+      new Fields[S] {
+        type Repr = R
+        def cachedLabelledGeneric = g
+        def apply() = k().toList.map(_.name)
+      }
+}
 
 /** Type class supporting multiple record field removal. */
 @annotation.implicitNotFound(msg = "No fields ${K} in record ${L}")
@@ -118,5 +143,8 @@ object XLTupler extends XLTuplerInstances {
 trait IsXLTuple[T]
 
 object IsXLTuple {
+  import scala.language.experimental.macros
+  import scala.reflect.macros.whitebox
+  
   implicit def apply[T]: IsXLTuple[T] = macro IsXLTupleMacro.mk[T]
 }

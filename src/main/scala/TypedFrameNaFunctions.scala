@@ -10,7 +10,11 @@ import shapeless.tag.@@
 
 import eu.timepit.refined.numeric.Positive
 
-final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: DataFrameNaFunctions) extends Serializable {
+final class TypedFrameNaFunctions[Schema <: Product]
+  (dfn: DataFrameNaFunctions)
+  (implicit val fields: Fields[Schema])
+    extends Serializable {
+  
   def dropAny = new DropHowCurried("any")
   
   def dropAll = new DropHowCurried("all")
@@ -23,7 +27,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
         g: LabelledGeneric.Aux[Schema, G],
         r: SelectAll[G, C]
       ): TypedFrame[Schema] =
-        new TypedFrame(columnTuple match {
+        TypedFrame(columnTuple match {
           case HNil => dfn.drop(how)
           case _ => dfn.drop(how, l(columnTuple).map(_.name))
         })
@@ -40,7 +44,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
         g: LabelledGeneric.Aux[Schema, G],
         s: SelectAll.Aux[G, C, S]
       ): TypedFrame[Schema] =
-        new TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
+        TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
   }
   
   def fillAll(value: Double): TypedFrame[Schema] = new TypedFrame(dfn.fill(value))
@@ -64,7 +68,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        new TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
+        TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
   }
   
   type CanReplace = Double :: String :: HNil
@@ -76,7 +80,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
       g: Generic.Aux[Schema, G],
       s: Selector[G, T]
     ): TypedFrame[Schema] =
-      new TypedFrame(dfn.replace("*", replacement))
+      TypedFrame(dfn.replace("*", replacement))
   
   def replace[T](replacement: Map[T, T]) = new ReplaceCurried[T](replacement)
   
@@ -93,6 +97,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe] (dfn: D
         f: Fill.Aux[NC, T, F],
         e: S =:= F
       ): TypedFrame[Schema] =
-        new TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
+        TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
   }
+  
 }
