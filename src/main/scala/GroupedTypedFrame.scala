@@ -13,13 +13,11 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
   
   class DOp(theOp: Seq[String] => DataFrame) extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, N <: Nat, G <: HList, P <: HList, U <: HList, S <: HList, F <: HList, E <: HList]
-      (columnTuple: C)
+      (columns: C)
       (implicit
-        l: ToList[C, Symbol],
         h: IsHCons[C],
-        g: LabelledGeneric.Aux[Schema, G],
+        s: FieldsExtractor.Aux[Schema, C, G, U],
         a: AllRemover.Aux[G, C, P],
-        s: SelectAll.Aux[G, C, U],
         i: LiftAll[Numeric, U],
         e: SelectAll[P, GroupingColumns],
         r: SelectAll.Aux[G, GroupingColumns, S],
@@ -29,7 +27,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
         t: XLTupler.Aux[E, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(theOp(columnTuple.toList.map(_.name)))
+        new TypedFrame(theOp(s(columns)))
   }
   
   def avg = new DOp(gd.avg)
@@ -37,13 +35,11 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
   
   object sum extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, G <: HList, P <: HList, U <: HList, S <: HList, O <: HList, E <: HList]
-      (columnTuple: C)
+      (columns: C)
       (implicit
-        l: ToList[C, Symbol],
         h: IsHCons[C],
-        g: LabelledGeneric.Aux[Schema, G],
+        s: FieldsExtractor.Aux[Schema, C, G, U],
         a: AllRemover.Aux[G, C, P],
-        s: SelectAll.Aux[G, C, U],
         e: SelectAll[P, GroupingColumns],
         r: SelectAll.Aux[G, GroupingColumns, S],
         m: Mapper.Aux[ToPreciseNumeric.type, U, O],
@@ -51,27 +47,24 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
         t: XLTupler.Aux[E, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(gd.sum(columnTuple.toList.map(_.name): _*))
+        new TypedFrame(gd.sum(s(columns): _*))
   }
   
   class POp(theOp: Seq[String] => DataFrame) extends SingletonProductArgs {
-    def applyProduct[Out <: Product, C <: HList, N <: Nat, G <: HList, P <: HList, U <: HList, S <: HList, E <: HList]
-      (columnTuple: C)
+    def applyProduct[Out <: Product, C <: HList, G <: HList, P <: HList, U <: HList, S <: HList, E <: HList]
+      (columns: C)
       (implicit
-        l: ToList[C, Symbol],
         h: IsHCons[C],
-        g: LabelledGeneric.Aux[Schema, G],
+        s: FieldsExtractor.Aux[Schema, C, G, U],
         a: AllRemover.Aux[G, C, P],
-        s: SelectAll.Aux[G, C, U],
         i: LiftAll[Numeric, U],
         e: SelectAll[P, GroupingColumns],
         r: SelectAll.Aux[G, GroupingColumns, S],
-        n: Length.Aux[C, N],
         p: Prepend.Aux[S, U, E],
         t: XLTupler.Aux[E, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(theOp(columnTuple.toList.map(_.name)))
+        new TypedFrame(theOp(s(columns)))
   }
   
   def max = new POp(gd.max)

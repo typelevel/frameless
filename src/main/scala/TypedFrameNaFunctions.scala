@@ -20,31 +20,20 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
   def dropAll = new DropHowCurried("all")
   
   class DropHowCurried(how: String) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList]
-      (columnTuple: C)
-      (implicit
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        r: SelectAll[G, C]
-      ): TypedFrame[Schema] =
-        new TypedFrame(columnTuple match {
+    def applyProduct[C <: HList](columns: C)
+      (implicit f: FieldsExtractor[Schema, C]): TypedFrame[Schema] =
+        new TypedFrame(columns match {
           case HNil => dfn.drop(how)
-          case _ => dfn.drop(how, l(columnTuple).map(_.name))
+          case _ => dfn.drop(how, f(columns))
         })
   }
   
   def drop(minNonNulls: Int @@ Positive) = new DropMinNNCurried(minNonNulls)
   
   class DropMinNNCurried(minNonNulls: Int @@ Positive) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList]
-      (columnTuple: C)
-      (implicit
-        h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll.Aux[G, C, S]
-      ): TypedFrame[Schema] =
-        new TypedFrame(dfn.drop(minNonNulls, l(columnTuple).map(_.name)))
+    def applyProduct[C <: HList](columns: C)
+      (implicit h: IsHCons[C], f: FieldsExtractor[Schema, C]): TypedFrame[Schema] =
+        new TypedFrame(dfn.drop(minNonNulls, f(columns)))
   }
   
   def fillAll(value: Double): TypedFrame[Schema] = new TypedFrame(dfn.fill(value))
@@ -56,19 +45,16 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
   type CanFill = Int :: Long :: Float :: Double :: String :: HNil
   
   class FillCurried[T](value: T) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
-      (columnTuple: C)
+    def applyProduct[C <: HList, G <: HList, S <: HList, NC <: Nat]
+      (columns: C)
       (implicit
         h: IsHCons[C],
         s: Selector[CanFill, T],
-        t: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        a: SelectAll.Aux[G, C, S],
+        f: FieldsExtractor.Aux[Schema, C, G, S],
         l: Length.Aux[S, NC],
-        f: Fill.Aux[NC, T, F],
-        e: S =:= F
+        i: Fill.Aux[NC, T, S]
       ): TypedFrame[Schema] =
-        new TypedFrame(dfn.fill(t(columnTuple).map(_.name -> value).toMap))
+        new TypedFrame(dfn.fill(f(columns).map(_ -> value).toMap))
   }
   
   type CanReplace = Double :: String :: HNil
@@ -85,19 +71,16 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
   def replace[T](replacement: Map[T, T]) = new ReplaceCurried[T](replacement)
   
   class ReplaceCurried[T](replacement: Map[T, T]) extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, S <: HList, F <: HList, NC <: Nat]
-      (columnTuple: C)
+    def applyProduct[C <: HList, G <: HList, S <: HList, NC <: Nat]
+      (columns: C)
       (implicit
         h: IsHCons[C],
         s: Selector[CanReplace, T],
-        t: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        a: SelectAll.Aux[G, C, S],
+        f: FieldsExtractor.Aux[Schema, C, G, S],
         l: Length.Aux[S, NC],
-        f: Fill.Aux[NC, T, F],
-        e: S =:= F
+        i: Fill.Aux[NC, T, S]
       ): TypedFrame[Schema] =
-        new TypedFrame(dfn.replace(t(columnTuple).map(_.name), replacement))
+        new TypedFrame(dfn.replace(f(columns), replacement))
   }
   
 }

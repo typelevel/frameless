@@ -70,16 +70,12 @@ final class TypedFrame[Schema <: Product] private[typedframe]
     new JoinPartial(other, "leftsemi")
   
   class JoinPartial[OtherSchema <: Product](other: TypedFrame[OtherSchema], joinType: String) extends SingletonProductArgs {
-    def usingProduct[C <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, T <: HList, A <: HList, V <: HList, D <: HList, P <: HList]
-      (columnTuple: C)
+    def usingProduct[C <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, A <: HList, V <: HList, D <: HList, P <: HList]
+      (columns: C)
       (implicit
         hc: IsHCons[C],
-        tc: ToList[C, Symbol],
-        gc: LabelledGeneric.Aux[Schema, L],
-        gd: LabelledGeneric.Aux[OtherSchema, R],
-        sc: SelectAll.Aux[L, C, S],
-        sd: SelectAll.Aux[R, C, T],
-        ev: S =:= T,
+        fl: FieldsExtractor.Aux[Schema, C, L, S],
+        fr: FieldsExtractor.Aux[OtherSchema, C, R, S],
         rc: AllRemover.Aux[R, C, A],
         vc: Values.Aux[L, V],
         vd: Values.Aux[A, D],
@@ -87,7 +83,7 @@ final class TypedFrame[Schema <: Product] private[typedframe]
         t: XLTupler.Aux[P, Out],
         g: Fields[Out]
       ): TypedFrame[Out] = {
-        val joinColumns: Seq[String] = tc(columnTuple).map(_.name)
+        val joinColumns: Seq[String] = fl(columns)
         val joinExpr: Column = joinColumns.map(n => df(n) === other.df(n)).reduce(_ && _)
         val joined: DataFrame = df.join(other.df, joinExpr, joinType)
         
@@ -111,68 +107,67 @@ final class TypedFrame[Schema <: Product] private[typedframe]
         new TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))
       }
     
-    def onProduct[C <: HList](columnTuple: C): JoinOnPartial[C, OtherSchema] =
-      new JoinOnPartial[C, OtherSchema](columnTuple: C, other: TypedFrame[OtherSchema], joinType: String)
+    def onProduct[C <: HList](columns: C): JoinOnPartial[C, OtherSchema] =
+      new JoinOnPartial[C, OtherSchema](columns: C, other: TypedFrame[OtherSchema], joinType: String)
   }
   
-  class JoinOnPartial[C <: HList, OtherSchema <: Product](columnTuple: C, other: TypedFrame[OtherSchema], joinType: String)
+  class JoinOnPartial[C <: HList, OtherSchema <: Product](columns: C, other: TypedFrame[OtherSchema], joinType: String)
       extends SingletonProductArgs {
-    def andProduct[D <: HList, L <: HList, R <: HList, S <: HList, T <: HList, V <: HList, W <: HList, P <: HList, Out <: Product]
+    def andProduct[D <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, V <: HList, W <: HList, P <: HList]
       (otherColumnTuple: D)
       (implicit
         hc: IsHCons[C],
-        tc: ToList[C, Symbol],
-        td: ToList[D, Symbol],
-        gc: LabelledGeneric.Aux[Schema, L],
-        gd: LabelledGeneric.Aux[OtherSchema, R],
-        sc: SelectAll.Aux[L, C, S],
-        sd: SelectAll.Aux[R, D, T],
-        ev: S =:= T,
+        fl: FieldsExtractor.Aux[Schema, C, L, S],
+        fr: FieldsExtractor.Aux[Schema, D, R, S],
         vc: Values.Aux[L, V],
         vd: Values.Aux[R, W],
         p: Prepend.Aux[V, W, P],
         t: XLTupler.Aux[P, Out],
         g: Fields[Out]
       ): TypedFrame[Out] = {
-        val expr = tc(columnTuple).map(_.name).map(df(_))
-          .zip(td(otherColumnTuple).map(_.name).map(other.df(_)))
+        val expr = fl(columns).map(df(_))
+          .zip(fr(otherColumnTuple).map(other.df(_)))
           .map(z => z._1 === z._2)
           .reduce(_ && _)
         new TypedFrame(df.join(other.df, expr, joinType))
       }
   }
   
-  // val sort = orderBy
-  object orderBy extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList]
-      (columnTuple: C)
+  object sort extends SingletonProductArgs {
+    def applyProduct[C <: HList]
+      (columns: C)
       (implicit
         h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G], // TODO: Optimizable
-        s: SelectAll[G, C]
+        f: FieldsExtractor[Schema, C]
       ): TypedFrame[Schema] =
-        new TypedFrame(df.sort(columnTuple.toList.map(c => col(c.name)): _*))
+        new TypedFrame(df.sort(f(columns).map(col): _*))
+  }
+  
+  object sortDesc extends SingletonProductArgs {
+    def applyProduct[C <: HList]
+      (columns: C)
+      (implicit
+        h: IsHCons[C],
+        f: FieldsExtractor[Schema, C]
+      ): TypedFrame[Schema] =
+        new TypedFrame(df.sort(f(columns).map(c => col(c).desc): _*))
   }
   
   object select extends SingletonProductArgs {
     def applyProduct[C <: HList, Out <: Product, G <: HList, S <: HList]
-      (columnTuple: C)
+      (columns: C)
       (implicit
         h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll.Aux[G, C, S],
+        f: FieldsExtractor.Aux[Schema, C, G, S],
         t: XLTupler.Aux[S, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(df.select(columnTuple.toList.map(c => col(c.name)): _*))
+        new TypedFrame(df.select(f(columns).map(col): _*))
   }
   
   def selectExpr(exprs: String*): DataFrame =
     df.selectExpr(exprs: _*)
   
-  // def where(condition: Column) = filter(condition)
   def filter
     (f: Schema => Boolean)
     (implicit
@@ -237,43 +232,34 @@ final class TypedFrame[Schema <: Product] private[typedframe]
       
   object drop extends SingletonProductArgs {
     def applyProduct[C <: HList, Out <: Product, G <: HList, R <: HList, V <: HList]
-      (columnTuple: C)
+      (columns: C)
       (implicit
         h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
+        f: FieldsExtractor.Aux[Schema, C, G, _],
         r: AllRemover.Aux[G, C, R],
         v: Values.Aux[R, V],
         t: XLTupler.Aux[V, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(columnTuple.toList.map(_.name).foldLeft(df)(_ drop _))
+        new TypedFrame(f(columns).foldLeft(df)(_ drop _))
   }
   
   object dropDuplicates extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
-      (columnTuple: C)
-      (implicit
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G], // TODO: Optimizable
-        r: SelectAll[G, C]
-      ): TypedFrame[Schema] =
-        new TypedFrame(columnTuple match {
-          case HNil => df.dropDuplicates()
-          case _ => df.dropDuplicates(columnTuple.toList.map(_.name))
-        })
+    def applyProduct[C <: HList](columns: C)(implicit f: FieldsExtractor[Schema, C]): TypedFrame[Schema] =
+      new TypedFrame(columns match {
+        case HNil => df.dropDuplicates()
+        case _ => df.dropDuplicates(f(columns))
+      })
   }
   
   object describe extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
-      (columnTuple: C)
+    def applyProduct[C <: HList]
+      (columns: C)
       (implicit
         h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G], // TODO: Optimizable
-        r: SelectAll[G, C]
+        f: FieldsExtractor[Schema, C]
       ): DataFrame =
-        df.describe(columnTuple.toList.map(_.name): _*)
+        df.describe(f(columns): _*)
   }
   
   def repartition(numPartitions: Int @@ Positive): TypedFrame[Schema] =
@@ -316,42 +302,25 @@ final class TypedFrame[Schema <: Product] private[typedframe]
   def stat: TypedFrameStatFunctions[Schema] = new TypedFrameStatFunctions(df.stat)
   
   object groupBy extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
-      (columnTuple: C)
-      (implicit
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll[G, C]
-      ): GroupedTypedFrame[Schema, C] =
-        new GroupedTypedFrame(df.groupBy(columnTuple.toList.map(c => col(c.name)): _*))
+    def applyProduct[C <: HList](columns: C)
+      (implicit f: FieldsExtractor[Schema, C]): GroupedTypedFrame[Schema, C] =
+        new GroupedTypedFrame(df.groupBy(f(columns).map(col): _*))
   }
   
   object rollup extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
-      (columnTuple: C)
-      (implicit
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll[G, C]
-      ): GroupedTypedFrame[Schema, C] =
-        new GroupedTypedFrame(df.rollup(columnTuple.toList.map(c => col(c.name)): _*))
+    def applyProduct[C <: HList](columns: C)
+      (implicit f: FieldsExtractor[Schema, C]): GroupedTypedFrame[Schema, C] =
+        new GroupedTypedFrame(df.rollup(f(columns).map(col): _*))
   }
   
   object cube extends SingletonProductArgs {
-    def applyProduct[C <: HList, G <: HList, R <: HList]
-      (columnTuple: C)
-      (implicit
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll[G, C]
-      ): GroupedTypedFrame[Schema, C] =
-        new GroupedTypedFrame(df.cube(columnTuple.toList.map(c => col(c.name)): _*))
+    def applyProduct[C <: HList](columns: C)
+      (implicit f: FieldsExtractor[Schema, C]): GroupedTypedFrame[Schema, C] =
+        new GroupedTypedFrame(df.cube(f(columns).map(col): _*))
   }
   
-  // def first = head
   def head()(implicit t: TypeableRow[Schema]): Schema = t(df.head())
   
-  // def head(n: Int) = take(n)
   def take(n: Int @@ NonNegative)(implicit t: TypeableRow[Schema]): Seq[Schema] =
     df.head(n).map(t.apply)
   

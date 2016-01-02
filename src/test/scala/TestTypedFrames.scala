@@ -26,18 +26,32 @@ class TestTypedFrames extends SpecWithContext {
     illTyped("fooTF.as[D]()")
   }
   
-  test("orderBy") {
-    val a: TypedFrame[Foo] = fooTF.orderBy('a)
-    val ab: TypedFrame[Foo] = fooTF.orderBy('a, 'b)
-    val ba: TypedFrame[Foo] = fooTF.orderBy('b, 'a)
+  test("sort") {
+    val a: TypedFrame[Foo] = fooTF.sort('a)
+    val ab: TypedFrame[Foo] = fooTF.sort('a, 'b)
+    val ba: TypedFrame[Foo] = fooTF.sort('b, 'a)
     
     checkAnswer(a, Seq(Foo(1, "id1"), Foo(4, "id3"), Foo(5, "id2")))
     checkAnswer(ab, Seq(Foo(1, "id1"), Foo(4, "id3"), Foo(5, "id2")))
     checkAnswer(ba, Seq(Foo(1, "id1"), Foo(5, "id2"), Foo(4, "id3")))
     
-    illTyped("fooTF.orderBy()")
-    illTyped("fooTF.orderBy('c)")
-    illTyped("fooTF.orderBy('a, 'c)")
+    illTyped("fooTF.sort()")
+    illTyped("fooTF.sort('c)")
+    illTyped("fooTF.sort('a, 'c)")
+  }
+  
+  test("sortDesc") {
+    val a: TypedFrame[Foo] = fooTF.sortDesc('a)
+    val ab: TypedFrame[Foo] = fooTF.sortDesc('a, 'b)
+    val ba: TypedFrame[Foo] = fooTF.sortDesc('b, 'a)
+    
+    checkAnswer(a, Seq(Foo(5, "id2"), Foo(4, "id3"), Foo(1, "id1")))
+    checkAnswer(ab, Seq(Foo(5, "id2"), Foo(4, "id3"), Foo(1, "id1")))
+    checkAnswer(ba, Seq(Foo(4, "id3"), Foo(5, "id2"), Foo(1, "id1")))
+    
+    illTyped("fooTF.sortDesc()")
+    illTyped("fooTF.sortDesc('c)")
+    illTyped("fooTF.sortDesc('a, 'c)")
   }
 
   test("select") {

@@ -3,7 +3,7 @@ package typedframe
 import shapeless._
 import shapeless.ops.hlist.{Length, Fill}
 import scala.reflect.runtime.universe.TypeTag
-import org.apache.spark.sql.Row // TODO remove, make it TypeableSeq
+import org.apache.spark.sql.Row
 
 trait TypeableRow[S <: Product] extends Serializable {
   def apply(row: Row): S

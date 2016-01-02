@@ -4,7 +4,7 @@ import org.apache.spark.sql.{DataFrameStatFunctions, DataFrame}
 
 import shapeless._
 import shapeless.nat._1
-import shapeless.ops.record.{Selector, SelectAll, Keys}
+import shapeless.ops.record.{Selector, Keys}
 import shapeless.ops.hlist.{ToList, IsHCons, Tupler}
 import shapeless.tag.@@
 
@@ -52,17 +52,15 @@ final class TypedFrameStatFunctions[Schema <: Product] private[typedframe]
   def freqItems(support: Double @@ ClosedInterval[_0, _1] = 0.01) = new FreqItemsCurried(support)
   
   class FreqItemsCurried(support: Double) extends SingletonProductArgs {
-    def applyProduct[Out <: Product, C <: HList, G <: HList, S <: HList]
-      (columnTuple: C)
+    def applyProduct[Out <: Product, C <: HList, S <: HList]
+      (columns: C)
       (implicit
         h: IsHCons[C],
-        l: ToList[C, Symbol],
-        g: LabelledGeneric.Aux[Schema, G],
-        s: SelectAll.Aux[G, C, S],
+        f: FieldsExtractor.Aux[Schema, C, _, S],
         t: Tupler.Aux[S, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
-        new TypedFrame(dfs.freqItems(l(columnTuple).map(_.name), support))
+        new TypedFrame(dfs.freqItems(f(columns), support))
   }
   
   def sampleBy[T, G <: HList, C]
