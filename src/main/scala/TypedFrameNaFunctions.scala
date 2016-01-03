@@ -5,7 +5,7 @@ import org.apache.spark.sql.DataFrameNaFunctions
 import shapeless._
 import shapeless.ops.nat.{ToInt, LT, LTEq}
 import shapeless.ops.record.{SelectAll, Values}
-import shapeless.ops.hlist.{ToList, Length, IsHCons, Fill, Selector}
+import shapeless.ops.hlist.{ToList, Length, IsHCons, Selector}
 import shapeless.tag.@@
 
 import eu.timepit.refined.numeric.Positive
@@ -52,7 +52,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
         s: Selector[CanFill, T],
         f: FieldsExtractor.Aux[Schema, C, G, S],
         l: Length.Aux[S, NC],
-        i: Fill.Aux[NC, T, S]
+        i: Fille.Aux[NC, T, S]
       ): TypedFrame[Schema] =
         new TypedFrame(dfn.fill(f(columns).map(_ -> value).toMap))
   }
@@ -78,7 +78,7 @@ final class TypedFrameNaFunctions[Schema <: Product] private[typedframe]
         s: Selector[CanReplace, T],
         f: FieldsExtractor.Aux[Schema, C, G, S],
         l: Length.Aux[S, NC],
-        i: Fill.Aux[NC, T, S]
+        i: Fille.Aux[NC, T, S]
       ): TypedFrame[Schema] =
         new TypedFrame(dfn.replace(f(columns), replacement))
   }

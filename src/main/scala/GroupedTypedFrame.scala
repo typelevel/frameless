@@ -2,7 +2,7 @@ package typedframe
 
 import shapeless._
 import org.apache.spark.sql.{DataFrame, GroupedData}
-import shapeless.ops.hlist.{ToList, Prepend, Length, Fill, RemoveAll, IsHCons, Mapper}
+import shapeless.ops.hlist.{ToList, Prepend, Length, RemoveAll, IsHCons, Mapper}
 import shapeless.ops.record.{SelectAll, Values, Keys}
 
 final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
@@ -22,7 +22,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
         e: SelectAll[P, GroupingColumns],
         r: SelectAll.Aux[G, GroupingColumns, S],
         n: Length.Aux[C, N],
-        f: Fill.Aux[N, Double, F],
+        f: Fille.Aux[N, Double, F],
         p: Prepend.Aux[S, F, E],
         t: XLTupler.Aux[E, Out],
         b: Fields[Out]

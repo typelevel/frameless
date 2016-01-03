@@ -14,7 +14,7 @@ import shapeless._
 import shapeless.nat._1
 import shapeless.ops.traversable.FromTraversable
 import shapeless.ops.record.{SelectAll, Values, Keys}
-import shapeless.ops.hlist.{ToList, ToTraversable, IsHCons, Prepend, RemoveAll, Length, Fill}
+import shapeless.ops.hlist.{ToList, ToTraversable, IsHCons, Prepend, RemoveAll, Length}
 import shapeless.tag.@@
 
 import eu.timepit.refined.numeric.{NonNegative, Positive}

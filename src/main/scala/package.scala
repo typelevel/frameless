@@ -1,5 +1,7 @@
 import shapeless._
 
 package object typedframe {
-  implicit val TODO: Typeable[Any] = Typeable.anyTypeable
+  // Workaround until this commit is published:
+  // https://github.com/milessabin/shapeless/commit/9ccbba8793a01a11cfea592c843d3deb465b33f9
+  implicit val anyTypeable: Typeable[Any] = Typeable.anyTypeable
 }

@@ -1,7 +1,7 @@
 package typedframe
 
 import shapeless._
-import shapeless.ops.hlist.{Length, Fill}
+import shapeless.ops.hlist.Length
 import scala.reflect.runtime.universe.TypeTag
 import org.apache.spark.sql.Row
 
@@ -12,8 +12,8 @@ trait TypeableRow[S <: Product] extends Serializable {
 trait LowPriorityTypeableRow {
   implicit def typeableRowProduct[S <: Product, G <: HList]
     (implicit
-      c: TypeTag[G],
       g: Generic.Aux[S, G],
+      c: TypeTag[G],
       n: FromTraversableNullable[G]
     ): TypeableRow[S] =
       new TypeableRow[S] {
@@ -29,11 +29,11 @@ object TypeableRow extends LowPriorityTypeableRow {
   
   implicit def typeableRowTuple[S <: Product, G <: HList, N <: Nat, F <: HList, T <: Product]
     (implicit
-      c: TypeTag[G],
       t: IsXLTuple[S],
       g: Generic.Aux[S, G],
+      c: TypeTag[G],
       l: Length.Aux[G, N],
-      f: Fill.Aux[N, Any, F],
+      f: Fille.Aux[N, Any, F],
       n: FromTraversableNullable[F],
       p: XLTupler.Aux[F, T]
     ): TypeableRow[S] =
