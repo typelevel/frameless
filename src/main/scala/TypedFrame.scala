@@ -223,7 +223,7 @@ final class TypedFrame[Schema <: Product] private[typedframe]
     (implicit
       a: TypeTag[NewSchema],
       n: Generic.Aux[NewSchema, N],
-      t: TypeableRow[Schema],
+      t: TypeableRow.Aux[Schema, G],
       p: Prepend.Aux[G, N, P],
       m: XLTupler.Aux[P, Out],
       g: Fields[Out]

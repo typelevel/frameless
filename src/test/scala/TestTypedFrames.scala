@@ -140,32 +140,31 @@ class TestTypedFrames extends SpecWithContext {
     illTyped("fooTF.randomSplit(Array(0.1, 0.2, -0.7))")
   }
   
-// TODO
-// test("explode") {
-//   val isss: TypedFrame[(Int, String, String, String)] =
-//     fooTF.explode { case Foo(a, b) => b.split("d").map(_ -> a.toString) }
-  
-//   checkAnswer(isss, Set(
-//     (1, "id1", "i", "1"),
-//     (1, "id1", "1", "1"),
-//     (4, "id3", "i", "4"),
-//     (4, "id3", "3", "4"),
-//     (5, "id2", "i", "5"),
-//     (5, "id2", "2", "5")
-//   ))
-  
-//   val issb: TypedFrame[(Int, String, String, Boolean)] =
-//     fooTF.explode(f => List.fill(f.a)(f.b -> f.b.isEmpty))
-  
-//   checkAnswer(issb, Set(
-//     (1, "id1", "id1", false),
-//     (1, "id1", "id1", false),
-//     (4, "id3", "id3", false),
-//     (4, "id3", "id3", false),
-//     (5, "id2", "id2", false),
-//     (5, "id2", "id2", false)
-//   ))
-// }
+  test("explode") {
+    val isss: TypedFrame[(Int, String, String, String)] =
+      fooTF.explode { case Foo(a, b) => b.split("d").map(_ -> a.toString) }
+    
+    checkAnswer(isss, Set(
+      (1, "id1", "i", "1"),
+      (1, "id1", "1", "1"),
+      (4, "id3", "i", "4"),
+      (4, "id3", "3", "4"),
+      (5, "id2", "i", "5"),
+      (5, "id2", "2", "5")
+    ))
+    
+    val issb: TypedFrame[(Int, String, String, Boolean)] =
+      fooTF.explode(f => List.fill(f.a)(f.b -> f.b.isEmpty))
+    
+    checkAnswer(issb, Set(
+      (1, "id1", "id1", false),
+      (1, "id1", "id1", false),
+      (4, "id3", "id3", false),
+      (4, "id3", "id3", false),
+      (5, "id2", "id2", false),
+      (5, "id2", "id2", false)
+    ))
+  }
   
   test("drop") {
     val dropA: TypedFrame[Tuple1[String]] = fooTF.drop('a)

@@ -7,16 +7,20 @@ import org.apache.spark.sql.Row
 
 trait TypeableRow[S <: Product] extends Serializable {
   def apply(row: Row): S
+  type Repr <: HList
 }
 
 trait LowPriorityTypeableRow {
+  type Aux[S <: Product, R0 <: HList] = TypeableRow[S] { type Repr = R0 }
+  
   implicit def typeableRowProduct[S <: Product, G <: HList]
     (implicit
       g: Generic.Aux[S, G],
       c: TypeTag[G],
       n: FromTraversableNullable[G]
-    ): TypeableRow[S] =
+    ): Aux[S, G] =
       new TypeableRow[S] {
+        type Repr = G
         def apply(row: Row): S = n(row.toSeq).fold(fail(row))(g.from)
       }
   
@@ -25,7 +29,7 @@ trait LowPriorityTypeableRow {
 }
 
 object TypeableRow extends LowPriorityTypeableRow {
-  def apply[S <: Product](implicit t: TypeableRow[S]): TypeableRow[S] = t
+  def apply[S <: Product](implicit t: TypeableRow[S]): Aux[S, t.Repr] = t
   
   implicit def typeableRowTuple[S <: Product, G <: HList, N <: Nat, F <: HList, T <: Product]
     (implicit
@@ -36,8 +40,9 @@ object TypeableRow extends LowPriorityTypeableRow {
       f: Fille.Aux[N, Any, F],
       n: FromTraversableNullable[F],
       p: XLTupler.Aux[F, T]
-    ): TypeableRow[S] =
+    ): Aux[S, G] =
       new TypeableRow[S] {
+        type Repr = G
         def apply(row: Row): S = n(row.toSeq).fold(fail(row))(l => p(l).asInstanceOf[S])
       }
 }
