@@ -2,6 +2,7 @@ package typedframe
 
 import shapeless._
 import shapeless.ops.hlist.Length
+import shapeless.ops.traversable.FromTraversable
 import scala.reflect.runtime.universe.TypeTag
 import org.apache.spark.sql.Row
 
@@ -17,7 +18,7 @@ trait LowPriorityTypeableRow {
     (implicit
       g: Generic.Aux[S, G],
       c: TypeTag[G],
-      n: FromTraversableNullable[G]
+      n: FromTraversable[G]
     ): Aux[S, G] =
       new TypeableRow[S] {
         type Repr = G
@@ -38,7 +39,7 @@ object TypeableRow extends LowPriorityTypeableRow {
       c: TypeTag[G],
       l: Length.Aux[G, N],
       f: Fille.Aux[N, Any, F],
-      n: FromTraversableNullable[F],
+      n: FromTraversable[F],
       p: XLTupler.Aux[F, T]
     ): Aux[S, G] =
       new TypeableRow[S] {

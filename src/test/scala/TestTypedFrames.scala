@@ -150,8 +150,7 @@ class TestTypedFrames extends SpecWithContext {
       (4, "id3", "i", "4"),
       (4, "id3", "3", "4"),
       (5, "id2", "i", "5"),
-      (5, "id2", "2", "5")
-    ))
+      (5, "id2", "2", "5")))
     
     val issb: TypedFrame[(Int, String, String, Boolean)] =
       fooTF.explode(f => List.fill(f.a)(f.b -> f.b.isEmpty))
@@ -162,8 +161,7 @@ class TestTypedFrames extends SpecWithContext {
       (4, "id3", "id3", false),
       (4, "id3", "id3", false),
       (5, "id2", "id2", false),
-      (5, "id2", "id2", false)
-    ))
+      (5, "id2", "id2", false)))
   }
   
   test("drop") {
@@ -178,8 +176,7 @@ class TestTypedFrames extends SpecWithContext {
   }
   
   test("dropDuplicates") {
-    def fooTFMe(s: Seq[(Int, String)]): Seq[Foo] =
-      s.map(Function.tupled(Foo.apply))
+    def fooTFMe(s: Seq[(Int, String)]): Seq[Foo] = s.map(Function.tupled(Foo.apply))
     
     val withDupSeq = Seq((1, "a"), (1, "a"), (1, "b"), (2, "c"), (3, "c"))
     val withDup: TypedFrame[Foo] = withDupSeq.toDF.toTF

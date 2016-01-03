@@ -12,7 +12,6 @@ import scala.util.Random.{nextLong => randomLong}
 
 import shapeless._
 import shapeless.nat._1
-import shapeless.ops.traversable.FromTraversable
 import shapeless.ops.record.{SelectAll, Values, Keys}
 import shapeless.ops.hlist.{ToList, ToTraversable, IsHCons, Prepend, RemoveAll, Length}
 import shapeless.tag.@@
@@ -42,11 +41,11 @@ final class TypedFrame[Schema <: Product] private[typedframe]
   
   def rdd(implicit t: TypeableRow[Schema], l: ClassTag[Schema]): RDD[Schema] = df.map(t.apply)
   
-  def cartesianJoin[OtherSchema <: Product, Out <: Product, L <: HList, R <: HList, P <: HList, V <: HList]
-    (other: TypedFrame[OtherSchema])
+  def cartesianJoin[OtherS <: Product, Out <: Product, L <: HList, R <: HList, P <: HList, V <: HList]
+    (other: TypedFrame[OtherS])
     (implicit
       l: LabelledGeneric.Aux[Schema, L],
-      r: LabelledGeneric.Aux[OtherSchema, R],
+      r: LabelledGeneric.Aux[OtherS, R],
       P: Prepend.Aux[L, R, P],
       v: Values.Aux[P, V],
       t: XLTupler.Aux[V, Out],
@@ -54,83 +53,120 @@ final class TypedFrame[Schema <: Product] private[typedframe]
     ): TypedFrame[Out] =
       new TypedFrame(df.join(other.df))
   
-  def innerJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
+  def innerJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
     new JoinPartial(other, "inner")
   
-  def outerJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
+  def outerJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
     new JoinPartial(other, "outer")
   
-  def leftOuterJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
+  def leftOuterJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
     new JoinPartial(other, "left_outer")
   
-  def rightOuterJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
+  def rightOuterJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
     new JoinPartial(other, "right_outer")
   
-  def leftsemiJoin[OtherSchema <: Product](other: TypedFrame[OtherSchema]) =
-    new JoinPartial(other, "leftsemi")
-  
-  class JoinPartial[OtherSchema <: Product](other: TypedFrame[OtherSchema], joinType: String) extends SingletonProductArgs {
+  class JoinPartial[OtherS <: Product](other: TypedFrame[OtherS], joinType: String)
+      extends SingletonProductArgs {
     def usingProduct[C <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, A <: HList, V <: HList, D <: HList, P <: HList]
       (columns: C)
       (implicit
-        hc: IsHCons[C],
-        fl: FieldsExtractor.Aux[Schema, C, L, S],
-        fr: FieldsExtractor.Aux[OtherSchema, C, R, S],
-        rc: AllRemover.Aux[R, C, A],
-        vc: Values.Aux[L, V],
-        vd: Values.Aux[A, D],
+        h: IsHCons[C],
+        l: FieldsExtractor.Aux[Schema, C, L, S],
+        r: FieldsExtractor.Aux[OtherS, C, R, S],
+        a: AllRemover.Aux[R, C, A],
+        c: Values.Aux[L, V],
+        d: Values.Aux[A, D],
         p: Prepend.Aux[V, D, P],
         t: XLTupler.Aux[P, Out],
         g: Fields[Out]
-      ): TypedFrame[Out] = {
-        val joinColumns: Seq[String] = fl(columns)
-        val joinExpr: Column = joinColumns.map(n => df(n) === other.df(n)).reduce(_ && _)
-        val joined: DataFrame = df.join(other.df, joinExpr, joinType)
-        
-        val slefCol: String => String = "s".+
-        val othrCol: String => String = "o".+
-        val prefixed: DataFrame = joined.toDF(df.columns.map(slefCol) ++ other.df.columns.map(othrCol): _*)
-        
-        val slefColumns: Seq[Column] = df.columns.map { c =>
-          if (joinColumns.contains(c))
-            when(
-              prefixed(slefCol(c)).isNotNull,
-              prefixed(slefCol(c))
-            ) otherwise
-              prefixed(othrCol(c))
-          else prefixed(slefCol(c))
-        }
-        
-        val otherColumns: Seq[Column] =
-          other.df.columns.filterNot(joinColumns.contains).map(c => prefixed(othrCol(c)))
-        
-        new TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))
-      }
+      ): TypedFrame[Out] =
+        emulateUsing(l(columns), g)
     
-    def onProduct[C <: HList](columns: C): JoinOnPartial[C, OtherSchema] =
-      new JoinOnPartial[C, OtherSchema](columns: C, other: TypedFrame[OtherSchema], joinType: String)
+    private def emulateUsing[Out <: Product](joinCs: Seq[String], g: Fields[Out]): TypedFrame[Out] = {
+      val joinExpr: Column = joinCs.map(n => df(n) === other.df(n)).reduce(_ && _)
+      val joined: DataFrame = df.join(other.df, joinExpr, joinType)
+      
+      val slefCol: String => String = "s".+
+      val othrCol: String => String = "o".+
+      val prefixed: DataFrame = joined.toDF(df.columns.map(slefCol) ++ other.df.columns.map(othrCol): _*)
+      
+      val slefColumns: Seq[Column] = df.columns.map { c =>
+        if (joinCs.contains(c))
+          when(
+            prefixed(slefCol(c)).isNotNull,
+            prefixed(slefCol(c))
+          ) otherwise
+            prefixed(othrCol(c))
+        else prefixed(slefCol(c))
+      }
+      
+      val otherColumns: Seq[Column] =
+        other.columns.filterNot(joinCs.contains).map(c => prefixed(othrCol(c)))
+      
+      new TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))(g)
+    }
+    
+    def onProduct[C <: HList](columns: C): JoinOnPartial[C, OtherS] =
+      new JoinOnPartial[C, OtherS](columns: C, other: TypedFrame[OtherS], joinType: String)
   }
   
-  class JoinOnPartial[C <: HList, OtherSchema <: Product](columns: C, other: TypedFrame[OtherSchema], joinType: String)
+  private def constructJoinOn[Out <: Product]
+    (other: DataFrame, columns: Seq[String], otherColumns: Seq[String], joinType: String)
+    (implicit f: Fields[Out]): TypedFrame[Out] = {
+      val expr = columns.map(df(_))
+        .zip(otherColumns.map(other(_)))
+        .map(z => z._1 === z._2)
+        .reduce(_ && _)
+      
+      new TypedFrame(df.join(other, expr, joinType))
+    }
+  
+  class JoinOnPartial[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS], joinType: String)
       extends SingletonProductArgs {
     def andProduct[D <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, V <: HList, W <: HList, P <: HList]
-      (otherColumnTuple: D)
+      (otherColumns: D)
       (implicit
-        hc: IsHCons[C],
-        fl: FieldsExtractor.Aux[Schema, C, L, S],
-        fr: FieldsExtractor.Aux[Schema, D, R, S],
-        vc: Values.Aux[L, V],
-        vd: Values.Aux[R, W],
+        h: IsHCons[C],
+        l: FieldsExtractor.Aux[Schema, C, L, S],
+        r: FieldsExtractor.Aux[OtherS, D, R, S],
+        c: Values.Aux[L, V],
+        d: Values.Aux[R, W],
         p: Prepend.Aux[V, W, P],
         t: XLTupler.Aux[P, Out],
         g: Fields[Out]
-      ): TypedFrame[Out] = {
-        val expr = fl(columns).map(df(_))
-          .zip(fr(otherColumnTuple).map(other.df(_)))
-          .map(z => z._1 === z._2)
-          .reduce(_ && _)
-        new TypedFrame(df.join(other.df, expr, joinType))
+      ): TypedFrame[Out] =
+        constructJoinOn(other.df, l(columns), r(otherColumns), joinType)
+  }
+  
+  def leftsemiJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
+    new LeftsemiJoinPartial(other)
+  
+  class LeftsemiJoinPartial[OtherS <: Product](other: TypedFrame[OtherS]) extends SingletonProductArgs {
+    def usingProduct[C <: HList, Out <: Product, S <: HList]
+      (columns: C)
+      (implicit
+        h: IsHCons[C],
+        l: FieldsExtractor.Aux[Schema, C, _, S],
+        r: FieldsExtractor.Aux[OtherS, C, _, S]
+      ): TypedFrame[Schema] = {
+        val joinExpr: Column = l(columns).map(n => df(n) === other.df(n)).reduce(_ && _)
+        new TypedFrame(df.join(other.df, joinExpr, "leftsemi"))
       }
+    
+    def onProduct[C <: HList](columns: C): LeftsemiJoinOnPartial[C, OtherS] =
+      new LeftsemiJoinOnPartial[C, OtherS](columns: C, other: TypedFrame[OtherS])
+  }
+  
+  class LeftsemiJoinOnPartial[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS])
+      extends SingletonProductArgs {
+    def andProduct[D <: HList, Out <: Product, S <: HList]
+      (otherColumns: D)
+      (implicit
+        h: IsHCons[C],
+        l: FieldsExtractor.Aux[Schema, C, _, S],
+        r: FieldsExtractor.Aux[OtherS, D, _, S]
+      ): TypedFrame[Schema] =
+        constructJoinOn(other.df, l(columns), r(otherColumns), "leftsemi")
   }
   
   object sort extends SingletonProductArgs {
@@ -179,30 +215,30 @@ final class TypedFrame[Schema <: Product] private[typedframe]
   def limit(n: Int @@ NonNegative): TypedFrame[Schema] =
     new TypedFrame(df.limit(n))
   
-  def unionAll[OtherSchema <: Product, S <: HList]
-    (other: TypedFrame[OtherSchema])
+  def unionAll[OtherS <: Product, S <: HList]
+    (other: TypedFrame[OtherS])
     (implicit
       l: Generic.Aux[Schema, S],
-      r: Generic.Aux[OtherSchema, S]
+      r: Generic.Aux[OtherS, S]
     ): TypedFrame[Schema] =
       new TypedFrame(df.unionAll(other.df))
   
-  def intersect[OtherSchema <: Product, S <: HList]
-    (other: TypedFrame[OtherSchema])
+  def intersect[OtherS <: Product, S <: HList]
+    (other: TypedFrame[OtherS])
     (implicit
       l: Generic.Aux[Schema, S],
-      r: Generic.Aux[OtherSchema, S]
+      r: Generic.Aux[OtherS, S]
     ): TypedFrame[Schema] =
       new TypedFrame(df.intersect(other.df))
   
-  def except[OtherSchema <: Product, S <: HList]
-    (other: TypedFrame[OtherSchema])
+  def except[OtherS <: Product, S <: HList]
+    (other: TypedFrame[OtherS])
     (implicit
       l: Generic.Aux[Schema, S],
-      r: Generic.Aux[OtherSchema, S]
+      r: Generic.Aux[OtherS, S]
     ): TypedFrame[Schema] =
       new TypedFrame(df.except(other.df))
-      
+  
   def sample(
     withReplacement: Boolean,
     fraction: Double @@ ClosedInterval[_0, _1],
@@ -229,7 +265,7 @@ final class TypedFrame[Schema <: Product] private[typedframe]
       g: Fields[Out]
     ): TypedFrame[Out] =
       new TypedFrame(df.explode(df.columns.map(col): _*)(r => f(t(r))))
-      
+  
   object drop extends SingletonProductArgs {
     def applyProduct[C <: HList, Out <: Product, G <: HList, R <: HList, V <: HList]
       (columns: C)
@@ -377,5 +413,4 @@ final class TypedFrame[Schema <: Product] private[typedframe]
   def toJSON: RDD[String] = df.toJSON
   
   def inputFiles: Array[String] = df.inputFiles
-  
 }

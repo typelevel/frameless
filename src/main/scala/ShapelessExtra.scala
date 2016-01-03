@@ -31,48 +31,6 @@ object AllRemover {
       }
 }
 
-/** Type class supporting type safe cast.
-  * Differs from shapeless.Typeable for it's null support.*/
-trait NullTypeable[T] extends Serializable {
-  def cast(t: Any): Option[T]
-}
-
-object NullTypeable {
-  def apply[T](implicit t: NullTypeable[T]): NullTypeable[T] = t
-  
-  implicit def nullTypeableFromTypeable[T](implicit typeable: Typeable[T]): NullTypeable[T] =
-    new NullTypeable[T] {
-      def cast(t: Any): Option[T] =
-        if(t == null) Some(null.asInstanceOf[T]) else typeable.cast(t)
-    }
-}
-
-/** Type class supporting type safe conversion of `Traversables` to `HLists`.
-  * Differs from shapeless.ops.traversable.FromTraversable for it's null support. */
-trait FromTraversableNullable[Out <: HList] extends Serializable {
-  def apply(l: GenTraversable[_]): Option[Out]
-}
-
-object FromTraversableNullable {
-  def apply[Out <: HList](implicit from: FromTraversableNullable[Out]) = from
-  
-  implicit def hnilFromTraversableNullable[T]: FromTraversableNullable[HNil] =
-    new FromTraversableNullable[HNil] {
-      def apply(l: GenTraversable[_]) =
-        if(l.isEmpty) Some(HNil) else None 
-    }
-  
-  implicit def hlistFromTraversableNullable[OutH, OutT <: HList]
-    (implicit
-      flt: FromTraversableNullable[OutT],
-      oc: NullTypeable[OutH]
-    ): FromTraversableNullable[OutH :: OutT] =
-      new FromTraversableNullable[OutH :: OutT] {
-        def apply(l: GenTraversable[_]): Option[OutH :: OutT] =
-          if(l.isEmpty) None else for(h <- oc.cast(l.head); t <- flt(l.tail)) yield h :: t
-      }
-}
-
 /** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
 trait XLTupler[L <: HList] extends DepFn1[L] with Serializable
 
