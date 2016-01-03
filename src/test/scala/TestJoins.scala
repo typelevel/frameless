@@ -1,16 +1,15 @@
-package typedframe
-
 import org.apache.spark.sql.SpecWithContext
 import shapeless.test.illTyped
+import typedframe._
 
 class TestJoins extends SpecWithContext {
   import testImplicits._
   
-  def fooTF: TypedFrame[Foo] = new TypedFrame(Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF)
+  def fooTF: TypedFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
 
   test("cartesianJoin") {
     case class Bar(i: Double, j: String)
-    val bar: TypedFrame[Bar] = new TypedFrame(Seq((1.1, "s"), (2.2, "t")).toDF)
+    val bar: TypedFrame[Bar] = Seq((1.1, "s"), (2.2, "t")).toDF.toTF
     val p = fooTF.cartesianJoin(bar): TypedFrame[(Int, String, Double, String)]
     
     checkAnswer(p, Set(
@@ -19,7 +18,7 @@ class TestJoins extends SpecWithContext {
   }
   
   case class Schema1(a: Int, b: Int, c: String)
-  def s1: TypedFrame[Schema1] = new TypedFrame(Seq((1, 10, "c"), (2, 20, "d"), (4, 40, "e")).toDF)
+  def s1: TypedFrame[Schema1] = Seq((1, 10, "c"), (2, 20, "d"), (4, 40, "e")).toDF.toTF
   
   def nullInstance[T] = null.asInstanceOf[T]
   
@@ -49,7 +48,7 @@ class TestJoins extends SpecWithContext {
     // illTyped("fooTF.innerJoin(s1).using('c)")
     
     // case class Schema2(a: Int, b: String, c: String)
-    // val s2: TypedFrame[Schema2] = new TypedFrame(Seq((1, "10", "c"), (2, "20", "d"), (4, "40", "e")).toDF)
+    // val s2: TypedFrame[Schema2] = Seq((1, "10", "c"), (2, "20", "d"), (4, "40", "e")).toDF.toTF
     
     // // TODO: checkAnswer
     // fooTF.innerJoin(s2).using('a): TypedFrame[(Int, String, String, String)]
@@ -70,7 +69,7 @@ class TestJoins extends SpecWithContext {
   //   // fooTF.leftsemiJoin(s1).on('a).and('a): TypedFrame[(Int, String, Int, Int, String)]
     
   //   case class Schema2(w: String, x: Int, y: Int, z: String)
-  //   val s2: TypedFrame[Schema2] = new TypedFrame(Seq(("10", 1, 10, "c"), ("20", 2, 20, "d"), ("40", 4, 40, "e")).toDF)
+  //   val s2: TypedFrame[Schema2] = Seq(("10", 1, 10, "c"), ("20", 2, 20, "d"), ("40", 4, 40, "e")).toDF.toTF
     
   //   // TODO: checkAnswer
   //   fooTF.innerJoin(s2).on('a).and('x)

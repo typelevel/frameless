@@ -1,8 +1,7 @@
-package typedframe
-
 import org.apache.spark.sql.SpecWithContext
 import shapeless.test.illTyped
 import shapeless.{::, HNil}
+import typedframe._
 
 class TestXLTuples extends SpecWithContext {
   import testImplicits._
@@ -37,7 +36,7 @@ class TestXLTuples extends SpecWithContext {
     val tSeq = Seq(Tuple23(
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23))
     
-    val tdf: TypedFrame[Tuple23Ints] = new TypedFrame(tSeq.toDF)
+    val tdf: TypedFrame[Tuple23Ints] = tSeq.toDF.toTF
     val largeTypedFrame: TypedFrame[Tuple46Ints] = tdf.cartesianJoin(tdf)
     
     val joinedSeq: Seq[Tuple46Ints] = Seq(Tuple46(

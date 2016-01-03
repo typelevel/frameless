@@ -1,8 +1,7 @@
-package typedframe
-
 import eu.timepit.refined.auto._
 import org.apache.spark.sql.{SpecWithContext, DataFrame}
 import org.scalatest.Matchers._
+import typedframe._
 
 object NLPLib {
   def soundsLikeAGirlName(name: String): Boolean = name.toLowerCase.contains("a")
@@ -11,12 +10,12 @@ object NLPLib {
 object ProblemStatement {
   // Find the neighborhood with most girls
   
+  type Neighborhood = String
   val right = "right"
   val left = "left"
   val top = "top"
   
   type Address = String
-  type Neighborhood = String
   
   case class PhoneBookEntry(address: Address, residents: String, phoneNumber: Double)
   case class CityMapEntry(address: Address, neighborhood: Neighborhood)
@@ -56,8 +55,8 @@ class BestNeighborhood extends SpecWithContext {
   test("complete example") {
     import ProblemStatement._
     
-    val phoneBookTF = new TypedFrame[PhoneBookEntry](phoneBook.toDF)
-    val cityMapTF = new TypedFrame[CityMapEntry](cityMap.toDF)
+    val phoneBookTF: TypedFrame[PhoneBookEntry] = phoneBook.toDF.toTF[PhoneBookEntry]
+    val cityMapTF: TypedFrame[CityMapEntry] = cityMap.toDF.toTF[CityMapEntry]
     
     val bestNeighborhood: String =            (((((((((
       phoneBookTF

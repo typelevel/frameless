@@ -1,9 +1,8 @@
-package typedframe
-
 import eu.timepit.refined.auto._
 import org.apache.spark.sql.{SpecWithContext, DataFrame}
 import org.scalatest.Matchers._
-import shapeless.test._
+import shapeless.test.illTyped
+import typedframe._
 
 case class Foo(a: Int, b: String)
 
@@ -12,7 +11,7 @@ class TestTypedFrames extends SpecWithContext {
   
   val fooTuples: Seq[(Int, String)] = Seq((1, "id1"), (4, "id3"), (5, "id2"))
   val fooSeq: Seq[Foo] = fooTuples.map(Foo.tupled)
-  def fooTF: TypedFrame[Foo] = new TypedFrame(fooTuples.toDF)
+  def fooTF: TypedFrame[Foo] = fooTuples.toDF.toTF
     
   import shapeless._
   implicit val lol: Typeable[Any] = Typeable.anyTypeable
@@ -92,10 +91,10 @@ class TestTypedFrames extends SpecWithContext {
   
   case class Bar(a: Int, s: String)
   val barTuples: Seq[(Int, String)] = Seq((1, "bar"), (4, "id3"), (5, "id2"))
-  def barTF: TypedFrame[Bar] = new TypedFrame(barTuples.toDF)
+  def barTF: TypedFrame[Bar] = barTuples.toDF.toTF
   
   case class Fuu(a: Int, i: Double)
-  def fuuTF: TypedFrame[Fuu] = new TypedFrame(Seq((1, 1.1)).toDF)
+  def fuuTF: TypedFrame[Fuu] = Seq((1, 1.1)).toDF.toTF
   
   test("unionAll") {
     val foofoo: TypedFrame[Foo] = fooTF.unionAll(fooTF)
@@ -184,7 +183,7 @@ class TestTypedFrames extends SpecWithContext {
       s.map(Function.tupled(Foo.apply))
     
     val withDupSeq = Seq((1, "a"), (1, "a"), (1, "b"), (2, "c"), (3, "c"))
-    val withDup: TypedFrame[Foo] = new TypedFrame(withDupSeq.toDF)
+    val withDup: TypedFrame[Foo] = withDupSeq.toDF.toTF
 
     val allDup: TypedFrame[Foo] = withDup.dropDuplicates()
     val aDup: TypedFrame[Foo] = withDup.dropDuplicates('a)
