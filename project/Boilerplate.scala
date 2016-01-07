@@ -94,12 +94,16 @@ object Boilerplate {
     def content(tv: TemplateVals) = {
       import tv._
       block"""
-        |package typedframe
+        |package frameless
         |
         |import shapeless._
         |
         |/** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
         |trait XLTupler[L <: HList] extends DepFn1[L] with Serializable
+        |
+        |object XLTupler extends XLTuplerInstances {
+        |  def apply[L <: HList](implicit tupler: XLTupler[L]): Aux[L, tupler.Out] = tupler
+        |}
         |
         |trait XLTuplerInstances {
         |  type Aux[L <: HList, Out0] = XLTupler[L] { type Out = Out0 }
@@ -119,7 +123,7 @@ object Boilerplate {
     def content(tv: TemplateVals) = {
       import tv._
       block"""
-        |package typedframe
+        |package frameless
         |
         |import scala.reflect.macros.whitebox
         |

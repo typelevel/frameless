@@ -42,7 +42,7 @@ lazy val framelessSettings = Seq(
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test"),
-  parallelExecution in Test := false
+  fork in Test := true
 ) ++ warnUnusedImport
 
 lazy val commonScalacOptions = Seq(
