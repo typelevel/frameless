@@ -23,7 +23,7 @@ lazy val dataset = project
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataset,
     "org.apache.spark" %% "spark-sql"  % sparkDataset))
-  .dependsOn(common)
+  .dependsOn(common % "test->test;compile->compile")
 
 lazy val dataframe = project
   .settings(framelessSettings: _*)
@@ -31,7 +31,7 @@ lazy val dataframe = project
     "org.apache.spark" %% "spark-core" % sparkDataFrame,
     "org.apache.spark" %% "spark-sql"  % sparkDataFrame))
   .settings(sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen))
-  .dependsOn(common)
+  .dependsOn(common % "test->test;compile->compile")
 
 lazy val framelessSettings = Seq(
   scalaVersion := scalaVersions.last,
