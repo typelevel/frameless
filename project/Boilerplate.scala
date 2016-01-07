@@ -98,6 +98,9 @@ object Boilerplate {
         |
         |import shapeless._
         |
+        |/** Type class supporting conversion of this `HList` to a tuple, up to Tuple64. */
+        |trait XLTupler[L <: HList] extends DepFn1[L] with Serializable
+        |
         |trait XLTuplerInstances {
         |  type Aux[L <: HList, Out0] = XLTupler[L] { type Out = Out0 }
         -
