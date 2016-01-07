@@ -2,36 +2,36 @@ name := "frameless"
 
 version := "0.0.1"
 
-scalaVersion := "2.10.5"
+licenses := Seq(("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")))
 
-licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0"))
+val sparkVersion = "1.6.0"
 
-resolvers ++= Seq(
-  Resolver.sonatypeRepo("releases")
-)
+scalaVersion := "2.11.7"
 
-val sparkVersion = "1.3.0"
-
-libraryDependencies ++= Seq(
-  compilerPlugin("org.scalamacros"  % "paradise_2.10.5" % "2.0.1"),
-
-  "com.chuusai"       %% "shapeless"          % "2.2.0-RC4",
-  "org.apache.spark"  %% "spark-core"         % sparkVersion    % "provided",
-  "org.apache.spark"  %% "spark-sql"          % sparkVersion    % "provided"
-)
-
-scalacOptions ++= Seq(
+scalacOptions := Seq(
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
-  "-language:existentials",
-  "-language:higherKinds",
-  "-language:implicitConversions",
   "-unchecked",
   "-Xfatal-warnings",
   "-Xlint",
+  "-Yinline-warnings",
   "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard"
-)
+  "-Ywarn-unused-import",
+  "-Ywarn-value-discard",
+  "-Xfatal-warnings",
+  "-Xfuture")
+
+libraryDependencies := Seq(
+  "org.scalatest" % "scalatest_2.11" % "2.2.5" % "test",
+  "com.chuusai" %% "shapeless" % "2.2.5",
+  "eu.timepit" %% "refined" % "0.3.2",
+  "org.apache.spark" %% "spark-core" % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % sparkVersion,
+  "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided")
+
+fork in Test := true
+
+sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen)

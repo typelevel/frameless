@@ -81,32 +81,32 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
   def sample(withReplacement: Boolean, fraction: Double, seed: Long): DataSheet[Schema] =
     DataSheet(dataFrame.sample(withReplacement, fraction, seed))
 
-  def save(source: String, mode: SaveMode, options: Map[String, String]): Unit = dataFrame.save(source, mode, options)
+  // def save(source: String, mode: SaveMode, options: Map[String, String]): Unit = dataFrame.save(source, mode, options) // Deprecated
 
-  def save(path: String, source: String, mode: SaveMode): Unit = dataFrame.save(path, source, mode)
+  // def save(path: String, source: String, mode: SaveMode): Unit = dataFrame.save(path, source, mode) // Deprecated
 
-  def save(path: String, source: String): Unit = dataFrame.save(path, source)
+  // def save(path: String, source: String): Unit = dataFrame.save(path, source) // Deprecated
 
-  def save(path: String, mode: SaveMode): Unit = dataFrame.save(path, mode)
+  // def save(path: String, mode: SaveMode): Unit = dataFrame.save(path, mode) // Deprecated
 
-  def save(path: String): Unit = dataFrame.save(path)
+  // def save(path: String): Unit = dataFrame.save(path) // Deprecated
 
-  def saveAsParquetFile(path: String): Unit = dataFrame.saveAsParquetFile(path)
+  // def saveAsParquetFile(path: String): Unit = dataFrame.saveAsParquetFile(path)  // Deprecated
 
-  def saveAsTable(tableName: String, source: String, mode: SaveMode, options: Map[String, String]): Unit =
-    dataFrame.saveAsTable(tableName, source, mode, options)
+  // def saveAsTable(tableName: String, source: String, mode: SaveMode, options: Map[String, String]): Unit =
+  //   dataFrame.saveAsTable(tableName, source, mode, options) // Deprecated
 
-  def saveAsTable(tableName: String, source: String, mode: SaveMode): Unit =
-    dataFrame.saveAsTable(tableName, source, mode)
+  // def saveAsTable(tableName: String, source: String, mode: SaveMode): Unit =
+  //   dataFrame.saveAsTable(tableName, source, mode) // Deprecated
 
-  def saveAsTable(tableName: String, source: String): Unit =
-    dataFrame.saveAsTable(tableName, source)
+  // def saveAsTable(tableName: String, source: String): Unit =
+  //   dataFrame.saveAsTable(tableName, source) // Deprecated
 
-  def saveAsTable(tableName: String, mode: SaveMode): Unit =
-    dataFrame.saveAsTable(tableName, mode)
+  // def saveAsTable(tableName: String, mode: SaveMode): Unit =
+  //   dataFrame.saveAsTable(tableName, mode) // Deprecated
 
-  def saveAsTable(tableName: String): Unit =
-    dataFrame.saveAsTable(tableName)
+  // def saveAsTable(tableName: String): Unit =
+  //   dataFrame.saveAsTable(tableName) // Deprecated
 
   def show(): Unit = dataFrame.show()
 
@@ -210,19 +210,19 @@ final class DataSheet[Schema <: HList] private(val dataFrame: DataFrame) extends
 
   /////////////////////////
 
-  def createJDBCTable(url: String, table: String, allowExisting: Boolean): Unit =
-    dataFrame.createJDBCTable(url, table, allowExisting)
+  // def createJDBCTable(url: String, table: String, allowExisting: Boolean): Unit =
+  //   dataFrame.createJDBCTable(url, table, allowExisting) // Deprecated
 
   def columns: Array[String] = dataFrame.columns
 
   def dtypes: Array[(String, String)] = dataFrame.dtypes
 
-  def insertInto(tableName: String): Unit = dataFrame.insertInto(tableName)
+  // def insertInto(tableName: String): Unit = dataFrame.insertInto(tableName) // Deprecated
 
-  def insertInto(tableName: String, overwrite: Boolean): Unit = dataFrame.insertInto(tableName, overwrite)
+  // def insertInto(tableName: String, overwrite: Boolean): Unit = dataFrame.insertInto(tableName, overwrite) // Deprecated
 
-  def insertIntoJDBC(url: String, table: String, overwrite: Boolean): Unit =
-    dataFrame.insertIntoJDBC(url, table, overwrite)
+  // def insertIntoJDBC(url: String, table: String, overwrite: Boolean): Unit =
+    // dataFrame.insertIntoJDBC(url, table, overwrite) // Deprecated
 
   def schema: StructType = dataFrame.schema
 

@@ -55,7 +55,7 @@ final class DataColumn[K, A] private[frameless](val column: Column) {
 
   def cast[B >: A]: TempDataColumn[B] = DataColumn(column)
 
-  def cast[B <% A]: TempDataColumn[B] = DataColumn(column)
+  // def cast[B <% A]: TempDataColumn[B] = DataColumn(column) // Deprecated
 
   def contains(other: A): TempDataColumn[Boolean] = DataColumn(column.contains(other))
 
@@ -72,7 +72,7 @@ final class DataColumn[K, A] private[frameless](val column: Column) {
 
   def explain(extended: Boolean): Unit = column.explain(extended)
 
-  def in(list: DataColumn[_, A]*): TempDataColumn[Boolean] = DataColumn(column.in(list.map(_.column): _*))
+  def in(list: DataColumn[_, A]*): TempDataColumn[Boolean] = DataColumn(column.isin(list.map(_.column): _*))
 
   def isNotNull: TempDataColumn[Boolean] = DataColumn(column.isNotNull)
 
