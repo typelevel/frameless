@@ -49,18 +49,18 @@ final class TypedFrame[Schema <: Product] private[frameless]
       new TypedFrame(df.join(other.df))
   
   def innerJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
-    new JoinPartial(other, "inner")
+    new JoinCurried(other, "inner")
   
   def outerJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
-    new JoinPartial(other, "outer")
+    new JoinCurried(other, "outer")
   
   def leftOuterJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
-    new JoinPartial(other, "left_outer")
+    new JoinCurried(other, "left_outer")
   
   def rightOuterJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
-    new JoinPartial(other, "right_outer")
+    new JoinCurried(other, "right_outer")
   
-  class JoinPartial[OtherS <: Product](other: TypedFrame[OtherS], joinType: String)
+  class JoinCurried[OtherS <: Product](other: TypedFrame[OtherS], joinType: String)
       extends SingletonProductArgs {
     def usingProduct[C <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, A <: HList, V <: HList, D <: HList, P <: HList]
       (columns: C)
@@ -101,8 +101,8 @@ final class TypedFrame[Schema <: Product] private[frameless]
       new TypedFrame(prefixed.select(slefColumns ++ otherColumns: _*))(g)
     }
     
-    def onProduct[C <: HList](columns: C): JoinOnPartial[C, OtherS] =
-      new JoinOnPartial[C, OtherS](columns: C, other: TypedFrame[OtherS], joinType: String)
+    def onProduct[C <: HList](columns: C): JoinOnCurried[C, OtherS] =
+      new JoinOnCurried[C, OtherS](columns: C, other: TypedFrame[OtherS], joinType: String)
   }
   
   private def constructJoinOn[Out <: Product]
@@ -116,7 +116,7 @@ final class TypedFrame[Schema <: Product] private[frameless]
       new TypedFrame(df.join(other, expr, joinType))
     }
   
-  class JoinOnPartial[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS], joinType: String)
+  class JoinOnCurried[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS], joinType: String)
       extends SingletonProductArgs {
     def andProduct[D <: HList, Out <: Product, L <: HList, R <: HList, S <: HList, V <: HList, W <: HList, P <: HList]
       (otherColumns: D)
@@ -134,9 +134,9 @@ final class TypedFrame[Schema <: Product] private[frameless]
   }
   
   def leftsemiJoin[OtherS <: Product](other: TypedFrame[OtherS]) =
-    new LeftsemiJoinPartial(other)
+    new LeftsemiJoinCurried(other)
   
-  class LeftsemiJoinPartial[OtherS <: Product](other: TypedFrame[OtherS]) extends SingletonProductArgs {
+  class LeftsemiJoinCurried[OtherS <: Product](other: TypedFrame[OtherS]) extends SingletonProductArgs {
     def usingProduct[C <: HList, Out <: Product, S <: HList]
       (columns: C)
       (implicit
@@ -148,11 +148,11 @@ final class TypedFrame[Schema <: Product] private[frameless]
         new TypedFrame(df.join(other.df, joinExpr, "leftsemi"))
       }
     
-    def onProduct[C <: HList](columns: C): LeftsemiJoinOnPartial[C, OtherS] =
-      new LeftsemiJoinOnPartial[C, OtherS](columns: C, other: TypedFrame[OtherS])
+    def onProduct[C <: HList](columns: C): LeftsemiJoinOnCurried[C, OtherS] =
+      new LeftsemiJoinOnCurried[C, OtherS](columns: C, other: TypedFrame[OtherS])
   }
   
-  class LeftsemiJoinOnPartial[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS])
+  class LeftsemiJoinOnCurried[C <: HList, OtherS <: Product](columns: C, other: TypedFrame[OtherS])
       extends SingletonProductArgs {
     def andProduct[D <: HList, Out <: Product, S <: HList]
       (otherColumns: D)

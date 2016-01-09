@@ -5,10 +5,10 @@ import shapeless._
 
 class RichDataset[T](ds: Dataset[T]) {
   /** Returns a new [[Dataset]] where each record has been mapped on to the specified type. */
-  def typedAs[U] = new TypedAsPartial[U]
+  def typedAs[U] = new TypedAsCurried[U]
   
   // Emulate mutiple type parameter lists
-  class TypedAsPartial[U] {
+  class TypedAsCurried[U] {
     def apply[S <: HList]()
       (implicit
         e: Encoder[U],
