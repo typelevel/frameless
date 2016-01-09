@@ -1,14 +1,51 @@
-name := "frameless"
+val home = "https://github.com/adelbertc/frameless"
+val repo = "git@github.com:adelbertc/frameless.git"
+val org = "github.com/adelbertc/frameless"
+val license = ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0"))
 
-version := "0.0.1"
+val sparkDataset = "1.6.0"
+val sparkDataFrame = "1.5.2"
+val scalatest = "2.2.5"
+val shapeless = "2.2.5"
+val scalaVersions = Seq("2.10.6", "2.11.7")
 
-licenses := Seq(("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")))
+lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
+  .aggregate(common, dataset, dataframe)
+  .settings(framelessSettings: _*)
 
-val sparkVersion = "1.6.0"
+lazy val common = project
+  .settings(framelessSettings: _*)
+  .settings(libraryDependencies +=
+    "org.apache.spark" %% "spark-sql" % sparkDataFrame)
 
-scalaVersion := "2.11.7"
+lazy val dataset = project
+  .settings(framelessSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkDataset,
+    "org.apache.spark" %% "spark-sql"  % sparkDataset))
+  .dependsOn(common % "test->test;compile->compile")
 
-scalacOptions := Seq(
+lazy val dataframe = project
+  .settings(framelessSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkDataFrame,
+    "org.apache.spark" %% "spark-sql"  % sparkDataFrame))
+  .settings(sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen))
+  .dependsOn(common % "test->test;compile->compile")
+
+lazy val framelessSettings = Seq(
+  scalaVersion := scalaVersions.last,
+  organization := org,
+  crossScalaVersions := scalaVersions,
+  scalacOptions ++= commonScalacOptions,
+  testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
+  libraryDependencies ++= Seq(
+    "com.chuusai" %% "shapeless" % shapeless,
+    "org.scalatest" %% "scalatest" % scalatest % "test"),
+  fork in Test := true
+) ++ warnUnusedImport
+
+lazy val commonScalacOptions = Seq(
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
@@ -19,19 +56,19 @@ scalacOptions := Seq(
   "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ywarn-unused-import",
   "-Ywarn-value-discard",
   "-Xfatal-warnings",
   "-Xfuture")
 
-libraryDependencies := Seq(
-  "org.scalatest" % "scalatest_2.11" % "2.2.5" % "test",
-  "com.chuusai" %% "shapeless" % "2.2.5",
-  "eu.timepit" %% "refined" % "0.3.2",
-  "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql" % sparkVersion,
-  "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided")
-
-fork in Test := true
-
-sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen)
+lazy val warnUnusedImport = Seq(
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 10)) =>
+        Seq()
+      case Some((2, n)) if n >= 11 =>
+        Seq("-Ywarn-unused-import")
+    }
+  },
+  scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
+  scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console))
+)
