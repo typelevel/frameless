@@ -31,16 +31,6 @@ object AllRemover {
       }
 }
 
-/** Type class witnessing that a type a tuple, up to Tuple64. */
-trait IsXLTuple[T]
-
-object IsXLTuple {
-  import scala.language.experimental.macros
-  import scala.reflect.macros.whitebox
-  
-  implicit def apply[T]: IsXLTuple[T] = macro IsXLTupleMacro.mk[T]
-}
-
 /** Type class supporting producing a HList of shape `N` filled with elements of type `A`.
   * (To be removed when https://github.com/milessabin/shapeless/pull/525 is published)*/
 trait Fill[N, A] extends DepFn1[A] with Serializable { type Out <: HList }

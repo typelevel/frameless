@@ -5,7 +5,7 @@ import org.apache.spark.sql.{DataFrameStatFunctions, DataFrame}
 import shapeless._
 import shapeless.nat._1
 import shapeless.ops.record.{Selector, Keys}
-import shapeless.ops.hlist.{ToList, IsHCons, Tupler}
+import shapeless.ops.hlist.{ToList, IsHCons}
 
 final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
   (dfs: DataFrameStatFunctions)
@@ -53,7 +53,7 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
       (implicit
         h: IsHCons[C],
         f: FieldsExtractor.Aux[Schema, C, _, S],
-        t: Tupler.Aux[S, Out],
+        t: XLTupler.Aux[S, Out],
         b: Fields[Out]
       ): TypedFrame[Out] =
         new TypedFrame(dfs.freqItems(f(columns), support))
