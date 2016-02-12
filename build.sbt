@@ -7,6 +7,7 @@ val sparkDataset = "1.6.0"
 val sparkDataFrame = "1.5.2"
 val scalatest = "2.2.5"
 val shapeless = "2.2.5"
+val scalacheck = "1.12.5"
 val scalaVersions = Seq("2.10.6", "2.11.7")
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
@@ -41,7 +42,9 @@ lazy val framelessSettings = Seq(
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
-    "org.scalatest" %% "scalatest" % scalatest % "test"),
+    "org.scalatest" %% "scalatest" % scalatest % "test",
+    "org.scalacheck" %% "scalacheck" % scalacheck % "test"
+  ),
   fork in Test := true
 ) ++ warnUnusedImport
 
@@ -57,7 +60,9 @@ lazy val commonScalacOptions = Seq(
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard",
-  "-Xfatal-warnings",
+  "-language:existentials",
+  "-language:implicitConversions",
+  "-language:higherKinds",
   "-Xfuture")
 
 lazy val warnUnusedImport = Seq(
