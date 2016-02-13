@@ -2,6 +2,7 @@ package frameless
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -245,6 +246,49 @@ object TypedEncoder extends LowPriorityTypedEncoder {
 
     def constructorFor(path: Expression): Expression = {
       WrapOption(underlying.constructorFor(path))
+    }
+  }
+
+  implicit def vectorEncoder[A](
+    implicit
+    underlying: TypedEncoder[A],
+    typeTag: TypeTag[A]
+  ): TypedEncoder[Vector[A]] = new PrimitiveTypedEncoder[Vector[A]]() {
+    def nullable: Boolean = false
+
+    def sourceDataType: DataType = ScalaReflection.dataTypeFor[Vector[A]]
+
+    def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
+
+    def constructorFor(path: Expression): Expression = {
+      val arrayData = Invoke(
+        MapObjects(
+          underlying.constructorFor,
+          path,
+          underlying.targetDataType
+        ),
+        "array",
+        ScalaReflection.dataTypeFor[Array[Any]]
+      )
+
+      StaticInvoke(
+        TypedEncoderUtils.getClass,
+        ScalaReflection.dataTypeFor[Vector[_]],
+        "mkVector",
+        arrayData :: Nil
+      )
+    }
+
+    def extractorFor(path: Expression): Expression = {
+      if (ScalaReflection.isNativeType(underlying.targetDataType)) {
+        NewInstance(
+          classOf[GenericArrayData],
+          path :: Nil,
+          dataType = ArrayType(underlying.targetDataType, underlying.nullable)
+        )
+      } else {
+        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
+      }
     }
   }
 
