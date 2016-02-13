@@ -75,4 +75,23 @@ class SelectTests extends TypedDatasetSuite {
     check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
     check(forAll { (xs: Vector[X4[String, String, Int, Int]]) => prop(xs) })
   }
+
+  test("select('a.b)") {
+    def prop[A, B, C, D](data: Vector[X2[X2[A, B], C]])(
+      implicit
+      eabc: TypedEncoder[X2[X2[A, B], C]],
+      eb: TypedEncoder[B],
+      cb: ClassTag[B]
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val AB = dataset.colMany('a, 'b)
+
+      val dataset2 = dataset.select(AB).collect().run.toVector
+      val data2 = data.map { case X2(X2(_, b), _) => b }
+
+      dataset2 ?= data2
+    }
+
+    check(forAll { (xs: Vector[X2[X2[Int, String], Double]]) => prop(xs) })
+  }
 }
