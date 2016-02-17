@@ -16,6 +16,9 @@ class TypedDataset[T](
     new TypedDataset(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
+  def coalesce(numPartitions: Int): TypedDataset[T] =
+    new TypedDataset(dataset.coalesce(numPartitions))
+
   /**
     * Returns `TypedColumn` of type `A` given it's name.
     *
