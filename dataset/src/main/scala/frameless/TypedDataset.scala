@@ -1,6 +1,7 @@
 package frameless
 
 import frameless.ops._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.{Column, SQLContext, Dataset}
 import shapeless.ops.hlist.{Tupler, ToTraversable}
@@ -101,6 +102,15 @@ class TypedDataset[T](
 
 object TypedDataset {
   def create[A](data: Seq[A])(
+    implicit
+    encoder: TypedEncoder[A],
+    sqlContext: SQLContext
+  ): TypedDataset[A] = {
+    val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
+    new TypedDataset[A](dataset)
+  }
+
+  def create[A](data: RDD[A])(
     implicit
     encoder: TypedEncoder[A],
     sqlContext: SQLContext

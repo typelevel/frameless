@@ -39,5 +39,9 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll { (xs: Vector[Option[String]]) => prop(xs) })
     check(forAll { (xs: Vector[Option[SQLDate]]) => prop(xs) })
     check(forAll { (xs: Vector[Option[SQLTimestamp]]) => prop(xs) })
+
+    check(forAll { (xs: Vector[Vector[Int]]) => prop(xs) })
+    check(forAll { (xs: Vector[Option[Int]]) => prop(xs) })
+    check(forAll { (xs: Vector[Vector[X2[Int, Int]]]) => prop(xs) })
   }
 }
