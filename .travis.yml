@@ -3,3 +3,11 @@ language: scala
 scala:
 - 2.10.6
 - 2.11.7
+
+notifications:
+  webhooks:
+    urls:
+    - https://webhooks.gitter.im/e/3d34c1a2985add1a5cb5
+    on_success: change
+    on_failure: always
+    on_start: never
