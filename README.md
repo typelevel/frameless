@@ -1,5 +1,6 @@
 # Frameless
 
+[![Build Status](https://travis-ci.org/adelbertc/frameless.svg?branch=master)](https://travis-ci.org/adelbertc/frameless)
 [![Join the chat at https://gitter.im/adelbertc/frameless](https://badges.gitter.im/adelbertc/frameless.svg)](https://gitter.im/adelbertc/frameless?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 **2016-01-06: The Frameless project has lots of discussion happening in the Gitter channel (see above). The project
