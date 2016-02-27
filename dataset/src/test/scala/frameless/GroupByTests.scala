@@ -6,6 +6,8 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class GroupByTests extends TypedDatasetSuite {
+  // datasets are coalesced due to https://issues.apache.org/jira/browse/SPARK-12675
+
   test("groupBy('a).agg(sum('b))") {
     def prop[A, B](data: List[X2[A, B]])(
       implicit
@@ -17,7 +19,7 @@ class GroupByTests extends TypedDatasetSuite {
       s: Summable[B],
       o: Ordering[A] // to compare ordered vectors
     ): Prop = {
-      val dataset = TypedDataset.create(data)
+      val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
@@ -44,7 +46,7 @@ class GroupByTests extends TypedDatasetSuite {
       sc: Summable[C],
       o: Ordering[A] // to compare ordered vectors
     ): Prop = {
-      val dataset = TypedDataset.create(data)
+      val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
@@ -81,7 +83,7 @@ class GroupByTests extends TypedDatasetSuite {
       sd: Summable[D],
       o: Ordering[(A, B)] // to compare ordered vectors
     ): Prop = {
-      val dataset = TypedDataset.create(data)
+      val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)

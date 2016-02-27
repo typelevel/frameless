@@ -5,6 +5,7 @@ val license = ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0"))
 
 val sparkDataset = "1.6.0"
 val sparkDataFrame = "1.5.2"
+val sparkTesting = "0.3.1"
 val scalatest = "2.2.5"
 val shapeless = "2.2.5"
 val scalacheck = "1.12.5"
@@ -16,8 +17,9 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
 
 lazy val common = project
   .settings(framelessSettings: _*)
-  .settings(libraryDependencies +=
-    "org.apache.spark" %% "spark-sql" % sparkDataFrame)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-sql"          % sparkDataFrame,
+    "com.holdenkarau"  %% "spark-testing-base" % (sparkDataFrame + "_" + sparkTesting) % "test"))
 
 lazy val dataset = project
   .settings(framelessSettings: _*)
@@ -45,7 +47,8 @@ lazy val framelessSettings = Seq(
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"
   ),
-  fork in Test := true
+  fork in Test := false,
+  parallelExecution in Test := false
 ) ++ warnUnusedImport
 
 lazy val commonScalacOptions = Seq(

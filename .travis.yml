@@ -3,6 +3,8 @@ language: scala
 scala:
 - 2.11.7
 
+sbt_args: -J-Xmx2G
+
 notifications:
   webhooks:
     urls:
