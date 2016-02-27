@@ -51,6 +51,8 @@ object Tests {
 }
 
 class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
+  implicit override val generatorDrivenConfig =
+    PropertyCheckConfig(maxSize = 10)
 
   property("spark is working") {
     sc.parallelize(Array(1, 2, 3)).collect shouldBe Array(1,2,3)
