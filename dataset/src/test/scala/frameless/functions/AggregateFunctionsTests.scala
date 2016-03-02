@@ -25,14 +25,11 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum = dataset.select(sum(A)).collect().run().toVector
+      val datasetSum = dataset.select(sum(A)).collect().run().toList
 
-      xs match {
-        case Nil => datasetSum ?= Vector(None)
-        case _ :: _ => datasetSum match {
-          case Vector(Some(x)) => approximatelyEqual(x, xs.sum)
-          case other => falsified
-        }
+      datasetSum match {
+        case x :: Nil => approximatelyEqual(x, xs.sum)
+        case other => falsified
       }
     }
 

@@ -11,10 +11,17 @@ package functions
   * - Int        -> Long
   * - ...
   */
-trait Summable[T]
+trait Summable[A] {
+  def zero: A
+}
 
 object Summable {
-  implicit val summableLong: Summable[Long] = new Summable[Long] {}
-  implicit val summableBigDecimal: Summable[BigDecimal] = new Summable[BigDecimal] {}
-  implicit val summableDouble: Summable[Double] = new Summable[Double] {}
+  def apply[A](zero: A): Summable[A] = {
+    val _zero = zero
+    new Summable[A] { val zero: A = _zero }
+  }
+
+  implicit val summableLong: Summable[Long] = Summable(zero = 0L)
+  implicit val summableBigDecimal: Summable[BigDecimal] = Summable(zero = BigDecimal(0))
+  implicit val summableDouble: Summable[Double] = Summable(zero = 0.0)
 }

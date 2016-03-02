@@ -1,29 +1,51 @@
 package frameless
 
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.{FramelessInternals, Column}
 import shapeless.ops.record.Selector
 import shapeless._
 
 import scala.annotation.implicitNotFound
 
-sealed trait UntypedColumn[T] {
+sealed trait UntypedExpression[T] {
   def expr: Expression
 }
 
-class TypedColumn[T, U](
+sealed class TypedColumn[T, U](
   val expr: Expression
-)(implicit
-  val encoder: TypedEncoder[U]
-) extends UntypedColumn[T] {
+)(
+  implicit
+  val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T] {
+
+  def this(column: Column)(implicit uencoder: TypedEncoder[U]) {
+    this(FramelessInternals.expr(column))
+  }
+
+  def untyped: Column = new Column(expr)
 
   def ===(other: U): TypedColumn[T, Boolean] = {
-    val newExpr = EqualTo(expr, encoder.extractorFor(Literal(other)))
-    new TypedColumn[T, Boolean](newExpr)
+    new TypedColumn[T, Boolean](untyped === other)
   }
 
   def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = {
-    val newExpr = EqualTo(expr, other.expr)
-    new TypedColumn[T, Boolean](newExpr)
+    new TypedColumn[T, Boolean](untyped === other.untyped)
+  }
+}
+
+sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {
+  def expr: Expression
+  def aencoder: TypedEncoder[A]
+}
+
+sealed class TypedAggregateAndColumn[T, A, U](expr: Expression)(
+  implicit
+  val aencoder: TypedEncoder[A],
+  uencoder: TypedEncoder[U]
+) extends TypedColumn[T, U](expr) with TypedAggregate[T, A] {
+
+  def this(column: Column)(implicit aencoder: TypedEncoder[A], uencoder: TypedEncoder[U]) {
+    this(FramelessInternals.expr(column))
   }
 }
 
