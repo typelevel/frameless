@@ -3,6 +3,8 @@ val repo = "git@github.com:adelbertc/frameless.git"
 val org = "github.com/adelbertc/frameless"
 val license = ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0"))
 
+val catsv = "0.4.1"
+val sparkCats = "1.6.0"
 val sparkDataset = "1.6.0"
 val sparkDataFrame = "1.5.2"
 val sparkTesting = "0.3.1"
@@ -12,7 +14,7 @@ val scalacheck = "1.12.5"
 val scalaVersions = Seq("2.10.6", "2.11.7")
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(common, dataset, dataframe)
+  .aggregate(common, cats, dataset, dataframe)
   .settings(framelessSettings: _*)
 
 lazy val common = project
@@ -20,6 +22,12 @@ lazy val common = project
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-sql"          % sparkDataFrame,
     "com.holdenkarau"  %% "spark-testing-base" % (sparkDataFrame + "_" + sparkTesting) % "test"))
+
+lazy val cats = project
+  .settings(framelessSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.typelevel"    %% "cats"       % catsv,
+    "org.apache.spark" %% "spark-core" % sparkCats))
 
 lazy val dataset = project
   .settings(framelessSettings: _*)
