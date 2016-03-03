@@ -15,6 +15,14 @@ The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
 associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.
 
+## Development
+We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
+(people who can merge pull requests) are:
+
+* [adelbertc](https://github.com/adelbertc)
+* [jeremyrsmith](https://github.com/jeremyrsmith)
+* [OlivierBlanvillain](https://github.com/OlivierBlanvillain/)
+
 ## License
 Code is provided under the Apache 2.0 license available at http://opensource.org/licenses/Apache-2.0,
 as well as in the LICENSE file. This is the same license used as Spark.
