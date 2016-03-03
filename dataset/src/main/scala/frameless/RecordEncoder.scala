@@ -1,6 +1,6 @@
 package frameless
 
-import org.apache.spark.sql.FramelessReflection
+import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types._
 
@@ -15,7 +15,7 @@ case class RecordEncoderField(
   encoder: TypedEncoder[_]
 )
 
-trait RecordEncoderFields[T <: HList] {
+trait RecordEncoderFields[T <: HList] extends Serializable {
   def value: List[RecordEncoderField]
 }
 
@@ -47,7 +47,7 @@ class RecordEncoder[F, G <: HList](
 ) extends TypedEncoder[F] {
   def nullable: Boolean = false
 
-  def sourceDataType: DataType = FramelessReflection.objectTypeFor[F]
+  def sourceDataType: DataType = FramelessInternals.objectTypeFor[F]
 
   def targetDataType: DataType = {
     val structFields = fields.value.value.map { field =>

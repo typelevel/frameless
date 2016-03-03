@@ -11,7 +11,7 @@ import shapeless._
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
-abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) {
+abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
   def nullable: Boolean
 
   def sourceDataType: DataType
