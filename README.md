@@ -21,6 +21,7 @@ We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull req
 
 * [adelbertc](https://github.com/adelbertc)
 * [jeremyrsmith](https://github.com/jeremyrsmith)
+* [non](https://github.com/non)
 * [OlivierBlanvillain](https://github.com/OlivierBlanvillain/)
 
 ## License
