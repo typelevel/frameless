@@ -85,7 +85,7 @@ class ProductEncoder[F, G <: HList](
       field.encoder.constructorFor(path)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, propagateNull = false, sourceDataType)
+    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = false)
   }
 
   def constructorFor(path: Expression): Expression = {
@@ -94,6 +94,6 @@ class ProductEncoder[F, G <: HList](
       field.encoder.constructorFor(fieldPath)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, propagateNull = false, sourceDataType)
+    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = false)
   }
 }

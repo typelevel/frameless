@@ -196,7 +196,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def targetDataType: DataType = underlying.targetDataType
 
     def constructor(): Expression = {
-      WrapOption(underlying.constructor())
+      WrapOption(underlying.constructor(), underlying.sourceDataType)
     }
 
     def extractor(): Expression = extractorFor(BoundReference(0, sourceDataType, nullable))
@@ -245,7 +245,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     }
 
     def constructorFor(path: Expression): Expression = {
-      WrapOption(underlying.constructorFor(path))
+      WrapOption(underlying.constructorFor(path), underlying.sourceDataType)
     }
   }
 
@@ -263,7 +263,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = {
       val arrayData = Invoke(
         MapObjects(
-          underlying.constructorFor,
+          underlying.constructorFor _,
           path,
           underlying.targetDataType
         ),
@@ -287,7 +287,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
           dataType = ArrayType(underlying.targetDataType, underlying.nullable)
         )
       } else {
-        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
+        MapObjects(underlying.extractorFor _, path, underlying.sourceDataType)
       }
     }
   }
