@@ -1,7 +1,7 @@
 package frameless
 
 import shapeless._
-import shapeless.ops.hlist.Length
+import shapeless.ops.hlist.{Length, Fill}
 import shapeless.ops.traversable.FromTraversable
 import scala.reflect.runtime.universe.TypeTag
 import org.apache.spark.sql.Row

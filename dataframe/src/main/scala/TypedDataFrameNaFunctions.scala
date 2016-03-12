@@ -5,7 +5,7 @@ import org.apache.spark.sql.DataFrameNaFunctions
 import shapeless._
 import shapeless.ops.nat.{ToInt, LT, LTEq}
 import shapeless.ops.record.{SelectAll, Values}
-import shapeless.ops.hlist.{ToList, Length, IsHCons, Selector}
+import shapeless.ops.hlist.{ToList, Length, IsHCons, Selector, Fill}
 
 final class TypedDataFrameNaFunctions[Schema <: Product] private[frameless]
   (dfn: DataFrameNaFunctions)
@@ -32,7 +32,6 @@ final class TypedDataFrameNaFunctions[Schema <: Product] private[frameless]
       (implicit h: IsHCons[C], f: FieldsExtractor[Schema, C]): TypedDataFrame[Schema] =
         new TypedDataFrame(dfn.drop(minNonNulls, f(columns)))
   }
-
   def fillAll(value: Double): TypedDataFrame[Schema] = new TypedDataFrame(dfn.fill(value))
 
   def fillAll(value: String): TypedDataFrame[Schema] = new TypedDataFrame(dfn.fill(value))

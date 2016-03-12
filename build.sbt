@@ -9,7 +9,7 @@ val sparkDataset = "1.6.1"
 val sparkDataFrame = "1.5.2"
 val sparkTesting = "0.3.1"
 val scalatest = "2.2.5"
-val shapeless = "2.2.5"
+val shapeless = "2.3.0"
 val scalacheck = "1.12.5"
 val scalaVersions = Seq("2.10.6", "2.11.7")
 
