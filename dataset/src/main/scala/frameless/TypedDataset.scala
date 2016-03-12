@@ -9,23 +9,19 @@ import org.apache.spark.sql.{FramelessInternals, Column, SQLContext, Dataset}
 import shapeless.ops.hlist.{Tupler, ToTraversable}
 import shapeless._
 
-class TypedDataset[T](
-  val dataset: Dataset[T]
-)(implicit val encoder: TypedEncoder[T]) { self =>
+class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
+    extends TypedDatasetForwarded[T] { self =>
 
+  /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
     implicit val uencoder = as.encoder
     new TypedDataset(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
-  def coalesce(numPartitions: Int): TypedDataset[T] =
-    new TypedDataset(dataset.coalesce(numPartitions))
-
-  /**
-    * Returns `TypedColumn` of type `A` given it's name.
+  /** Returns `TypedColumn` of type `A` given it's name.
     *
     * {{{
-    *   tf.col('id)
+    * tf.col('id)
     * }}}
     *
     * It is statically checked that column with such name exists and has type `A`.
@@ -53,15 +49,39 @@ class TypedDataset[T](
     }
   }
 
-  /**
-    * Job returns an array that contains all the elements in this [[TypedDataset]].
+  /** Job returns an array that contains all the elements in this [[TypedDataset]].
     *
     * Running job requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
+    *
+    * Differs from `Dataset#collect` by wrapping it's result into a [[frameless.Job]].
     */
-  def collect(): Job[Array[T]] = Job(dataset.collect())(dataset.sqlContext.sparkContext)
+  def collect(): Job[Array[T]] =
+    Job(dataset.collect())(dataset.sqlContext.sparkContext)
 
-  /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`. */
+  /** Returns the first element in this [[TypedDataset]].
+    *
+    * Differs from `Dataset#first` by wrapping it's result into a [[frameless.Job]].
+    */
+  def first(): Job[T] =
+    Job(dataset.first())(dataset.sqlContext.sparkContext)
+
+  /** Returns the first `num` elements of this [[TypedDataset]] as an array.
+    *
+    * Running take requires moving data into the application's driver process, and doing so with
+    * a very large `num` can crash the driver process with OutOfMemoryError.
+    *
+    * Differs from `Dataset#take` by wrapping it's result into a [[frameless.Job]].
+    */
+  def take(num: Int): Job[Array[T]] =
+    Job(dataset.take(num))(dataset.sqlContext.sparkContext)
+
+  /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
+    *
+    * Differs from [[TypedDatasetForward.filter]] by taking a `TypedColumn[T, Boolean]` instead of a
+    * `T => Boolean`. Using a column expression instead of a regular function save one Spark → Scala
+    * deserialization which leads to better preformances.
+    */
   def filter(column: TypedColumn[T, Boolean]): TypedDataset[T] = {
     val filtered = dataset.toDF()
       .filter(new Column(column.expr))

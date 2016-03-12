@@ -1,6 +1,6 @@
-package frameless.ops
+package frameless
+package ops
 
-import frameless.TypedColumn
 import shapeless._
 
 trait ColumnTypes[V, U <: HList] {
