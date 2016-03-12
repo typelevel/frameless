@@ -31,13 +31,13 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetSum = dataset.select(sum(A)).collect().run.toVector
 
-      xs match {
-        case Nil => datasetSum ?= Vector(None)
-        case _ :: _ => datasetSum match {
-          case Vector(Some(x)) => approximatelyEqual(x, xs.sum)
+      if (xs.isEmpty)
+        datasetSum ?= Vector(n.fromInt(0))
+      else
+        datasetSum match {
+          case Vector(x) => approximatelyEqual(x, xs.sum)
           case other => falsified
         }
-      }
     }
 
     check(forAll { (xs: List[BigDecimal]) => prop(xs) })

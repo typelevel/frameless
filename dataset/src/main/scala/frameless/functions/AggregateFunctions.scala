@@ -20,18 +20,12 @@ trait AggregateFunctions {
   }
 
   def sum[A: Summable, T](column: TypedColumn[T, A])(
-    implicit encoder: TypedEncoder[Option[A]]
-  ): TypedColumn[T, Option[A]] = {
-    new TypedColumn[T, Option[A]](Sum(column.expr).toAggregateExpression())
-  }
-
-  def sum[A: Summable, T](column: TypedColumn[T, A], default: A)(
     implicit encoder: TypedEncoder[A]
   ): TypedColumn[T, A] = {
     new TypedColumn[T, A](
       Coalesce(List(
         Sum(column.expr).toAggregateExpression(),
-        lit(default).expr
+        lit(0).expr
       ))
     )
   }
