@@ -16,7 +16,7 @@ class SelectTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val dataset2 = dataset.select(A).collect().run.toVector
+      val dataset2 = dataset.select(A).collect().run().toVector
       val data2 = data.map { case X4(a, _, _, _) => a }
 
       dataset2 ?= data2
@@ -39,7 +39,7 @@ class SelectTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val dataset2 = dataset.select(A, B).collect().run.toVector
+      val dataset2 = dataset.select(A, B).collect().run().toVector
       val data2 = data.map { case X4(a, b, _, _) => (a, b) }
 
       dataset2 ?= data2
@@ -65,7 +65,7 @@ class SelectTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
-      val dataset2 = dataset.select(A, B, C).collect().run.toVector
+      val dataset2 = dataset.select(A, B, C).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, _) => (a, b, c) }
 
       dataset2 ?= data2
@@ -86,7 +86,7 @@ class SelectTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val AB = dataset.colMany('a, 'b)
 
-      val dataset2 = dataset.select(AB).collect().run.toVector
+      val dataset2 = dataset.select(AB).collect().run().toVector
       val data2 = data.map { case X2(X2(_, b), _) => b }
 
       dataset2 ?= data2

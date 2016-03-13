@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 class CollectTests extends TypedDatasetSuite {
   test("collect()") {
     def prop[A: TypedEncoder: ClassTag](data: Vector[A]): Prop = {
-      TypedDataset.create(data).collect().run.toVector ?= data
+      TypedDataset.create(data).collect().run().toVector ?= data
     }
 
     check(forAll { (xs: Vector[X2[Int, Int]]) => prop(xs) })

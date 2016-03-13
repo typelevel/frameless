@@ -12,7 +12,7 @@ class AsTests extends TypedDatasetSuite {
     ): Prop = {
       val dataset = TypedDataset.create(data)
 
-      val dataset2 = dataset.as[X2[A,B]]().collect().run.toVector
+      val dataset2 = dataset.as[X2[A,B]]().collect().run().toVector
       val data2 = data.map { case (a, b) => X2(a, b) }
 
       dataset2 ?= data2

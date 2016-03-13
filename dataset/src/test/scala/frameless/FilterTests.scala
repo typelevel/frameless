@@ -13,12 +13,12 @@ class FilterTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col('a)
 
-      val dataset2 = dataset.filter(A === elem).collect().run.toVector
+      val dataset2 = dataset.filter(A === elem).collect().run().toVector
       val data2 = data.filter(_.a == elem)
 
       dataset2 ?= data2
     }
 
-    check(forAll { (elem: Int, data: Vector[X1[Int]]) => prop(elem, data)  })
+    check(forAll { (elem: Int, data: Vector[X1[Int]]) => prop(elem, data) })
   }
 }

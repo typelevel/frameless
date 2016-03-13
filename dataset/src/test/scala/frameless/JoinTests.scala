@@ -17,7 +17,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinLeft(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run.toVector.sortBy(_._1.a)
+        .collect().run().toVector.sortBy(_._1.a)
 
       val rightKeys = right.map(_.a).toSet
       val joined = {
@@ -34,7 +34,7 @@ class JoinTests extends TypedDatasetSuite {
       (joined.sortBy(_._1.a) ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
     }
 
-    check {forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) }}
+    check(forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) })
   }
 
   test("ab.join(ac, ab.a, ac.a)") {
@@ -50,7 +50,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .join(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run.toVector.sortBy(_._1.a)
+        .collect().run().toVector.sortBy(_._1.a)
 
       val joined = {
         for {
@@ -62,6 +62,6 @@ class JoinTests extends TypedDatasetSuite {
       joined.sortBy(_._1.a) ?= joinedDs
     }
 
-    check {forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) }}
+    check(forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) })
   }
 }

@@ -29,7 +29,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum = dataset.select(sum(A)).collect().run.toVector
+      val datasetSum = dataset.select(sum(A)).collect().run().toVector
 
       xs match {
         case Nil => datasetSum ?= Vector(None)
@@ -62,7 +62,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetAvg) = dataset.select(avg(A)).collect().run.toVector
+      val Vector(datasetAvg) = dataset.select(avg(A)).collect().run().toVector
 
       xs match {
         case Nil => datasetAvg ?= None
@@ -80,7 +80,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("count") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs)
-      val Vector(datasetCount) = dataset.select(count()).collect().run.toVector
+      val Vector(datasetCount) = dataset.select(count()).collect().run().toVector
 
       datasetCount ?= xs.size.toLong
     }
@@ -97,7 +97,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val Vector(datasetCount) = dataset.select(count(A)).collect().run.toVector
+      val Vector(datasetCount) = dataset.select(count(A)).collect().run().toVector
 
       datasetCount ?= xs.size.toLong
     }

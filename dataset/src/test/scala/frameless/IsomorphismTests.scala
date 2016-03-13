@@ -7,7 +7,7 @@ import org.scalacheck.Prop._
 class IsomorphismTests extends TypedDatasetSuite {
   test("isomorphism") {
     check(forAll { (data: Vector[Usd]) =>
-      TypedDataset.create(data).collect().run.toVector ?= data
+      TypedDataset.create(data).collect().run().toVector ?= data
     })
 
     check(secure {

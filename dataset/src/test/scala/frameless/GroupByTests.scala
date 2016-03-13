@@ -6,7 +6,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class GroupByTests extends TypedDatasetSuite {
-  // datasets are coalesced due to https://issues.apache.org/jira/browse/SPARK-12675
+  // Datasets are coalesced due to https://issues.apache.org/jira/browse/SPARK-12675
 
   test("groupBy('a).agg(sum('b))") {
     def prop[A, B](data: List[X2[A, B]])(
@@ -23,7 +23,7 @@ class GroupByTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val datasetSumByA = dataset.groupBy(A).agg(sum(B, n.fromInt(0))).collect().run.toVector.sortBy(_._1)
+      val datasetSumByA = dataset.groupBy(A).agg(sum(B, n.fromInt(0))).collect().run().toVector.sortBy(_._1)
       val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
@@ -54,7 +54,7 @@ class GroupByTests extends TypedDatasetSuite {
       val datasetSumByAB = dataset
         .groupBy(A)
         .agg(sum(B, nb.fromInt(0)), sum(C, nc.fromInt(0)))
-        .collect().run.toVector.sortBy(_._1)
+        .collect().run().toVector.sortBy(_._1)
 
       val sumByAB = data.groupBy(_.a).mapValues { xs =>
         (xs.map(_.b).sum, xs.map(_.c).sum)
@@ -92,7 +92,7 @@ class GroupByTests extends TypedDatasetSuite {
       val datasetSumByAB = dataset
         .groupBy(A, B)
         .agg(sum(C, nc.fromInt(0)), sum(D, nd.fromInt(0)))
-        .collect().run.toVector.sortBy(x => (x._1, x._2))
+        .collect().run().toVector.sortBy(x => (x._1, x._2))
 
       val sumByAB = data.groupBy(x => (x.a, x.b)).mapValues { xs =>
         (xs.map(_.c).sum, xs.map(_.d).sum)
