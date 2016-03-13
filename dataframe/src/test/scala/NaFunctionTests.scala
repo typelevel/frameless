@@ -6,21 +6,21 @@ import frameless._
 class NaFunctionTests extends SpecWithContext {
   import testImplicits._
 
-  def fooTF: TypedFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
+  def fooTF: TypedDataFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
 
   test("dropAny") {
-    fooTF.na.dropAny(): TypedFrame[Foo]
-    fooTF.na.dropAny('a): TypedFrame[Foo]
-    fooTF.na.dropAny('b): TypedFrame[Foo]
-    fooTF.na.dropAny('a, 'b): TypedFrame[Foo]
+    fooTF.na.dropAny(): TypedDataFrame[Foo]
+    fooTF.na.dropAny('a): TypedDataFrame[Foo]
+    fooTF.na.dropAny('b): TypedDataFrame[Foo]
+    fooTF.na.dropAny('a, 'b): TypedDataFrame[Foo]
     illTyped("fooTF.na.dropAny('c)")
   }
 
   test("dropAll") {
-    fooTF.na.dropAll(): TypedFrame[Foo]
-    fooTF.na.dropAll('a): TypedFrame[Foo]
-    fooTF.na.dropAll('b): TypedFrame[Foo]
-    fooTF.na.dropAll('a, 'b): TypedFrame[Foo]
+    fooTF.na.dropAll(): TypedDataFrame[Foo]
+    fooTF.na.dropAll('a): TypedDataFrame[Foo]
+    fooTF.na.dropAll('b): TypedDataFrame[Foo]
+    fooTF.na.dropAll('a, 'b): TypedDataFrame[Foo]
     illTyped("fooTF.na.dropAll('c)")
   }
 
@@ -34,7 +34,7 @@ class NaFunctionTests extends SpecWithContext {
   test("fill") {
     case class Ls(i: Int, l: Long, f: Float, d: Double, s: String, b: Boolean)
     val lsSeq = Seq((1, 1l, 1f, 1d, "s", true), (2, 2l, 2f, 2d, "t", false))
-    val ls: TypedFrame[Ls] = lsSeq.toDF.toTF
+    val ls: TypedDataFrame[Ls] = lsSeq.toDF.toTF
 
     ls.na.fill(4)('i)
     ls.na.fill(4l)('l)
@@ -46,7 +46,7 @@ class NaFunctionTests extends SpecWithContext {
 
     case class Fs(i: Int, j: Int, s: String, k: Int, t: String)
     val fsSeq = Seq((1, 1, "s", 10, "ss"), (2, 2, "t", 20, "tt"))
-    val fs: TypedFrame[Fs] = fsSeq.toDF.toTF
+    val fs: TypedDataFrame[Fs] = fsSeq.toDF.toTF
 
     fs.na.fill(1)('i)
     fs.na.fill(1)('i, 'j)
@@ -60,7 +60,7 @@ class NaFunctionTests extends SpecWithContext {
   test("replaceAll") {
     case class Ts(d: Double, s: String, b: Boolean)
     val tsSeq = Seq((1d, "s", true), (3d, "c", true), (0d, "a", false))
-    val ts: TypedFrame[Ts] = tsSeq.toDF.toTF
+    val ts: TypedDataFrame[Ts] = tsSeq.toDF.toTF
 
     checkAnswer(
       ts.na.replaceAll(Map(1d -> 2d, 3d -> 4d)),
@@ -77,7 +77,7 @@ class NaFunctionTests extends SpecWithContext {
   test("replace") {
     case class Ts(d: Double, s: String, b: Boolean)
     val tsSeq = Seq((1d, "s", true), (3d, "c", true), (0d, "a", false))
-    val ts: TypedFrame[Ts] = tsSeq.toDF.toTF
+    val ts: TypedDataFrame[Ts] = tsSeq.toDF.toTF
 
     checkAnswer(
       ts.na.replace(Map(1d -> 2d, 3d -> 4d))('d),
@@ -94,7 +94,7 @@ class NaFunctionTests extends SpecWithContext {
       (0d, 1.1d, "s", 0d, "s"),
       (0d, 0d, "c", 0d, "c"),
       (1.2d, 1.3d, "d", 1.4d, "d"))
-    val fs: TypedFrame[Fs] = fsSeq.toDF.toTF
+    val fs: TypedDataFrame[Fs] = fsSeq.toDF.toTF
 
     checkAnswer(
       fs.na.replace(Map(0d -> 1d))('i),

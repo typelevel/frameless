@@ -5,11 +5,11 @@ import frameless._
 class StatFunctionTests extends SpecWithContext {
   import testImplicits._
 
-  def fooTF: TypedFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
+  def fooTF: TypedDataFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
 
   case class Ns(i: Int, j: Int, d: Double, s: String)
   val nsSeq = Seq((1, 2, 3.0, "s"), (2, 2, 8.0, "S"), (4, 4, 6.0, "c"))
-  def ns: TypedFrame[Ns] = nsSeq.toDF.toTF
+  def ns: TypedDataFrame[Ns] = nsSeq.toDF.toTF
 
   test("cov") {
     ns.stat.cov('i, 'j)

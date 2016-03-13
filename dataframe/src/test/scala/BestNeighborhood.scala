@@ -47,31 +47,31 @@ object ProblemStatement {
 class BestNeighborhood extends SpecWithContext {
   import testImplicits._
 
-  implicit class DebugTypedFrame[S <: Product](s: TypedFrame[S]) {
-    def d: TypedFrame[S] = { /* s.show(); */ s }
+  implicit class DebugTypedDataFrame[S <: Product](s: TypedDataFrame[S]) {
+    def d: TypedDataFrame[S] = { /* s.show(); */ s }
   }
 
   test("complete example") {
     import ProblemStatement._
 
-    val phoneBookTF: TypedFrame[PhoneBookEntry] = phoneBook.toDF.toTF[PhoneBookEntry]
-    val cityMapTF: TypedFrame[CityMapEntry] = cityMap.toDF.toTF[CityMapEntry]
+    val phoneBookTF: TypedDataFrame[PhoneBookEntry] = phoneBook.toDF.toTF[PhoneBookEntry]
+    val cityMapTF: TypedDataFrame[CityMapEntry] = cityMap.toDF.toTF[CityMapEntry]
 
     val bestNeighborhood: String =            (((((((((
       phoneBookTF
-        .innerJoin(cityMapTF).using('address) :TypedFrame[(Address, String, Double, String)]).d
-        .select('_2, '_4)                     :TypedFrame[(String, String)]).d
-        .as[Family]()                         :TypedFrame[Family]).d
+        .innerJoin(cityMapTF).using('address) :TypedDataFrame[(Address, String, Double, String)]).d
+        .select('_2, '_4)                     :TypedDataFrame[(String, String)]).d
+        .as[Family]()                         :TypedDataFrame[Family]).d
         .flatMap { f =>
           f.residents.split(' ').map(r => Person(r, f.neighborhood))
-        }                                     :TypedFrame[Person]).d
+        }                                     :TypedDataFrame[Person]).d
         .filter { p =>
           NLPLib.soundsLikeAGirlName(p.name)
-        }                                     :TypedFrame[Person]).d
-        .groupBy('neighborhood).count()       :TypedFrame[(String, Long)]).d
-        .as[NeighborhoodCount]()              :TypedFrame[NeighborhoodCount]).d
-        .sortDesc('count)                     :TypedFrame[NeighborhoodCount]).d
-        .select('neighborhood)                :TypedFrame[Tuple1[String]]).d
+        }                                     :TypedDataFrame[Person]).d
+        .groupBy('neighborhood).count()       :TypedDataFrame[(String, Long)]).d
+        .as[NeighborhoodCount]()              :TypedDataFrame[NeighborhoodCount]).d
+        .sortDesc('count)                     :TypedDataFrame[NeighborhoodCount]).d
+        .select('neighborhood)                :TypedDataFrame[Tuple1[String]]).d
         .head._1
 
     bestNeighborhood shouldBe top

@@ -6,22 +6,22 @@ import frameless._
 class GroupByTests extends SpecWithContext {
   import testImplicits._
 
-  def fooTF: TypedFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
+  def fooTF: TypedDataFrame[Foo] = Seq((1, "id1"), (4, "id3"), (5, "id2")).toDF.toTF
 
   test("count") {
     val toCount = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toCountTF: TypedFrame[Foo] = toCount.toDF.toTF
+    val toCountTF: TypedDataFrame[Foo] = toCount.toDF.toTF
 
-    val grouped: TypedFrame[Tuple1[Long]] = toCountTF.groupBy().count()
+    val grouped: TypedDataFrame[Tuple1[Long]] = toCountTF.groupBy().count()
     checkAnswer(grouped, Seq(Tuple1(5l)))
 
-    val groupedA: TypedFrame[(Int, Long)] = toCountTF.groupBy('a).count()
+    val groupedA: TypedDataFrame[(Int, Long)] = toCountTF.groupBy('a).count()
     checkAnswer(groupedA, Seq((1, 3l), (4, 1l), (5, 1l)))
 
-    val groupedB: TypedFrame[(String, Long)] = toCountTF.groupBy('b).count()
+    val groupedB: TypedDataFrame[(String, Long)] = toCountTF.groupBy('b).count()
     checkAnswer(groupedB, Set(("id1", 1l), ("id3", 3l), ("id2", 1l)))
 
-    val groupedAB: TypedFrame[(Int, String, Long)] = toCountTF.groupBy('a, 'b).count()
+    val groupedAB: TypedDataFrame[(Int, String, Long)] = toCountTF.groupBy('a, 'b).count()
     checkAnswer(groupedAB, Set((1, "id1", 1l),  (1, "id3", 2l), (4, "id3", 1l), (5, "id2", 1l)))
 
     illTyped("fooTF.groupBy('c)")
@@ -34,25 +34,25 @@ class GroupByTests extends SpecWithContext {
   case class FooFloat(a: Float, b: String)
   case class FooDouble(a: Double, b: String)
 
-  def fByteTF: TypedFrame[FooByte] = Seq((1.toByte, "a"), (2.toByte, "a")).toDF.toTF
-  def fShortTF: TypedFrame[FooShort] = Seq((1.toShort, "a"), (2.toShort, "a")).toDF.toTF
-  def fIntTF: TypedFrame[FooInt] = Seq((1.toInt, "a"), (2.toInt, "a")).toDF.toTF
-  def fLongTF: TypedFrame[FooLong] = Seq((1.toLong, "a"), (2.toLong, "a")).toDF.toTF
-  def fFloatTF: TypedFrame[FooFloat] = Seq((1.toFloat, "a"), (2.toFloat, "a")).toDF.toTF
-  def fDoubleTF: TypedFrame[FooDouble] = Seq((1.toDouble, "a"), (2.toDouble, "a")).toDF.toTF
+  def fByteTF: TypedDataFrame[FooByte] = Seq((1.toByte, "a"), (2.toByte, "a")).toDF.toTF
+  def fShortTF: TypedDataFrame[FooShort] = Seq((1.toShort, "a"), (2.toShort, "a")).toDF.toTF
+  def fIntTF: TypedDataFrame[FooInt] = Seq((1.toInt, "a"), (2.toInt, "a")).toDF.toTF
+  def fLongTF: TypedDataFrame[FooLong] = Seq((1.toLong, "a"), (2.toLong, "a")).toDF.toTF
+  def fFloatTF: TypedDataFrame[FooFloat] = Seq((1.toFloat, "a"), (2.toFloat, "a")).toDF.toTF
+  def fDoubleTF: TypedDataFrame[FooDouble] = Seq((1.toDouble, "a"), (2.toDouble, "a")).toDF.toTF
 
   test("sum") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = toSum.toDF.toTF
-    val summed: TypedFrame[(String, Long)] = toSumTF.groupBy('b).sum('a)
+    val toSumTF: TypedDataFrame[Foo] = toSum.toDF.toTF
+    val summed: TypedDataFrame[(String, Long)] = toSumTF.groupBy('b).sum('a)
     checkAnswer(summed, Seq(("id1", 1l), ("id2", 5l), ("id3", 6l)))
 
-    val sByte: TypedFrame[(String, Long)] = fByteTF.groupBy('b).sum('a)
-    val sShort: TypedFrame[(String, Long)] = fShortTF.groupBy('b).sum('a)
-    val sInt: TypedFrame[(String, Long)] = fIntTF.groupBy('b).sum('a)
-    val sLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).sum('a)
-    val sFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).sum('a)
-    val sDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).sum('a)
+    val sByte: TypedDataFrame[(String, Long)] = fByteTF.groupBy('b).sum('a)
+    val sShort: TypedDataFrame[(String, Long)] = fShortTF.groupBy('b).sum('a)
+    val sInt: TypedDataFrame[(String, Long)] = fIntTF.groupBy('b).sum('a)
+    val sLong: TypedDataFrame[(String, Long)] = fLongTF.groupBy('b).sum('a)
+    val sFloat: TypedDataFrame[(String, Double)] = fFloatTF.groupBy('b).sum('a)
+    val sDouble: TypedDataFrame[(String, Double)] = fDoubleTF.groupBy('b).sum('a)
 
     checkAnswer(sByte, Seq(("a", 3.toLong)))
     checkAnswer(sShort, Seq(("a", 3.toLong)))
@@ -68,16 +68,16 @@ class GroupByTests extends SpecWithContext {
 
   test("avg") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = toSum.toDF.toTF
-    val avged: TypedFrame[(String, Double)] = toSumTF.groupBy('b).avg('a)
+    val toSumTF: TypedDataFrame[Foo] = toSum.toDF.toTF
+    val avged: TypedDataFrame[(String, Double)] = toSumTF.groupBy('b).avg('a)
     checkAnswer(avged, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
 
-    val aByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).avg('a)
-    val aShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).avg('a)
-    val aInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).avg('a)
-    val aLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).avg('a)
-    val aFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).avg('a)
-    val aDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).avg('a)
+    val aByte: TypedDataFrame[(String, Double)] = fByteTF.groupBy('b).avg('a)
+    val aShort: TypedDataFrame[(String, Double)] = fShortTF.groupBy('b).avg('a)
+    val aInt: TypedDataFrame[(String, Double)] = fIntTF.groupBy('b).avg('a)
+    val aLong: TypedDataFrame[(String, Double)] = fLongTF.groupBy('b).avg('a)
+    val aFloat: TypedDataFrame[(String, Double)] = fFloatTF.groupBy('b).avg('a)
+    val aDouble: TypedDataFrame[(String, Double)] = fDoubleTF.groupBy('b).avg('a)
 
     checkAnswer(aByte, Seq(("a", 1.5d)))
     checkAnswer(aShort, Seq(("a", 1.5d)))
@@ -93,16 +93,16 @@ class GroupByTests extends SpecWithContext {
 
   test("mean") {
     val toSum = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toSumTF: TypedFrame[Foo] = toSum.toDF.toTF
-    val meaned: TypedFrame[(String, Double)] = toSumTF.groupBy('b).mean('a)
+    val toSumTF: TypedDataFrame[Foo] = toSum.toDF.toTF
+    val meaned: TypedDataFrame[(String, Double)] = toSumTF.groupBy('b).mean('a)
     checkAnswer(meaned, Seq(("id1", 1d), ("id2", 5d), ("id3", 2d)))
 
-    val mByte: TypedFrame[(String, Double)] = fByteTF.groupBy('b).mean('a)
-    val mShort: TypedFrame[(String, Double)] = fShortTF.groupBy('b).mean('a)
-    val mInt: TypedFrame[(String, Double)] = fIntTF.groupBy('b).mean('a)
-    val mLong: TypedFrame[(String, Double)] = fLongTF.groupBy('b).mean('a)
-    val mFloat: TypedFrame[(String, Double)] = fFloatTF.groupBy('b).mean('a)
-    val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).mean('a)
+    val mByte: TypedDataFrame[(String, Double)] = fByteTF.groupBy('b).mean('a)
+    val mShort: TypedDataFrame[(String, Double)] = fShortTF.groupBy('b).mean('a)
+    val mInt: TypedDataFrame[(String, Double)] = fIntTF.groupBy('b).mean('a)
+    val mLong: TypedDataFrame[(String, Double)] = fLongTF.groupBy('b).mean('a)
+    val mFloat: TypedDataFrame[(String, Double)] = fFloatTF.groupBy('b).mean('a)
+    val mDouble: TypedDataFrame[(String, Double)] = fDoubleTF.groupBy('b).mean('a)
 
     checkAnswer(mByte, Seq(("a", 1.5d)))
     checkAnswer(mShort, Seq(("a", 1.5d)))
@@ -118,16 +118,16 @@ class GroupByTests extends SpecWithContext {
 
   test("max") {
     val toMax = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toMaxTF: TypedFrame[Foo] = toMax.toDF.toTF
-    val maxed: TypedFrame[(String, Int)] = toMaxTF.groupBy('b).max('a)
+    val toMaxTF: TypedDataFrame[Foo] = toMax.toDF.toTF
+    val maxed: TypedDataFrame[(String, Int)] = toMaxTF.groupBy('b).max('a)
     checkAnswer(maxed, Seq(("id1", 1), ("id2", 5), ("id3", 4)))
 
-    val mByte: TypedFrame[(String, Byte)] = fByteTF.groupBy('b).max('a)
-    val mShort: TypedFrame[(String, Short)] = fShortTF.groupBy('b).max('a)
-    val mInt: TypedFrame[(String, Int)] = fIntTF.groupBy('b).max('a)
-    val mLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).max('a)
-    val mFloat: TypedFrame[(String, Float)] = fFloatTF.groupBy('b).max('a)
-    val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).max('a)
+    val mByte: TypedDataFrame[(String, Byte)] = fByteTF.groupBy('b).max('a)
+    val mShort: TypedDataFrame[(String, Short)] = fShortTF.groupBy('b).max('a)
+    val mInt: TypedDataFrame[(String, Int)] = fIntTF.groupBy('b).max('a)
+    val mLong: TypedDataFrame[(String, Long)] = fLongTF.groupBy('b).max('a)
+    val mFloat: TypedDataFrame[(String, Float)] = fFloatTF.groupBy('b).max('a)
+    val mDouble: TypedDataFrame[(String, Double)] = fDoubleTF.groupBy('b).max('a)
 
     checkAnswer(mByte, Seq(("a", 2.toByte)))
     checkAnswer(mShort, Seq(("a", 2.toShort)))
@@ -143,16 +143,16 @@ class GroupByTests extends SpecWithContext {
 
   test("min") {
     val toMin = Seq((1, "id1"),  (1, "id3"), (1, "id3"), (4, "id3"), (5, "id2"))
-    val toMinTF: TypedFrame[Foo] = toMin.toDF.toTF
-    val mined: TypedFrame[(String, Int)] = toMinTF.groupBy('b).min('a)
+    val toMinTF: TypedDataFrame[Foo] = toMin.toDF.toTF
+    val mined: TypedDataFrame[(String, Int)] = toMinTF.groupBy('b).min('a)
     checkAnswer(mined, Seq(("id1", 1), ("id2", 5), ("id3", 1)))
 
-    val mByte: TypedFrame[(String, Byte)] = fByteTF.groupBy('b).min('a)
-    val mShort: TypedFrame[(String, Short)] = fShortTF.groupBy('b).min('a)
-    val mInt: TypedFrame[(String, Int)] = fIntTF.groupBy('b).min('a)
-    val mLong: TypedFrame[(String, Long)] = fLongTF.groupBy('b).min('a)
-    val mFloat: TypedFrame[(String, Float)] = fFloatTF.groupBy('b).min('a)
-    val mDouble: TypedFrame[(String, Double)] = fDoubleTF.groupBy('b).min('a)
+    val mByte: TypedDataFrame[(String, Byte)] = fByteTF.groupBy('b).min('a)
+    val mShort: TypedDataFrame[(String, Short)] = fShortTF.groupBy('b).min('a)
+    val mInt: TypedDataFrame[(String, Int)] = fIntTF.groupBy('b).min('a)
+    val mLong: TypedDataFrame[(String, Long)] = fLongTF.groupBy('b).min('a)
+    val mFloat: TypedDataFrame[(String, Float)] = fFloatTF.groupBy('b).min('a)
+    val mDouble: TypedDataFrame[(String, Double)] = fDoubleTF.groupBy('b).min('a)
 
     checkAnswer(mByte, Seq(("a", 1.toByte)))
     checkAnswer(mShort, Seq(("a", 1.toShort)))

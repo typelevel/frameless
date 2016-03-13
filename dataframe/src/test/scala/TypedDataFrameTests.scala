@@ -6,12 +6,12 @@ import frameless._
 
 case class Foo(a: Int, b: String)
 
-class TypedFrameTests extends SpecWithContext {
+class TypedDataFrameTests extends SpecWithContext {
   import testImplicits._
 
   val fooTuples: Seq[(Int, String)] = Seq((1, "id1"), (4, "id3"), (5, "id2"))
   val fooSeq: Seq[Foo] = fooTuples.map(Foo.tupled)
-  def fooTF: TypedFrame[Foo] = fooTuples.toDF.toTF
+  def fooTF: TypedDataFrame[Foo] = fooTuples.toDF.toTF
 
   test("as") {
     case class Bar(i: Int, j: String)
@@ -23,9 +23,9 @@ class TypedFrameTests extends SpecWithContext {
   }
 
   test("sort") {
-    val a: TypedFrame[Foo] = fooTF.sort('a)
-    val ab: TypedFrame[Foo] = fooTF.sort('a, 'b)
-    val ba: TypedFrame[Foo] = fooTF.sort('b, 'a)
+    val a: TypedDataFrame[Foo] = fooTF.sort('a)
+    val ab: TypedDataFrame[Foo] = fooTF.sort('a, 'b)
+    val ba: TypedDataFrame[Foo] = fooTF.sort('b, 'a)
 
     checkAnswer(a, Seq(Foo(1, "id1"), Foo(4, "id3"), Foo(5, "id2")))
     checkAnswer(ab, Seq(Foo(1, "id1"), Foo(4, "id3"), Foo(5, "id2")))
@@ -37,9 +37,9 @@ class TypedFrameTests extends SpecWithContext {
   }
 
   test("sortDesc") {
-    val a: TypedFrame[Foo] = fooTF.sortDesc('a)
-    val ab: TypedFrame[Foo] = fooTF.sortDesc('a, 'b)
-    val ba: TypedFrame[Foo] = fooTF.sortDesc('b, 'a)
+    val a: TypedDataFrame[Foo] = fooTF.sortDesc('a)
+    val ab: TypedDataFrame[Foo] = fooTF.sortDesc('a, 'b)
+    val ba: TypedDataFrame[Foo] = fooTF.sortDesc('b, 'a)
 
     checkAnswer(a, Seq(Foo(5, "id2"), Foo(4, "id3"), Foo(1, "id1")))
     checkAnswer(ab, Seq(Foo(5, "id2"), Foo(4, "id3"), Foo(1, "id1")))
@@ -51,9 +51,9 @@ class TypedFrameTests extends SpecWithContext {
   }
 
   test("select") {
-    val a: TypedFrame[Tuple1[Int]] = fooTF.select('a)
-    val ab: TypedFrame[(Int, String)] = fooTF.select('a, 'b)
-    val ba: TypedFrame[(String, Int)] = fooTF.select('b, 'a)
+    val a: TypedDataFrame[Tuple1[Int]] = fooTF.select('a)
+    val ab: TypedDataFrame[(Int, String)] = fooTF.select('a, 'b)
+    val ba: TypedDataFrame[(String, Int)] = fooTF.select('b, 'a)
 
     checkAnswer(a, Seq(Tuple1(1), Tuple1(4), Tuple1(5)))
     checkAnswer(ab, Seq((1, "id1"), (4, "id3"), (5, "id2")))
@@ -65,18 +65,18 @@ class TypedFrameTests extends SpecWithContext {
   }
 
   test("filter") {
-    val gt: TypedFrame[Foo] = fooTF.filter(_.a > 2)
-    val sw: TypedFrame[Foo] = fooTF.filter(_.b.endsWith("3"))
+    val gt: TypedDataFrame[Foo] = fooTF.filter(_.a > 2)
+    val sw: TypedDataFrame[Foo] = fooTF.filter(_.b.endsWith("3"))
 
     checkAnswer(gt, Seq(Foo(4, "id3"), Foo(5, "id2")))
     checkAnswer(sw, Seq(Foo(4, "id3")))
   }
 
   test("limit") {
-    val l0: TypedFrame[Foo] = fooTF.limit(0)
-    val l1: TypedFrame[Foo] = fooTF.limit(1)
-    val l2: TypedFrame[Foo] = fooTF.limit(2)
-    val l100: TypedFrame[Foo] = fooTF.limit(100)
+    val l0: TypedDataFrame[Foo] = fooTF.limit(0)
+    val l1: TypedDataFrame[Foo] = fooTF.limit(1)
+    val l2: TypedDataFrame[Foo] = fooTF.limit(2)
+    val l100: TypedDataFrame[Foo] = fooTF.limit(100)
 
     checkAnswer(l0, Seq())
     checkAnswer(l1, Seq(Foo(1, "id1")))
@@ -86,43 +86,43 @@ class TypedFrameTests extends SpecWithContext {
 
   case class Bar(a: Int, s: String)
   val barTuples: Seq[(Int, String)] = Seq((1, "bar"), (4, "id3"), (5, "id2"))
-  def barTF: TypedFrame[Bar] = barTuples.toDF.toTF
+  def barTF: TypedDataFrame[Bar] = barTuples.toDF.toTF
 
   case class Fuu(a: Int, i: Double)
-  def fuuTF: TypedFrame[Fuu] = Seq((1, 1.1)).toDF.toTF
+  def fuuTF: TypedDataFrame[Fuu] = Seq((1, 1.1)).toDF.toTF
 
   test("unionAll") {
-    val foofoo: TypedFrame[Foo] = fooTF.unionAll(fooTF)
+    val foofoo: TypedDataFrame[Foo] = fooTF.unionAll(fooTF)
     checkAnswer(foofoo, fooSeq ++ fooSeq)
 
-    val foobar: TypedFrame[Foo] = fooTF.unionAll(barTF)
+    val foobar: TypedDataFrame[Foo] = fooTF.unionAll(barTF)
     checkAnswer(foobar, fooSeq ++ barTuples.map(Foo.tupled))
 
     illTyped("fooTF.unionAll(fuuTF)")
   }
 
   test("intersect") {
-    val foofoo: TypedFrame[Foo] = fooTF.intersect(fooTF)
+    val foofoo: TypedDataFrame[Foo] = fooTF.intersect(fooTF)
     checkAnswer(foofoo, fooSeq.intersect(fooSeq).toSet)
 
-    val foobar: TypedFrame[Foo] = fooTF.intersect(barTF)
+    val foobar: TypedDataFrame[Foo] = fooTF.intersect(barTF)
     checkAnswer(foobar, fooSeq.intersect(barTuples.map(Foo.tupled)).toSet)
 
     illTyped("fooTF.intersect(fuuTF)")
   }
 
   test("except") {
-    val foofoo: TypedFrame[Foo] = fooTF.except(fooTF)
+    val foofoo: TypedDataFrame[Foo] = fooTF.except(fooTF)
     checkAnswer(foofoo, Seq.empty[Foo])
 
-    val foobar: TypedFrame[Foo] = fooTF.except(barTF)
+    val foobar: TypedDataFrame[Foo] = fooTF.except(barTF)
     checkAnswer(foobar, fooSeq.filterNot(barTuples.map(Foo.tupled) contains _).toSet)
 
     illTyped("fooTF.except(fuuTF)")
   }
 
   test("explode") {
-    val isss: TypedFrame[(Int, String, String, String)] =
+    val isss: TypedDataFrame[(Int, String, String, String)] =
       fooTF.explode { case Foo(a, b) => b.split("d").map(_ -> a.toString) }
 
     checkAnswer(isss, Set(
@@ -133,7 +133,7 @@ class TypedFrameTests extends SpecWithContext {
       (5, "id2", "i", "5"),
       (5, "id2", "2", "5")))
 
-    val issb: TypedFrame[(Int, String, String, Boolean)] =
+    val issb: TypedDataFrame[(Int, String, String, Boolean)] =
       fooTF.explode(f => List.fill(f.a)(f.b -> f.b.isEmpty))
 
     checkAnswer(issb, Set(
@@ -146,10 +146,10 @@ class TypedFrameTests extends SpecWithContext {
   }
 
   test("drop") {
-    val dropA: TypedFrame[Tuple1[String]] = fooTF.drop('a)
+    val dropA: TypedDataFrame[Tuple1[String]] = fooTF.drop('a)
     checkAnswer(dropA, fooTuples.map(Tuple1 apply _._2))
 
-    val dropB: TypedFrame[Tuple1[Int]] = fooTF.drop('b)
+    val dropB: TypedDataFrame[Tuple1[Int]] = fooTF.drop('b)
     checkAnswer(dropB, fooTuples.map(Tuple1 apply _._1))
 
     illTyped("fooTF.drop()")
@@ -160,12 +160,12 @@ class TypedFrameTests extends SpecWithContext {
     def fooTFMe(s: Seq[(Int, String)]): Seq[Foo] = s.map(Function.tupled(Foo.apply))
 
     val withDupSeq = Seq((1, "a"), (1, "a"), (1, "b"), (2, "c"), (3, "c"))
-    val withDup: TypedFrame[Foo] = withDupSeq.toDF.toTF
+    val withDup: TypedDataFrame[Foo] = withDupSeq.toDF.toTF
 
-    val allDup: TypedFrame[Foo] = withDup.dropDuplicates()
-    val aDup: TypedFrame[Foo] = withDup.dropDuplicates('a)
-    val bDup: TypedFrame[Foo] = withDup.dropDuplicates('b)
-    val abDup: TypedFrame[Foo] = withDup.dropDuplicates('a, 'b)
+    val allDup: TypedDataFrame[Foo] = withDup.dropDuplicates()
+    val aDup: TypedDataFrame[Foo] = withDup.dropDuplicates('a)
+    val bDup: TypedDataFrame[Foo] = withDup.dropDuplicates('b)
+    val abDup: TypedDataFrame[Foo] = withDup.dropDuplicates('a, 'b)
 
     checkAnswer(allDup, fooTFMe(Seq((1, "a"), (1, "b"), (2, "c"), (3, "c"))))
     checkAnswer(aDup, fooTFMe(Seq((1, "a"), (2, "c"), (3, "c"))))
