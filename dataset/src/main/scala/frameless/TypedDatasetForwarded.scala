@@ -16,6 +16,23 @@ import scala.util.Random
   */
 trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
 
+  override def toString: String =
+    dataset.toString
+
+  /** Prints the schema of the underlying [[Dataset]] to the console in a nice tree format.
+    *
+    * apache/spark
+   */
+  def printSchema(): Unit =
+    dataset.printSchema()
+
+  /** Prints the plans (logical and physical) to the console for debugging purposes.
+    *
+    * apache/spark
+   */
+  def explain(extended: Boolean = false): Unit =
+    dataset.explain(extended)
+
   /** Converts this strongly typed collection of data to generic Dataframe.  In contrast to the
     * strongly typed objects that Dataset operations work on, a Dataframe returns generic Row
     * objects that allow fields to be accessed by ordinal or name.
