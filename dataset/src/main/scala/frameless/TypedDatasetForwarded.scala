@@ -1,7 +1,7 @@
 package frameless
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Encoder}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -93,23 +93,23 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     *
     * apache/spark
     */
-  def map[U: Encoder : TypedEncoder](func: T => U): TypedDataset[U] =
-    new TypedDataset(dataset.map(func))
+  def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
+    new TypedDataset(dataset.map(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
     *
     * apache/spark
     */
-  def mapPartitions[U: Encoder : TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
-    new TypedDataset(dataset.mapPartitions(func))
+  def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
+    new TypedDataset(dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
     * and then flattening the results.
     *
     * apache/spark
     */
-  def flatMap[U: Encoder : TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
-    new TypedDataset(dataset.flatMap(func))
+  def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
+    new TypedDataset(dataset.flatMap(func)(TypedExpressionEncoder[U]))
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
