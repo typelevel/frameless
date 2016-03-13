@@ -12,11 +12,20 @@ import shapeless._
 class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
+  private implicit val sparkContext = dataset.sqlContext.sparkContext
+
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
     implicit val uencoder = as.encoder
     new TypedDataset(dataset.as[U](TypedExpressionEncoder[U]))
   }
+
+  /** Returns the number of elements in the [[TypedDataset]].
+    *
+    * Differs from `Dataset#count` by wrapping it's result into a [[frameless.Job]].
+    */
+  def count(): Job[Long] =
+    Job(dataset.count)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -57,14 +66,17 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
     * Differs from `Dataset#collect` by wrapping it's result into a [[frameless.Job]].
     */
   def collect(): Job[Array[T]] =
-    Job(dataset.collect())(dataset.sqlContext.sparkContext)
+    Job(dataset.collect())
 
   /** Returns the first element in this [[TypedDataset]].
+    *
+    * @throws NoSuchElementException
+    * if this [[TypedDataset]] is empty.
     *
     * Differs from `Dataset#first` by wrapping it's result into a [[frameless.Job]].
     */
   def first(): Job[T] =
-    Job(dataset.first())(dataset.sqlContext.sparkContext)
+    Job(dataset.first())
 
   /** Returns the first `num` elements of this [[TypedDataset]] as an array.
     *
@@ -72,9 +84,32 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
     * Differs from `Dataset#take` by wrapping it's result into a [[frameless.Job]].
+    *
+    * apache/spark
     */
   def take(num: Int): Job[Array[T]] =
-    Job(dataset.take(num))(dataset.sqlContext.sparkContext)
+    Job(dataset.take(num))
+
+  /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
+    * will be truncated, and all cells will be aligned right. For example:
+    * {{{
+    *   year  month AVG('Adj Close) MAX('Adj Close)
+    *   1980  12    0.503218        0.595103
+    *   1981  01    0.523289        0.570307
+    *   1982  02    0.436504        0.475256
+    *   1983  03    0.410516        0.442194
+    *   1984  04    0.450090        0.483521
+    * }}}
+    * @param numRows Number of rows to show
+    * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
+    *   be truncated and all cells will be aligned right
+    *
+    * Differs from `Dataset#show` by wrapping it's result into a [[frameless.Job]].
+    *
+    * apache/spark
+    */
+  def show(numRows: Int = 20, truncate: Boolean = true): Job[Unit] =
+    Job(dataset.show(numRows, truncate))
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
@@ -89,6 +124,31 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
     new TypedDataset[T](filtered)
   }
+
+  /** Runs `func` on each element of this [[TypedDataset]].
+    *
+    * Differs from `Dataset#foreach` by wrapping it's result into a [[frameless.Job]].
+    */
+  def foreach(func: T => Unit): Job[Unit] =
+    Job(dataset.foreach(func))
+
+  /** Runs `func` on each partition of this [[TypedDataset]].
+    *
+    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[frameless.Job]].
+    */
+  def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
+    Job(dataset.foreachPartition(func))
+
+  /** Reduces the elements of this [[TypedDataset]] using the specified binary function. The given `func`
+    * must be commutative and associative or the result may be non-deterministic.
+    *
+    * @throws UnsupportedOperationException
+    * if this [[TypedDataset]] is empty.
+    *
+    * Differs from `Dataset#reduce` by wrapping it's result into a [[frameless.Job]].
+    */
+  def reduce(func: (T, T) => T): Job[T] =
+    Job(dataset.reduce(func))
 
   def groupBy[K1](
     c1: TypedColumn[T, K1]
