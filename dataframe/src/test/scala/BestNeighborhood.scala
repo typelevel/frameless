@@ -8,21 +8,21 @@ object NLPLib {
 
 object ProblemStatement {
   // Find the neighborhood with most girls
-  
+
   type Neighborhood = String
   val right = "right"
   val left = "left"
   val top = "top"
-  
+
   type Address = String
-  
+
   case class PhoneBookEntry(address: Address, residents: String, phoneNumber: Double)
   case class CityMapEntry(address: Address, neighborhood: Neighborhood)
 
   case class Family(residents: String, neighborhood: Neighborhood)
   case class Person(name: String, neighborhood: Neighborhood)
   case class NeighborhoodCount(neighborhood: Neighborhood, count: Long)
-  
+
   def phoneBook: Seq[(Address, Neighborhood, Double)] = Seq(
     ("Boulevard de Belleville",      "Inès Enzo Léa",            0.136903816),
     ("Place de la Bourse",           "Louis Jade",               0.170688543),
@@ -32,7 +32,7 @@ object ProblemStatement {
     ("Rue de Courcelles",            "Lilou Arthur Léna",        0.175124256),
     ("Rue du Faubourg-Saint-Honoré", "Ethan Sarah",              0.139750951),
     ("Avenue Foch",                  "Maël Maëlys Tom",          0.126858629))
-  
+
   def cityMap: Seq[(Address, Neighborhood)] = Seq(
     ("Boulevard de Belleville", right),
     ("Place de la Bourse", right),
@@ -46,17 +46,17 @@ object ProblemStatement {
 
 class BestNeighborhood extends SpecWithContext {
   import testImplicits._
-  
+
   implicit class DebugTypedFrame[S <: Product](s: TypedFrame[S]) {
     def d: TypedFrame[S] = { /* s.show(); */ s }
   }
-  
+
   test("complete example") {
     import ProblemStatement._
-    
+
     val phoneBookTF: TypedFrame[PhoneBookEntry] = phoneBook.toDF.toTF[PhoneBookEntry]
     val cityMapTF: TypedFrame[CityMapEntry] = cityMap.toDF.toTF[CityMapEntry]
-    
+
     val bestNeighborhood: String =            (((((((((
       phoneBookTF
         .innerJoin(cityMapTF).using('address) :TypedFrame[(Address, String, Double, String)]).d
@@ -73,7 +73,7 @@ class BestNeighborhood extends SpecWithContext {
         .sortDesc('count)                     :TypedFrame[NeighborhoodCount]).d
         .select('neighborhood)                :TypedFrame[Tuple1[String]]).d
         .head._1
-    
+
     bestNeighborhood shouldBe top
   }
 }

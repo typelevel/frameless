@@ -11,7 +11,7 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
   (dfs: DataFrameStatFunctions)
   (implicit val fields: Fields[Schema])
     extends Serializable {
-  
+
   def cov[G <: HList, C1, C2]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
@@ -22,7 +22,7 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
       m: Numeric[C2]
     ): Double =
       dfs.cov(column1.value.name, column2.value.name)
-  
+
   def corr[G <: HList, C1, C2]
     (column1: Witness.Lt[Symbol], column2: Witness.Lt[Symbol])
     (implicit
@@ -33,7 +33,7 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
       m: Numeric[C2]
     ): Double =
       dfs.corr(column1.value.name, column2.value.name)
-  
+
   // This can't a TypedFrame since the output columns depend on the dataframe
   // content: there is one column for each different value accross all rows.
   def crosstab[G <: HList]
@@ -44,9 +44,9 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
       c: Selector[G, column2.T]
     ): DataFrame =
       dfs.crosstab(column1.value.name, column2.value.name)
-  
+
   def freqItems(support: Double = 0.01) = new FreqItemsCurried(support)
-  
+
   class FreqItemsCurried(support: Double) extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, S <: HList]
       (columns: C)
@@ -58,7 +58,7 @@ final class TypedFrameStatFunctions[Schema <: Product] private[frameless]
       ): TypedFrame[Out] =
         new TypedFrame(dfs.freqItems(f(columns), support))
   }
-  
+
   def sampleBy[T, G <: HList, C]
     (column: Witness.Lt[Symbol], fractions: Map[T, Double], seed: Long)
     (implicit

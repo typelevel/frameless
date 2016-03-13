@@ -10,7 +10,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
   (implicit val fields: Fields[Schema])
     extends Serializable {
   import GroupedTypedFrame._
-  
+
   class DOp(theOp: Seq[String] => DataFrame) extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, N <: Nat, G <: HList, P <: HList, U <: HList, S <: HList, F <: HList, E <: HList]
       (columns: C)
@@ -29,10 +29,10 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
       ): TypedFrame[Out] =
         new TypedFrame(theOp(s(columns)))
   }
-  
+
   def avg = new DOp(gd.avg)
   def mean = new DOp(gd.mean)
-  
+
   object sum extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, G <: HList, P <: HList, U <: HList, S <: HList, O <: HList, E <: HList]
       (columns: C)
@@ -49,7 +49,7 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
       ): TypedFrame[Out] =
         new TypedFrame(gd.sum(s(columns): _*))
   }
-  
+
   class POp(theOp: Seq[String] => DataFrame) extends SingletonProductArgs {
     def applyProduct[Out <: Product, C <: HList, G <: HList, P <: HList, U <: HList, S <: HList, E <: HList]
       (columns: C)
@@ -66,10 +66,10 @@ final class GroupedTypedFrame[Schema <: Product, GroupingColumns <: HList]
       ): TypedFrame[Out] =
         new TypedFrame(theOp(s(columns)))
   }
-  
+
   def max = new POp(gd.max)
   def min = new POp(gd.min)
-  
+
   def count[Out <: Product, G <: HList, S <: HList, P <: HList]()
     (implicit
       g: LabelledGeneric.Aux[Schema, G],
