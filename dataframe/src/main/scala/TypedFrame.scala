@@ -301,15 +301,11 @@ final class TypedFrame[Schema <: Product] private[frameless]
 
   def distinct(): TypedFrame[Schema] = new TypedFrame(df.distinct())
 
-  def persist(): TypedFrame[Schema] = new TypedFrame(df.persist())
-
   def cache(): TypedFrame[Schema] = new TypedFrame(df.cache())
 
-  def persist(newLevel: StorageLevel): TypedFrame[Schema] = new TypedFrame(df.persist(newLevel))
+  def persist(newLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK): TypedFrame[Schema] = new TypedFrame(df.persist(newLevel))
 
-  def unpersist(blocking: Boolean): TypedFrame[Schema] = new TypedFrame(df.unpersist(blocking))
-
-  def unpersist(): TypedFrame[Schema] = new TypedFrame(df.unpersist())
+  def unpersist(blocking: Boolean = false): TypedFrame[Schema] = new TypedFrame(df.unpersist(blocking))
 
   def schema: StructType = df.schema
 
@@ -319,9 +315,7 @@ final class TypedFrame[Schema <: Product] private[frameless]
 
   def printSchema(): Unit = df.printSchema()
 
-  def explain(extended: Boolean): Unit = df.explain(extended)
-
-  def explain(): Unit = df.explain()
+  def explain(extended: Boolean = false): Unit = df.explain(extended)
 
   def isLocal: Boolean = df.isLocal
 
