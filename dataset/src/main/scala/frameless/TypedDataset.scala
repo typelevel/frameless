@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.{FramelessInternals, Column, SQLContext, Dataset}
 import shapeless.ops.hlist.{Tupler, ToTraversable}
 import shapeless._
+import scala.util.Try
 
 class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
@@ -68,15 +69,18 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
   def collect(): Job[Array[T]] =
     Job(dataset.collect())
 
-  /** Returns the first element in this [[TypedDataset]].
+  /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * @throws NoSuchElementException
-    * if this [[TypedDataset]] is empty.
-    *
-    * Differs from `Dataset#first` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[frameless.Job]].
     */
-  def first(): Job[T] =
-    Job(dataset.first())
+  def firstOption(): Job[Option[T]] =
+    Job {
+      try {
+        Option(dataset.first())
+      } catch {
+        case e: NoSuchElementException => None
+      }
+    }
 
   /** Returns the first `num` elements of this [[TypedDataset]] as an array.
     *
@@ -139,16 +143,19 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
   def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
     Job(dataset.foreachPartition(func))
 
-  /** Reduces the elements of this [[TypedDataset]] using the specified binary function. The given `func`
-    * must be commutative and associative or the result may be non-deterministic.
+  /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
+    * `func` must be commutative and associative or the result may be non-deterministic.
     *
-    * @throws UnsupportedOperationException
-    * if this [[TypedDataset]] is empty.
-    *
-    * Differs from `Dataset#reduce` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[frameless.Job]].
     */
-  def reduce(func: (T, T) => T): Job[T] =
-    Job(dataset.reduce(func))
+  def reduceOption(func: (T, T) => T): Job[Option[T]] =
+    Job {
+      try {
+        Option(dataset.reduce(func))
+      } catch {
+        case e: UnsupportedOperationException => None
+      }
+    }
 
   def groupBy[K1](
     c1: TypedColumn[T, K1]
