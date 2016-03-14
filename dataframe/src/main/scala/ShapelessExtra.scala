@@ -11,15 +11,15 @@ trait AllRemover[L <: HList, K <: HList] extends DepFn1[L] with Serializable { t
 
 object AllRemover {
   def apply[L <: HList, K <: HList](implicit rf: AllRemover[L, K]): Aux[L, K, rf.Out] = rf
-  
+
   type Aux[L <: HList, K <: HList, Out0 <: HList] = AllRemover[L, K] { type Out = Out0 }
-  
+
   implicit def hnilAllRemover[L <: HList]: Aux[L, HNil, L] =
     new AllRemover[L, HNil] {
       type Out = L
       def apply(l: L): Out = l
     }
-  
+
   implicit def hconsAllRemover[L <: HList, H, T <: HList, V, R <: HList]
     (implicit
       r: Remover.Aux[L, H, (V, R)],
@@ -37,7 +37,7 @@ trait IsXLTuple[T]
 object IsXLTuple {
   import scala.language.experimental.macros
   import scala.reflect.macros.whitebox
-  
+
   implicit def apply[T]: IsXLTuple[T] = macro IsXLTupleMacro.mk[T]
 }
 
@@ -80,18 +80,18 @@ sealed trait LiftAll[F[_], In <: HList] {
 
 object LiftAll {
   type Aux[F[_], In0 <: HList, Out0 <: HList] = LiftAll[F, In0] { type Out = Out0 }
-  
+
   class Curried[F[_]] {
     def apply[In <: HList](in: In)(implicit ev: LiftAll[F, In]) = ev
   }
   def apply[F[_]] = new Curried[F]
   def apply[F[_], In <: HList](implicit ev: LiftAll[F, In]) = ev
-  
+
   implicit def hnil[F[_]]: LiftAll.Aux[F, HNil, HNil] = new LiftAll[F, HNil] {
     type Out = HNil
     def instances = HNil
   }
-  
+
   implicit def hcons[F[_], H, T <: HList]
     (implicit
       headInstance: F[H],
