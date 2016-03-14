@@ -3,7 +3,6 @@ package functions
 
 import java.math.MathContext
 
-import frameless.X1
 import frameless.functions.aggregate._
 
 import org.scalacheck.Prop
