@@ -23,7 +23,7 @@ class GroupByTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val datasetSumByA = dataset.groupBy(A).agg(sum(B, n.fromInt(0))).collect().run.toVector.sortBy(_._1)
+      val datasetSumByA = dataset.groupBy(A).agg(sum(B)).collect().run.toVector.sortBy(_._1)
       val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
@@ -53,7 +53,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetSumByAB = dataset
         .groupBy(A)
-        .agg(sum(B, nb.fromInt(0)), sum(C, nc.fromInt(0)))
+        .agg(sum(B), sum(C))
         .collect().run.toVector.sortBy(_._1)
 
       val sumByAB = data.groupBy(_.a).mapValues { xs =>
@@ -91,7 +91,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetSumByAB = dataset
         .groupBy(A, B)
-        .agg(sum(C, nc.fromInt(0)), sum(D, nd.fromInt(0)))
+        .agg(sum(C), sum(D))
         .collect().run.toVector.sortBy(x => (x._1, x._2))
 
       val sumByAB = data.groupBy(x => (x.a, x.b)).mapValues { xs =>
