@@ -1,11 +1,10 @@
 package frameless
 package cats
 
-import algebra.{Group, Monoid, Order, Semigroup}
+import algebra.{Monoid, Order, Semigroup}
 import _root_.cats.implicits._
 
 import scala.reflect.ClassTag
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 object implicits {

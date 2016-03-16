@@ -3,9 +3,8 @@ package frameless
 import org.apache.spark.sql.{DataFrameStatFunctions, DataFrame}
 
 import shapeless._
-import shapeless.nat._1
-import shapeless.ops.record.{Selector, Keys}
-import shapeless.ops.hlist.{ToList, IsHCons, Tupler}
+import shapeless.ops.record.Selector
+import shapeless.ops.hlist.{IsHCons, Tupler}
 
 final class TypedDataFrameStatFunctions[Schema <: Product] private[frameless]
   (dfs: DataFrameStatFunctions)

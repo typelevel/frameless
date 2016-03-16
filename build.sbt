@@ -1,8 +1,3 @@
-val home = "https://github.com/adelbertc/frameless"
-val repo = "git@github.com:adelbertc/frameless.git"
-val org = "github.com/adelbertc/frameless"
-val license = ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0"))
-
 val catsv = "0.4.1"
 val sparkCats = "1.6.1"
 val sparkDataset = "1.6.1"
@@ -11,7 +6,6 @@ val sparkTesting = "0.3.1"
 val scalatest = "2.2.5"
 val shapeless = "2.3.0"
 val scalacheck = "1.12.5"
-val scalaVersions = Seq("2.10.6", "2.11.7")
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(common, cats, dataset, dataframe)
@@ -24,12 +18,14 @@ lazy val common = project
     "com.holdenkarau"  %% "spark-testing-base" % (sparkDataFrame + "_" + sparkTesting) % "test"))
 
 lazy val cats = project
+  .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
     "org.apache.spark" %% "spark-core" % sparkCats))
 
 lazy val dataset = project
+  .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataset,
@@ -37,6 +33,7 @@ lazy val dataset = project
   .dependsOn(common % "test->test;compile->compile")
 
 lazy val dataframe = project
+  .settings(name := "frameless-dataframe")
   .settings(framelessSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataFrame,
@@ -45,10 +42,11 @@ lazy val dataframe = project
   .dependsOn(common % "test->test;compile->compile")
 
 lazy val framelessSettings = Seq(
-  scalaVersion := scalaVersions.last,
-  organization := org,
-  crossScalaVersions := scalaVersions,
+  organization := "io.github.adelbertc",
+  scalaVersion := "2.11.8",
+  version := "0.1.0-SNAPSHOT",
   scalacOptions ++= commonScalacOptions,
+  licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
@@ -72,6 +70,7 @@ lazy val commonScalacOptions = Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard",
   "-language:existentials",
+  "-language:experimental.macros",
   "-language:implicitConversions",
   "-language:higherKinds",
   "-Xfuture")

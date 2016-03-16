@@ -9,9 +9,7 @@ import Arbitrary._
 import org.scalatest._
 import prop._
 
-import scala.reflect.ClassTag
 import org.apache.spark.{SparkConf, SparkContext => SC}
-import org.apache.spark.rdd.RDD
 
 trait SparkTests {
 

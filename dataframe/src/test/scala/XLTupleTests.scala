@@ -1,5 +1,4 @@
 import org.apache.spark.sql.SpecWithContext
-import shapeless.test.illTyped
 import shapeless.{::, HNil}
 import TestHelpers._
 import frameless._
