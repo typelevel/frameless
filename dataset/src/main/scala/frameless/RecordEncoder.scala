@@ -90,7 +90,7 @@ class RecordEncoder[F, G <: HList](
       field.encoder.constructorFor(path)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, propagateNull = true, sourceDataType)
+    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
   }
 
   def constructorFor(path: Expression): Expression = {
@@ -99,6 +99,6 @@ class RecordEncoder[F, G <: HList](
       field.encoder.constructorFor(fieldPath)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, propagateNull = true, sourceDataType)
+    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
   }
 }

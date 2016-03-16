@@ -1,4 +1,6 @@
 import org.scalacheck.{Gen, Arbitrary}
+import org.scalacheck.Test.Parameters
+import org.scalatest.prop.Configuration.PropertyCheckConfig
 
 package object frameless {
   /** Fixed decimal point to avoid precision problems specific to Spark */

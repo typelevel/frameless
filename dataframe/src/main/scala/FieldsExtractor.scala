@@ -12,7 +12,7 @@ trait Fields[S <: Product] extends Serializable {
 
 object Fields {
   def apply[S <: Product](implicit f: Fields[S]): Fields[S] = f
-  
+
   implicit def mkFields[S <: Product, R <: HList, K <: HList]
     (implicit
       g: LabelledGeneric.Aux[S, R],
@@ -34,10 +34,10 @@ trait FieldsExtractor[S <: Product, C <: HList] extends Serializable {
 
 object FieldsExtractor {
   def apply[S <: Product, C <: HList](implicit f: FieldsExtractor[S, C]): FieldsExtractor[S, C] = f
-  
+
   type Aux[S <: Product, C <: HList, R0 <: HList, F0 <: HList] =
     FieldsExtractor[S, C] { type Repr = R0; type Fields = F0 }
-  
+
   implicit def mkFieldsExtractor[S <: Product, C <: HList, R <: HList, F <: HList]
     (implicit
       t: ToList[C, Symbol],
