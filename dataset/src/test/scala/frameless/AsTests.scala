@@ -18,9 +18,9 @@ class AsTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[(Int, Int)]) => prop(xs) })
-    check(forAll { (xs: Vector[(String, String)]) => prop(xs) })
-    check(forAll { (xs: Vector[(String, Int)]) => prop(xs) })
-    check(forAll { (xs: Vector[(Long, Int)]) => prop(xs) })
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[String, String] _))
+    check(forAll(prop[String, Int] _))
+    check(forAll(prop[Long, Int] _))
   }
 }

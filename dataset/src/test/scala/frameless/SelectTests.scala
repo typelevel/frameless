@@ -22,8 +22,8 @@ class SelectTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
   }
 
   test("select('a, 'b) FROM abcd") {
@@ -45,9 +45,9 @@ class SelectTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, String, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[String, String, Int, Int] _))
   }
 
   test("select('a, 'b, 'c) FROM abcd") {
@@ -71,13 +71,13 @@ class SelectTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, String, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[String, String, Int, Int] _))
   }
 
   test("select('a.b)") {
-    def prop[A, B, C, D](data: Vector[X2[X2[A, B], C]])(
+    def prop[A, B, C](data: Vector[X2[X2[A, B], C]])(
       implicit
       eabc: TypedEncoder[X2[X2[A, B], C]],
       eb: TypedEncoder[B],
@@ -92,6 +92,6 @@ class SelectTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X2[X2[Int, String], Double]]) => prop(xs) })
+    check(forAll(prop[Int, String, Double] _))
   }
 }

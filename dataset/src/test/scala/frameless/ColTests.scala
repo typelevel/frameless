@@ -23,7 +23,6 @@ class ColTests extends TypedDatasetSuite {
 
     illTyped("x4.col[Int]('b)", "No column .* of type Int in frameless.X4.*")
 
-
     ()
   }
 

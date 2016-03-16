@@ -25,7 +25,7 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByA ?= sumByA
     }
 
-    check {forAll { (xs: List[X2[Int, Long]]) => prop(xs) }}
+    check(forAll(prop[Int, Long] _))
   }
 
   test("groupBy('a).agg(sum('b), sum('c))") {
@@ -56,7 +56,7 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByAB ?= sumByAB
     }
 
-    check {forAll { (xs: List[X3[String, Long, BigDecimal]]) => prop(xs) }}
+    check(forAll(prop[String, Long, BigDecimal] _))
   }
 
   test("groupBy('a, 'b).agg(sum('c), sum('d))") {
@@ -89,6 +89,6 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByAB ?= sumByAB
     }
 
-    check {forAll { (xs: List[X4[Byte, Int, Long, BigDecimal]]) => prop(xs) }}
+    check(forAll(prop[Byte, Int, Long, BigDecimal] _))
   }
 }

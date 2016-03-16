@@ -37,14 +37,14 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
-    check(forAll { (xs: List[BigDecimal]) => prop(xs) })
-    check(forAll { (xs: List[Long]) => prop(xs) })
-    check(forAll { (xs: List[Double]) => prop(xs) })
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
 
     // doesn't work yet because resulting type is different
-    // check(forAll { (xs: List[Int]) => prop(xs) })
-    // check(forAll { (xs: List[Short]) => prop(xs) })
-    // check(forAll { (xs: List[Byte]) => prop(xs) })
+    // check(forAll(prop[Int] _)
+    // check(forAll(prop[Short] _)
+    // check(forAll(prop[Byte] _)
   }
 
   test("avg") {
@@ -68,8 +68,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
-    check(forAll { (xs: List[BigDecimal]) => prop(xs) })
-    check(forAll { (xs: List[Double]) => prop(xs) })
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Double] _))
   }
 
   test("count") {
@@ -80,8 +80,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       datasetCount ?= xs.size.toLong
     }
 
-    check(forAll { (xs: List[Int]) => prop(xs) })
-    check(forAll { (xs: List[Byte]) => prop(xs) })
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Byte] _))
   }
 
   test("count('a)") {
@@ -93,7 +93,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       datasetCount ?= xs.size.toLong
     }
 
-    check(forAll { (xs: List[Int]) => prop(xs) })
-    check(forAll { (xs: List[Byte]) => prop(xs) })
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Byte] _))
   }
 }

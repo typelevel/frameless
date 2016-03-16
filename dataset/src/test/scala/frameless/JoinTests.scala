@@ -32,7 +32,7 @@ class JoinTests extends TypedDatasetSuite {
       (joined.sortBy(_._1.a) ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
     }
 
-    check(forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) })
+    check(forAll(prop[Int, Long, String] _))
   }
 
   test("ab.join(ac, ab.a, ac.a)") {
@@ -58,6 +58,6 @@ class JoinTests extends TypedDatasetSuite {
       joined.sortBy(_._1.a) ?= joinedDs
     }
 
-    check(forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) })
+    check(forAll(prop[Int, Long, String] _))
   }
 }

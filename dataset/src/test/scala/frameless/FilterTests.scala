@@ -15,6 +15,6 @@ class FilterTests extends TypedDatasetSuite {
       dataset2 ?= data2
     }
 
-    check(forAll { (elem: Int, data: Vector[X1[Int]]) => prop(elem, data) })
+    check(forAll(prop[Int] _))
   }
 }
