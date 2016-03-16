@@ -5,13 +5,11 @@ import org.scalacheck.Prop._
 
 class JoinTests extends TypedDatasetSuite {
   test("ab.joinLeft(ac, ab.a, ac.a)") {
-    def prop[A, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
-      ae: TypedEncoder[A],
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
-      joinede: TypedEncoder[(X2[A, B], Option[X2[A, C]])],
-      ordering: Ordering[A]
+      joinede: TypedEncoder[(X2[A, B], Option[X2[A, C]])]
     ): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -38,13 +36,11 @@ class JoinTests extends TypedDatasetSuite {
   }
 
   test("ab.join(ac, ab.a, ac.a)") {
-    def prop[A, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
-      ae: TypedEncoder[A],
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
-      joinede: TypedEncoder[(X2[A, B], X2[A, C])],
-      ordering: Ordering[A]
+      joinede: TypedEncoder[(X2[A, B], X2[A, C])]
     ): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)

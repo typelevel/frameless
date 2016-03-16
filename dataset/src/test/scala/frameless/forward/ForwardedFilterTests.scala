@@ -5,7 +5,7 @@ import org.scalacheck.Prop._
 
 class ForwardedFilterTests extends TypedDatasetSuite {
   test("filter") {
-    def prop[A](filterFunction: A => Boolean, data: Vector[A])(implicit e: TypedEncoder[A]): Prop =
+    def prop[A: TypedEncoder](filterFunction: A => Boolean, data: Vector[A]): Prop =
       TypedDataset.create(data).filter(filterFunction).collect().run().toVector =? data.filter(filterFunction)
 
     check(forAll(prop[Int] _))

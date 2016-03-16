@@ -1,7 +1,7 @@
 import org.scalacheck.{Gen, Arbitrary}
 
 package object frameless {
-  /** fixed decimal point to avoid precision problems specific to Spark */
+  /** Fixed decimal point to avoid precision problems specific to Spark */
   implicit val arbBigDecimal = Arbitrary {
     for {
       x <- Gen.chooseNum(-1000, 1000)

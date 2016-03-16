@@ -5,7 +5,7 @@ import org.scalacheck.Prop._
 
 class CountTests extends TypedDatasetSuite {
   test("count") {
-    def prop[A](data: Vector[A])(implicit e: TypedEncoder[A]): Prop =
+    def prop[A: TypedEncoder](data: Vector[A]): Prop =
       TypedDataset.create(data).count().run() ?= data.size.toLong
 
     check(forAll(prop[Int] _))

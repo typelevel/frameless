@@ -5,7 +5,7 @@ import org.scalacheck.Prop._
 
 class MapTests extends TypedDatasetSuite {
   test("map") {
-    def prop[A, B](mapFunction: A => B, data: Vector[A])(implicit a: TypedEncoder[A], b: TypedEncoder[B]): Prop =
+    def prop[A: TypedEncoder, B: TypedEncoder](mapFunction: A => B, data: Vector[A]): Prop =
       TypedDataset.create(data).map(mapFunction).collect().run().toVector =? data.map(mapFunction)
 
     check(forAll(prop[Int, Int] _))

@@ -11,20 +11,17 @@ import org.scalacheck.Prop._
 
 class AggregateFunctionsTests extends TypedDatasetSuite {
 
-  def approximatelyEqual[A](a: A, b: A)(implicit n: Numeric[A]): Prop = {
+  def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
     val mc = new MathContext(4)
-    if (BigDecimal(n.toDouble(a)).round(mc) == BigDecimal(n.toDouble(b)).round(mc)) proved
+    if (BigDecimal(numeric.toDouble(a)).round(mc) == BigDecimal(numeric.toDouble(b)).round(mc)) proved
     else falsified :| "Expected " + a + " but got " + b
   }
 
   test("sum") {
-    def prop[A](xs: List[A])(
+    def prop[A: TypedEncoder : Numeric : Summable](xs: List[A])(
       implicit
-      ea: TypedEncoder[A],
       eoa: TypedEncoder[Option[A]],
-      ex1: TypedEncoder[X1[A]],
-      n: Numeric[A],
-      s: Summable[A]
+      ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
@@ -51,11 +48,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("avg") {
-    def prop[A](xs: List[A])(
+    def prop[A: TypedEncoder : Averagable](xs: List[A])(
       implicit
       fractional: Fractional[A],
-      averagable: Averagable[A],
-      ea: TypedEncoder[A],
       eoa: TypedEncoder[Option[A]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
@@ -90,11 +85,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("count('a)") {
-    def prop[A](xs: List[A])(
-      implicit
-      ea: TypedEncoder[A],
-      ex1: TypedEncoder[X1[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder](xs: List[A])(implicit ex1: TypedEncoder[X1[A]]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
       val Vector(datasetCount) = dataset.select(count(A)).collect().run().toVector

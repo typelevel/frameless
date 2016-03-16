@@ -6,7 +6,7 @@ import math.Ordering
 
 class UnionTests extends TypedDatasetSuite {
   test("Union") {
-    def prop[A](data1: Vector[A], data2: Vector[A])(implicit e: TypedEncoder[A]): Prop = {
+    def prop[A: TypedEncoder](data1: Vector[A], data2: Vector[A]): Prop = {
       val dataset1 = TypedDataset.create(data1)
       val dataset2 = TypedDataset.create(data2)
       val datasetUnion = dataset1.union(dataset2).collect().run().toVector

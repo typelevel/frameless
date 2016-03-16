@@ -6,7 +6,7 @@ import math.Ordering
 
 class SubtractTests extends TypedDatasetSuite {
   test("subtract") {
-    def prop[A](data1: Vector[A], data2: Vector[A])(implicit e: TypedEncoder[A], o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder : Ordering](data1: Vector[A], data2: Vector[A]): Prop = {
       val dataset1 = TypedDataset.create(data1)
       val dataset2 = TypedDataset.create(data2)
       val datasetSubtract = dataset1.subtract(dataset2).collect().run().toVector
