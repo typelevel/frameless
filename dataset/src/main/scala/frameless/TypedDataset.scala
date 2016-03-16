@@ -23,7 +23,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
   /** Returns the number of elements in the [[TypedDataset]].
     *
-    * Differs from `Dataset#count` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#count` by wrapping it's result into a [[Job]].
     */
   def count(): Job[Long] =
     Job(dataset.count)
@@ -59,19 +59,19 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
     }
   }
 
-  /** Job returns an array that contains all the elements in this [[TypedDataset]].
+  /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
-    * Running job requires moving all the data into the application's driver process, and
+    * Running this [[Job]] requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#collect` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#collect` by wrapping it's result into a [[Job]].
     */
-  def collect(): Job[Array[T]] =
+  def collect(): Job[Seq[T]] =
     Job(dataset.collect())
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[frameless.Job]].
+    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[Job]].
     */
   def firstOption(): Job[Option[T]] =
     Job {
@@ -82,16 +82,16 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
       }
     }
 
-  /** Returns the first `num` elements of this [[TypedDataset]] as an array.
+  /** Returns the first `num` elements of this [[TypedDataset]] as a `Seq`.
     *
     * Running take requires moving data into the application's driver process, and doing so with
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#take` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#take` by wrapping it's result into a [[Job]].
     *
     * apache/spark
     */
-  def take(num: Int): Job[Array[T]] =
+  def take(num: Int): Job[Seq[T]] =
     Job(dataset.take(num))
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
@@ -108,7 +108,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
     * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
     *   be truncated and all cells will be aligned right
     *
-    * Differs from `Dataset#show` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#show` by wrapping it's result into a [[Job]].
     *
     * apache/spark
     */
@@ -131,14 +131,14 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreach` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#foreach` by wrapping it's result into a [[Job]].
     */
   def foreach(func: T => Unit): Job[Unit] =
     Job(dataset.foreach(func))
 
   /** Runs `func` on each partition of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[frameless.Job]].
+    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[Job]].
     */
   def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
     Job(dataset.foreachPartition(func))
@@ -146,7 +146,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
   /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
     * `func` must be commutative and associative or the result may be non-deterministic.
     *
-    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[frameless.Job]].
+    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
     */
   def reduceOption(func: (T, T) => T): Job[Option[T]] =
     Job {

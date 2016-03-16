@@ -1,5 +1,4 @@
 package frameless
-package forward
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
