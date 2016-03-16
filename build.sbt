@@ -10,6 +10,7 @@ val scalacheck = "1.12.5"
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(common, cats, dataset, dataframe)
   .settings(framelessSettings: _*)
+  .settings(noPublishSettings: _*)
 
 lazy val common = project
   .settings(framelessSettings: _*)
@@ -20,6 +21,7 @@ lazy val common = project
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
+  .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
     "org.apache.spark" %% "spark-core" % sparkCats))
@@ -27,6 +29,7 @@ lazy val cats = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
+  .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataset,
     "org.apache.spark" %% "spark-sql"  % sparkDataset))
@@ -35,6 +38,7 @@ lazy val dataset = project
 lazy val dataframe = project
   .settings(name := "frameless-dataframe")
   .settings(framelessSettings: _*)
+  .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataFrame,
     "org.apache.spark" %% "spark-sql"  % sparkDataFrame))
@@ -86,4 +90,37 @@ lazy val warnUnusedImport = Seq(
   },
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
   scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console))
+)
+
+lazy val publishSettings = Seq(
+  publishMavenStyle := true,
+  publishTo := {
+    val nexus = "https://oss.sonatype.org/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+  },
+  publishArtifact in Test := false,
+  pomIncludeRepository := Function.const(false),
+  pomExtra in Global := {
+    <url>https://github.com/adelbertc/frameless</url>
+    <scm>
+      <url>git@github.com:adelbertc/frameless.git</url>
+      <connection>scm:git:git@github.com:adelbertc/frameless.git</connection>
+    </scm>
+    <developers>
+      <developer>
+        <id>adelbertc</id>
+        <name>Adelbert Chang</name>
+        <url>https://github.com/adelbertc/</url>
+      </developer>
+    </developers>
+  }
+)
+
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
 )
