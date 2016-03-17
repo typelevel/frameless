@@ -10,6 +10,12 @@ import shapeless.ops.hlist.{Tupler, ToTraversable}
 import shapeless._
 import scala.util.Try
 
+/** [[TypedDataset]] is a safer interface for working with `Dataset`.
+  *
+  * Documentation marked "apache/spark" is thanks to apache/spark Contributors
+  * at https://github.com/apache/spark, licensed under Apache v2.0 available at
+  * http://www.apache.org/licenses/LICENSE-2.0
+  */
 class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
