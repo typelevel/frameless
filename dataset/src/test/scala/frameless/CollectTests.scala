@@ -7,41 +7,40 @@ import scala.reflect.ClassTag
 
 class CollectTests extends TypedDatasetSuite {
   test("collect()") {
-    def prop[A: TypedEncoder: ClassTag](data: Vector[A]): Prop = {
-      TypedDataset.create(data).collect().run.toVector ?= data
-    }
+    def prop[A: TypedEncoder : ClassTag](data: Vector[A]): Prop =
+      TypedDataset.create(data).collect().run().toVector ?= data
 
-    check(forAll { (xs: Vector[X2[Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X2[String, String]]) => prop(xs) })
-    check(forAll { (xs: Vector[X2[String, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X2[Long, Int]]) => prop(xs) })
+    check(forAll(prop[X2[Int, Int]] _))
+    check(forAll(prop[X2[String, String]] _))
+    check(forAll(prop[X2[String, Int]] _))
+    check(forAll(prop[X2[Long, Int]] _))
 
-    check(forAll { (xs: Vector[X2[X2[Int, String], Boolean]]) => prop(xs) })
+    check(forAll(prop[X2[X2[Int, String], Boolean]] _))
 
-    check(forAll { (xs: Vector[Int]) => prop(xs) })
-    check(forAll { (xs: Vector[Long]) => prop(xs) })
-    check(forAll { (xs: Vector[Double]) => prop(xs) })
-    check(forAll { (xs: Vector[Float]) => prop(xs) })
-    check(forAll { (xs: Vector[Short]) => prop(xs) })
-    check(forAll { (xs: Vector[Byte]) => prop(xs) })
-    check(forAll { (xs: Vector[Boolean]) => prop(xs) })
-    check(forAll { (xs: Vector[String]) => prop(xs) })
-    check(forAll { (xs: Vector[SQLDate]) => prop(xs) })
-    check(forAll { (xs: Vector[SQLTimestamp]) => prop(xs) })
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
 
-    check(forAll { (xs: Vector[Option[Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Long]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Double]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Float]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Short]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Byte]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Boolean]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[String]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[SQLDate]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[SQLTimestamp]]) => prop(xs) })
+    check(forAll(prop[Option[Int]] _))
+    check(forAll(prop[Option[Long]] _))
+    check(forAll(prop[Option[Double]] _))
+    check(forAll(prop[Option[Float]] _))
+    check(forAll(prop[Option[Short]] _))
+    check(forAll(prop[Option[Byte]] _))
+    check(forAll(prop[Option[Boolean]] _))
+    check(forAll(prop[Option[String]] _))
+    check(forAll(prop[Option[SQLDate]] _))
+    check(forAll(prop[Option[SQLTimestamp]] _))
 
-    check(forAll { (xs: Vector[Vector[Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[Option[Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[Vector[X2[Int, Int]]]) => prop(xs) })
+    check(forAll(prop[Vector[Int]] _))
+    check(forAll(prop[Option[Int]] _))
+    check(forAll(prop[Vector[X2[Int, Int]]] _))
   }
 }

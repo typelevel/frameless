@@ -5,19 +5,17 @@ import org.scalacheck.Prop._
 
 class JoinTests extends TypedDatasetSuite {
   test("ab.joinLeft(ac, ab.a, ac.a)") {
-    def prop[A, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
-      ae: TypedEncoder[A],
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
-      joinede: TypedEncoder[(X2[A, B], Option[X2[A, C]])],
-      ordering: Ordering[A]
+      joinede: TypedEncoder[(X2[A, B], Option[X2[A, C]])]
     ): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinLeft(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run.toVector.sortBy(_._1.a)
+        .collect().run().toVector.sortBy(_._1.a)
 
       val rightKeys = right.map(_.a).toSet
       val joined = {
@@ -34,23 +32,21 @@ class JoinTests extends TypedDatasetSuite {
       (joined.sortBy(_._1.a) ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
     }
 
-    check {forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) }}
+    check(forAll(prop[Int, Long, String] _))
   }
 
   test("ab.join(ac, ab.a, ac.a)") {
-    def prop[A, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
-      ae: TypedEncoder[A],
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
-      joinede: TypedEncoder[(X2[A, B], X2[A, C])],
-      ordering: Ordering[A]
+      joinede: TypedEncoder[(X2[A, B], X2[A, C])]
     ): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .join(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run.toVector.sortBy(_._1.a)
+        .collect().run().toVector.sortBy(_._1.a)
 
       val joined = {
         for {
@@ -62,6 +58,6 @@ class JoinTests extends TypedDatasetSuite {
       joined.sortBy(_._1.a) ?= joinedDs
     }
 
-    check {forAll { (xs: List[X2[Int, Long]], ys: List[X2[Int, String]]) => prop(xs, ys) }}
+    check(forAll(prop[Int, Long, String] _))
   }
 }

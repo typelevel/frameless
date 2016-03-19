@@ -4,7 +4,7 @@ import org.apache.spark.SparkContext
 
 sealed abstract class Job[A](implicit sc: SparkContext) { self =>
   /** Runs a new Spark job. */
-  def run: A
+  def run(): A
 
   def withGroupId(groupId: String): Job[A] = {
     withLocalProperty("spark.jobGroup.id", groupId)
@@ -16,9 +16,9 @@ sealed abstract class Job[A](implicit sc: SparkContext) { self =>
 
   def withLocalProperty(key: String, value: String): Job[A] = {
     new Job[A] {
-      def run: A = {
+      def run(): A = {
         sc.setLocalProperty(key, value)
-        self.run
+        self.run()
       }
     }
   }
@@ -26,6 +26,6 @@ sealed abstract class Job[A](implicit sc: SparkContext) { self =>
 
 object Job {
   def apply[A](a: => A)(implicit sc: SparkContext): Job[A] = new Job[A] {
-    def run: A = a
+    def run(): A = a
   }
 }

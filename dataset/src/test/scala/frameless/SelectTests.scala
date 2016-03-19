@@ -16,14 +16,14 @@ class SelectTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val dataset2 = dataset.select(A).collect().run.toVector
+      val dataset2 = dataset.select(A).collect().run().toVector
       val data2 = data.map { case X4(a, _, _, _) => a }
 
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
   }
 
   test("select('a, 'b) FROM abcd") {
@@ -39,15 +39,15 @@ class SelectTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val dataset2 = dataset.select(A, B).collect().run.toVector
+      val dataset2 = dataset.select(A, B).collect().run().toVector
       val data2 = data.map { case X4(a, b, _, _) => (a, b) }
 
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, String, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[String, String, Int, Int] _))
   }
 
   test("select('a, 'b, 'c) FROM abcd") {
@@ -65,19 +65,19 @@ class SelectTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
-      val dataset2 = dataset.select(A, B, C).collect().run.toVector
+      val dataset2 = dataset.select(A, B, C).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, _) => (a, b, c) }
 
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X4[Int, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, Int, Int, Int]]) => prop(xs) })
-    check(forAll { (xs: Vector[X4[String, String, Int, Int]]) => prop(xs) })
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[String, String, Int, Int] _))
   }
 
   test("select('a.b)") {
-    def prop[A, B, C, D](data: Vector[X2[X2[A, B], C]])(
+    def prop[A, B, C](data: Vector[X2[X2[A, B], C]])(
       implicit
       eabc: TypedEncoder[X2[X2[A, B], C]],
       eb: TypedEncoder[B],
@@ -86,12 +86,12 @@ class SelectTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val AB = dataset.colMany('a, 'b)
 
-      val dataset2 = dataset.select(AB).collect().run.toVector
+      val dataset2 = dataset.select(AB).collect().run().toVector
       val data2 = data.map { case X2(X2(_, b), _) => b }
 
       dataset2 ?= data2
     }
 
-    check(forAll { (xs: Vector[X2[X2[Int, String], Double]]) => prop(xs) })
+    check(forAll(prop[Int, String, Double] _))
   }
 }

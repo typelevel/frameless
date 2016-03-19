@@ -1,6 +1,6 @@
-package frameless.ops
+package frameless
+package ops
 
-import frameless.TypedEncoder
 import shapeless.{Generic, HList}
 
 class As[T, U](implicit val encoder: TypedEncoder[U])
