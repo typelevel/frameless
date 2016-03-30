@@ -3,9 +3,7 @@ package frameless
 import org.apache.spark.sql.DataFrameNaFunctions
 
 import shapeless._
-import shapeless.ops.nat.{ToInt, LT, LTEq}
-import shapeless.ops.record.{SelectAll, Values}
-import shapeless.ops.hlist.{ToList, Length, IsHCons, Selector, Fill}
+import shapeless.ops.hlist.{Length, IsHCons, Selector, Fill}
 
 final class TypedDataFrameNaFunctions[Schema <: Product] private[frameless]
   (dfn: DataFrameNaFunctions)

@@ -2,8 +2,6 @@ package frameless
 
 import shapeless._
 import shapeless.ops.record.Remover
-import scala.collection.GenTraversable
-import scala.language.higherKinds
 
 /** Type class supporting multiple record field removal. */
 @annotation.implicitNotFound(msg = "No fields ${K} in record ${L}")
@@ -35,8 +33,5 @@ object AllRemover {
 trait IsXLTuple[T]
 
 object IsXLTuple {
-  import scala.language.experimental.macros
-  import scala.reflect.macros.whitebox
-
   implicit def apply[T]: IsXLTuple[T] = macro IsXLTupleMacro.mk[T]
 }

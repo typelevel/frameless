@@ -2,8 +2,8 @@ package frameless
 
 import shapeless._
 import org.apache.spark.sql.{DataFrame, GroupedData}
-import shapeless.ops.hlist.{ToList, Prepend, Length, RemoveAll, IsHCons, Mapper, LiftAll, Fill}
-import shapeless.ops.record.{SelectAll, Values, Keys}
+import shapeless.ops.hlist.{Prepend, Length, IsHCons, Mapper, LiftAll, Fill}
+import shapeless.ops.record.SelectAll
 
 final class GroupedTypedDataFrame[Schema <: Product, GroupingColumns <: HList]
   (gd: GroupedData)

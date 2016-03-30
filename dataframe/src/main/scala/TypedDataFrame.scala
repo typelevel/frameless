@@ -1,6 +1,6 @@
 package frameless
 
-import org.apache.spark.sql.{DataFrame, Column, Row, DataFrameWriter, GroupedData, SQLContext}
+import org.apache.spark.sql.{DataFrame, Column, DataFrameWriter, SQLContext}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.functions.{col, when}
 import org.apache.spark.rdd.RDD
@@ -11,9 +11,8 @@ import scala.reflect.runtime.universe.TypeTag
 import scala.util.Random.{nextLong => randomLong}
 
 import shapeless._
-import shapeless.nat._1
-import shapeless.ops.record.{SelectAll, Values, Keys}
-import shapeless.ops.hlist.{ToList, ToTraversable, IsHCons, Prepend, RemoveAll, Length}
+import shapeless.ops.record.Values
+import shapeless.ops.hlist.{IsHCons, Prepend}
 
 final class TypedDataFrame[Schema <: Product] private[frameless]
   (_df: DataFrame)

@@ -1,4 +1,4 @@
-import org.apache.spark.sql.{SpecWithContext, DataFrame}
+import org.apache.spark.sql.SpecWithContext
 import org.scalatest.Matchers._
 import frameless._
 
