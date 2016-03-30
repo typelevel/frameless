@@ -8,7 +8,6 @@ import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.{FramelessInternals, Column, SQLContext, Dataset}
 import shapeless.ops.hlist.{Tupler, ToTraversable}
 import shapeless._
-import scala.util.Try
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
