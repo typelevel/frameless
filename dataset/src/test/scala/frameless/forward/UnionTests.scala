@@ -2,7 +2,6 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import math.Ordering
 
 class UnionTests extends TypedDatasetSuite {
   test("Union") {
