@@ -19,7 +19,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   override def toString: String =
     dataset.toString
 
-  /** Prints the schema of the underlying [[Dataset]] to the console in a nice tree format.
+  /** Prints the schema of the underlying `Dataset` to the console in a nice tree format.
     *
     * apache/spark
    */

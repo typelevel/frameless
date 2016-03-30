@@ -122,7 +122,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
-    * Differs from [[TypedDatasetForward.filter]] by taking a `TypedColumn[T, Boolean]` instead of a
+    * Differs from `TypedDatasetForward#filter` by taking a `TypedColumn[T, Boolean]` instead of a
     * `T => Boolean`. Using a column expression instead of a regular function save one Spark → Scala
     * deserialization which leads to better preformances.
     */
