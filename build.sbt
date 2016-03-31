@@ -13,7 +13,9 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .settings(noPublishSettings: _*)
 
 lazy val common = project
+  .settings(name := "frameless-common")
   .settings(framelessSettings: _*)
+  .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-sql"          % sparkDataFrame,
     "com.holdenkarau"  %% "spark-testing-base" % (sparkDataFrame + "_" + sparkTesting) % "test"))
@@ -123,4 +125,12 @@ lazy val noPublishSettings = Seq(
   publish := (),
   publishLocal := (),
   publishArtifact := false
+)
+
+lazy val credentialSettings = Seq(
+  // For Travis CI - see http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
+  credentials ++= (for {
+    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
+    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
+  } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
