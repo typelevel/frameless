@@ -14,6 +14,24 @@ The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
 associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.
 
+## Quick Start
+Frameless is compiled against Scala 2.11.x. To use frameless add the following dependencies as needed:
+
+```scala
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+val framelessVersion = "0.1.0-SNAPSHOT"
+
+libraryDependencies ++= List(
+  "io.github.adelbertc" %% "frameless-cats"      % framelessVersion,
+  "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion,
+  "io.github.adelbertc" %% "frameless-dataframe" % framelessVersion
+)
+```
+
+Currently the only release is "0.1.0-SNAPSHOT" which is updated by Travis after every successful build. Frameless
+is rapidly changing so be very careful if you depend on this snapshot.
+
 ## Development
 We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
 (people who can merge pull requests) are:

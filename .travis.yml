@@ -3,7 +3,7 @@ language: scala
 scala:
 - 2.11.8
 
-sbt_args: -J-Xmx2G
+sbt_args: "-J-Xmx2G"
 
 notifications:
   webhooks:
@@ -12,3 +12,11 @@ notifications:
     on_success: change
     on_failure: always
     on_start: never
+
+env:
+  global:
+  - secure: Dlg4CwB+Ux9oNN9R3WLdVZL4RjTXn4K1fWv+RoX+OA7/TYG5C1P+akuPaR4/n/xMBtvt8EuUU0WlkeH/zRpOdfaiWwdVZYmf20G2vro5XSX5pRVcfBXi+yVbad7/03EvNN26+4/tTUPyaEwxk+Erxlvfx/3QwOIJtzvNBJtGxv6un5i16kpqQ7V39rKLAM0UHowIslI86CeD4+Uy14JU4IpDUTQSh9XTkzWjHNcqbo1o+O6GVyFt+DJOVZUj2rv3vwWyJRx7KmDV+8BWsrITx/XZeTTQ7h1f8j0J5AncVRR6AE4gkVaNlGYCYgne63DWX3y59kFU3lvz5eiyEdcADS47NRxKeMzcxevUjZnn3S5HXWY6/iPFDi6Dj9OFKDDgHlFM/BJPvvPZ4XFzlrqXchP9qELLjiOowFZA3YBHjVgKjXVGJMT9Dd5TEzFvkjhW+OB/EZVvKkNpIGPRNkYRc1jZJY/xxHb3LCmMfFtYHCJI/UjlZQwfif8FeurqbTwoHViIUMa2PclHqyliWtE0rJ8Zd4ErpGHyMXQ55UThXDJWq2/quEpDGobYg3rN7nzGPkebF/j5ihOZQxpZprUM6OSAgpj3hDbaIcyDKRToOhodHRAOzW7TjDEURYd/NjS9qlaZr/Ol8Svy6hHHQe8M2hBRdmwnsyNqFNsq7JV5PJY=
+  - secure: WDtrhFtK41JeaazeLfewT3d9jkVn6JsR83coy09MM11pnY0Uo5HXS5qUOefUCYFI/EJp8Sc57MXghgkljEfWq6x+EHnItQG6EOIYv591tPbNs3Itm3MVRdwhIS4O9iKrwXWQUS2mHz5s8uhEJiDevcEtWMydAoCQkz8hRDSwAM5sQ3tcVTjhnoEAQfZFdu3Rr6nClrnk+7DaNpHv2T2oBfi1oUTkuohey9qvWlM/aIWYrmXA4i4bDaSpWXU3Thqdu0V6GFI1aysjudjthVXvuAVzIfPuCEyGQ6rCb6aSzlqBkcRpk1SqgP59o9pNjM3znJErMTNa1Quxd9yUQ4XmgDtr0XfzN6TMqVSY+ELgXqMXRuzgoWF0S3eQTc0+cYh6uDDL049enIJIGOuDx+YDWVdPTPngi7HnA4ddrm29TTJzVs48eOSHebMUEha6RL7UFHs8rFsHgyDkefzH/AnSd9Y+2ciUgB+nVjRjisfKV1L8FnPs1nsx8oGToxSffeplsydzYps3dDyrMH2eByirXSiTlyeMjk47Ndf3VCyjTqqnGHEmq8hUurccFweQzuQbfc6M5xHO4bXBtyvhvXGvigWgxhXoYNSX1YA4cSfjku7UkZwHUGyo/ifRZ3puy6TpBA5J2C6sAC4h0v795AZshS7t/mtCu3+nRmH+FgiRhqs=
+
+after_success:
+  - "[[ $TRAVIS_BRANCH == \"master\" ]] && { sbt common/publish cats/publish dataset/publish dataframe/publish; };"
