@@ -49,13 +49,11 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[String]
     def targetDataType: DataType = StringType
 
-    def extractorFor(path: Expression): Expression = {
+    def extractorFor(path: Expression): Expression =
       StaticInvoke(classOf[UTF8String], targetDataType, "fromString", path :: Nil)
-    }
 
-    def constructorFor(path: Expression): Expression = {
+    def constructorFor(path: Expression): Expression =
       Invoke(path, "toString", sourceDataType)
-    }
   }
 
   implicit val booleanEncoder: TypedEncoder[Boolean] = new PrimitiveTypedEncoder[Boolean] {
@@ -134,13 +132,11 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[BigDecimal]
     def targetDataType: DataType = DecimalType.SYSTEM_DEFAULT
 
-    def extractorFor(path: Expression): Expression = {
+    def extractorFor(path: Expression): Expression =
       StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil)
-    }
 
-    def constructorFor(path: Expression): Expression = {
-      Invoke(path, "toBigDecimal", sourceDataType, arguments = Nil)
-    }
+    def constructorFor(path: Expression): Expression =
+      Invoke(path, "toBigDecimal", sourceDataType)
   }
 
   implicit val sqlDate: TypedEncoder[SQLDate] = new PrimitiveTypedEncoder[SQLDate] {
@@ -149,11 +145,10 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLDate]
     def targetDataType: DataType = DateType
 
-    def extractorFor(path: Expression): Expression = {
-      Invoke(path, "days", IntegerType, arguments = Nil)
-    }
+    def extractorFor(path: Expression): Expression =
+      Invoke(path, "days", IntegerType)
 
-    def constructorFor(path: Expression): Expression = {
+    def constructorFor(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLDate.getClass,
         dataType = sourceDataType,
@@ -161,7 +156,6 @@ object TypedEncoder extends LowPriorityTypedEncoder {
         arguments = intEncoder.constructorFor(path) :: Nil,
         propagateNull = true
       )
-    }
   }
 
   implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] = new PrimitiveTypedEncoder[SQLTimestamp] {
@@ -170,11 +164,10 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLTimestamp]
     def targetDataType: DataType = TimestampType
 
-    def extractorFor(path: Expression): Expression = {
-      Invoke(path, "us", LongType, arguments = Nil)
-    }
+    def extractorFor(path: Expression): Expression =
+      Invoke(path, "us", LongType)
 
-    def constructorFor(path: Expression): Expression = {
+    def constructorFor(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLTimestamp.getClass,
         dataType = sourceDataType,
@@ -182,7 +175,6 @@ object TypedEncoder extends LowPriorityTypedEncoder {
         arguments = longEncoder.constructorFor(path) :: Nil,
         propagateNull = true
       )
-    }
   }
 
   implicit def optionEncoder[T](
@@ -195,9 +187,8 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[Option[T]]
     def targetDataType: DataType = underlying.targetDataType
 
-    def constructor(): Expression = {
+    def constructor(): Expression =
       WrapOption(underlying.constructor(), underlying.sourceDataType)
-    }
 
     def extractor(): Expression = extractorFor(BoundReference(0, sourceDataType, nullable))
 
@@ -244,9 +235,8 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       }
     }
 
-    def constructorFor(path: Expression): Expression = {
+    def constructorFor(path: Expression): Expression =
       WrapOption(underlying.constructorFor(path), underlying.sourceDataType)
-    }
   }
 
   implicit def vectorEncoder[A](
@@ -291,6 +281,25 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       }
     }
   }
+
+  implicit def fromInjection[A, B]
+    (implicit
+      inj: Injection[A, B],
+      trb: TypedEncoder[B],
+      cta: ClassTag[A],
+      tta: TypeTag[A]
+    ): TypedEncoder[A] =
+      new PrimitiveTypedEncoder[A] {
+        def nullable: Boolean = false
+        def sourceDataType: DataType = ScalaReflection.dataTypeFor[A]
+        def targetDataType: DataType = trb.targetDataType
+
+        def constructorFor(path: Expression): Expression =
+          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(path))
+
+        def extractorFor(path: Expression): Expression =
+          Invoke(Literal.fromObject(inj), "apply", targetDataType, Seq(path))
+      }
 
   /** Encodes things as records if */
   implicit def deriveRecordEncoder[F, G <: HList](
