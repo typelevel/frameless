@@ -5,9 +5,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
-
 import shapeless._
-
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 
@@ -30,6 +28,13 @@ abstract class PrimitiveTypedEncoder[T: ClassTag] extends TypedEncoder[T] {
   def extractor(): Expression = extractorFor(BoundReference(0, sourceDataType, nullable))
 }
 
+// Waiting on scala 2.12
+// @annotation.implicitAmbiguous(msg =
+// """TypedEncoder[${T}] can be obtained both from automatic type class derivation and using the implicit Injection[${T}, ?] in scope. To desambigious this resolution you need to either:
+//   - Remove the implicit Injection[${T}, ?] from scope
+//   - import TypedEncoder.usingInjection
+//   - import TypedEncoder.usingDerivation
+// """)
 object TypedEncoder extends LowPriorityTypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
@@ -282,7 +287,8 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     }
   }
 
-  implicit def fromInjection[A, B]
+  /** Encodes things using injection if there is one defined */
+  implicit def usingInjection[A, B]
     (implicit
       inj: Injection[A, B],
       trb: TypedEncoder[B],
@@ -301,8 +307,8 @@ object TypedEncoder extends LowPriorityTypedEncoder {
           Invoke(Literal.fromObject(inj), "apply", targetDataType, Seq(path))
       }
 
-  /** Encodes things as records if */
-  implicit def deriveRecordEncoder[F, G <: HList](
+  /** Encodes things as records if there is not Injection defined */
+  implicit def usingDerivation[F, G <: HList](
     implicit
     lgen: LabelledGeneric.Aux[F, G],
     recordEncoder: Lazy[RecordEncoderFields[G]],
