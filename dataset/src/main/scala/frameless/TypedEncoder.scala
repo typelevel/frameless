@@ -288,23 +288,28 @@ object TypedEncoder extends LowPriorityTypedEncoder {
   }
 
   /** Encodes things using injection if there is one defined */
-  implicit def usingInjection[A, B]
-    (implicit
-      inj: Injection[A, B],
-      trb: TypedEncoder[B],
-      cta: ClassTag[A],
-      tta: TypeTag[A]
-    ): TypedEncoder[A] =
+  implicit def usingInjection[A: TypeTag : ClassTag, B: TypeTag]
+    (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
       new PrimitiveTypedEncoder[A] {
         def nullable: Boolean = false
         def sourceDataType: DataType = ScalaReflection.dataTypeFor[A]
         def targetDataType: DataType = trb.targetDataType
 
-        def constructorFor(path: Expression): Expression =
-          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(path))
+        def constructorFor(path: Expression): Expression = {
+          // I have no Idea why this is needed, see discusison on #30.
+          val meh = path match {
+            case BoundReference(_, _: StructType, _) =>
+              trb.constructor()
+            case _ =>
+              trb.constructorFor(path)
+          }
+          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(meh))
+        }
 
-        def extractorFor(path: Expression): Expression =
-          Invoke(Literal.fromObject(inj), "apply", targetDataType, Seq(path))
+        def extractorFor(path: Expression): Expression = {
+          val intermediateDataType: DataType = ScalaReflection.dataTypeFor[B]
+          trb.extractorFor(Invoke(Literal.fromObject(inj), "apply", intermediateDataType, Seq(path)))
+        }
       }
 
   /** Encodes things as records if there is not Injection defined */

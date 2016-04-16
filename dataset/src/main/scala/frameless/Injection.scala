@@ -2,7 +2,7 @@ package frameless
 
 /** An Injection[A, B] is a reverible function from A to B.
   *
-  * Must obey `forAll { a: A => comap(map(a)) == a }`.
+  * Must obey `forAll { a: A => invert(apply(a)) == a }`.
   */
 trait Injection[A, B] {
   def apply(a: A): B

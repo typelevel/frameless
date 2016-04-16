@@ -52,6 +52,11 @@ class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
     check(forAll(prop[LocalDateTime] _))
+    check(forAll(prop[X1[Country]] _))
+    check(forAll(prop[X1[LocalDateTime]] _))
+    check(forAll(prop[X1[X1[Country]]] _))
+    check(forAll(prop[X1[X1[LocalDateTime]]] _))
+    check(forAll(prop[X2[Country, LocalDateTime]] _))
   }
 
   test("TypedEncoder[Person] is ambiguous") {
@@ -61,6 +66,9 @@ class InjectionTests extends TypedDatasetSuite {
   test("Resolve ambiguity by importing usingInjection") {
     import TypedEncoder.usingInjection
     assert(implicitly[TypedEncoder[Person]].isInstanceOf[PrimitiveTypedEncoder[Person]])
+    check(forAll(prop[X1[Person]] _))
+    check(forAll(prop[X1[X1[Person]]] _))
+    check(forAll(prop[X2[Person, Person]] _))
     check(forAll(prop[Person] _))
   }
 
