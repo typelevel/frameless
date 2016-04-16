@@ -17,6 +17,30 @@ object Country {
     Injection(France.==, if (_) France else Russia)
 }
 
+sealed trait Food
+case object Burger extends Food
+case object Pasta extends Food
+case object Rice extends Food
+
+object Food {
+  implicit val arbitrary: Arbitrary[Food] =
+    Arbitrary(Arbitrary.arbitrary[Int].map(i => injection.invert(Math.abs(i % 3))))
+
+  implicit val injection: Injection[Food, Int] =
+    Injection(
+      _ match {
+        case Burger => 0
+        case Pasta => 1
+        case Rice => 2
+      },
+      _ match {
+        case 0 => Burger
+        case 1 => Pasta
+        case 2 => Rice
+      }
+    )
+}
+
 // Supposingly comming from a java lib, shapeless can't derive stuff for this one :(
 class LocalDateTime {
   var instant: Long = _
@@ -52,11 +76,15 @@ class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
     check(forAll(prop[LocalDateTime] _))
+    check(forAll(prop[Food] _))
     check(forAll(prop[X1[Country]] _))
     check(forAll(prop[X1[LocalDateTime]] _))
+    check(forAll(prop[X1[Food]] _))
     check(forAll(prop[X1[X1[Country]]] _))
     check(forAll(prop[X1[X1[LocalDateTime]]] _))
-    check(forAll(prop[X2[Country, LocalDateTime]] _))
+    check(forAll(prop[X1[X1[Food]]] _))
+    check(forAll(prop[X2[Country, X2[LocalDateTime, Food]]] _))
+    check(forAll(prop[X3[Country, LocalDateTime, Food]] _))
   }
 
   test("TypedEncoder[Person] is ambiguous") {
