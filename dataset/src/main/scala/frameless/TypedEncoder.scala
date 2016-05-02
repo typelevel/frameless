@@ -1,5 +1,6 @@
 package frameless
 
+import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.util.GenericArrayData
@@ -7,7 +8,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe.TypeTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
   def nullable: Boolean
@@ -182,14 +182,13 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       )
   }
 
-  implicit def optionEncoder[T](
+  implicit def optionEncoder[A](
     implicit
-    underlying: TypedEncoder[T],
-    typeTag: TypeTag[Option[T]]
-  ): TypedEncoder[Option[T]] = new TypedEncoder[Option[T]] {
+    underlying: TypedEncoder[A]
+  ): TypedEncoder[Option[A]] = new TypedEncoder[Option[A]] {
     def nullable: Boolean = true
 
-    def sourceDataType: DataType = ScalaReflection.dataTypeFor[Option[T]]
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
     def targetDataType: DataType = underlying.targetDataType
 
     def constructor(): Expression =
@@ -246,12 +245,11 @@ object TypedEncoder extends LowPriorityTypedEncoder {
 
   implicit def vectorEncoder[A](
     implicit
-    underlying: TypedEncoder[A],
-    typeTag: TypeTag[A]
+    underlying: TypedEncoder[A]
   ): TypedEncoder[Vector[A]] = new PrimitiveTypedEncoder[Vector[A]]() {
     def nullable: Boolean = false
 
-    def sourceDataType: DataType = ScalaReflection.dataTypeFor[Vector[A]]
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Vector[A]](classTag)
 
     def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
@@ -268,7 +266,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
 
       StaticInvoke(
         TypedEncoderUtils.getClass,
-        ScalaReflection.dataTypeFor[Vector[_]],
+        sourceDataType,
         "mkVector",
         arrayData :: Nil
       )
@@ -288,27 +286,32 @@ object TypedEncoder extends LowPriorityTypedEncoder {
   }
 
   /** Encodes things using injection if there is one defined */
-  implicit def usingInjection[A: TypeTag : ClassTag, B: TypeTag]
+  implicit def usingInjection[A: ClassTag, B]
     (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
-      new PrimitiveTypedEncoder[A] {
-        def nullable: Boolean = false
-        def sourceDataType: DataType = ScalaReflection.dataTypeFor[A]
+      new TypedEncoder[A] {
+        def nullable: Boolean = trb.nullable
+        def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
         def targetDataType: DataType = trb.targetDataType
 
+        def constructor(): Expression = {
+          val bexpr = trb.constructor()
+          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
+        }
+
         def constructorFor(path: Expression): Expression = {
-          // I have no Idea why this is needed, see discusison on #30.
-          val meh = path match {
-            case BoundReference(_, _: StructType, _) =>
-              trb.constructor()
-            case _ =>
-              trb.constructorFor(path)
-          }
-          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(meh))
+          val bexpr = trb.constructorFor(path)
+          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
+        }
+
+        def extractor(): Expression = {
+          val path = BoundReference(0, sourceDataType, nullable)
+          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
+          trb.extractorFor(invoke)
         }
 
         def extractorFor(path: Expression): Expression = {
-          val intermediateDataType: DataType = ScalaReflection.dataTypeFor[B]
-          trb.extractorFor(Invoke(Literal.fromObject(inj), "apply", intermediateDataType, Seq(path)))
+          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
+          trb.extractorFor(invoke)
         }
       }
 

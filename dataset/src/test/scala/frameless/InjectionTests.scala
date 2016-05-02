@@ -28,12 +28,12 @@ object Food {
 
   implicit val injection: Injection[Food, Int] =
     Injection(
-      _ match {
+      {
         case Burger => 0
         case Pasta => 1
         case Rice => 2
       },
-      _ match {
+      {
         case 0 => Burger
         case 1 => Pasta
         case 2 => Rice
@@ -41,7 +41,7 @@ object Food {
     )
 }
 
-// Supposingly comming from a java lib, shapeless can't derive stuff for this one :(
+// Supposingly coming from a java lib, shapeless can't derive stuff for this one :(
 class LocalDateTime {
   var instant: Long = _
 
@@ -68,8 +68,17 @@ object Person {
   implicit val arbitrary: Arbitrary[Person] =
     Arbitrary(Arbitrary.arbTuple2[Int, String].arbitrary.map(tupled))
 
-  implicit val injection: Injection[Person, Tuple2[Int, String]] =
+  implicit val injection: Injection[Person, (Int, String)] =
     Injection(p => unapply(p).get, tupled)
+}
+
+
+case class I[A](value: A)
+
+object I {
+  implicit def injection[A]: Injection[I[A], A] = Injection(_.value, I(_))
+  implicit def typedEncoder[A: TypedEncoder]: TypedEncoder[I[A]] = TypedEncoder.usingInjection[I[A], A]
+  implicit def arbitrary[A: Arbitrary]: Arbitrary[I[A]] = Arbitrary(Arbitrary.arbitrary[A].map(I(_)))
 }
 
 class InjectionTests extends TypedDatasetSuite {
@@ -85,6 +94,24 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[X1[X1[Food]]] _))
     check(forAll(prop[X2[Country, X2[LocalDateTime, Food]]] _))
     check(forAll(prop[X3[Country, LocalDateTime, Food]] _))
+
+    check(forAll(prop[I[Int]] _))
+    check(forAll(prop[I[Option[Int]]] _))
+    check(forAll(prop[I[I[Int]]] _))
+    check(forAll(prop[I[I[Option[Int]]]] _))
+
+    check(forAll(prop[I[X1[Int]]] _))
+    check(forAll(prop[I[I[X1[Int]]]] _))
+    check(forAll(prop[I[I[Option[X1[Int]]]]] _))
+
+    // FIXME injections to `Option[_]` don't work properly
+    //check(forAll(prop[Option[I[Int]]] _))
+    //check(forAll(prop[Option[I[X1[Int]]]] _))
+
+    assert(TypedEncoder[I[Int]].targetDataType == TypedEncoder[Int].targetDataType)
+    assert(TypedEncoder[I[I[Int]]].targetDataType == TypedEncoder[Int].targetDataType)
+
+    assert(TypedEncoder[I[Option[Int]]].nullable)
   }
 
   test("TypedEncoder[Person] is ambiguous") {
@@ -93,11 +120,13 @@ class InjectionTests extends TypedDatasetSuite {
 
   test("Resolve ambiguity by importing usingInjection") {
     import TypedEncoder.usingInjection
-    assert(implicitly[TypedEncoder[Person]].isInstanceOf[PrimitiveTypedEncoder[Person]])
+
     check(forAll(prop[X1[Person]] _))
     check(forAll(prop[X1[X1[Person]]] _))
     check(forAll(prop[X2[Person, Person]] _))
     check(forAll(prop[Person] _))
+
+    assert(TypedEncoder[Person].targetDataType == TypedEncoder[(Int, String)].targetDataType)
   }
 
   test("Resolve ambiguity by importing usingDerivation") {
