@@ -1,15 +1,13 @@
 package frameless
 
+import frameless.CollectTests.prop
+import org.apache.spark.sql.SQLContext
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-
 import scala.reflect.ClassTag
 
 class CollectTests extends TypedDatasetSuite {
   test("collect()") {
-    def prop[A: TypedEncoder : ClassTag](data: Vector[A]): Prop =
-      TypedDataset.create(data).collect().run().toVector ?= data
-
     check(forAll(prop[X2[Int, Int]] _))
     check(forAll(prop[X2[String, String]] _))
     check(forAll(prop[X2[String, Int]] _))
@@ -43,4 +41,9 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Vector[X2[Int, Int]]] _))
   }
+}
+
+object CollectTests {
+  def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SQLContext): Prop =
+    TypedDataset.create(data).collect().run().toVector ?= data
 }
