@@ -172,18 +172,21 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
   ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
 
   object groupByMany extends ProductArgs {
-    def applyProduct[K <: HList, Out0 <: HList, Out](groupedBy: K)(
+    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)(
       implicit
-      ct: ColumnTypes.Aux[T, K, Out0],
-      toTraversable: ToTraversable.Aux[K, List, UntypedExpression[T]]
-    ): GroupedByManyOps[T, K, Out0] = new GroupedByManyOps[T, K, Out0](self, groupedBy)
+      ct: ColumnTypes.Aux[T, TK, K],
+      tupler: Tupler.Aux[K, KT],
+      toTraversable: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+    ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
-  def join[A: TypedEncoder, B](
+  def join[A, B](
     right: TypedDataset[A],
     leftCol: TypedColumn[T, B],
     rightCol: TypedColumn[A, B]
-  )(implicit e: TypedEncoder[(T, A)]): TypedDataset[(T, A)] = {
+  ): TypedDataset[(T, A)] = {
+    implicit def re = right.encoder
+
     val leftPlan = FramelessInternals.logicalPlan(dataset)
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
     val condition = EqualTo(leftCol.expr, rightCol.expr)

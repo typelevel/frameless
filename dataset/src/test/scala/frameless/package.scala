@@ -16,4 +16,8 @@ package object frameless {
   implicit val arbSqlTimestamp = Arbitrary {
     Arbitrary.arbitrary[Long].map(SQLTimestamp)
   }
+
+  implicit def arbTuple1[A: Arbitrary] = Arbitrary {
+    Arbitrary.arbitrary[A].map(Tuple1(_))
+  }
 }

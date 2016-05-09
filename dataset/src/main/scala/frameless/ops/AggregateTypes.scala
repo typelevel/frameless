@@ -12,8 +12,13 @@ object AggregateTypes {
 
   implicit def deriveHNil[T]: AggregateTypes.Aux[T, HNil, HNil] = new AggregateTypes[T, HNil] { type Out = HNil }
 
-  implicit def deriveCons[V, H, TT <: HList, T <: HList](
+  implicit def deriveCons1[V, H, TT <: HList, T <: HList](
     implicit tail: AggregateTypes.Aux[V, TT, T]
   ): AggregateTypes.Aux[V, TypedAggregate[V, H] :: TT, H :: T] =
     new AggregateTypes[V, TypedAggregate[V, H] :: TT] {type Out = H :: T}
+
+  implicit def deriveCons2[V, H, U, TT <: HList, T <: HList](
+    implicit tail: AggregateTypes.Aux[V, TT, T]
+  ): AggregateTypes.Aux[V, TypedAggregateAndColumn[V, H, U] :: TT, H :: T] =
+    new AggregateTypes[V, TypedAggregateAndColumn[V, H, U] :: TT] {type Out = H :: T}
 }
