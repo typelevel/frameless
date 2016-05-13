@@ -12,19 +12,19 @@ class GroupedByManyOps[T, TK <: HList, K <: HList](
 )(
   implicit
   ct: ColumnTypes.Aux[T, TK, K],
-  toTraversable: ToTraversable.Aux[TK, List, UntypedColumn[T]]
+  toTraversable: ToTraversable.Aux[TK, List, UntypedExpression[T]]
 ) {
 
   def agg[TC <: HList, C <: HList, Out0 <: HList, Out1](columns: TC)(
     implicit
-    tcColumnType: ColumnTypes.Aux[T, TC, C],
+    tc: AggregateTypes.Aux[T, TC, C],
     encoder: TypedEncoder[Out1],
     append: Prepend.Aux[K, C, Out0],
     toTuple: Tupler.Aux[Out0, Out1],
-    columnsToList: ToTraversable.Aux[TC, List, UntypedColumn[T]]
+    columnsToList: ToTraversable.Aux[TC, List, UntypedExpression[T]]
   ): TypedDataset[Out1] = {
 
-    def expr(c: UntypedColumn[T]): Column = new Column(c.expr)
+    def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
 
     val groupByExprs = toTraversable(groupedBy).map(expr)
     val aggregates =
@@ -50,15 +50,15 @@ class GroupedBy1Ops[K1, V](
 ) {
   private def underlying = new GroupedByManyOps(self, g1 :: HNil)
 
-  def agg[U1](c1: TypedColumn[V, U1])(
+  def agg[U1](c1: TypedAggregate[V, U1])(
     implicit encoder: TypedEncoder[(K1, U1)]
   ): TypedDataset[(K1, U1)] = underlying.agg(c1 :: HNil)
 
-  def agg[U1, U2](c1: TypedColumn[V, U1], c2: TypedColumn[V, U2])(
+  def agg[U1, U2](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2])(
     implicit encoder: TypedEncoder[(K1, U1, U2)]
   ): TypedDataset[(K1, U1, U2)] = underlying.agg(c1 :: c2 :: HNil)
 
-  def agg[U1, U2, U3](c1: TypedColumn[V, U1], c2: TypedColumn[V, U2], c3: TypedColumn[V, U3])(
+  def agg[U1, U2, U3](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3])(
     implicit encoder: TypedEncoder[(K1, U1, U2, U3)]
   ): TypedDataset[(K1, U1, U2, U3)] = underlying.agg(c1 :: c2 :: c3 :: HNil)
 }
@@ -70,15 +70,15 @@ class GroupedBy2Ops[K1, K2, V](
 ) {
   private def underlying = new GroupedByManyOps(self, g1 :: g2 :: HNil)
 
-  def agg[U1](c1: TypedColumn[V, U1])(
+  def agg[U1](c1: TypedAggregate[V, U1])(
     implicit encoder: TypedEncoder[(K1, K2, U1)]
   ): TypedDataset[(K1, K2, U1)] = underlying.agg(c1 :: HNil)
 
-  def agg[U1, U2](c1: TypedColumn[V, U1], c2: TypedColumn[V, U2])(
+  def agg[U1, U2](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2])(
     implicit encoder: TypedEncoder[(K1, K2, U1, U2)]
   ): TypedDataset[(K1, K2, U1, U2)] = underlying.agg(c1 :: c2 :: HNil)
 
-  def agg[U1, U2, U3](c1: TypedColumn[V, U1], c2: TypedColumn[V, U2], c3: TypedColumn[V, U3])(
+  def agg[U1, U2, U3](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3])(
     implicit encoder: TypedEncoder[(K1, K2, U1, U2, U3)]
   ): TypedDataset[(K1, K2, U1, U2, U3)] = underlying.agg(c1 :: c2 :: c3 :: HNil)
 }

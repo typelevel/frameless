@@ -1,6 +1,6 @@
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.expressions.NamedExpression
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types.ObjectType
@@ -16,6 +16,8 @@ object FramelessInternals {
         s"""Cannot resolve column name "$colNames" among (${ds.schema.fieldNames.mkString(", ")})""")
     }
   }
+
+  def expr(column: Column): Expression = column.expr
 
   def logicalPlan(ds: Dataset[_]): LogicalPlan = ds.logicalPlan
 

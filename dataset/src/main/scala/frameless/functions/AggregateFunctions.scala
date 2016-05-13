@@ -1,8 +1,9 @@
 package frameless
 package functions
 
+import org.apache.spark.sql.FramelessInternals.expr
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.aggregate.{Average, Sum, Count}
+import org.apache.spark.sql.{functions => untyped}
 
 trait AggregateFunctions {
   def lit[T, U: TypedEncoder](value: U): TypedColumn[T, U] = {
@@ -11,34 +12,32 @@ trait AggregateFunctions {
     new TypedColumn[T, U](encoder.extractorFor(untyped))
   }
 
-  def count[T](): TypedColumn[T, Long] = {
-    new TypedColumn[T, Long](Count(Literal(1)).toAggregateExpression())
+  def count[T](): TypedAggregateAndColumn[T, Long, Long] = {
+    new TypedAggregateAndColumn(untyped.count(untyped.lit(1)))
   }
 
-  def count[T](column: TypedColumn[T, _]): TypedColumn[T, Long] = {
-    new TypedColumn[T, Long](Count(column.expr).toAggregateExpression())
+  def count[T](column: TypedColumn[T, _]): TypedAggregateAndColumn[T, Long, Long] = {
+    new TypedAggregateAndColumn[T, Long, Long](untyped.count(column.untyped))
   }
 
-  def sum[A: Summable, T](column: TypedColumn[T, A])(
-    implicit encoder: TypedEncoder[Option[A]]
-  ): TypedColumn[T, Option[A]] = {
-    new TypedColumn[T, Option[A]](Sum(column.expr).toAggregateExpression())
-  }
+  def sum[A, T](column: TypedColumn[T, A])(
+    implicit
+    summable: Summable[A],
+    encoder1: TypedEncoder[A],
+    encoder2: TypedEncoder[Option[A]]
+  ): TypedAggregateAndColumn[T, A, A] = {
+    val zeroExpr = Literal.create(summable.zero, encoder1.targetDataType)
+    val sumExpr = expr(untyped.sum(column.untyped))
+    val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-  def sum[A: Summable, T](column: TypedColumn[T, A], default: A)(
-    implicit encoder: TypedEncoder[A]
-  ): TypedColumn[T, A] = {
-    new TypedColumn[T, A](
-      Coalesce(List(
-        Sum(column.expr).toAggregateExpression(),
-        lit(default).expr
-      ))
-    )
+    new TypedAggregateAndColumn[T, A, A](sumOrZero)
   }
 
   def avg[A: Averagable, T](column: TypedColumn[T, A])(
-    implicit encoder: TypedEncoder[Option[A]]
-  ): TypedColumn[T, Option[A]] = {
-    new TypedColumn[T, Option[A]](Average(column.expr).toAggregateExpression())
+    implicit
+    encoder1: TypedEncoder[A],
+    encoder2: TypedEncoder[Option[A]]
+  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+    new TypedAggregateAndColumn[T, A, Option[A]](untyped.avg(column.untyped))
   }
 }
