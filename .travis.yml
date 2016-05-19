@@ -5,6 +5,9 @@ scala:
 
 sbt_args: "-J-Xmx2G"
 
+script:
+- scripts/travis-publish.sh
+
 notifications:
   webhooks:
     urls:
@@ -17,6 +20,3 @@ env:
   global:
   - secure: Fxdtb60ygWBGFDvNORZZqZx/5xOz6Y5hvw7vNdICOUt+69T/CrTUEgdThW7OCxOE41DCZoUxNRwO6qrUmSSiPHlfC+54UKy08U2bk1zhfGPpWvEF8EHSD8jZAxHg6Nbo5/Tsn/TB2AgkcamPKgvpOgtPv82S76pDMOHp+UpRnyjODZ/Y2mG3vK9Y5s8DOhO8SJwj+dcBxnkCZY3iiz2lo6kEtnfX+Jg7DqIdA+OqpEssL23wKNBdEE9xx+oxCyLo+YOaB2Sp8UXMrW2FvxOdIdUEfflVkUnmcEV0BFC7wFRncPrfthnmr/2XHjWvkbekwJvJOyGIrF537oYwzacb3Q3sOx88Ou84oaax9vuw40EFudY9XLoEjTAE/2JD0IwmHoFHFRJMk/jrbM0F4ghiEwQDiCVK0sfyf0ZYlSBl4VzK9gFWLRIT/YnZP2fnYJTwajPUwTRaXDpenAGYPs5JVvBoLbvH1c6ipPJpknvQsYGaEbO2p+oCLA4o9y4cGfpj5dhM3h/j0IUdaE4MGF9OYKZ1SjOxc+X8GrQvzCPyid+szMC58LOT2QO8f/NqRqTqJJlKl5pqn8x+nzbRDzxRdcIDy0WZU261y46Xrz3xaBD6znT93T3X5Rz2U1T44QpunUHs6YIqb8b4yKCXcfrAH6bkiTHRHr4w6O1MZCDOp0s=
   - secure: nl8EieIsnkG44k9QPRFf/yakNlncPJuV9x+cm1nu116WMFLOGS9uBc4eG/4tnnLdKC5ZmEX5DAmYwMSvf7Clg1L9iV/rnT6rtWBKGPyJVIfyBL04Ls5ugZR2PEZ+ifZI6yebbyS+vX72+9u3/Jg7HEGWNqjBOIQ/wiO2Cjd6UxS4mPUiN0MrS40x8pV/2XMlxwdBBkJ7xZgDrKxwNTTCznk3F2eMODCoKkByo/FGQfHWJGb6RCMSR5y0a2c+rx0BIOBywjcjWs30CAQHsjglkpVhNTgOtU4Y0G+bYTp8b3VMjYy8wxoNQGyOs6FZg2nD8hmVdQ0TRZc88yIQ4xgOMduODNkMhEvUMh4fMSA1r2Q8IKYw9M1+BftG0r37n03TS2q/nAYVdOb9AOAelVBIlg+pB2MxwijxOCbWI1WGC20KRHZC1/qcN54BBZYt2OgTW4pEBbBy3fSraMtqZ4u1lJkjmL4iuF3r1K2CWEt7PqZZUeq8ZhfDDq9b9hTQdEwgOlxt0NfMjzuVnpq1PdiLYk6xmRHcs7wQGg/FlKv6q3Rd38jOkMoqwyPDlCi9umrFA51VrEsw5oQaox3jhDPDVdVmbJFjxze2iv/Sm7WMyfVbm5zepks5elzLSzOp+xTJbppLqcFbLSAprWTrEhllwThMputyRrqsCB2j9kVmqFA=
-
-after_success:
-- '[[ $TRAVIS_BRANCH == "master" ]] && { sbt common/publish cats/publish dataset/publish dataframe/publish; };'
