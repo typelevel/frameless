@@ -14,6 +14,7 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[X2[Long, Int]] _))
 
     check(forAll(prop[X2[X2[Int, String], Boolean]] _))
+    check(forAll(prop[Tuple1[Option[Int]]] _))
 
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
