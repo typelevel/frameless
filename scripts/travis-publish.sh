@@ -13,5 +13,7 @@ sbt_cmd="sbt ++$TRAVIS_SCALA_VERSION"
 
 test_cmd="$sbt_cmd test"
 
-run_cmd="$test_cmd $publish_cmd"
+coverage="$sbt_cmd coverage test && sbt coverageReport && bash <(curl -s https://codecov.io/bash)"
+
+run_cmd="$coverage && $test_cmd $publish_cmd"
 eval $run_cmd
