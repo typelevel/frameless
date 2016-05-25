@@ -15,6 +15,15 @@ The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
 associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.
 
+
+## Why?
+
+Benefits of using `TypedDataset` compared to vanilla `Dataset`:
+
+* Typesafe columns referencing and expressions
+* Customizable, typecafe encoders
+* Enhanced type signature for some built-in functions
+
 ## Quick Start
 Frameless is compiled against Scala 2.11.x. To use frameless add the following dependencies as needed:
 
