@@ -25,12 +25,17 @@ Benefits of using `TypedDataset` compared to vanilla `Dataset`:
 * Enhanced type signature for some built-in functions
 
 ## Quick Start
-Frameless is compiled against Scala 2.11.x. To use frameless add the following dependencies as needed:
+Frameless is compiled against Scala 2.11.x.
+
+Note that while Frameless is still getting off the ground, it is very possible that breaking changes will be
+made for at least the next few versions.
+
+To use frameless add the following dependencies as needed:
 
 ```scala
-resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += Resolver.sonatypeRepo("releases")
 
-val framelessVersion = "0.1.0-SNAPSHOT"
+val framelessVersion = "0.1.0"
 
 libraryDependencies ++= List(
   "io.github.adelbertc" %% "frameless-cats"      % framelessVersion,
@@ -38,9 +43,6 @@ libraryDependencies ++= List(
   "io.github.adelbertc" %% "frameless-dataframe" % framelessVersion
 )
 ```
-
-Currently the only release is "0.1.0-SNAPSHOT" which is updated by Travis after every successful build. Frameless
-is rapidly changing so be very careful if you depend on this snapshot.
 
 ## Development
 We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
