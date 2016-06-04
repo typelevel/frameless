@@ -2,9 +2,10 @@ package frameless
 
 import shapeless._
 import shapeless.ops.record.Remover
+import scala.annotation.implicitNotFound
 
 /** Type class supporting multiple record field removal. */
-@annotation.implicitNotFound(msg = "No fields ${K} in record ${L}")
+@implicitNotFound(msg = "No fields ${K} in record ${L}")
 trait AllRemover[L <: HList, K <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 
 object AllRemover {
