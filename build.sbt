@@ -8,13 +8,14 @@ val shapeless = "2.3.0"
 val scalacheck = "1.12.5"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(common, cats, dataset, dataframe)
+  .aggregate(common, cats, dataset, dataframe, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
 
 lazy val common = project
   .settings(name := "frameless-common")
   .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-sql"          % sparkDataFrame,
@@ -23,6 +24,7 @@ lazy val common = project
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
@@ -31,6 +33,7 @@ lazy val cats = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataset,
@@ -40,12 +43,20 @@ lazy val dataset = project
 lazy val dataframe = project
   .settings(name := "frameless-dataframe")
   .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkDataFrame,
     "org.apache.spark" %% "spark-sql"  % sparkDataFrame))
   .settings(sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen))
   .dependsOn(common % "test->test;compile->compile")
+
+lazy val docs = project
+  .settings(framelessSettings: _*)
+  .settings(noPublishSettings: _*)
+  .settings(tutSettings: _*)
+  .settings(crossTarget := file(".") / "docs" / "target")
+  .dependsOn(dataset, dataframe)
 
 lazy val framelessSettings = Seq(
   organization := "io.github.adelbertc",
@@ -56,11 +67,10 @@ lazy val framelessSettings = Seq(
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
-    "org.scalacheck" %% "scalacheck" % scalacheck % "test"
-  ),
+    "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
   fork in Test := false,
   parallelExecution in Test := false
-) ++ warnUnusedImport
+)
 
 lazy val commonScalacOptions = Seq(
   "-deprecation",

@@ -4,7 +4,6 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{FramelessInternals, Column}
 import shapeless.ops.record.Selector
 import shapeless._
-
 import scala.annotation.implicitNotFound
 
 sealed trait UntypedExpression[T] {

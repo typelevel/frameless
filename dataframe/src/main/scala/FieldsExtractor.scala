@@ -3,6 +3,7 @@ package frameless
 import shapeless._
 import shapeless.ops.record.{Keys, SelectAll}
 import shapeless.ops.hlist.ToList
+import scala.annotation.implicitNotFound
 
 /** Type class aggregating `LabelledGeneric`, `record.Keys` and `hlist.ToList`
   * to extract the name of all fields of a product. */
@@ -26,6 +27,7 @@ object Fields {
 
 /** Type class witnessing that a set of symbols are fields of a product.
   * Aggregates `ToList`, `LabelledGeneric` and `SelectAll` to extract field names. */
+@implicitNotFound(msg = "Columns ${C} are not part of schema ${S}.")
 trait FieldsExtractor[S <: Product, C <: HList] extends Serializable {
   type Repr <: HList
   type Fields <: HList
@@ -35,6 +37,7 @@ trait FieldsExtractor[S <: Product, C <: HList] extends Serializable {
 object FieldsExtractor {
   def apply[S <: Product, C <: HList](implicit f: FieldsExtractor[S, C]): FieldsExtractor[S, C] = f
 
+  @implicitNotFound(msg = "Columns ${C} are not part of schema ${S}.")
   type Aux[S <: Product, C <: HList, R0 <: HList, F0 <: HList] =
     FieldsExtractor[S, C] { type Repr = R0; type Fields = F0 }
 
