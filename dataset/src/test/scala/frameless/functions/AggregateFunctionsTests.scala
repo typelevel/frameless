@@ -1,8 +1,6 @@
 package frameless
 package functions
 
-import java.math.MathContext
-
 import frameless.functions.aggregate._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -45,7 +43,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("avg") {
-    def prop[A: TypedEncoder : Averagable](xs: List[A])(
+    def prop[A: TypedEncoder : Averageable](xs: List[A])(
       implicit
       fractional: Fractional[A],
       eoa: TypedEncoder[Option[A]],
@@ -65,7 +63,47 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
+    //check(forAll(prop[Int] _))
     check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("stddev") {
+
+    def std[A](xs: List[A])(
+      implicit fractional: Fractional[A],
+      numeric: Numeric[A]
+    ): Double = {
+      val ds = xs.map(numeric.toDouble)
+      val avg = ds.sum/ds.size
+      math.sqrt((0.0 /: ds) {
+        (a,e) => a + math.pow(e - avg, 2.0)
+      } / (xs.size - 1))
+    }
+
+    def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A])(
+      implicit
+      eoa: TypedEncoder[Option[A]],
+      ex1: TypedEncoder[X1[A]]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
+
+      xs match {
+        case Nil => datasetStd ?= None
+        case _ :: Nil => datasetStd match {
+          case Some(x) => if (implicitly[Numeric[A]].toDouble(x).isNaN) proved else falsified
+          case _ => falsified
+        }
+        case _ => datasetStd match {
+          case Some(x) => approximatelyEqual(implicitly[Numeric[A]].toDouble(x), std(xs))
+          case _ => falsified
+        }
+      }
+    }
+
     check(forAll(prop[Double] _))
   }
 
@@ -92,5 +130,115 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     check(forAll(prop[Int] _))
     check(forAll(prop[Byte] _))
+  }
+
+  test("max") {
+    def prop[A: TypedEncoder : Ordering](xs: List[A])(
+      implicit
+      ex1: TypedEncoder[X1[A]],
+      eoa: TypedEncoder[Option[A]]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+      val datasetMax::_ = dataset.select(max(A)).collect().run().toList
+
+      xs match {
+        case Nil => datasetMax.isEmpty
+        case xs => datasetMax match {
+          case Some(m) => xs.max ?= m
+          case _ => falsified
+        }
+      }
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("min") {
+    def prop[A: TypedEncoder : Ordering](xs: List[A])(
+      implicit
+      ex1: TypedEncoder[X1[A]],
+      eoa: TypedEncoder[Option[A]]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val datasetMin::_ = dataset.select(min(A)).collect().run().toList
+      xs match {
+        case Nil => datasetMin.isEmpty
+        case xs => datasetMin match {
+          case Some(m) => xs.min ?= m
+          case _ => falsified
+        }
+      }
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("first") {
+    def prop[A: TypedEncoder](xs: List[A])(
+      implicit ex1: TypedEncoder[X1[A]],
+      eoa: TypedEncoder[Option[A]]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val datasetFirst :: Nil = dataset.select(first(A)).collect().run().toList
+
+      xs match {
+        case Nil => datasetFirst.isEmpty
+        case x::_ => datasetFirst match {
+          case Some(m) => x ?= m
+          case _ => falsified
+        }
+      }
+    }
+
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("last") {
+    def prop[A: TypedEncoder](xs: List[A])(
+      implicit ex1: TypedEncoder[X1[A]],
+      eoa: TypedEncoder[Option[A]]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val datasetLast :: Nil = dataset.select(last(A)).collect().run().toList
+
+      xs match {
+        case Nil => datasetLast.isEmpty
+        case xs => datasetLast match {
+          case Some(m) => xs.last ?= m
+          case _ => falsified
+        }
+      }
+    }
+
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
   }
 }
