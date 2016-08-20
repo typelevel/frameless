@@ -11,5 +11,6 @@ class MapTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int] _))
     check(forAll(prop[Int, String] _))
     check(forAll(prop[String, Int] _))
+    check(forAll(prop[X1[Int], X1[Int]] _))
   }
 }

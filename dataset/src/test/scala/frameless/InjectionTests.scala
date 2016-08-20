@@ -104,9 +104,8 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[I[I[X1[Int]]]] _))
     check(forAll(prop[I[I[Option[X1[Int]]]]] _))
 
-    // FIXME injections to `Option[_]` don't work properly
-    //check(forAll(prop[Option[I[Int]]] _))
-    //check(forAll(prop[Option[I[X1[Int]]]] _))
+    check(forAll(prop[Option[I[Int]]] _))
+    check(forAll(prop[Option[I[X1[Int]]]] _))
 
     assert(TypedEncoder[I[Int]].targetDataType == TypedEncoder[Int].targetDataType)
     assert(TypedEncoder[I[I[Int]]].targetDataType == TypedEncoder[Int].targetDataType)

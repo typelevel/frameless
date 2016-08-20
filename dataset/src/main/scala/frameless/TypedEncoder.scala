@@ -3,6 +3,7 @@ package frameless
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions.objects._
 import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
@@ -15,17 +16,8 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
   def sourceDataType: DataType
   def targetDataType: DataType
 
-  def constructor(): Expression
   def constructorFor(path: Expression): Expression
-
-  def extractor(): Expression
   def extractorFor(path: Expression): Expression
-}
-
-abstract class PrimitiveTypedEncoder[T: ClassTag] extends TypedEncoder[T] {
-  def constructor(): Expression = constructorFor(BoundReference(0, targetDataType, nullable))
-
-  def extractor(): Expression = extractorFor(BoundReference(0, sourceDataType, nullable))
 }
 
 // Waiting on scala 2.12
@@ -35,10 +27,10 @@ abstract class PrimitiveTypedEncoder[T: ClassTag] extends TypedEncoder[T] {
 //   - import TypedEncoder.usingInjection
 //   - import TypedEncoder.usingDerivation
 // """)
-object TypedEncoder extends LowPriorityTypedEncoder {
+object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
-  implicit val unitEncoder: TypedEncoder[Unit] = new PrimitiveTypedEncoder[Unit] {
+  implicit val unitEncoder: TypedEncoder[Unit] = new TypedEncoder[Unit] {
     def nullable: Boolean = true
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[Unit]
@@ -48,10 +40,10 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def extractorFor(path: Expression): Expression = Literal.create(null, targetDataType)
   }
 
-  implicit val stringEncoder: TypedEncoder[String] = new PrimitiveTypedEncoder[String] {
-    def nullable: Boolean = false
+  implicit val stringEncoder: TypedEncoder[String] = new TypedEncoder[String] {
+    def nullable: Boolean = true
 
-    def sourceDataType: DataType = ScalaReflection.dataTypeFor[String]
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[String]
     def targetDataType: DataType = StringType
 
     def extractorFor(path: Expression): Expression =
@@ -61,7 +53,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       Invoke(path, "toString", sourceDataType)
   }
 
-  implicit val booleanEncoder: TypedEncoder[Boolean] = new PrimitiveTypedEncoder[Boolean] {
+  implicit val booleanEncoder: TypedEncoder[Boolean] = new TypedEncoder[Boolean] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = BooleanType
@@ -71,7 +63,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val intEncoder: TypedEncoder[Int] = new PrimitiveTypedEncoder[Int] {
+  implicit val intEncoder: TypedEncoder[Int] = new TypedEncoder[Int] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = IntegerType
@@ -81,7 +73,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val longEncoder: TypedEncoder[Long] = new PrimitiveTypedEncoder[Long] {
+  implicit val longEncoder: TypedEncoder[Long] = new TypedEncoder[Long] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = LongType
@@ -91,7 +83,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val shortEncoder: TypedEncoder[Short] = new PrimitiveTypedEncoder[Short] {
+  implicit val shortEncoder: TypedEncoder[Short] = new TypedEncoder[Short] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ShortType
@@ -101,7 +93,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val byteEncoder: TypedEncoder[Byte] = new PrimitiveTypedEncoder[Byte] {
+  implicit val byteEncoder: TypedEncoder[Byte] = new TypedEncoder[Byte] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ByteType
@@ -111,7 +103,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val floatEncoder: TypedEncoder[Float] = new PrimitiveTypedEncoder[Float] {
+  implicit val floatEncoder: TypedEncoder[Float] = new TypedEncoder[Float] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = FloatType
@@ -121,7 +113,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val doubleEncoder: TypedEncoder[Double] = new PrimitiveTypedEncoder[Double] {
+  implicit val doubleEncoder: TypedEncoder[Double] = new TypedEncoder[Double] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = DoubleType
@@ -131,7 +123,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
-  implicit val bigDecimalEncoder: TypedEncoder[BigDecimal] = new PrimitiveTypedEncoder[BigDecimal] {
+  implicit val bigDecimalEncoder: TypedEncoder[BigDecimal] = new TypedEncoder[BigDecimal] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[BigDecimal]
@@ -144,7 +136,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       Invoke(path, "toBigDecimal", sourceDataType)
   }
 
-  implicit val sqlDate: TypedEncoder[SQLDate] = new PrimitiveTypedEncoder[SQLDate] {
+  implicit val sqlDate: TypedEncoder[SQLDate] = new TypedEncoder[SQLDate] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLDate]
@@ -163,7 +155,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
       )
   }
 
-  implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] = new PrimitiveTypedEncoder[SQLTimestamp] {
+  implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] = new TypedEncoder[SQLTimestamp] {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLTimestamp]
@@ -190,11 +182,6 @@ object TypedEncoder extends LowPriorityTypedEncoder {
 
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
     def targetDataType: DataType = underlying.targetDataType
-
-    def constructor(): Expression =
-      WrapOption(underlying.constructor(), underlying.sourceDataType)
-
-    def extractor(): Expression = extractorFor(BoundReference(0, sourceDataType, nullable))
 
     def extractorFor(path: Expression): Expression = {
       // for primitive types we must manually unbox the value of the object
@@ -246,7 +233,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
   implicit def vectorEncoder[A](
     implicit
     underlying: TypedEncoder[A]
-  ): TypedEncoder[Vector[A]] = new PrimitiveTypedEncoder[Vector[A]]() {
+  ): TypedEncoder[Vector[A]] = new TypedEncoder[Vector[A]]() {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[Vector[A]](classTag)
@@ -256,7 +243,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     def constructorFor(path: Expression): Expression = {
       val arrayData = Invoke(
         MapObjects(
-          underlying.constructorFor _,
+          underlying.constructorFor,
           path,
           underlying.targetDataType
         ),
@@ -280,7 +267,7 @@ object TypedEncoder extends LowPriorityTypedEncoder {
           dataType = ArrayType(underlying.targetDataType, underlying.nullable)
         )
       } else {
-        MapObjects(underlying.extractorFor _, path, underlying.sourceDataType)
+        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
       }
     }
   }
@@ -293,20 +280,9 @@ object TypedEncoder extends LowPriorityTypedEncoder {
         def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
         def targetDataType: DataType = trb.targetDataType
 
-        def constructor(): Expression = {
-          val bexpr = trb.constructor()
-          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
-        }
-
         def constructorFor(path: Expression): Expression = {
           val bexpr = trb.constructorFor(path)
           Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
-        }
-
-        def extractor(): Expression = {
-          val path = BoundReference(0, sourceDataType, nullable)
-          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
-          trb.extractorFor(invoke)
         }
 
         def extractorFor(path: Expression): Expression = {
@@ -322,14 +298,4 @@ object TypedEncoder extends LowPriorityTypedEncoder {
     recordEncoder: Lazy[RecordEncoderFields[G]],
     classTag: ClassTag[F]
   ): TypedEncoder[F] = new RecordEncoder[F, G]
-}
-
-trait LowPriorityTypedEncoder {
-  /** Encodes things as products if they aren't records. */
-  implicit def deriveProductEncoder[F, G <: HList](
-    implicit
-    gen: Generic.Aux[F, G],
-    productEncoder: Lazy[ProductEncoderFields[G]],
-    classTag: ClassTag[F]
-  ): TypedEncoder[F] = new ProductEncoder[F, G]
 }

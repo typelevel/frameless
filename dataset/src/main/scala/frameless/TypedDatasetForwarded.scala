@@ -141,15 +141,16 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def union(other: TypedDataset[T]): TypedDataset[T] =
     new TypedDataset(dataset.union(other.dataset))
 
-  /** Returns a new [[TypedDataset]] where any elements present in `other` have been removed.
+  /** Returns a new Dataset containing rows in this Dataset but not in another Dataset.
+    * This is equivalent to `EXCEPT` in SQL.
     *
     * Note that, equality checking is performed directly on the encoded representation of the data
     * and thus is not affected by a custom `equals` function defined on `T`.
     *
     * apache/spark
     */
-  def subtract(other: TypedDataset[T]): TypedDataset[T] =
-    new TypedDataset(dataset.subtract(other.dataset))
+  def except(other: TypedDataset[T]): TypedDataset[T] =
+    new TypedDataset(dataset.except(other.dataset))
 
   /** Persist this [[TypedDataset]] with the default storage level (`MEMORY_AND_DISK`).
     *
