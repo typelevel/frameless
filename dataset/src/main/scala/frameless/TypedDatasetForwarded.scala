@@ -80,6 +80,15 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def filter(func: T => Boolean): TypedDataset[T] =
     new TypedDataset(dataset.filter(func))
 
+  /** Returns a new Dataset by taking the first `n` rows. The difference between this function
+    * and `head` is that `head` is an action and returns an array (by triggering query execution)
+    * while `limit` returns a new Dataset.
+    *
+    * apache/spark
+    */
+  def limit(n: Int): TypedDataset[T] =
+    new TypedDataset(dataset.limit(n))
+
   /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
     *
     * apache/spark
@@ -141,15 +150,16 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def union(other: TypedDataset[T]): TypedDataset[T] =
     new TypedDataset(dataset.union(other.dataset))
 
-  /** Returns a new [[TypedDataset]] where any elements present in `other` have been removed.
+  /** Returns a new Dataset containing rows in this Dataset but not in another Dataset.
+    * This is equivalent to `EXCEPT` in SQL.
     *
     * Note that, equality checking is performed directly on the encoded representation of the data
     * and thus is not affected by a custom `equals` function defined on `T`.
     *
     * apache/spark
     */
-  def subtract(other: TypedDataset[T]): TypedDataset[T] =
-    new TypedDataset(dataset.subtract(other.dataset))
+  def except(other: TypedDataset[T]): TypedDataset[T] =
+    new TypedDataset(dataset.except(other.dataset))
 
   /** Persist this [[TypedDataset]] with the default storage level (`MEMORY_AND_DISK`).
     *

@@ -1,25 +1,21 @@
 val catsv = "0.4.1"
-val sparkCats = "1.6.1"
-val sparkDataset = "1.6.1"
-val sparkDataFrame = "1.5.2"
-val sparkTesting = "0.3.1"
+val sparkCats = "2.0.0"
+val sparkVersion = "2.0.0"
+val sparkTesting = "0.3.3"
 val scalatest = "2.2.5"
 val shapeless = "2.3.0"
 val scalacheck = "1.12.5"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(common, cats, dataset, dataframe, docs)
+  .aggregate(core, cats, dataset, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
 
-lazy val common = project
-  .settings(name := "frameless-common")
+lazy val core = project
+  .settings(name := "frameless-core")
   .settings(framelessSettings: _*)
   .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-sql"          % sparkDataFrame,
-    "com.holdenkarau"  %% "spark-testing-base" % (sparkDataFrame + "_" + sparkTesting) % "test"))
 
 lazy val cats = project
   .settings(name := "frameless-cats")
@@ -36,27 +32,17 @@ lazy val dataset = project
   .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkDataset,
-    "org.apache.spark" %% "spark-sql"  % sparkDataset))
-  .dependsOn(common % "test->test;compile->compile")
-
-lazy val dataframe = project
-  .settings(name := "frameless-dataframe")
-  .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
-  .settings(publishSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkDataFrame,
-    "org.apache.spark" %% "spark-sql"  % sparkDataFrame))
-  .settings(sourceGenerators in Compile <+= (sourceManaged in Compile).map(Boilerplate.gen))
-  .dependsOn(common % "test->test;compile->compile")
+    "org.apache.spark" %% "spark-core" % sparkVersion,
+    "org.apache.spark" %% "spark-sql"  % sparkVersion
+  ))
+  .dependsOn(core % "test->test;compile->compile")
 
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(tutSettings: _*)
   .settings(crossTarget := file(".") / "docs" / "target")
-  .dependsOn(dataset, dataframe)
+  .dependsOn(dataset)
 
 lazy val framelessSettings = Seq(
   organization := "io.github.adelbertc",

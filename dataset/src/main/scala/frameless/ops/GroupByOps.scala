@@ -2,7 +2,6 @@ package frameless
 package ops
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
-import org.apache.spark.sql.catalyst.encoders.OuterScopes
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless._
@@ -54,9 +53,11 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
   def flatMapGroups[U: TypedEncoder](
     f: (KT, Iterator[T]) => TraversableOnce[U]
   )(implicit kencoder: TypedEncoder[KT]): TypedDataset[U] = {
+    implicit val tendcoder = self.encoder
+
     val cols = toTraversable(groupedBy)
     val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
-    val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias)
+    val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
     val withKey = Project(withKeyColumns, logicalPlan)
     val executed = FramelessInternals.executePlan(self.dataset, withKey)
     val keyAttributes = executed.analyzed.output.takeRight(cols.size)
@@ -64,11 +65,10 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
 
     val mapGroups = MapGroups(
       f,
-      TypedExpressionEncoder[tupler.Out].resolve(keyAttributes, OuterScopes.outerScopes),
-      TypedExpressionEncoder[T](self.encoder).resolve(dataAttributes, OuterScopes.outerScopes),
       keyAttributes,
+      dataAttributes,
       executed.analyzed
-    )(TypedExpressionEncoder[U])
+    )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
 
     val groupedAndFlatMapped = FramelessInternals.mkDataset(
       self.dataset.sqlContext,

@@ -26,7 +26,6 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
-
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Option[Long]] _))
     check(forAll(prop[Option[Double]] _))

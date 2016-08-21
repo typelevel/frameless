@@ -46,7 +46,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
     exists: TypedColumn.Exists[T, column.T, A],
     encoder: TypedEncoder[A]
   ): TypedColumn[T, A] = {
-    val colExpr = FramelessInternals.resolveExpr(dataset, column.value.name :: Nil)
+    val colExpr = dataset.col(column.value.name).as[A](TypedExpressionEncoder[A])
     new TypedColumn[T, A](colExpr)
   }
 

@@ -1,9 +1,10 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
+import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions.objects.{Invoke, NewInstance}
 import org.apache.spark.sql.types._
-
 import shapeless.labelled.FieldType
 import shapeless._
 
@@ -62,10 +63,6 @@ class RecordEncoder[F, G <: HList](
     StructType(structFields)
   }
 
-  def extractor(): Expression = {
-    extractorFor(BoundReference(0, sourceDataType, nullable = false))
-  }
-
   def extractorFor(path: Expression): Expression = {
     val nameExprs = fields.value.value.map { field =>
       Literal(field.name)
@@ -84,18 +81,14 @@ class RecordEncoder[F, G <: HList](
     CreateNamedStruct(exprs)
   }
 
-  def constructor(): Expression = {
-    val exprs = fields.value.value.map { field =>
-      val path = BoundReference(field.ordinal, field.encoder.sourceDataType, field.encoder.nullable)
-      field.encoder.constructorFor(path)
-    }
-
-    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
-  }
-
   def constructorFor(path: Expression): Expression = {
     val exprs = fields.value.value.map { field =>
-      val fieldPath = GetStructField(path, field.ordinal, Some(field.name))
+      val fieldPath = path match {
+        case BoundReference(ordinal, dataType, nullable) =>
+          GetColumnByOrdinal(field.ordinal, field.encoder.sourceDataType)
+        case other =>
+          GetStructField(path, field.ordinal, Some(field.name))
+      }
       field.encoder.constructorFor(fieldPath)
     }
 
