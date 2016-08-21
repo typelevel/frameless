@@ -1,15 +1,24 @@
 package frameless
 
-import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
 
-class TypedDatasetSuite extends FunSuite with Checkers with SharedSparkContext {
+class TypedDatasetSuite extends FunSuite with Checkers {
   // Limit size of generated collections and number of checks because Travis
   implicit override val generatorDrivenConfig =
     PropertyCheckConfig(maxSize = 10, minSuccessful = 10)
 
-  implicit def _sc = sc
-  implicit def sqlContext = SparkSession.builder().getOrCreate().sqlContext
+  val appID = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
+
+  val conf = new SparkConf()
+    .setMaster("local[*]")
+    .setAppName("test")
+    .set("spark.ui.enabled", "false")
+    .set("spark.app.id", appID)
+
+  implicit def session = SparkSession.builder().config(conf).getOrCreate()
+  implicit def sc = session.sparkContext
+  implicit def sqlContext = session.sqlContext
 }

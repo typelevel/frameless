@@ -9,7 +9,7 @@ Frameless is a proof-of-concept library for working with [Spark](http://spark.ap
 It consists of the following modules:
 
 * `cats` for using Spark with [cats](https://github.com/typelevel/cats)
-* `dataframe` for more strongly typed `DataFrame`s
+* `dataframe` (deprecated) for more strongly typed `DataFrame`s
 * `dataset` for more strongly typed `Dataset`s
 
 The Frameless project and contributors support the

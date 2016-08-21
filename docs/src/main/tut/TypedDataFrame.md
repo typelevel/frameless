@@ -8,7 +8,7 @@ To safely manipulate `DataFrame`s we use a technique called *shadow type*, which
 
 In `TypedDataFrame`, we use a single `Schema <: Product` to model the number, the types and the names of columns. Here is a what the definition of `TypedDataFrame` looks like, with simplified type signatures:
 
-```tut:silent
+```scala
 import org.apache.spark.sql.DataFrame
 import shapeless.HList
 
@@ -30,7 +30,7 @@ As you can see, instead of the `def filter(conditionExpr: String): DataFrame` de
 
 For Spark's `DataFrame`s, column referencing is done directly by `String`s or using the `Column` type which provides no additional type safety. `TypedDataFrame` improves on that by catching column referencing at compile type. When everything goes well, frameless select is very similar to vanilla select, except that it keeps track of the selected column types:
 
-```tut:silent
+```scala
 import frameless.TypedDataFrame
 
 case class Foo(s: String, d: Double, i: Int)
@@ -41,7 +41,7 @@ def selectIntString(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] =
 
 However, in case of typo, it gets coughs right away:
 
-```tut:nofail
+```scala
 def selectIntStringTypo(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] =
   tf.select('j, 's)
 ```
@@ -50,7 +50,7 @@ def selectIntStringTypo(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] 
 
 Joins can available with two different syntaxes, the first lets you reference different columns on each `TypedDataFrame`, and ensures that their all exists and have compatible types:
 
-```tut:silent
+```scala
 case class Bar(i: Int, j: String, b: Boolean)
 
 def join1(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
@@ -60,7 +60,7 @@ def join1(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
 
 The second syntax bring some convenience when the joining columns have identical names in both tables:
 
-```tut:silent
+```scala
 def join2(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
     : TypedDataFrame[(String, Double, Int, String, Boolean)] =
   tf1.innerJoin(tf2).using('i)
@@ -98,7 +98,7 @@ object NLPLib {
 
 Suppose we manage to obtain a `TypedDataFrame[PhoneBookEntry]` and a `TypedDataFrame[CityMapEntry]` public data, here is what our Spark job could look like with frameless:
 
-```tut:silent
+```scala
 import org.apache.spark.sql.SQLContext
 
 // These case classes are used to hold intermediate results
