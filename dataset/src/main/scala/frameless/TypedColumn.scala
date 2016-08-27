@@ -1,5 +1,7 @@
 package frameless
 
+import frameless.syntax._
+
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless.ops.record.Selector
@@ -257,5 +259,12 @@ object TypedColumn {
       lgen: LabelledGeneric.Aux[T, H],
       selector: Selector.Aux[H, K, V]
     ): Exists[T, K, V] = new Exists[T, K, V] {}
+  }
+
+  implicit class OrderedTypedColumnSyntax[T, U: CatalystOrdered](col: TypedColumn[T, U]) {
+    def <(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped < other.untyped).typed
+    def <=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped <= other.untyped).typed
+    def >(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped > other.untyped).typed
+    def >=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped >= other.untyped).typed
   }
 }
