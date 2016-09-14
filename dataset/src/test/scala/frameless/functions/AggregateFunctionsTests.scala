@@ -4,15 +4,16 @@ package functions
 import java.math.MathContext
 
 import frameless.functions.aggregate._
-
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class AggregateFunctionsTests extends TypedDatasetSuite {
 
   def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
-    val mc = new MathContext(4)
-    if (BigDecimal(numeric.toDouble(a)).round(mc) == BigDecimal(numeric.toDouble(b)).round(mc)) proved
+    val da = numeric.toDouble(a)
+    val db = numeric.toDouble(b)
+    if((da.isNaN && db.isNaN) || (da.isInfinity && db.isInfinity)) proved
+    else if ((da - db).abs < 1e-6) proved
     else falsified :| "Expected " + a + " but got " + b
   }
 
