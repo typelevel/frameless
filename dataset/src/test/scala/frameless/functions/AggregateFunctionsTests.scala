@@ -10,7 +10,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
     val da = numeric.toDouble(a)
     val db = numeric.toDouble(b)
-    if((da.isNaN && db.isNaN) || (da.isInfinity && db.isInfinity)) proved
+    // Spark has a weird behaviour concerning expressions that should return Inf
+    // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
+    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
     else if ((da - db).abs < 1e-6) proved
     else falsified :| "Expected " + a + " but got " + b
   }
@@ -90,6 +92,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
 
       val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
+
 
       xs match {
         case Nil => datasetStd ?= None
