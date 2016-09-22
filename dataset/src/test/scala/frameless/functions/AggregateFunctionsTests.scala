@@ -63,7 +63,6 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
-    //check(forAll(prop[Int] _))
     check(forAll(prop[BigDecimal] _))
     check(forAll(prop[Double] _))
   }
@@ -71,11 +70,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("stddev") {
 
     def std[A](xs: List[A])(
-      implicit fractional: Fractional[A],
+      implicit
+      fractional: Fractional[A],
       numeric: Numeric[A]
     ): Double = {
       val ds = xs.map(numeric.toDouble)
-      val avg = ds.sum/ds.size
+      val avg = ds.sum / ds.size
       math.sqrt((0.0 /: ds) {
         (a,e) => a + math.pow(e - avg, 2.0)
       } / (xs.size - 1))
@@ -140,7 +140,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val datasetMax::_ = dataset.select(max(A)).collect().run().toList
+      val datasetMax = dataset.select(max(A)).collect().run().toList.head
 
       xs match {
         case Nil => datasetMax.isEmpty
@@ -168,7 +168,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetMin::_ = dataset.select(min(A)).collect().run().toList
+      val datasetMin = dataset.select(min(A)).collect().run().toList.head
       xs match {
         case Nil => datasetMin.isEmpty
         case xs => datasetMin match {
@@ -188,7 +188,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("first") {
     def prop[A: TypedEncoder](xs: List[A])(
-      implicit ex1: TypedEncoder[X1[A]],
+      implicit
+      ex1: TypedEncoder[X1[A]],
       eoa: TypedEncoder[Option[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
@@ -216,7 +217,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("last") {
     def prop[A: TypedEncoder](xs: List[A])(
-      implicit ex1: TypedEncoder[X1[A]],
+      implicit
+      ex1: TypedEncoder[X1[A]],
       eoa: TypedEncoder[Option[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
