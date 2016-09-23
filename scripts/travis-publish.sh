@@ -5,9 +5,9 @@
 
 export publish_cmd="publishLocal"
 
-if [[ $TRAVIS_PULL_REQUEST == "false" && $TRAVIS_BRANCH == "master" && $(cat version.sbt) =~ "-SNAPSHOT" ]]; then
-  export publish_cmd="common/publish cats/publish dataset/publish dataframe/publish"
-fi
+# if [[ $TRAVIS_PULL_REQUEST == "false" && $TRAVIS_BRANCH == "master" && $(cat version.sbt) =~ "-SNAPSHOT" ]]; then
+#   export publish_cmd="common/publish cats/publish dataset/publish dataframe/publish"
+# fi
 
 sbt_cmd="sbt ++$TRAVIS_SCALA_VERSION"
 
