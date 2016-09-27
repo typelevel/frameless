@@ -59,7 +59,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       xs match {
         case Nil => datasetAvg ?= None
         case _ :: _ => datasetAvg match {
-          case Some(x) => approximatelyEqual(x, fractional.div(xs.sum, fractional.fromInt(xs.size)))
+          case Some(x) => approximatelyEqual(fractional.div(xs.sum, fractional.fromInt(xs.size)), x)
           case other => falsified
         }
       }
@@ -71,18 +71,6 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("stddev") {
 
-    def std[A](xs: List[A])(
-      implicit
-      fractional: Fractional[A],
-      numeric: Numeric[A]
-    ): Double = {
-      val ds = xs.map(numeric.toDouble)
-      val avg = ds.sum / ds.size
-      math.sqrt((0.0 /: ds) {
-        (a,e) => a + math.pow(e - avg, 2.0)
-      } / (xs.size - 1))
-    }
-
     def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A])(
       implicit
       eoa: TypedEncoder[Option[A]],
@@ -92,7 +80,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
 
       val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
-
+      val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
 
       xs match {
         case Nil => datasetStd ?= None
@@ -101,7 +89,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
           case _ => falsified
         }
         case _ => datasetStd match {
-          case Some(x) => approximatelyEqual(implicitly[Numeric[A]].toDouble(x), std(xs))
+          case Some(x) => approximatelyEqual(std, implicitly[Numeric[A]].toDouble(x))
           case _ => falsified
         }
       }
