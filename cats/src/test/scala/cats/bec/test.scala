@@ -2,13 +2,12 @@ package cats
 package bec
 
 import cats.implicits._
-
 import org.scalatest.Matchers
 import org.scalacheck.Arbitrary
 import Arbitrary._
+import org.apache.spark.rdd.RDD
 import org.scalatest._
 import prop._
-
 import org.apache.spark.{SparkConf, SparkContext => SC}
 
 trait SparkTests {
@@ -20,6 +19,7 @@ trait SparkTests {
     new SparkConf()
       .setMaster("local[4]")
       .setAppName("cats.bec test")
+      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 }
 
 object Tests {
@@ -61,5 +61,21 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     forAll { (xh: (String, Int), mx: Map[String, Int], yh: (String, Int), my: Map[String, Int]) =>
       Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _)
     }
+  }
+
+  property("rdd simple numeric monoid example") {
+    import frameless.cats.implicits._
+    val theSeq = 1 to 20
+    val toy = theSeq.toRdd
+    toy.cmin shouldBe 1
+    toy.cmax shouldBe 20
+    toy.csum shouldBe theSeq.sum
+  }
+
+  property("rdd Map[Int,Int] monoid example - kryo") {
+    import frameless.cats.implicits._
+    import cats.implicits._
+    val rdd: RDD[Map[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(Map(_))
+    rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
   }
 }
