@@ -18,6 +18,9 @@ project/plugins/project/
 bin/
 .settings/
 
+# IntelliJ specific
+.idea
+
 # OS X
 .DS_Store
 node_modules
