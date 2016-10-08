@@ -4,10 +4,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class JoinTests extends TypedDatasetSuite {
-  // doesn't work consistenly due to https://issues.apache.org/jira/browse/SPARK-16802
-  // TODO test once 2.0.1 is released
-
-  ignore("ab.joinLeft(ac, ab.a, ac.a)") {
+  test("ab.joinLeft(ac, ab.a, ac.a)") {
     def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
       lefte: TypedEncoder[X2[A, B]],
@@ -38,7 +35,7 @@ class JoinTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Long, String] _))
   }
 
-  ignore("ab.join(ac, ab.a, ac.a)") {
+  test("ab.join(ac, ab.a, ac.a)") {
     def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
       lefte: TypedEncoder[X2[A, B]],

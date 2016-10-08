@@ -1,6 +1,5 @@
 val catsv = "0.4.1"
-val sparkCats = "2.0.0"
-val sparkVersion = "2.0.0"
+val sparkVersion = "2.0.1"
 val sparkTesting = "0.3.3"
 val scalatest = "2.2.5"
 val shapeless = "2.3.0"
@@ -24,7 +23,7 @@ lazy val cats = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
-    "org.apache.spark" %% "spark-core" % sparkCats))
+    "org.apache.spark" %% "spark-core" % sparkVersion))
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
