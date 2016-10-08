@@ -10,16 +10,21 @@ import org.scalatest._
 import prop._
 import org.apache.spark.{SparkConf, SparkContext => SC}
 
+import scala.reflect.ClassTag
+
 trait SparkTests {
 
   implicit lazy val sc: SC =
     new SC(conf)
 
+  implicit class seqToRdd[A: ClassTag](seq: Seq[A])(implicit sc: SC) {
+    def toRdd: RDD[A] = sc.makeRDD(seq)
+  }
+
   lazy val conf: SparkConf =
     new SparkConf()
       .setMaster("local[4]")
       .setAppName("cats.bec test")
-      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 }
 
 object Tests {
@@ -72,10 +77,16 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     toy.csum shouldBe theSeq.sum
   }
 
-  property("rdd Map[Int,Int] monoid example - kryo") {
+  property("rdd Map[Int,Int] monoid example") {
     import frameless.cats.implicits._
-    import cats.implicits._
     val rdd: RDD[Map[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(Map(_))
     rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
+  }
+
+  property("rdd tuple monoid example") {
+    import frameless.cats.implicits._
+    val seq = Seq( (1,2), (2,3), (5,6) )
+    val rdd = seq.toRdd
+    rdd.csum shouldBe seq.reduce(_|+|_)
   }
 }

@@ -2,9 +2,8 @@ package frameless
 package cats
 
 import _root_.cats.implicits._
-import org.apache.spark.SparkContext
+import _root_.cats._
 
-import algebra.{Monoid, Order, Semigroup}
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
@@ -13,10 +12,6 @@ object implicits {
     def csum(implicit m: Monoid[A]): A = lhs.reduce(_ |+| _)
     def cmin(implicit o: Order[A]): A = lhs.reduce(_ min _)
     def cmax(implicit o: Order[A]): A = lhs.reduce(_ max _)
-  }
-
-  implicit class seqToRdd[A: ClassTag](seq: Seq[A])(implicit sc: SparkContext) {
-    def toRdd: RDD[A] = sc.makeRDD(seq)
   }
 
   implicit class pairRddOps[K: ClassTag, V: ClassTag](lhs: RDD[(K, V)]) {
