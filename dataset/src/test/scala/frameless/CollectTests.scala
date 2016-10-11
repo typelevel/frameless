@@ -21,6 +21,7 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
     check(forAll(prop[Float] _))
     check(forAll(prop[Short] _))
+    check(forAll(prop[Char] _))
     check(forAll(prop[Byte] _))
     check(forAll(prop[Boolean] _))
     check(forAll(prop[String] _))

@@ -93,6 +93,29 @@ object TypedEncoder {
     def constructorFor(path: Expression): Expression = path
   }
 
+  implicit val charEncoder: TypedEncoder[Char] = new TypedEncoder[Char] {
+    // tricky because while Char is primitive type, Spark doesn't support it
+
+    implicit val charAsString: Injection[java.lang.Character, String] = new Injection[java.lang.Character, String] {
+      def apply(a: java.lang.Character): String = String.valueOf(a)
+      def invert(b: String): java.lang.Character = {
+        require(b.length == 1)
+        b.charAt(0)
+      }
+    }
+
+    val underlying = usingInjection[java.lang.Character, String]
+
+    def nullable: Boolean = false
+
+    // this line fixes underlying encoder
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[java.lang.Character]
+    def targetDataType: DataType = StringType
+
+    def extractorFor(path: Expression): Expression = underlying.extractorFor(path)
+    def constructorFor(path: Expression): Expression = underlying.constructorFor(path)
+  }
+
   implicit val byteEncoder: TypedEncoder[Byte] = new TypedEncoder[Byte] {
     def nullable: Boolean = false
 
