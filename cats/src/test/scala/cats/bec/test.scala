@@ -2,19 +2,24 @@ package cats
 package bec
 
 import cats.implicits._
-
 import org.scalatest.Matchers
 import org.scalacheck.Arbitrary
 import Arbitrary._
+import org.apache.spark.rdd.RDD
 import org.scalatest._
 import prop._
-
 import org.apache.spark.{SparkConf, SparkContext => SC}
+
+import scala.reflect.ClassTag
 
 trait SparkTests {
 
   implicit lazy val sc: SC =
     new SC(conf)
+
+  implicit class seqToRdd[A: ClassTag](seq: Seq[A])(implicit sc: SC) {
+    def toRdd: RDD[A] = sc.makeRDD(seq)
+  }
 
   lazy val conf: SparkConf =
     new SparkConf()
@@ -61,5 +66,27 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     forAll { (xh: (String, Int), mx: Map[String, Int], yh: (String, Int), my: Map[String, Int]) =>
       Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _)
     }
+  }
+
+  property("rdd simple numeric monoid example") {
+    import frameless.cats.implicits._
+    val theSeq = 1 to 20
+    val toy = theSeq.toRdd
+    toy.cmin shouldBe 1
+    toy.cmax shouldBe 20
+    toy.csum shouldBe theSeq.sum
+  }
+
+  property("rdd Map[Int,Int] monoid example") {
+    import frameless.cats.implicits._
+    val rdd: RDD[Map[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(Map(_))
+    rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
+  }
+
+  property("rdd tuple monoid example") {
+    import frameless.cats.implicits._
+    val seq = Seq( (1,2), (2,3), (5,6) )
+    val rdd = seq.toRdd
+    rdd.csum shouldBe seq.reduce(_|+|_)
   }
 }

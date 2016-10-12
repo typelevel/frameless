@@ -1,8 +1,8 @@
 package frameless
 package cats
 
-import algebra.{Monoid, Order, Semigroup}
 import _root_.cats.implicits._
+import _root_.cats._
 
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
