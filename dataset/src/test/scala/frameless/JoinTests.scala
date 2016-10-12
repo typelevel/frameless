@@ -4,11 +4,10 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class JoinTests extends TypedDatasetSuite {
-  // doesn't work consistenly due to https://issues.apache.org/jira/browse/SPARK-16802
-  // TODO test once 2.0.1 is released
+  import scala.math.Ordering.Implicits._
 
-  ignore("ab.joinLeft(ac, ab.a, ac.a)") {
-    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+  test("ab.joinLeft(ac, ab.a, ac.a)") {
+    def prop[A: TypedEncoder : Ordering, B: Ordering, C: Ordering](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
@@ -18,7 +17,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinLeft(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run().toVector.sortBy(_._1.a)
+        .collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
       val joined = {
@@ -32,14 +31,14 @@ class JoinTests extends TypedDatasetSuite {
         } yield (ab, None)
       }.toVector
 
-      (joined.sortBy(_._1.a) ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
+      (joined.sorted ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
     }
 
     check(forAll(prop[Int, Long, String] _))
   }
 
-  ignore("ab.join(ac, ab.a, ac.a)") {
-    def prop[A: TypedEncoder : Ordering, B, C](left: List[X2[A, B]], right: List[X2[A, C]])(
+  test("ab.join(ac, ab.a, ac.a)") {
+    def prop[A: TypedEncoder : Ordering, B: Ordering, C: Ordering](left: List[X2[A, B]], right: List[X2[A, C]])(
       implicit
       lefte: TypedEncoder[X2[A, B]],
       righte: TypedEncoder[X2[A, C]],
@@ -49,7 +48,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .join(rightDs, leftDs.col('a), rightDs.col('a))
-        .collect().run().toVector.sortBy(_._1.a)
+        .collect().run().toVector.sorted
 
       val joined = {
         for {
@@ -58,7 +57,7 @@ class JoinTests extends TypedDatasetSuite {
         } yield (ab, ac)
       }.toVector
 
-      joined.sortBy(_._1.a) ?= joinedDs
+      joined.sorted ?= joinedDs
     }
 
     check(forAll(prop[Int, Long, String] _))
