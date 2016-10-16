@@ -11,6 +11,9 @@ import shapeless._
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
+  * NOTE: Prefer `TypedDataset.create` over `new TypedDataset` unless you
+  * know what you are doing.
+  *
   * Documentation marked "apache/spark" is thanks to apache/spark Contributors
   * at https://github.com/apache/spark, licensed under Apache v2.0 available at
   * http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +35,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def count(): Job[Long] =
     Job(dataset.count)
+
+  /** Returns `TypedColumn` of type `A` given it's name.
+    *
+    * {{{
+    * tf('id)
+    * }}}
+    *
+    * It is statically checked that column with such name exists and has type `A`.
+    */
+  def apply[A](column: Witness.Lt[Symbol])(
+    implicit
+    exists: TypedColumn.Exists[T, column.T, A],
+    encoder: TypedEncoder[A]
+  ): TypedColumn[T, A] = col(column)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -124,11 +141,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * Differs from `TypedDatasetForward#filter` by taking a `TypedColumn[T, Boolean]` instead of a
     * `T => Boolean`. Using a column expression instead of a regular function save one Spark → Scala
-    * deserialization which leads to better preformances.
+    * deserialization which leads to better performance.
     */
   def filter(column: TypedColumn[T, Boolean]): TypedDataset[T] = {
     val filtered = dataset.toDF()
-      .filter(new Column(column.expr))
+      .filter(column.untyped)
       .as[T](TypedExpressionEncoder[T])
 
     TypedDataset.create[T](filtered)
@@ -252,7 +269,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       encoder: TypedEncoder[Out]
     ): TypedDataset[Out] = {
       val selected = dataset.toDF()
-        .select(toTraversable(columns).map(c => new Column(c.expr)): _*)
+        .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
         .as[Out](TypedExpressionEncoder[Out])
 
       TypedDataset.create[Out](selected)

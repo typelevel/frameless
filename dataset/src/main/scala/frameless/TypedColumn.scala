@@ -16,16 +16,22 @@ sealed trait UntypedExpression[T] {
   * http://www.apache.org/licenses/LICENSE-2.0
   */
 sealed class TypedColumn[T, U](
-  val expr: Expression
-)(
+  val expr: Expression)(
   implicit
   val uencoder: TypedEncoder[U]
 ) extends UntypedExpression[T] { self =>
 
+  /** From an untyped Column to a [[TypedColumn]]
+    *
+    * @param column a spark.sql Column
+    * @param uencoder encoder of the resulting type U
+    */
   def this(column: Column)(implicit uencoder: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
   }
 
+  /** Fall back to an untyped Column
+    */
   def untyped: Column = new Column(expr)
 
   /** Equality test.
@@ -71,6 +77,28 @@ sealed class TypedColumn[T, U](
     */
   def +(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = plus(u)
 
+  /** Sum of this expression (column) with a constant.
+    * {{{
+    *   // Scala: The following selects the sum of a person's height and weight.
+    *   people.select( people('height) + 2 )
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def +(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.plus(u))
+
+  /** Unary minus, i.e. negate the expression.
+    * {{{
+    *   // Scala: select the amount column and negates all values.
+    *   df.select( -df('amount) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def unary_-(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](-self.untyped)
+
+
   /** Subtraction. Subtract the other expression from this expression.
     * {{{
     *   // The following selects the difference between people's height and their weight.
@@ -92,6 +120,17 @@ sealed class TypedColumn[T, U](
     */
   def -(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = minus(u)
 
+  /** Subtraction. Subtract the other expression from this expression.
+    * {{{
+    *   // Scala: The following selects the difference between people's height and their weight.
+    *   people.select( people('height) - 1 )
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def -(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.minus(u))
+
   /** Multiplication of this expression and another expression.
     * {{{
     *   // The following multiplies a person's height by their weight.
@@ -112,6 +151,52 @@ sealed class TypedColumn[T, U](
     * apache/spark
     */
   def *(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = multiply(u)
+
+  /** Multiplication of this expression a constant.
+    * {{{
+    *   // The following multiplies a person's height by their weight.
+    *   people.select( people.col('height) * people.col('weight) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def *(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.multiply(u))
+
+  /**
+    * Division this expression by another expression.
+    * {{{
+    *   // Scala: The following divides a person's height by their weight.
+    *   people.select( people('height) / people('weight) )
+    * }}}
+    *
+    * @param u another column of the same type
+    * apache/spark
+    */
+  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = new TypedColumn[T, Double](self.untyped.divide(u.untyped))
+
+  /**
+    * Division this expression by another expression.
+    * {{{
+    *   // Scala: The following divides a person's height by their weight.
+    *   people.select( people('height) / people('weight) )
+    * }}}
+    *
+    * @param u another column of the same type
+    * apache/spark
+    */
+  def /(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = divide(u)
+
+  /**
+    * Division this expression by another expression.
+    * {{{
+    *   // Scala: The following divides a person's height by their weight.
+    *   people.select( people('height) / 2 )
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = new TypedColumn[T, Double](self.untyped.divide(u))
 
   /** Casts the column to a different type.
     * {{{

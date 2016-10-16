@@ -2,6 +2,8 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+import shapeless.test.illTyped
+import frameless.implicits.widen._
 
 import scala.reflect.ClassTag
 
@@ -93,5 +95,111 @@ class SelectTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop[Int, String, Double] _))
+  }
+
+  test("select with column expression addition") {
+    def prop[A](data: Vector[X1[A]], const: A)(
+      implicit
+      eabc: TypedEncoder[X1[A]],
+      anum: CatalystNumeric[A],
+      num: Numeric[A],
+      eb: TypedEncoder[A]
+    ): Prop = {
+      val ds = TypedDataset.create(data)
+
+      val dataset2 = ds.select( ds('a) + const ).collect().run().toVector
+      val data2 = data.map { case X1(a) => num.plus(a,const) }
+
+      dataset2 ?= data2
+    }
+
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("select with column expression multiplication") {
+    def prop[A](data: Vector[X1[A]], const: A)(
+      implicit
+      eabc: TypedEncoder[X1[A]],
+      anum: CatalystNumeric[A],
+      num: Numeric[A],
+      eb: TypedEncoder[A]
+    ): Prop = {
+      val ds = TypedDataset.create(data)
+
+      val dataset2 = ds.select( ds('a) * const ).collect().run().toVector
+      val data2 = data.map { case X1(a) => num.times(a,const) }
+
+      dataset2 ?= data2
+    }
+
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("select with column expression subtraction") {
+    def prop[A](data: Vector[X1[A]], const: A)(
+      implicit
+      eabc: TypedEncoder[X1[A]],
+      cnum: CatalystNumeric[A],
+      num: Numeric[A],
+      eb: TypedEncoder[A]
+    ): Prop = {
+      val ds = TypedDataset.create(data)
+
+      val dataset2 = ds.select( ds('a) - const ).collect().run().toVector
+      val data2 = data.map { case X1(a) => num.minus(a,const) }
+
+      dataset2 ?= data2
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("select with column expression division") {
+    def prop[A](data: Vector[X1[A]], const: A)(
+      implicit
+      eabc: TypedEncoder[X1[A]],
+      anum: CatalystNumeric[A],
+      frac: Fractional[A],
+      eb: TypedEncoder[A]
+    ): Prop = {
+      val ds = TypedDataset.create(data)
+
+      if(const != 0) {
+        val dataset2 = ds.select(ds('a) / const).collect().run().toVector.asInstanceOf[Vector[A]]
+        val data2 = data.map { case X1(a) => frac.div(a, const) }
+        dataset2 ?= data2
+      } else 0 ?= 0
+    }
+
+    check(forAll(prop[Double] _))
+  }
+
+  test("tests to cover problematic dataframe column names during projections") {
+    case class Foo(i: Int)
+    val e = TypedDataset.create[Foo]( Foo(1) :: Nil )
+    val t: TypedDataset[(Int, Int)] = e.select( e.col('i) * 2, e.col('i) )
+    assert(t.select(t.col('_1)).collect().run().toList === List(2))
+    // Issue #54
+    val fooT = t.select(t.col('_1)).map(x => Tuple1.apply(x)).as[Foo]
+    assert(fooT.select(fooT('i)).collect().run().toList === List(2))
+  }
+
+  test("unary - on arithmetic") {
+    val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
+    assert(e.select(-e('_1)).collect().run().toVector === Vector(-1, -2, -2))
+    assert(e.select(-(e('_1) + e('_3))).collect().run().toVector === Vector(-3L, -6L, -3L))
+  }
+
+  test("unary - on strings should not type check") {
+    val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
+    illTyped("""e.select( -e('_2) )""")
   }
 }
