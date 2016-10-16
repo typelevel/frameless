@@ -39,7 +39,7 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
         .agg(aggregates.head, aggregates.tail: _*)
         .as[Out1](TypedExpressionEncoder[Out1])
 
-      new TypedDataset[Out1](aggregated)
+      TypedDataset.create[Out1](aggregated)
     }
   }
 
@@ -76,7 +76,7 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
       TypedExpressionEncoder[U]
     )
 
-    new TypedDataset(groupedAndFlatMapped)
+    TypedDataset.create(groupedAndFlatMapped)
   }
 
   private def retainGroupColumns: Boolean = {
