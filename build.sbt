@@ -29,6 +29,7 @@ lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
   .settings(warnUnusedImport: _*)
+  .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -86,6 +87,33 @@ lazy val warnUnusedImport = Seq(
   },
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
   scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console))
+)
+
+lazy val framelessTypedDatasetREPL = Seq(
+  initialize ~= { _ => // Color REPL
+    val ansi = System.getProperty("sbt.log.noformat", "false") != "true"
+    if (ansi) System.setProperty("scala.color", "true")
+  },
+  initialCommands in console :=
+    """
+      |import org.apache.spark.{SparkConf, SparkContext}
+      |import org.apache.spark.sql.SparkSession
+      |import frameless.functions.aggregate._
+      |
+      |val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
+      |val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+      |
+      |import spark.implicits._
+      |
+      |spark.sparkContext.setLogLevel("WARN")
+      |
+      |import frameless.TypedDataset
+      |implicit val sqlContenxt = spark.sqlContext
+    """.stripMargin,
+  cleanupCommands in console :=
+    """
+      |spark.stop()
+    """.stripMargin
 )
 
 lazy val publishSettings = Seq(
