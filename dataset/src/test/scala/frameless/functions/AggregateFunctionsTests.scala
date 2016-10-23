@@ -22,7 +22,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("sum") {
-    def prop[A: TypedEncoder : Numeric : Summable](xs: List[A])(
+    def prop[A: TypedEncoder : Numeric : CatalystSummable](xs: List[A])(
       implicit
       eoa: TypedEncoder[Option[A]],
       ex1: TypedEncoder[X1[A]]

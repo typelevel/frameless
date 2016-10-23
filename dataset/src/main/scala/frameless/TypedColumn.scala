@@ -1,9 +1,10 @@
 package frameless
 
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.{FramelessInternals, Column}
+import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless.ops.record.Selector
 import shapeless._
+
 import scala.annotation.implicitNotFound
 
 sealed trait UntypedExpression[T] {
@@ -15,7 +16,7 @@ sealed class TypedColumn[T, U](
 )(
   implicit
   val uencoder: TypedEncoder[U]
-) extends UntypedExpression[T] {
+) extends UntypedExpression[T] { self =>
 
   def this(column: Column)(implicit uencoder: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
@@ -30,6 +31,12 @@ sealed class TypedColumn[T, U](
   def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = {
     new TypedColumn[T, Boolean](untyped === other.untyped)
   }
+
+  def plus(u: TypedColumn[T, U])(implicit n: CatalystSummable[U]): TypedColumn[T, U] =
+    new TypedColumn[T, U](self.untyped.plus(u.untyped))
+
+  def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): TypedColumn[T, A] =
+    new TypedColumn(self.untyped.cast(TypedEncoder[A].targetDataType))
 }
 
 sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {

@@ -22,7 +22,7 @@ trait AggregateFunctions {
 
   def sum[A, T](column: TypedColumn[T, A])(
     implicit
-    summable: Summable[A],
+    summable: CatalystSummable[A],
     encoder: TypedEncoder[A])
   : TypedAggregateAndColumn[T, A, A] = {
     val zeroExpr = Literal.create(summable.zero, encoder.targetDataType)
