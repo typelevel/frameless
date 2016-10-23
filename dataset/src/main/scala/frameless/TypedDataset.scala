@@ -5,8 +5,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
-import org.apache.spark.sql.{FramelessInternals, Column, SQLContext, Dataset}
-import shapeless.ops.hlist.{Tupler, ToTraversable}
+import org.apache.spark.sql.{Column, Dataset, FramelessInternals, SQLContext}
+import shapeless.ops.hlist.{ToTraversable, Tupler}
 import shapeless._
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
@@ -15,7 +15,7 @@ import shapeless._
   * at https://github.com/apache/spark, licensed under Apache v2.0 available at
   * http://www.apache.org/licenses/LICENSE-2.0
   */
-class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
+class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
   private implicit val sparkContext = dataset.sqlContext.sparkContext
@@ -23,7 +23,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
     implicit val uencoder = as.encoder
-    new TypedDataset(dataset.as[U](TypedExpressionEncoder[U]))
+    TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
   /** Returns the number of elements in the [[TypedDataset]].
@@ -131,7 +131,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
       .filter(new Column(column.expr))
       .as[T](TypedExpressionEncoder[T])
 
-    new TypedDataset[T](filtered)
+    TypedDataset.create[T](filtered)
   }
 
   /** Runs `func` on each element of this [[TypedDataset]].
@@ -202,7 +202,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
     val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, A)])
 
-    new TypedDataset[(T, A)](joinedDs)
+    TypedDataset.create[(T, A)](joinedDs)
   }
 
   def joinLeft[A: TypedEncoder, B](
@@ -225,7 +225,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
 
     val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[A])])
 
-    new TypedDataset[(T, Option[A])](joinedDs)
+    TypedDataset.create[(T, Option[A])](joinedDs)
   }
 
   def select[A: TypedEncoder](
@@ -255,7 +255,7 @@ class TypedDataset[T](val dataset: Dataset[T])(implicit val encoder: TypedEncode
         .select(toTraversable(columns).map(c => new Column(c.expr)): _*)
         .as[Out](TypedExpressionEncoder[Out])
 
-      new TypedDataset[Out](selected)
+      TypedDataset.create[Out](selected)
     }
   }
 }
@@ -267,7 +267,7 @@ object TypedDataset {
     sqlContext: SQLContext
   ): TypedDataset[A] = {
     val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
-    new TypedDataset[A](dataset)
+    TypedDataset.create[A](dataset)
   }
 
   def create[A](data: RDD[A])(
@@ -276,6 +276,33 @@ object TypedDataset {
     sqlContext: SQLContext
   ): TypedDataset[A] = {
     val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
+    TypedDataset.create[A](dataset)
+  }
+
+  def create[A: TypedEncoder](dataset: Dataset[A]): TypedDataset[A] = {
+    val e = TypedEncoder[A]
+    val output = dataset.queryExecution.analyzed.output
+
+    val fields = TypedExpressionEncoder.targetStructType(e)
+    val colNames = fields.map(_.name)
+
+    val shouldReshape = output.size != fields.size || output.zip(colNames).exists {
+      case (expr, colName) => expr.name != colName
+    }
+
+    // NOTE: if output.size != fields.size Spark would generate Exception
+    // It means that something has gone completely wrong and frameless schema has diverged from Spark one
+
+    val reshaped =
+      if (shouldReshape) dataset.toDF(colNames: _*)
+      else dataset
+
+    new TypedDataset[A](reshaped.as[A](TypedExpressionEncoder[A]))
+  }
+
+  /** Prefer `TypedDataset.create` over `TypedDataset.unsafeCreate` unless you
+    * know what you are doing. */
+  def unsafeCreate[A: TypedEncoder](dataset: Dataset[A]): TypedDataset[A] = {
     new TypedDataset[A](dataset)
   }
 }

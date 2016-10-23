@@ -6,14 +6,23 @@ import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStr
 import org.apache.spark.sql.types.StructType
 
 object TypedExpressionEncoder {
-  def apply[T: TypedEncoder]: ExpressionEncoder[T] = {
-    val encoder = TypedEncoder[T]
-    val schema = encoder.targetDataType match {
+
+  /** In Spark, DataFrame has always schema of StructType
+    *
+    * DataFrames of primitive types become records with a single field called "_1".
+    */
+  def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
+   encoder.targetDataType match {
       case x: StructType =>
         if (encoder.nullable) StructType(x.fields.map(_.copy(nullable = true)))
         else x
-      case dt => new StructType().add("value", dt, nullable = encoder.nullable)
+      case dt => new StructType().add("_1", dt, nullable = encoder.nullable)
     }
+  }
+
+  def apply[T: TypedEncoder]: ExpressionEncoder[T] = {
+    val encoder = TypedEncoder[T]
+    val schema = targetStructType(encoder)
 
     val in = BoundReference(0, encoder.sourceDataType, encoder.nullable)
 
@@ -25,7 +34,7 @@ object TypedExpressionEncoder {
       case other =>
         val out = GetColumnByOrdinal(0, encoder.targetDataType)
 
-        (out, CreateNamedStruct(Literal("value") :: other :: Nil).flatten)
+        (out, CreateNamedStruct(Literal("_1") :: other :: Nil).flatten)
     }
 
     new ExpressionEncoder[T](

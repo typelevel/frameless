@@ -2,6 +2,7 @@ package frameless
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -18,6 +19,14 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
 
   override def toString: String =
     dataset.toString
+
+  /**
+    * Returns the schema of this Dataset.
+    *
+    * apache/spark
+    */
+  def schema: StructType =
+    dataset.schema
 
   /** Prints the schema of the underlying `Dataset` to the console in a nice tree format.
     *
@@ -54,7 +63,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def repartition(numPartitions: Int): TypedDataset[T] =
-    new TypedDataset(dataset.repartition(numPartitions))
+    TypedDataset.create(dataset.repartition(numPartitions))
 
   /** Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
     * Similar to coalesce defined on an RDD, this operation results in a narrow dependency, e.g.
@@ -64,7 +73,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def coalesce(numPartitions: Int): TypedDataset[T] =
-    new TypedDataset(dataset.coalesce(numPartitions))
+    TypedDataset.create(dataset.coalesce(numPartitions))
 
   /** Concise syntax for chaining custom transformations.
     *
@@ -78,7 +87,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def filter(func: T => Boolean): TypedDataset[T] =
-    new TypedDataset(dataset.filter(func))
+    TypedDataset.create(dataset.filter(func))
 
   /** Returns a new Dataset by taking the first `n` rows. The difference between this function
     * and `head` is that `head` is an action and returns an array (by triggering query execution)
@@ -87,21 +96,21 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def limit(n: Int): TypedDataset[T] =
-    new TypedDataset(dataset.limit(n))
+    TypedDataset.create(dataset.limit(n))
 
   /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
     *
     * apache/spark
     */
   def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
-    new TypedDataset(dataset.map(func)(TypedExpressionEncoder[U]))
+    TypedDataset.create(dataset.map(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
     *
     * apache/spark
     */
   def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
-    new TypedDataset(dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
+    TypedDataset.create(dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
     * and then flattening the results.
@@ -109,14 +118,14 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
-    new TypedDataset(dataset.flatMap(func)(TypedExpressionEncoder[U]))
+    TypedDataset.create(dataset.flatMap(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] by sampling a fraction of records.
     *
     * apache/spark
     */
   def sample(withReplacement: Boolean, fraction: Double, seed: Long = Random.nextLong): TypedDataset[T] =
-    new TypedDataset(dataset.sample(withReplacement, fraction, seed))
+    TypedDataset.create(dataset.sample(withReplacement, fraction, seed))
 
   /** Returns a new [[TypedDataset]] that contains only the unique elements of this [[TypedDataset]].
     *
@@ -126,7 +135,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def distinct: TypedDataset[T] =
-    new TypedDataset(dataset.distinct)
+    TypedDataset.create(dataset.distinct)
 
   /** Returns a new [[TypedDataset]] that contains only the elements of this [[TypedDataset]] that are also
     * present in `other`.
@@ -137,7 +146,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def intersect(other: TypedDataset[T]): TypedDataset[T] =
-    new TypedDataset(dataset.intersect(other.dataset))
+    TypedDataset.create(dataset.intersect(other.dataset))
 
   /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
     * combined.
@@ -148,7 +157,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def union(other: TypedDataset[T]): TypedDataset[T] =
-    new TypedDataset(dataset.union(other.dataset))
+    TypedDataset.create(dataset.union(other.dataset))
 
   /** Returns a new Dataset containing rows in this Dataset but not in another Dataset.
     * This is equivalent to `EXCEPT` in SQL.
@@ -159,14 +168,14 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def except(other: TypedDataset[T]): TypedDataset[T] =
-    new TypedDataset(dataset.except(other.dataset))
+    TypedDataset.create(dataset.except(other.dataset))
 
   /** Persist this [[TypedDataset]] with the default storage level (`MEMORY_AND_DISK`).
     *
     * apache/spark
     */
   def cache(): TypedDataset[T] =
-    new TypedDataset(dataset.cache())
+    TypedDataset.create(dataset.cache())
 
   /** Persist this [[TypedDataset]] with the given storage level.
     * @param newLevel One of: `MEMORY_ONLY`, `MEMORY_AND_DISK`, `MEMORY_ONLY_SER`,
@@ -175,7 +184,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def persist(newLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK): TypedDataset[T] =
-    new TypedDataset(dataset.persist(newLevel))
+    TypedDataset.create(dataset.persist(newLevel))
 
   /** Mark the [[TypedDataset]] as non-persistent, and remove all blocks for it from memory and disk.
     * @param blocking Whether to block until all blocks are deleted.
@@ -183,5 +192,5 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def unpersist(blocking: Boolean = false): TypedDataset[T] =
-    new TypedDataset(dataset.unpersist(blocking))
+    TypedDataset.create(dataset.unpersist(blocking))
 }
