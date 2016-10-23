@@ -2,11 +2,16 @@ import org.scalacheck.{Gen, Arbitrary}
 
 package object frameless {
   /** Fixed decimal point to avoid precision problems specific to Spark */
-  implicit val arbBigDecimal = Arbitrary {
+  implicit val arbBigDecimal: Arbitrary[BigDecimal] = Arbitrary {
     for {
       x <- Gen.chooseNum(-1000, 1000)
       y <- Gen.chooseNum(0, 1000000)
     } yield BigDecimal(s"$x.$y")
+  }
+
+  /** Fixed decimal point to avoid precision problems specific to Spark */
+  implicit val arbDouble: Arbitrary[Double] = Arbitrary {
+    arbBigDecimal.arbitrary.map(_.toDouble)
   }
 
   implicit val arbSqlDate = Arbitrary {
