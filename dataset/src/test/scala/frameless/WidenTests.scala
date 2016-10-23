@@ -13,7 +13,7 @@ class WidenTests extends TypedDatasetSuite {
      df.select(df('a) plus df('b))
   """)
 
-  def widenSum[A: TypedEncoder: CatalystSummable: Numeric, B: TypedEncoder](a: A, b: B)(
+  def widenSum[A: TypedEncoder: CatalystNumeric: Numeric, B: TypedEncoder](a: A, b: B)(
     implicit
     view: B => A,
     colView: TypedColumn[X2[A, B], B] => TypedColumn[X2[A, B], A]
