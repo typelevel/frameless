@@ -1,6 +1,5 @@
 package frameless
 
-import frameless.functions._
 import frameless.functions.aggregate._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -10,7 +9,7 @@ class GroupByTests extends TypedDatasetSuite {
   test("groupByMany('a).agg(sum('b))") {
     def prop[
       A: TypedEncoder : Ordering,
-      B: TypedEncoder : Summable : Numeric
+      B: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
@@ -28,7 +27,7 @@ class GroupByTests extends TypedDatasetSuite {
   test("groupBy('a).agg(sum('b))") {
     def prop[
       A: TypedEncoder : Ordering,
-      B: TypedEncoder : Summable : Numeric
+      B: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
@@ -46,7 +45,7 @@ class GroupByTests extends TypedDatasetSuite {
   test("groupBy('a).mapGroups('a, sum('b))") {
     def prop[
       A: TypedEncoder : Ordering,
-      B: TypedEncoder : Summable : Numeric
+      B: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
@@ -66,8 +65,8 @@ class GroupByTests extends TypedDatasetSuite {
   test("groupBy('a).agg(sum('b), sum('c))") {
     def prop[
       A: TypedEncoder : Ordering,
-      B: TypedEncoder : Summable : Numeric,
-      C: TypedEncoder : Summable : Numeric
+      B: TypedEncoder : CatalystSummable : Numeric,
+      C: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
@@ -95,8 +94,8 @@ class GroupByTests extends TypedDatasetSuite {
     def prop[
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Ordering,
-      C: TypedEncoder : Summable : Numeric,
-      D: TypedEncoder : Summable : Numeric
+      C: TypedEncoder : CatalystSummable : Numeric,
+      D: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X4[A, B, C, D]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
@@ -125,7 +124,7 @@ class GroupByTests extends TypedDatasetSuite {
     def prop[
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Ordering,
-      C: TypedEncoder : Summable : Numeric
+      C: TypedEncoder : CatalystSummable : Numeric
     ](data: List[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
