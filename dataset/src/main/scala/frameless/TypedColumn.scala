@@ -79,7 +79,7 @@ sealed class TypedColumn[T, U](
 
   /** Sum of this expression (column) with a constant.
     * {{{
-    *   // Scala: The following selects the sum of a person's height and weight.
+    *   // The following selects the sum of a person's height and weight.
     *   people.select( people('height) + 2 )
     * }}}
     *
@@ -90,7 +90,7 @@ sealed class TypedColumn[T, U](
 
   /** Unary minus, i.e. negate the expression.
     * {{{
-    *   // Scala: select the amount column and negates all values.
+    *   // Select the amount column and negates all values.
     *   df.select( -df('amount) )
     * }}}
     *
@@ -122,7 +122,7 @@ sealed class TypedColumn[T, U](
 
   /** Subtraction. Subtract the other expression from this expression.
     * {{{
-    *   // Scala: The following selects the difference between people's height and their weight.
+    *   // The following selects the difference between people's height and their weight.
     *   people.select( people('height) - 1 )
     * }}}
     *
@@ -165,7 +165,7 @@ sealed class TypedColumn[T, U](
   /**
     * Division this expression by another expression.
     * {{{
-    *   // Scala: The following divides a person's height by their weight.
+    *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
     * }}}
     *
@@ -177,7 +177,7 @@ sealed class TypedColumn[T, U](
   /**
     * Division this expression by another expression.
     * {{{
-    *   // Scala: The following divides a person's height by their weight.
+    *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
     * }}}
     *
@@ -189,7 +189,7 @@ sealed class TypedColumn[T, U](
   /**
     * Division this expression by another expression.
     * {{{
-    *   // Scala: The following divides a person's height by their weight.
+    *   // The following divides a person's height by their weight.
     *   people.select( people('height) / 2 )
     * }}}
     *
