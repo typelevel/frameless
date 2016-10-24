@@ -245,9 +245,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create[(T, Option[A])](joinedDs)
   }
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple1[A]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -255,9 +254,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     ca: TypedColumn[T, A]
   ): TypedDataset[A] = selectMany(ca).as[A]() // TODO fix selectMany for a single parameter
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple2[A,B]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -266,9 +264,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     cb: TypedColumn[T, B]
   ): TypedDataset[(A, B)] = selectMany(ca, cb)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple3[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -278,9 +275,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     cc: TypedColumn[T, C]
   ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple4[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -291,9 +287,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cd: TypedColumn[T, D]
   ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple5[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -305,9 +300,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ce: TypedColumn[T, E]
   ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple6[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -320,9 +314,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cf: TypedColumn[T, F]
   ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple7[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -336,9 +329,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cg: TypedColumn[T, G]
   ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple8[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -353,9 +345,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ch: TypedColumn[T, H]
   ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple9[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -371,9 +362,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ci: TypedColumn[T, I]
   ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
 
-  /** Type-safe projection from type T to TupleN[A,B,...]
+  /** Type-safe projection from type T to Tuple10[A,B,...]
     * {{{
-    *   // Scala:
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
@@ -389,8 +379,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ci: TypedColumn[T, I],
      cj: TypedColumn[T, J]
   ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
-
- 
 
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
