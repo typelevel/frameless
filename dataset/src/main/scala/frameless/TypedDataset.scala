@@ -11,6 +11,9 @@ import shapeless._
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
+  * NOTE: Prefer `TypedDataset.create` over `new TypedDataset` unless you
+  * know what you are doing.
+  *
   * Documentation marked "apache/spark" is thanks to apache/spark Contributors
   * at https://github.com/apache/spark, licensed under Apache v2.0 available at
   * http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +35,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def count(): Job[Long] =
     Job(dataset.count)
+
+  /** Returns `TypedColumn` of type `A` given it's name.
+    *
+    * {{{
+    * tf('id)
+    * }}}
+    *
+    * It is statically checked that column with such name exists and has type `A`.
+    */
+  def apply[A](column: Witness.Lt[Symbol])(
+    implicit
+    exists: TypedColumn.Exists[T, column.T, A],
+    encoder: TypedEncoder[A]
+  ): TypedColumn[T, A] = col(column)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -124,11 +141,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * Differs from `TypedDatasetForward#filter` by taking a `TypedColumn[T, Boolean]` instead of a
     * `T => Boolean`. Using a column expression instead of a regular function save one Spark → Scala
-    * deserialization which leads to better preformances.
+    * deserialization which leads to better performance.
     */
   def filter(column: TypedColumn[T, Boolean]): TypedDataset[T] = {
     val filtered = dataset.toDF()
-      .filter(new Column(column.expr))
+      .filter(column.untyped)
       .as[T](TypedExpressionEncoder[T])
 
     TypedDataset.create[T](filtered)
@@ -228,20 +245,140 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create[(T, Option[A])](joinedDs)
   }
 
+  /** Type-safe projection from type T to Tuple1[A]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
   def select[A: TypedEncoder](
     ca: TypedColumn[T, A]
   ): TypedDataset[A] = selectMany(ca).as[A]() // TODO fix selectMany for a single parameter
 
+  /** Type-safe projection from type T to Tuple2[A,B]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
   def select[A: TypedEncoder, B: TypedEncoder](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B]
   ): TypedDataset[(A, B)] = selectMany(ca, cb)
 
+  /** Type-safe projection from type T to Tuple3[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
   def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B],
     cc: TypedColumn[T, C]
   ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
+
+  /** Type-safe projection from type T to Tuple4[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D]
+  ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
+
+  /** Type-safe projection from type T to Tuple5[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E]
+  ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
+
+  /** Type-safe projection from type T to Tuple6[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E],
+     cf: TypedColumn[T, F]
+  ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
+
+  /** Type-safe projection from type T to Tuple7[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+ def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E],
+     cf: TypedColumn[T, F],
+     cg: TypedColumn[T, G]
+  ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
+
+  /** Type-safe projection from type T to Tuple8[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+ def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E],
+     cf: TypedColumn[T, F],
+     cg: TypedColumn[T, G],
+     ch: TypedColumn[T, H]
+  ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+
+  /** Type-safe projection from type T to Tuple9[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+ def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E],
+     cf: TypedColumn[T, F],
+     cg: TypedColumn[T, G],
+     ch: TypedColumn[T, H],
+     ci: TypedColumn[T, I]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+
+  /** Type-safe projection from type T to Tuple10[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+ def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder, J: TypedEncoder](
+     ca: TypedColumn[T, A],
+     cb: TypedColumn[T, B],
+     cc: TypedColumn[T, C],
+     cd: TypedColumn[T, D],
+     ce: TypedColumn[T, E],
+     cf: TypedColumn[T, F],
+     cg: TypedColumn[T, G],
+     ch: TypedColumn[T, H],
+     ci: TypedColumn[T, I],
+     cj: TypedColumn[T, J]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
 
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
@@ -252,7 +389,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       encoder: TypedEncoder[Out]
     ): TypedDataset[Out] = {
       val selected = dataset.toDF()
-        .select(toTraversable(columns).map(c => new Column(c.expr)): _*)
+        .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
         .as[Out](TypedExpressionEncoder[Out])
 
       TypedDataset.create[Out](selected)

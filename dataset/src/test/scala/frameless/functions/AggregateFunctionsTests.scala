@@ -43,9 +43,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
 
     // doesn't work yet because resulting type is different
-    // check(forAll(prop[Int] _)
-    // check(forAll(prop[Short] _)
-    // check(forAll(prop[Byte] _)
+    // check(forAll(prop[Int] _))
+    // check(forAll(prop[Short]_))
+    // check(forAll(prop[Byte]_))
   }
 
   test("avg") {
