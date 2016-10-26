@@ -5,6 +5,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, Dataset, FramelessInternals, SQLContext}
 import shapeless.ops.hlist.{ToTraversable, Tupler}
 import shapeless._
@@ -252,7 +253,25 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def select[A: TypedEncoder](
     ca: TypedColumn[T, A]
-  ): TypedDataset[A] = selectMany(ca).as[A]() // TODO fix selectMany for a single parameter
+  ): TypedDataset[A] = {
+    val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
+
+    // now we need to unpack `Tuple1[A]` to `A`
+
+    TypedEncoder[A].targetDataType match {
+      case StructType(_) =>
+        // if column is struct, we use all it's fields
+        val df = tuple1
+          .dataset
+          .selectExpr("_1.*")
+          .as[A](TypedExpressionEncoder[A])
+
+        TypedDataset.create(df)
+      case other =>
+        // for primitive types `Tuple1[A]` has the same schema as `A`
+        TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
+    }
+  }
 
   /** Type-safe projection from type T to Tuple2[A,B]
     * {{{

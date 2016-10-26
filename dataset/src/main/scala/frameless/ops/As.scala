@@ -12,9 +12,4 @@ object As {
     t: Generic.Aux[T, S],
     u: Generic.Aux[U, S]
   ): As[T, U] = new As[T, U]
-
-  implicit def deriveTuple1[U](
-    implicit
-    e: TypedEncoder[U]
-  ): As[Tuple1[U], U] = new As[Tuple1[U], U]
 }

@@ -25,6 +25,7 @@ class SelectTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[X2[Int, Int], Int, Int, Int] _))
     check(forAll(prop[String, Int, Int, Int] _))
   }
 
