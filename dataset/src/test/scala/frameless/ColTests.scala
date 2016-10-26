@@ -2,6 +2,9 @@ package frameless
 
 import shapeless.test.illTyped
 
+import org.scalacheck.Prop
+import org.scalacheck.Prop._
+
 class ColTests extends TypedDatasetSuite {
   test("col") {
     val x4 = TypedDataset.create[X4[Int, String, Long, Boolean]](Nil)
@@ -37,5 +40,18 @@ class ColTests extends TypedDatasetSuite {
 
     illTyped("x2x2.colMany('a, 'c)")
     illTyped("x2x2.colMany('a, 'a, 'a)")
+  }
+
+  test("select colMany") {
+    def prop[A: TypedEncoder](x: X2[X2[A, A], A]): Prop = {
+      val df = TypedDataset.create(x :: Nil)
+      val got = df.select(df.colMany('a, 'a)).collect().run()
+
+      got ?= (x.a.a :: Nil)
+    }
+
+    check(prop[Int] _)
+    check(prop[X2[Int, Int]] _)
+    check(prop[X2[X2[Int, Int], Int]] _)
   }
 }
