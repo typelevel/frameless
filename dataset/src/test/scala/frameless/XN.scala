@@ -44,3 +44,13 @@ object X4 {
     Ordering.Tuple4[A, B, C, D].on(x => (x.a, x.b, x.c, x.d))
 }
 
+case class X5[A, B, C, D, E](a: A, b: B, c: C, d: D, e: E)
+
+object X5 {
+  implicit def arbitrary[A: Arbitrary, B: Arbitrary, C: Arbitrary, D: Arbitrary, E: Arbitrary]: Arbitrary[X5[A, B, C, D, E]] = {
+    Arbitrary(Arbitrary.arbTuple5[A, B, C, D, E].arbitrary.map((X5.apply[A, B, C, D, E] _).tupled))
+  }
+
+  implicit def ordering[A: Ordering, B: Ordering, C: Ordering, D: Ordering, E: Ordering]: Ordering[X5[A, B, C, D, E]] =
+    Ordering.Tuple5[A, B, C, D, E].on(x => (x.a, x.b, x.c, x.d, x.e))
+}
