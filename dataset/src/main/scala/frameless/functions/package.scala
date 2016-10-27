@@ -1,5 +1,5 @@
 package frameless
 
-package object functions {
+package object functions extends Udf {
   object aggregate extends AggregateFunctions
 }
