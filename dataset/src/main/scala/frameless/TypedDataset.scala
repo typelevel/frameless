@@ -2,13 +2,12 @@ package frameless
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql.{Column, Dataset, FramelessInternals, SQLContext}
 import shapeless._
-import shapeless.ops.hlist.{ToTraversable, Tupler}
+import shapeless.ops.hlist.ToTraversable
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -49,7 +48,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     implicit
     exists: TypedColumn.Exists[T, column.T, A],
     encoder: TypedEncoder[A]
-  ): TypedColumn[T, A] = col(column)
+  ): TypedColumn[A] = col(column)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -63,9 +62,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     implicit
     exists: TypedColumn.Exists[T, column.T, A],
     encoder: TypedEncoder[A]
-  ): TypedColumn[T, A] = {
+  ): TypedColumn[A] = {
     val colExpr = dataset.col(column.value.name).as[A](TypedExpressionEncoder[A])
-    new TypedColumn[T, A](colExpr)
+    new TypedColumn[A](colExpr)
   }
 
   object colMany extends SingletonProductArgs {
@@ -74,11 +73,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       existsAll: TypedColumn.ExistsMany[T, U, Out],
       encoder: TypedEncoder[Out],
       toTraversable: ToTraversable.Aux[U, List, Symbol]
-    ): TypedColumn[T, Out] = {
+    ): TypedColumn[Out] = {
       val names = toTraversable(columns).map(_.name)
       val colExpr = FramelessInternals.resolveExpr(dataset, names)
 
-      new TypedColumn[T, Out](colExpr)
+      new TypedColumn[Out](colExpr)
     }
   }
 
@@ -140,11 +139,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
-    * Differs from `TypedDatasetForward#filter` by taking a `TypedColumn[T, Boolean]` instead of a
+    * Differs from `TypedDatasetForward#filter` by taking a `TypedColumn[Boolean]` instead of a
     * `T => Boolean`. Using a column expression instead of a regular function save one Spark → Scala
     * deserialization which leads to better performance.
     */
-  def filter(column: TypedColumn[T, Boolean]): TypedDataset[T] = {
+  def filter(column: TypedColumn[Boolean]): TypedDataset[T] = {
     val filtered = dataset.toDF()
       .filter(column.untyped)
       .as[T](TypedExpressionEncoder[T])
@@ -180,34 +179,31 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       }
     }
 
-  def groupBy[K1](
-    c1: TypedColumn[T, K1]
-  ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
+  // def groupBy[K1](
+  //   c1: TypedColumn[K1]
+  // ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
 
-  def groupBy[K1, K2](
-    c1: TypedColumn[T, K1],
-    c2: TypedColumn[T, K2]
-  ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
+  // def groupBy[K1, K2](
+  //   c1: TypedColumn[K1],
+  //   c2: TypedColumn[K2]
+  // ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
 
-  object groupByMany extends ProductArgs {
-    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)(
-      implicit
-      ct: ColumnTypes.Aux[T, TK, K],
-      tupler: Tupler.Aux[K, KT],
-      toTraversable: ToTraversable.Aux[TK, List, UntypedExpression[T]]
-    ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
-  }
+  // object groupByMany extends ProductArgs {
+  //   def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)(
+  //     implicit
+  //     ct: ColumnTypes.Aux[T, TK, K],
+  //     tupler: Tupler.Aux[K, KT],
+  //     toTraversable: ToTraversable.Aux[TK, List, UntypedExpression]
+  //   ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
+  // }
 
-  def join[A, B](
-    right: TypedDataset[A],
-    leftCol: TypedColumn[T, B],
-    rightCol: TypedColumn[A, B]
-  ): TypedDataset[(T, A)] = {
+  def join[U](right: TypedDataset[U])
+      (expression: (ColumnSyntax[T], ColumnSyntax[U]) => TypedColumn[Boolean]): TypedDataset[(T, U)] = {
     implicit def re = right.encoder
 
     val leftPlan = FramelessInternals.logicalPlan(dataset)
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
-    val condition = EqualTo(leftCol.expr, rightCol.expr)
+    val condition = expression(new ColumnSyntax(dataset), new ColumnSyntax(right.dataset)).expr
 
     val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, Inner, Some(condition)))
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
@@ -218,19 +214,18 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       Alias(CreateStruct(rightOutput), "_2")()
     ), joined.analyzed)
 
-    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, A)])
+    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, U)])
 
-    TypedDataset.create[(T, A)](joinedDs)
+    TypedDataset.create[(T, U)](joinedDs)
   }
 
-  def joinLeft[A: TypedEncoder, B](
-    right: TypedDataset[A],
-    leftCol: TypedColumn[T, B],
-    rightCol: TypedColumn[A, B]
-  )(implicit e: TypedEncoder[(T, Option[A])]): TypedDataset[(T, Option[A])] = {
+  def joinLeft[U: TypedEncoder](right: TypedDataset[U])
+      (expression: (ColumnSyntax[T], ColumnSyntax[U]) => TypedColumn[Boolean])
+      (implicit e: TypedEncoder[(T, Option[U])]): TypedDataset[(T, Option[U])] = {
+
     val leftPlan = FramelessInternals.logicalPlan(dataset)
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
-    val condition = EqualTo(leftCol.expr, rightCol.expr)
+    val condition = expression(new ColumnSyntax(dataset), new ColumnSyntax(right.dataset)).expr
 
     val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
@@ -241,65 +236,46 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       Alias(CreateStruct(rightOutput), "_2")()
     ), joined.analyzed)
 
-    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[A])])
+    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[U])])
 
-    TypedDataset.create[(T, Option[A])](joinedDs)
+    TypedDataset.create[(T, Option[U])](joinedDs)
   }
 
-  /** Takes a function from A => R and converts it to a UDF for TypedColumn[T, A] => TypedColumn[T, R].
+  /** Takes a function from A => R and converts it to a UDF for TypedColumn[A] => TypedColumn[R].
     */
-  def makeUDF[A: TypedEncoder, R: TypedEncoder](f: A => R):
-  TypedColumn[T, A] => TypedColumn[T, R] = functions.udf(f)
+  def makeUDF[A: TypedEncoder, R: TypedEncoder](f: A => R): TypedColumn[A] => TypedColumn[R] = functions.udf(f)
 
   /** Takes a function from (A1, A2) => R and converts it to a UDF for
-    * (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R].
+    * (TypedColumn[A1], TypedColumn[A2]) => TypedColumn[R].
     */
-  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, R: TypedEncoder](f: (A1, A2) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] = functions.udf(f)
+  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, R: TypedEncoder](f: (A1, A2) => R): (TypedColumn[A1], TypedColumn[A2]) => TypedColumn[R] = functions.udf(f)
 
   /** Takes a function from (A1, A2, A3) => R and converts it to a UDF for
-    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R].
+    * (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3]) => TypedColumn[R].
     */
-  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] = functions.udf(f)
+  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3) => R): (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3]) => TypedColumn[R] = functions.udf(f)
 
   /** Takes a function from (A1, A2, A3, A4) => R and converts it to a UDF for
-    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R].
+    * (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4]) => TypedColumn[R].
     */
-  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = functions.udf(f)
+  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4) => R): (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4]) => TypedColumn[R] = functions.udf(f)
 
   /** Takes a function from (A1, A2, A3, A4, A5) => R and converts it to a UDF for
-    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R].
+    * (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4], TypedColumn[A5]) => TypedColumn[R].
     */
-  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, A5: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = functions.udf(f)
+  def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, A5: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R): (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4], TypedColumn[A5]) => TypedColumn[R] = functions.udf(f)
 
   /** Type-safe projection from type T to Tuple1[A]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder](
-    ca: TypedColumn[T, A]
-  ): TypedDataset[A] = {
-    val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
+  def select[A: TypedEncoder](expression: ColumnSyntax[T] => TypedColumn[A]): TypedDataset[A] = {
+    val selected = dataset.toDF()
+      .select(new Column(expression(new ColumnSyntax(dataset)).expr))
+      .as[A](TypedExpressionEncoder[A])
 
-    // now we need to unpack `Tuple1[A]` to `A`
-
-    TypedEncoder[A].targetDataType match {
-      case StructType(_) =>
-        // if column is struct, we use all it's fields
-        val df = tuple1
-          .dataset
-          .selectExpr("_1.*")
-          .as[A](TypedExpressionEncoder[A])
-
-        TypedDataset.create(df)
-      case other =>
-        // for primitive types `Tuple1[A]` has the same schema as `A`
-        TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
-    }
+      TypedDataset.create(selected)
   }
 
   /** Type-safe projection from type T to Tuple2[A,B]
@@ -307,141 +283,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder](
-    ca: TypedColumn[T, A],
-    cb: TypedColumn[T, B]
-  ): TypedDataset[(A, B)] = selectMany(ca, cb)
+  def select[A: TypedEncoder, B: TypedEncoder](expression: ColumnSyntax[T] => (TypedColumn[A], TypedColumn[B])): TypedDataset[(A, B)] = {
+    val (a, b) = expression(new ColumnSyntax(dataset))
+    val selected = dataset.toDF()
+      .select(Seq(a, b).map(c => new Column(c.expr)): _*)
+      .as[(A, B)](TypedExpressionEncoder[(A, B)])
 
-  /** Type-safe projection from type T to Tuple3[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
-    ca: TypedColumn[T, A],
-    cb: TypedColumn[T, B],
-    cc: TypedColumn[T, C]
-  ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
-
-  /** Type-safe projection from type T to Tuple4[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D]
-  ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
-
-  /** Type-safe projection from type T to Tuple5[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E]
-  ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
-
-  /** Type-safe projection from type T to Tuple6[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E],
-     cf: TypedColumn[T, F]
-  ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
-
-  /** Type-safe projection from type T to Tuple7[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E],
-     cf: TypedColumn[T, F],
-     cg: TypedColumn[T, G]
-  ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
-
-  /** Type-safe projection from type T to Tuple8[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E],
-     cf: TypedColumn[T, F],
-     cg: TypedColumn[T, G],
-     ch: TypedColumn[T, H]
-  ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
-
-  /** Type-safe projection from type T to Tuple9[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E],
-     cf: TypedColumn[T, F],
-     cg: TypedColumn[T, G],
-     ch: TypedColumn[T, H],
-     ci: TypedColumn[T, I]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
-
-  /** Type-safe projection from type T to Tuple10[A,B,...]
-    * {{{
-    *   d.select( d('a), d('a)+d('b), ... )
-    * }}}
-    */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder, J: TypedEncoder](
-     ca: TypedColumn[T, A],
-     cb: TypedColumn[T, B],
-     cc: TypedColumn[T, C],
-     cd: TypedColumn[T, D],
-     ce: TypedColumn[T, E],
-     cf: TypedColumn[T, F],
-     cg: TypedColumn[T, G],
-     ch: TypedColumn[T, H],
-     ci: TypedColumn[T, I],
-     cj: TypedColumn[T, J]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
-
-  object selectMany extends ProductArgs {
-    def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
-      implicit
-      ct: ColumnTypes.Aux[T, U, Out0],
-      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
-      tupler: Tupler.Aux[Out0, Out],
-      encoder: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
-      val selected = dataset.toDF()
-        .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
-        .as[Out](TypedExpressionEncoder[Out])
-
-      TypedDataset.create[Out](selected)
-    }
+    TypedDataset.create[(A, B)](selected)
   }
 }
 
