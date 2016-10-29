@@ -88,11 +88,13 @@ case class CityMapEntry(
 )
 ```
 
-Our goal will be to compute the best neighborhood, where best mean highest number of girls currently leaving there (sorry for the fishy example). We are going to need a natural language processing library at some point, let's use the following for the example:
+Our goal will be to compute the neighborhood with unique names, approximating "unique" with names containing less common
+letters in the alphabet: 'x', 'q', and 'z'. We are going to need a natural language processing library at some point, so
+let's use the following for the example:
 
 ```tut:silent
 object NLPLib {
-  def soundsLikeAGirlName(name: String): Boolean = name.toLowerCase.contains("a")
+  def uniqueName(name: String): Boolean = name.exists(Set('x', 'q', 'z'))
 }
 ```
 
@@ -118,7 +120,7 @@ def bestNeighborhood
       f.residents.split(' ').map(r => Person(r, f.neighborhood))
     }                                     :TypedDataFrame[Person])
     .filter { p =>
-      NLPLib.soundsLikeAGirlName(p.name)
+      NLPLib.uniqueName(p.name)
     }                                     :TypedDataFrame[Person])
     .groupBy('neighborhood).count()       :TypedDataFrame[(String, Long)])
     .as[NeighborhoodCount]()              :TypedDataFrame[NeighborhoodCount])
