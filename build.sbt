@@ -42,7 +42,7 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(tutSettings: _*)
   .settings(crossTarget := file(".") / "docs" / "target")
-  .dependsOn(dataset)
+  .dependsOn(dataset, cats)
 
 lazy val framelessSettings = Seq(
   organization := "io.github.adelbertc",
