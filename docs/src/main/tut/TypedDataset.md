@@ -67,34 +67,30 @@ to return type `Long` (look at the `as[Long]` statement). We will discuss this l
 Now, let's take a quick look at the optimized Physical Plan that Spark's Catalyst generated.
 
 ```tut:book
-
 filteredDs.explain()
-
 ```
 
 The last line is very important (see `ReadSchema`). The schema read 
 from the parquet file only required reading column `i` without needing to access column `j`.
 This is great! We have both an optimized query plan and typesafety! 
 
-Unfortunately, this syntax is not bulletproof. 
-This syntax will fail if we try to access a non existing column `x`. 
-The following statement works great at compile time and it will 
-fail at run time (apologies for the long stack trace):
+
+Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access 
+a non existing column `x`:
+
 
 ```tut:fail
 ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
 There are two things to improve here. Fist, we would want to avoid the `at[Long]` casting that we are required
-to type for typesafely. This is clearly an area where we can introduce a bug but casting to an incompatible 
+to type for typesafely. This is clearly an area where we can introduce a bug by casting to an incompatible 
 type. Second, we want a solution where reference to a 
-non existing column name will fail at compilation time. 
+non existing column name fails at compilation time. 
 The standard Spark Dataset can achieve this using the following syntax.
  
 ```tut:book
- 
 ds.filter(_.i == 10).map(_.i).show()
-
 ```
 
 This looks great! It reminds us the familiar syntax from Scala. 
@@ -102,27 +98,23 @@ The two closures in filter and map are functions that operate on `Foo` and the
 compiler will helps us capture all the mistakes we mentioned above.
 
 ```tut:fail
- 
 ds.filter(_.i == 10).map(_.x).show()
-
 ```
 
 Unfortunately, this syntax does not allow Spark to optimize the code. 
 
 
 ```tut:book
-
 ds.filter(_.i == 10).map(_.i).explain()
-
 ```
 
 As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
- Reading the parquet file will required loading all the fields of `Foo`. This might be ok for
- small datasets or for datasets with few columns, but will be extremely slow for most practical
- applications. The reason behind this behavior is beyond the scope of this tutorial. 
- Intuitively, Spark currently doesn't have a way to look inside the code we pass in these two 
- closures. It only knows that they both take one argument of type `Foo`, but it has no way of knowing if
- we use just one or all of `Foo`'s fields. 
+Reading the parquet file will required loading all the fields of `Foo`. This might be ok for
+small datasets or for datasets with few columns, but will be extremely slow for most practical
+applications. 
+Intuitively, Spark currently doesn't have a way to look inside the code we pass in these two 
+closures. It only knows that they both take one argument of type `Foo`, but it has no way of knowing if
+we use just one or all of `Foo`'s fields. 
  
  
 The TypedDataset in frameless solves this problem. It allows for a simple and typesafe syntax 
