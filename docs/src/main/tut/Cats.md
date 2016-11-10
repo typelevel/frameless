@@ -28,7 +28,7 @@ Cats offers ways to sort and aggregate tuples of arbitrary arity.
 ```tut:book
 import frameless.cats.implicits._
 
-val data: RDD[(Int, Int, Int)] = sc.makeRDD((1,2,3) :: (1,5,3) :: (8,2,3) :: Nil)
+val data: RDD[(Int, Int, Int)] = sc.makeRDD((1, 2, 3) :: (1, 5, 3) :: (8, 2, 3) :: Nil)
 
 println(data.csum)
 println(data.cmax)
@@ -37,13 +37,12 @@ println(data.cmin)
 
 The following example aggregates all the elements with a common key.  
 
-
 ```tut:book
 type User = String
 type TransactionCount = Int
 
 val allData: RDD[(User,TransactionCount)] = 
-   sc.makeRDD( ("Bob",12) :: ("Joe",1) :: ("Anna",100) :: ("Bob",20) :: ("Joe",2) :: Nil )
+   sc.makeRDD(("Bob", 12) :: ("Joe", 1) :: ("Anna", 100) :: ("Bob", 20) :: ("Joe", 2) :: Nil)
 
 val totalPerUser =  allData.csumByKey
 
@@ -53,16 +52,14 @@ totalPerUser.collectAsMap
 The same example would work for more complex keys. 
 
 ```tut:book
-
 val allDataComplexKeu = 
    sc.makeRDD( ("Bob", Map("task1" -> 10)) :: 
-    ("Joe", Map("task1"->1, "task2" -> 3)) :: ("Bob",Map("task1"->10, "task2"->1)) :: ("Joe",Map("task3"->4)) :: Nil )
+    ("Joe", Map("task1" -> 1, "task2" -> 3)) :: ("Bob", Map("task1" -> 10, "task2" -> 1)) :: ("Joe", Map("task3" -> 4)) :: Nil )
 
-val overalTasksPerUser =  allDataComplexKeu.csumByKey
+val overalTasksPerUser = allDataComplexKeu.csumByKey
 
 overalTasksPerUser.collectAsMap
 ```
-
 
 #### Joins
 
@@ -70,7 +67,6 @@ overalTasksPerUser.collectAsMap
 // Type aliases for meaningful types
 type TimeSeries = Map[Int,Int]
 type UserName = String
-
 ```
 
 Example: Using the implicit full-our-join operator
@@ -78,8 +74,8 @@ Example: Using the implicit full-our-join operator
 ```tut:book
 import frameless.cats.outer._
 
-val day1: RDD[(UserName,TimeSeries)] = sc.makeRDD( ("John", Map(0->2, 1->4)) :: ("Chris", Map(0->1, 1->2)) :: ("Sam", Map(0->1)) :: Nil )
-val day2: RDD[(UserName,TimeSeries)] = sc.makeRDD( ("John", Map(0->10, 1->11)) :: ("Chris", Map(0->1, 1->2)) :: ("Joe", Map(0->1, 1->2)) :: Nil )
+val day1: RDD[(UserName,TimeSeries)] = sc.makeRDD( ("John", Map(0 -> 2, 1 -> 4)) :: ("Chris", Map(0 -> 1, 1 -> 2)) :: ("Sam", Map(0 -> 1)) :: Nil )
+val day2: RDD[(UserName,TimeSeries)] = sc.makeRDD( ("John", Map(0 -> 10, 1 -> 11)) :: ("Chris", Map(0 -> 1, 1 -> 2)) :: ("Joe", Map(0 -> 1, 1 -> 2)) :: Nil )
 
 val daysCombined = day1 |+| day2
 
@@ -96,10 +92,7 @@ In `cats`:
 Map(1 -> 2, 2 -> 3) |+| Map(1 -> 4, 2 -> -1)
 ```
 
-
 ```tut:invisible
 sc.stop()
 sc = null
 ```
-
-
