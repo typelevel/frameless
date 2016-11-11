@@ -22,55 +22,82 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("sum") {
-    def prop[A: TypedEncoder : Numeric : CatalystSummable](xs: List[A])(
+    abstract class Summer[A, B]{
+      implicit def sum(as: List[A]): B
+    }
+
+    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
+      summable: CatalystSummable[A, Out],
+      summer: Summer[A, Out],
       eoa: TypedEncoder[Option[A]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum = dataset.select(sum(A)).collect().run().toList
+      val datasetSum: List[Out] = dataset.select(sum(A)).collect().run().toList
 
       datasetSum match {
-        case x :: Nil => approximatelyEqual(x, xs.sum)
+        case x :: Nil => approximatelyEqual(summer.sum(xs), x)
         case other => falsified
       }
     }
 
-    check(forAll(prop[BigDecimal] _))
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Double] _))
+    // Replicate Spark's behaviour : Ints and Shorts are cast to Long
+    // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
+    implicit def summerDecimal = new Summer[BigDecimal, BigDecimal] { def sum(as: List[BigDecimal]) = as.sum }
+    implicit def summerLong = new Summer[Long, Long] { def sum(as: List[Long]) = as.sum }
+    implicit def summerDouble = new Summer[Double, Double] { def sum(as: List[Double]) = as.sum }
+    implicit def summerInt = new Summer[Int, Long] { def sum(as: List[Int]) = as.map(_.toLong).sum }
+    implicit def summerShort = new Summer[Short, Long] { def sum(as: List[Short]) = as.map(_.toLong).sum }
 
-    // doesn't work yet because resulting type is different
-    // check(forAll(prop[Int] _))
-    // check(forAll(prop[Short]_))
-    // check(forAll(prop[Byte]_))
+    check(forAll(prop[BigDecimal, BigDecimal] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Short, Long] _))
   }
 
   test("avg") {
-    def prop[A: TypedEncoder : Averageable](xs: List[A])(
+    abstract class Averager[A: Numeric, B: Numeric]{
+      def avg(a: Seq[A]): B
+    }
+
+    def prop[A: TypedEncoder : Numeric, B: TypedEncoder : Numeric](xs: List[A])(
       implicit
-      fractional: Fractional[A],
-      eoa: TypedEncoder[Option[A]],
+      averageable: CatalystAverageable[A, B],
+      averager: Averager[A, B],
+      eob: TypedEncoder[Option[B]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetAvg) = dataset.select(avg(A)).collect().run().toVector
+      val Vector(datasetAvg): Vector[Option[B]] = dataset.select(avg(A)).collect().run().toVector
 
       xs match {
         case Nil => datasetAvg ?= None
         case _ :: _ => datasetAvg match {
-          case Some(x) => approximatelyEqual(fractional.div(xs.sum, fractional.fromInt(xs.size)), x)
+          case Some(x) => approximatelyEqual(averager.avg(xs), x)
           case other => falsified
         }
       }
     }
 
-    check(forAll(prop[BigDecimal] _))
-    check(forAll(prop[Double] _))
+    // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
+    // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
+    implicit def averageDecimal = new Averager[BigDecimal, BigDecimal] { def avg(as: Seq[BigDecimal]) = as.sum/as.size }
+    implicit def averageDouble = new Averager[Double, Double] { def avg(as: Seq[Double]) = as.sum/as.size }
+    implicit def averageLong = new Averager[Long, Double] { def avg(as: Seq[Long]) = as.map(_.toDouble).sum/as.size }
+    implicit def averageInt = new Averager[Int, Double] { def avg(as: Seq[Int]) = as.map(_.toDouble).sum/as.size }
+    implicit def averageShort = new Averager[Short, Double] { def avg(as: Seq[Short]) = as.map(_.toDouble).sum/as.size }
+
+    check(forAll(prop[BigDecimal, BigDecimal] _))
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Long, Double] _))
+    check(forAll(prop[Int, Double] _))
+    check(forAll(prop[Short, Double] _))
   }
 
   test("stddev") {

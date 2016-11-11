@@ -20,28 +20,31 @@ trait AggregateFunctions {
     new TypedAggregateAndColumn[T, Long, Long](untyped.count(column.untyped))
   }
 
-  def sum[A, T](column: TypedColumn[T, A])(
+  def sum[A, T, Out](column: TypedColumn[T, A])(
     implicit
-    summable: CatalystSummable[A],
-    encoder: TypedEncoder[A])
-  : TypedAggregateAndColumn[T, A, A] = {
-    val zeroExpr = Literal.create(summable.zero, encoder.targetDataType)
+    summable: CatalystSummable[A, Out],
+    encoder1: TypedEncoder[A],
+    encoder2: TypedEncoder[Out])
+  : TypedAggregateAndColumn[T, A, Out] = {
+    val zeroExpr = Literal.create(summable.zero, encoder2.targetDataType)
     val sumExpr = expr(untyped.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregateAndColumn[T, A, A](sumOrZero)
+    new TypedAggregateAndColumn[T, A, Out](sumOrZero)
   }
 
-  def avg[A: Averageable, T](column: TypedColumn[T, A])(
+  def avg[A, T, Out](column: TypedColumn[T, A])(
     implicit
+    averageable: CatalystAverageable[A, Out],
     encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.avg(column.untyped))
+    encoder2: TypedEncoder[Option[Out]]
+  ): TypedAggregateAndColumn[T, A, Option[Out]] = {
+    new TypedAggregateAndColumn[T, A, Option[Out]](untyped.avg(column.untyped))
   }
 
-  def variance[A: Variance, T](column: TypedColumn[T, A])(
+  def variance[A, T](column: TypedColumn[T, A])(
     implicit
+    variance: Variance[A],
     encoder1: TypedEncoder[A],
     encoder2: TypedEncoder[Option[A]]
   ): TypedAggregateAndColumn[T, A, Option[A]] = {
