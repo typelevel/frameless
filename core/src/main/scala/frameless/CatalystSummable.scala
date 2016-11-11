@@ -8,7 +8,7 @@ package frameless
   *
   * For other types there are conversions:
   * - Int        -> Long
-  * - ...
+  * - Short      -> Long
   */
 trait CatalystSummable[A, Out] {
   def zero: A

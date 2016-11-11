@@ -1,9 +1,13 @@
 package frameless
 
 /**
-  * When summing Spark doesn't change these types:
+  * When averaging Spark doesn't change these types:
   * - BigDecimal -> BigDecimal
   * - Double     -> Double
+  * But it changes these types :
+  * - Int        -> Double
+  * - Short      -> Double
+  * - Long       -> Double
   */
 trait CatalystAverageable[In, Out]
 

@@ -22,15 +22,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("sum") {
-    abstract class Summer[A, B]{
-      implicit def sum(as: List[A]): B
-    }
+    case class Sum4Tests[A, B](sum: Seq[A] => B)
 
     def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
       summable: CatalystSummable[A, Out],
-      summer: Summer[A, Out],
-      eoa: TypedEncoder[Option[A]],
+      summer: Sum4Tests[A, Out],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
@@ -45,12 +42,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     }
 
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
-    // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
-    implicit def summerDecimal = new Summer[BigDecimal, BigDecimal] { def sum(as: List[BigDecimal]) = as.sum }
-    implicit def summerLong = new Summer[Long, Long] { def sum(as: List[Long]) = as.sum }
-    implicit def summerDouble = new Summer[Double, Double] { def sum(as: List[Double]) = as.sum }
-    implicit def summerInt = new Summer[Int, Long] { def sum(as: List[Int]) = as.map(_.toLong).sum }
-    implicit def summerShort = new Summer[Short, Long] { def sum(as: List[Short]) = as.map(_.toLong).sum }
+    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
+    implicit def summerDecimal = Sum4Tests[BigDecimal, BigDecimal](_.sum)
+    implicit def summerDouble = Sum4Tests[Double, Double](_.sum)
+    implicit def summerLong = Sum4Tests[Long, Long](_.sum)
+    implicit def summerInt = Sum4Tests[Int, Long](_.map(_.toLong).sum)
+    implicit def summerShort = Sum4Tests[Short, Long](_.map(_.toLong).sum)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Long, Long] _))
@@ -60,21 +57,19 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("avg") {
-    abstract class Averager[A: Numeric, B: Numeric]{
-      def avg(a: Seq[A]): B
-    }
+    case class  Averager4Tests[A: Numeric, B: Numeric](avg: Seq[A] => B)
 
-    def prop[A: TypedEncoder : Numeric, B: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
-      averageable: CatalystAverageable[A, B],
-      averager: Averager[A, B],
-      eob: TypedEncoder[Option[B]],
+      averageable: CatalystAverageable[A, Out],
+      averager: Averager4Tests[A, Out],
+      eob: TypedEncoder[Option[Out]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetAvg): Vector[Option[B]] = dataset.select(avg(A)).collect().run().toVector
+      val Vector(datasetAvg): Vector[Option[Out]] = dataset.select(avg(A)).collect().run().toVector
 
       xs match {
         case Nil => datasetAvg ?= None
@@ -86,12 +81,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     }
 
     // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
-    // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
-    implicit def averageDecimal = new Averager[BigDecimal, BigDecimal] { def avg(as: Seq[BigDecimal]) = as.sum/as.size }
-    implicit def averageDouble = new Averager[Double, Double] { def avg(as: Seq[Double]) = as.sum/as.size }
-    implicit def averageLong = new Averager[Long, Double] { def avg(as: Seq[Long]) = as.map(_.toDouble).sum/as.size }
-    implicit def averageInt = new Averager[Int, Double] { def avg(as: Seq[Int]) = as.map(_.toDouble).sum/as.size }
-    implicit def averageShort = new Averager[Short, Double] { def avg(as: Seq[Short]) = as.map(_.toDouble).sum/as.size }
+    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
+    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
+    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
+    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Double, Double] _))
