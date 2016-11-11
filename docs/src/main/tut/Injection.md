@@ -24,10 +24,10 @@ trait Injection[A, B] extends Serializable {
 Let's define a simple case class : 
 ```tut:book
 case class Person(age: Int, birthday: java.util.Date)
+val people = Seq(Person(42, new java.util.Date))
 ``` 
 And an instance of a `TypedDataset` :
 ```tut:book:fail
-val people = Seq(Person(42, new java.util.Date))
 val personDS = TypedDataset.create(people)
 ``` 
 Looks like we can't, a `TypedEncoder` instance of `Person` is not available, or more precisely for `java.util.Date`. 
