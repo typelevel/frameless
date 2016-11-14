@@ -22,55 +22,77 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("sum") {
-    def prop[A: TypedEncoder : Numeric : CatalystSummable](xs: List[A])(
+    case class Sum4Tests[A, B](sum: Seq[A] => B)
+
+    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
-      eoa: TypedEncoder[Option[A]],
+      summable: CatalystSummable[A, Out],
+      summer: Sum4Tests[A, Out],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum = dataset.select(sum(A)).collect().run().toList
+      val datasetSum: List[Out] = dataset.select(sum(A)).collect().run().toList
 
       datasetSum match {
-        case x :: Nil => approximatelyEqual(x, xs.sum)
+        case x :: Nil => approximatelyEqual(summer.sum(xs), x)
         case other => falsified
       }
     }
 
-    check(forAll(prop[BigDecimal] _))
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Double] _))
+    // Replicate Spark's behaviour : Ints and Shorts are cast to Long
+    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
+    implicit def summerDecimal = Sum4Tests[BigDecimal, BigDecimal](_.sum)
+    implicit def summerDouble = Sum4Tests[Double, Double](_.sum)
+    implicit def summerLong = Sum4Tests[Long, Long](_.sum)
+    implicit def summerInt = Sum4Tests[Int, Long](_.map(_.toLong).sum)
+    implicit def summerShort = Sum4Tests[Short, Long](_.map(_.toLong).sum)
 
-    // doesn't work yet because resulting type is different
-    // check(forAll(prop[Int] _))
-    // check(forAll(prop[Short]_))
-    // check(forAll(prop[Byte]_))
+    check(forAll(prop[BigDecimal, BigDecimal] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Short, Long] _))
   }
 
   test("avg") {
-    def prop[A: TypedEncoder : Averageable](xs: List[A])(
+    case class  Averager4Tests[A: Numeric, B: Numeric](avg: Seq[A] => B)
+
+    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
-      fractional: Fractional[A],
-      eoa: TypedEncoder[Option[A]],
+      averageable: CatalystAverageable[A, Out],
+      averager: Averager4Tests[A, Out],
+      eob: TypedEncoder[Option[Out]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetAvg) = dataset.select(avg(A)).collect().run().toVector
+      val Vector(datasetAvg): Vector[Option[Out]] = dataset.select(avg(A)).collect().run().toVector
 
       xs match {
         case Nil => datasetAvg ?= None
         case _ :: _ => datasetAvg match {
-          case Some(x) => approximatelyEqual(fractional.div(xs.sum, fractional.fromInt(xs.size)), x)
+          case Some(x) => approximatelyEqual(averager.avg(xs), x)
           case other => falsified
         }
       }
     }
 
-    check(forAll(prop[BigDecimal] _))
-    check(forAll(prop[Double] _))
+    // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
+    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
+    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
+    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
+    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
+
+    check(forAll(prop[BigDecimal, BigDecimal] _))
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Long, Double] _))
+    check(forAll(prop[Int, Double] _))
+    check(forAll(prop[Short, Double] _))
   }
 
   test("stddev") {
