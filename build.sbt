@@ -23,7 +23,7 @@ lazy val cats = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
-    "org.apache.spark" %% "spark-core" % sparkVersion))
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided"))
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
@@ -32,8 +32,8 @@ lazy val dataset = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
   ))
   .dependsOn(core % "test->test;compile->compile")
 
@@ -42,6 +42,10 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(tutSettings: _*)
   .settings(crossTarget := file(".") / "docs" / "target")
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion,
+    "org.apache.spark" %% "spark-sql"  % sparkVersion
+  ))
   .dependsOn(dataset, cats)
 
 lazy val framelessSettings = Seq(
