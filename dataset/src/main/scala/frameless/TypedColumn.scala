@@ -1,5 +1,7 @@
 package frameless
 
+import frameless.syntax._
+
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless.ops.record.Selector
@@ -41,9 +43,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: U): TypedColumn[T, Boolean] = {
-    new TypedColumn[T, Boolean](untyped === other)
-  }
+  def ===(other: U): TypedColumn[T, Boolean] = (untyped === other).typed
 
   /** Equality test.
     * {{{
@@ -52,9 +52,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = {
-    new TypedColumn[T, Boolean](untyped === other.untyped)
-  }
+  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (untyped === other.untyped).typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -65,7 +63,7 @@ sealed class TypedColumn[T, U](
     * apache/spark
     */
   def plus(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
-    new TypedColumn[T, U](self.untyped.plus(u.untyped))
+    self.untyped.plus(u.untyped).typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -86,7 +84,7 @@ sealed class TypedColumn[T, U](
     * @param u a constant of the same type
     * apache/spark
     */
-  def +(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.plus(u))
+  def +(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = self.untyped.plus(u).typed
 
   /** Unary minus, i.e. negate the expression.
     * {{{
@@ -96,8 +94,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def unary_-(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](-self.untyped)
-
+  def unary_-(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = (-self.untyped).typed
 
   /** Subtraction. Subtract the other expression from this expression.
     * {{{
@@ -108,7 +105,7 @@ sealed class TypedColumn[T, U](
     * apache/spark
     */
   def minus(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
-    new TypedColumn[T, U](self.untyped.minus(u.untyped))
+    self.untyped.minus(u.untyped).typed
 
   /** Subtraction. Subtract the other expression from this expression.
     * {{{
@@ -129,7 +126,7 @@ sealed class TypedColumn[T, U](
     * @param u a constant of the same type
     * apache/spark
     */
-  def -(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.minus(u))
+  def -(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = self.untyped.minus(u).typed
 
   /** Multiplication of this expression and another expression.
     * {{{
@@ -140,7 +137,7 @@ sealed class TypedColumn[T, U](
     * apache/spark
     */
   def multiply(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
-    new TypedColumn[T, U](self.untyped.multiply(u.untyped))
+    self.untyped.multiply(u.untyped).typed
 
   /** Multiplication of this expression and another expression.
     * {{{
@@ -160,7 +157,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def *(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = new TypedColumn[T, U](self.untyped.multiply(u))
+  def *(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = self.untyped.multiply(u).typed
 
   /**
     * Division this expression by another expression.
@@ -172,7 +169,7 @@ sealed class TypedColumn[T, U](
     * @param u another column of the same type
     * apache/spark
     */
-  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = new TypedColumn[T, Double](self.untyped.divide(u.untyped))
+  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u.untyped).typed
 
   /**
     * Division this expression by another expression.
@@ -196,7 +193,7 @@ sealed class TypedColumn[T, U](
     * @param u a constant of the same type
     * apache/spark
     */
-  def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = new TypedColumn[T, Double](self.untyped.divide(u))
+  def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
   /** Casts the column to a different type.
     * {{{
@@ -204,7 +201,7 @@ sealed class TypedColumn[T, U](
     * }}}
     */
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): TypedColumn[T, A] =
-    new TypedColumn(self.untyped.cast(TypedEncoder[A].targetDataType))
+    self.untyped.cast(TypedEncoder[A].targetDataType).typed
 }
 
 sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {
@@ -257,5 +254,12 @@ object TypedColumn {
       lgen: LabelledGeneric.Aux[T, H],
       selector: Selector.Aux[H, K, V]
     ): Exists[T, K, V] = new Exists[T, K, V] {}
+  }
+
+  implicit class OrderedTypedColumnSyntax[T, U: CatalystOrdered](col: TypedColumn[T, U]) {
+    def <(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped < other.untyped).typed
+    def <=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped <= other.untyped).typed
+    def >(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped > other.untyped).typed
+    def >=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped >= other.untyped).typed
   }
 }

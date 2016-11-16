@@ -4,7 +4,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class FilterTests extends TypedDatasetSuite {
-  test("filter") {
+  test("filter('a == lit(b))") {
     def prop[A: TypedEncoder](elem: A, data: Vector[X1[A]])(implicit ex1: TypedEncoder[X1[A]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col('a)
