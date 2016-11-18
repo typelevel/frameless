@@ -1,0 +1,680 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>TypedDataset: Feature Overview · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="TypedDatasetVsSparkDataset.html" />
+    
+    
+    <link rel="prev" href="./" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    TypedDataset: Feature Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="TypedDatasetVsSparkDataset.html">
+            
+                <a href="TypedDatasetVsSparkDataset.html">
+            
+                    
+                    Comparing TypedDatasets with Spark's Datasets
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="TypedEncoder.html">
+            
+                <a href="TypedEncoder.html">
+            
+                    
+                    Typed Encoders in Frameless
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Injection.html">
+            
+                <a href="Injection.html">
+            
+                    
+                    Injection: Creating Custom Encoders
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Cats.html">
+            
+                <a href="Cats.html">
+            
+                    
+                    Using Cats with RDDs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="TypedDataFrame.html">
+            
+                <a href="TypedDataFrame.html">
+            
+                    
+                    Proof of Concept: TypedDataFrame
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >TypedDataset: Feature Overview</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="typeddataset-feature-overview">TypedDataset: Feature Overview</h1>
+<p>This tutorial introduces <code>TypedDataset</code>s through a small toy example.
+The following imports are needed to make all code examples compile.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> org.apache.spark.{<span class="hljs-type">SparkConf</span>, <span class="hljs-type">SparkContext</span>}
+<span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">SparkSession</span>
+<span class="hljs-keyword">import</span> frameless.functions.aggregate._
+<span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+
+<span class="hljs-keyword">val</span> conf = <span class="hljs-keyword">new</span> <span class="hljs-type">SparkConf</span>().setMaster(<span class="hljs-string">&quot;local[*]&quot;</span>).setAppName(<span class="hljs-string">&quot;frameless repl&quot;</span>).set(<span class="hljs-string">&quot;spark.ui.enabled&quot;</span>, <span class="hljs-string">&quot;false&quot;</span>)
+<span class="hljs-keyword">val</span> spark = <span class="hljs-type">SparkSession</span>.builder().config(conf).appName(<span class="hljs-string">&quot;REPL&quot;</span>).getOrCreate()
+<span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> sqlContext = spark.sqlContext
+spark.sparkContext.setLogLevel(<span class="hljs-string">&quot;WARN&quot;</span>)
+
+<span class="hljs-keyword">import</span> spark.implicits._
+</code></pre>
+<h2 id="creating-typeddataset-instances">Creating TypedDataset instances</h2>
+<p>We start by defining a simple case class that will be the basis of our examples.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Apartment</span>(<span class="hljs-params">city: <span class="hljs-type">String</span>, surface: <span class="hljs-type">Int</span>, price: <span class="hljs-type">Double</span></span>)</span>
+</code></pre>
+<p>And let&apos;s define a few <code>Apartment</code> instances:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> apartments = <span class="hljs-type">Seq</span>(
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Paris&quot;</span>, <span class="hljs-number">50</span>, <span class="hljs-number">300000.0</span>),
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Paris&quot;</span>, <span class="hljs-number">100</span>, <span class="hljs-number">450000.0</span>),
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Paris&quot;</span>, <span class="hljs-number">25</span>, <span class="hljs-number">250000.0</span>),
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Lyon&quot;</span>, <span class="hljs-number">83</span>, <span class="hljs-number">200000.0</span>),
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Lyon&quot;</span>, <span class="hljs-number">45</span>, <span class="hljs-number">133000.0</span>),
+  <span class="hljs-type">Apartment</span>(<span class="hljs-string">&quot;Nice&quot;</span>, <span class="hljs-number">74</span>, <span class="hljs-number">325000.0</span>)
+)
+</code></pre>
+<p>We are now ready to instantiate a <code>TypedDataset[Apartment]</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> apartmentsTypedDS = <span class="hljs-type">TypedDataset</span>.create(apartments)
+<span class="hljs-comment">// apartmentsTypedDS: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+</code></pre>
+<p>We can also create it from an existing <code>Dataset</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> apartmentsDS = spark.createDataset(apartments)
+<span class="hljs-comment">// apartmentsDS: org.apache.spark.sql.Dataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+
+<span class="hljs-keyword">val</span> apartmentsTypedDS = <span class="hljs-type">TypedDataset</span>.create(apartmentsDS)
+<span class="hljs-comment">// apartmentsTypedDS: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+</code></pre>
+<p>Or use the frameless syntax:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.syntax._
+<span class="hljs-comment">// import frameless.syntax._</span>
+
+<span class="hljs-keyword">val</span> apartmentsTypedDS2 = spark.createDataset(apartments).typed
+<span class="hljs-comment">// apartmentsTypedDS2: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+</code></pre>
+<h2 id="typesafe-column-referencing">Typesafe column referencing</h2>
+<p>This is how we select a particular column from a <code>TypedDataset</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> cities: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">String</span>] = apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>))
+<span class="hljs-comment">// cities: frameless.TypedDataset[String] = [_1: string]</span>
+</code></pre>
+<p>This is completely safe, for instance suppose we misspell <code>city</code>:</p>
+<pre><code class="lang-scala">apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;citi</span>))
+<span class="hljs-comment">// &lt;console&gt;:33: error: No column Symbol with shapeless.tag.Tagged[String(&quot;citi&quot;)] of type A in Apartment</span>
+<span class="hljs-comment">//        apartmentsTypedDS.select(apartmentsTypedDS(&apos;citi))</span>
+<span class="hljs-comment">//                                                  ^</span>
+</code></pre>
+<p>This gets caught at compile-time, whereas with traditional Spark <code>Dataset</code> the error appears at run-time.</p>
+<pre><code class="lang-scala">apartmentsDS.select(<span class="hljs-symbol">&apos;citi</span>)
+<span class="hljs-comment">// org.apache.spark.sql.AnalysisException: cannot resolve &apos;`citi`&apos; given input columns: [city, surface, price];;</span>
+<span class="hljs-comment">// &apos;Project [&apos;citi]</span>
+<span class="hljs-comment">// +- LocalRelation [city#40, surface#41, price#42]</span>
+<span class="hljs-comment">// </span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:42)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$apply$2.applyOrElse(CheckAnalysis.scala:77)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$apply$2.applyOrElse(CheckAnalysis.scala:74)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$transformUp$1.apply(TreeNode.scala:308)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode$$anonfun$transformUp$1.apply(TreeNode.scala:308)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.CurrentOrigin$.withOrigin(TreeNode.scala:69)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.transformUp(TreeNode.scala:307)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan.transformExpressionUp$1(QueryPlan.scala:269)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan.org$apache$spark$sql$catalyst$plans$QueryPlan$$recursiveTransform$2(QueryPlan.scala:279)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan$$anonfun$org$apache$spark$sql$catalyst$plans$QueryPlan$$recursiveTransform$2$1.apply(QueryPlan.scala:283)</span>
+<span class="hljs-comment">//   at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)</span>
+<span class="hljs-comment">//   at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)</span>
+<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)</span>
+<span class="hljs-comment">//   at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)</span>
+<span class="hljs-comment">//   at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)</span>
+<span class="hljs-comment">//   at scala.collection.AbstractTraversable.map(Traversable.scala:104)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan.org$apache$spark$sql$catalyst$plans$QueryPlan$$recursiveTransform$2(QueryPlan.scala:283)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan$$anonfun$8.apply(QueryPlan.scala:288)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:186)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.QueryPlan.transformExpressionsUp(QueryPlan.scala:288)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.apply(CheckAnalysis.scala:74)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.apply(CheckAnalysis.scala:67)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:126)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$class.checkAnalysis(CheckAnalysis.scala:67)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:58)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:64)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.org$apache$spark$sql$Dataset$$withPlan(Dataset.scala:2603)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.select(Dataset.scala:969)</span>
+<span class="hljs-comment">//   ... 442 elided</span>
+</code></pre>
+<p><code>select()</code> supports arbitrary column operations:</p>
+<pre><code class="lang-scala">apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>) * <span class="hljs-number">10</span>, apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>) + <span class="hljs-number">2</span>).show().run()
+<span class="hljs-comment">// +----+---+</span>
+<span class="hljs-comment">// |  _1| _2|</span>
+<span class="hljs-comment">// +----+---+</span>
+<span class="hljs-comment">// | 500| 52|</span>
+<span class="hljs-comment">// |1000|102|</span>
+<span class="hljs-comment">// | 250| 27|</span>
+<span class="hljs-comment">// | 830| 85|</span>
+<span class="hljs-comment">// | 450| 47|</span>
+<span class="hljs-comment">// | 740| 76|</span>
+<span class="hljs-comment">// +----+---+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p><em>Note that unlike the standard Spark api, here <code>show()</code> is lazy. It requires to apply <code>run()</code> for the
+ <code>show</code> job to materialize.</em></p>
+<p>Let us now try to compute the price by surface unit:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;price</span>)/apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>))                                                                          ^
+<span class="hljs-comment">// &lt;console&gt;:32: error: overloaded method value / with alternatives:</span>
+<span class="hljs-comment">//   (u: Double)(implicit n: frameless.CatalystNumeric[Double])frameless.TypedColumn[Apartment,Double] &lt;and&gt;</span>
+<span class="hljs-comment">//   (u: frameless.TypedColumn[Apartment,Double])(implicit n: frameless.CatalystNumeric[Double])frameless.TypedColumn[Apartment,Double]</span>
+<span class="hljs-comment">//  cannot be applied to (frameless.TypedColumn[Apartment,Int])</span>
+<span class="hljs-comment">//        val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(&apos;price)/apartmentsTypedDS(&apos;surface))                                                                          ^</span>
+<span class="hljs-comment">//                                                                                   ^</span>
+<span class="hljs-comment">// &lt;console&gt;:32: warning: postfix operator ^ should be enabled</span>
+<span class="hljs-comment">// by making the implicit value scala.language.postfixOps visible.</span>
+<span class="hljs-comment">// This can be achieved by adding the import clause &apos;import scala.language.postfixOps&apos;</span>
+<span class="hljs-comment">// or by setting the compiler option -language:postfixOps.</span>
+<span class="hljs-comment">// See the Scaladoc for value scala.language.postfixOps for a discussion</span>
+<span class="hljs-comment">// why the feature should be explicitly enabled.</span>
+<span class="hljs-comment">//        val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(&apos;price)/apartmentsTypedDS(&apos;surface))                                                                          ^</span>
+<span class="hljs-comment">//                                                                                                                                                                                          ^</span>
+</code></pre>
+<p>Argh! Looks like we can&apos;t divide a <code>TypedColumn</code> of <code>Double</code> by <code>Int</code>.
+Well, we can cast our <code>Int</code>s to <code>Double</code>s explicitly to proceed with the computation.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;price</span>)/apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>).cast[<span class="hljs-type">Double</span>])
+<span class="hljs-comment">// priceBySurfaceUnit: frameless.TypedDataset[Double] = [_1: double]</span>
+
+priceBySurfaceUnit.collect().run()
+<span class="hljs-comment">// res6: Seq[Double] = WrappedArray(6000.0, 4500.0, 10000.0, 2409.6385542168673, 2955.5555555555557, 4391.891891891892)</span>
+</code></pre>
+<p>Alternatively, we can perform the cast implicitly:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.implicits.widen._
+<span class="hljs-comment">// import frameless.implicits.widen._</span>
+
+<span class="hljs-keyword">val</span> priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;price</span>)/apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>))
+<span class="hljs-comment">// priceBySurfaceUnit: frameless.TypedDataset[Double] = [_1: double]</span>
+
+priceBySurfaceUnit.collect.run()
+<span class="hljs-comment">// res7: Seq[Double] = WrappedArray(6000.0, 4500.0, 10000.0, 2409.6385542168673, 2955.5555555555557, 4391.891891891892)</span>
+</code></pre>
+<p>Looks like it worked, but that <code>cast</code> looks unsafe right? Actually it is safe.
+Let&apos;s try to cast a <code>TypedColumn</code> of <code>String</code> to <code>Double</code>:</p>
+<pre><code class="lang-scala">apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>).cast[<span class="hljs-type">Double</span>]
+<span class="hljs-comment">// &lt;console&gt;:36: error: could not find implicit value for parameter c: frameless.CatalystCast[String,Double]</span>
+<span class="hljs-comment">//        apartmentsTypedDS(&apos;city).cast[Double]</span>
+<span class="hljs-comment">//                                     ^</span>
+</code></pre>
+<p>The compile-time error tells us that to perform the cast, an evidence (in the form of <code>CatalystCast[String, Double]</code>) must be available.</p>
+<p>Check <a href="https://github.com/adelbertc/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala" target="_blank">here</a> for the set of available <code>CatalystCast</code>.</p>
+<h2 id="typesafe-typeddataset-casting-and-projections">TypeSafe TypedDataset casting and projections</h2>
+<p>With <code>select()</code> the resulting TypedDataset is of type <code>TypedDataset[TupleN[...]]</code> (with N in <code>[1...10]</code>).
+For example, if we select three columns with types <code>String</code>, <code>Int</code>, and <code>Boolean</code> the result will have type
+<code>TypedDataset[(String, Int, Boolean)]</code>.
+We often want to give more expressive types to the result of our computations.</p>
+<p><code>as[T]</code> allows us to safely cast a <code>TypedDataset[U]</code> to another of type <code>TypedDataset[T]</code> as long
+as the types in <code>U</code> and <code>T</code> align.</p>
+<p>The cast is valid and the expression compiles:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UpdatedSurface</span>(<span class="hljs-params">city: <span class="hljs-type">String</span>, surface: <span class="hljs-type">Int</span></span>)</span>
+<span class="hljs-comment">// defined class UpdatedSurface</span>
+
+<span class="hljs-keyword">val</span> updated = apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>), apartmentsTypedDS(<span class="hljs-symbol">&apos;surface</span>) + <span class="hljs-number">2</span>).as[<span class="hljs-type">UpdatedSurface</span>]
+<span class="hljs-comment">// updated: frameless.TypedDataset[UpdatedSurface] = [city: string, surface: int]</span>
+
+updated.show(<span class="hljs-number">2</span>).run()
+<span class="hljs-comment">// +-----+-------+</span>
+<span class="hljs-comment">// | city|surface|</span>
+<span class="hljs-comment">// +-----+-------+</span>
+<span class="hljs-comment">// |Paris|     52|</span>
+<span class="hljs-comment">// |Paris|    102|</span>
+<span class="hljs-comment">// +-----+-------+</span>
+<span class="hljs-comment">// only showing top 2 rows</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>Next we try to cast a <code>(String, String)</code> to an <code>UpdatedSurface</code> (which has types <code>String</code>, <code>Int</code>).
+The cast is not valid and the expression does not compile:</p>
+<pre><code class="lang-scala">apartmentsTypedDS.select(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>), apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>)).as[<span class="hljs-type">UpdatedSurface</span>]
+<span class="hljs-comment">// &lt;console&gt;:38: error: could not find implicit value for parameter as: frameless.ops.As[(String, String),UpdatedSurface]</span>
+<span class="hljs-comment">//        apartmentsTypedDS.select(apartmentsTypedDS(&apos;city), apartmentsTypedDS(&apos;city)).as[UpdatedSurface]</span>
+<span class="hljs-comment">//                                                                                       ^</span>
+</code></pre>
+<h3 id="projections">Projections</h3>
+<p>We often want to work with a subset of the fields in a dataset.
+Projections allows to easily select the fields we are interested
+while preserving their initial name and types for extra safety.</p>
+<p>Here is an example using the <code>TypedDataset[Apartment]</code> with an additional column:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.implicits.widen._
+<span class="hljs-comment">// import frameless.implicits.widen._</span>
+
+<span class="hljs-keyword">val</span> aptds = apartmentsTypedDS <span class="hljs-comment">// For shorter expressions</span>
+<span class="hljs-comment">// aptds: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ApartmentDetails</span>(<span class="hljs-params">city: <span class="hljs-type">String</span>, price: <span class="hljs-type">Double</span>, surface: <span class="hljs-type">Int</span>, ratio: <span class="hljs-type">Double</span></span>)</span>
+<span class="hljs-comment">// defined class ApartmentDetails</span>
+
+<span class="hljs-keyword">val</span> aptWithRatio = aptds.select(aptds(<span class="hljs-symbol">&apos;city</span>), aptds(<span class="hljs-symbol">&apos;price</span>), aptds(<span class="hljs-symbol">&apos;surface</span>), aptds(<span class="hljs-symbol">&apos;price</span>) / aptds(<span class="hljs-symbol">&apos;surface</span>)).as[<span class="hljs-type">ApartmentDetails</span>]
+<span class="hljs-comment">// aptWithRatio: frameless.TypedDataset[ApartmentDetails] = [city: string, price: double ... 2 more fields]</span>
+</code></pre>
+<p>Suppose we only want to work with <code>city</code> and <code>ratio</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CityInfo</span>(<span class="hljs-params">city: <span class="hljs-type">String</span>, ratio: <span class="hljs-type">Double</span></span>)</span>
+<span class="hljs-comment">// defined class CityInfo</span>
+
+<span class="hljs-keyword">val</span> cityRatio = aptWithRatio.project[<span class="hljs-type">CityInfo</span>]
+<span class="hljs-comment">// cityRatio: frameless.TypedDataset[CityInfo] = [city: string, ratio: double]</span>
+
+cityRatio.show(<span class="hljs-number">2</span>).run()
+<span class="hljs-comment">// +-----+------+</span>
+<span class="hljs-comment">// | city| ratio|</span>
+<span class="hljs-comment">// +-----+------+</span>
+<span class="hljs-comment">// |Paris|6000.0|</span>
+<span class="hljs-comment">// |Paris|4500.0|</span>
+<span class="hljs-comment">// +-----+------+</span>
+<span class="hljs-comment">// only showing top 2 rows</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>Suppose we only want to work with <code>price</code> and <code>ratio</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PriceInfo</span>(<span class="hljs-params">ratio: <span class="hljs-type">Double</span>, price: <span class="hljs-type">Double</span></span>)</span>
+<span class="hljs-comment">// defined class PriceInfo</span>
+
+<span class="hljs-keyword">val</span> priceInfo = aptWithRatio.project[<span class="hljs-type">PriceInfo</span>]
+<span class="hljs-comment">// priceInfo: frameless.TypedDataset[PriceInfo] = [ratio: double, price: double]</span>
+
+priceInfo.show(<span class="hljs-number">2</span>).run()
+<span class="hljs-comment">// +------+--------+</span>
+<span class="hljs-comment">// | ratio|   price|</span>
+<span class="hljs-comment">// +------+--------+</span>
+<span class="hljs-comment">// |6000.0|300000.0|</span>
+<span class="hljs-comment">// |4500.0|450000.0|</span>
+<span class="hljs-comment">// +------+--------+</span>
+<span class="hljs-comment">// only showing top 2 rows</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>We see here that the order of the fields doesn&apos;t matter as long as the
+names and the corresponding types agree. However, if we make a mistake in
+any of the names and/or their types, then we get a compilation error.</p>
+<p>Say we make a typo in a field name:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PriceInfo2</span>(<span class="hljs-params">ratio: <span class="hljs-type">Double</span>, pricEE: <span class="hljs-type">Double</span></span>)</span>
+</code></pre>
+<pre><code class="lang-scala">aptWithRatio.project[<span class="hljs-type">PriceInfo2</span>]
+<span class="hljs-comment">// &lt;console&gt;:45: error: Cannot prove that ApartmentDetails can be projected to PriceInfo2. Perhaps not all member names and types of PriceInfo2 are the same in ApartmentDetails?</span>
+<span class="hljs-comment">//        aptWithRatio.project[PriceInfo2]</span>
+<span class="hljs-comment">//                            ^</span>
+</code></pre>
+<p>Say we make a mistake in the corresponding type:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PriceInfo3</span>(<span class="hljs-params">ratio: <span class="hljs-type">Int</span>, price: <span class="hljs-type">Double</span></span>) <span class="hljs-title">//</span> <span class="hljs-title">ratio</span> <span class="hljs-title">should</span> <span class="hljs-title">be</span> <span class="hljs-title">Double</span></span>
+</code></pre>
+<pre><code class="lang-scala">aptWithRatio.project[<span class="hljs-type">PriceInfo3</span>]
+<span class="hljs-comment">// &lt;console&gt;:45: error: Cannot prove that ApartmentDetails can be projected to PriceInfo3. Perhaps not all member names and types of PriceInfo3 are the same in ApartmentDetails?</span>
+<span class="hljs-comment">//        aptWithRatio.project[PriceInfo3]</span>
+<span class="hljs-comment">//                            ^</span>
+</code></pre>
+<h2 id="user-defined-functions">User Defined Functions</h2>
+<p>Frameless supports lifting any Scala function (up to five arguments) to the
+context of a particular <code>TypedDataset</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-comment">// The function we want to use as UDF</span>
+<span class="hljs-keyword">val</span> priceModifier =
+    (name: <span class="hljs-type">String</span>, price:<span class="hljs-type">Double</span>) =&gt; <span class="hljs-keyword">if</span>(name == <span class="hljs-string">&quot;Paris&quot;</span>) price * <span class="hljs-number">2.0</span> <span class="hljs-keyword">else</span> price
+<span class="hljs-comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;</span>
+
+<span class="hljs-keyword">val</span> udf = apartmentsTypedDS.makeUDF(priceModifier)
+<span class="hljs-comment">// udf: (frameless.TypedColumn[Apartment,String], frameless.TypedColumn[Apartment,Double]) =&gt; frameless.TypedColumn[Apartment,Double] = &lt;function2&gt;</span>
+
+<span class="hljs-keyword">val</span> aptds = apartmentsTypedDS <span class="hljs-comment">// For shorter expressions</span>
+<span class="hljs-comment">// aptds: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+
+<span class="hljs-keyword">val</span> adjustedPrice = aptds.select(aptds(<span class="hljs-symbol">&apos;city</span>), udf(aptds(<span class="hljs-symbol">&apos;city</span>), aptds(<span class="hljs-symbol">&apos;price</span>)))
+<span class="hljs-comment">// adjustedPrice: frameless.TypedDataset[(String, Double)] = [_1: string, _2: double]</span>
+
+adjustedPrice.show().run()
+<span class="hljs-comment">// +-----+--------+</span>
+<span class="hljs-comment">// |   _1|      _2|</span>
+<span class="hljs-comment">// +-----+--------+</span>
+<span class="hljs-comment">// |Paris|600000.0|</span>
+<span class="hljs-comment">// |Paris|900000.0|</span>
+<span class="hljs-comment">// |Paris|500000.0|</span>
+<span class="hljs-comment">// | Lyon|200000.0|</span>
+<span class="hljs-comment">// | Lyon|133000.0|</span>
+<span class="hljs-comment">// | Nice|325000.0|</span>
+<span class="hljs-comment">// +-----+--------+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<h2 id="groupby-and-aggregations">GroupBy and Aggregations</h2>
+<p>Let&apos;s suppose we wanted to retrieve the average apartment price in each city</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> priceByCity = apartmentsTypedDS.groupBy(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>)).agg(avg(apartmentsTypedDS(<span class="hljs-symbol">&apos;price</span>)))
+<span class="hljs-comment">// priceByCity: frameless.TypedDataset[(String, Double)] = [_1: string, _2: double]</span>
+
+priceByCity.collect().run()
+<span class="hljs-comment">// res17: Seq[(String, Double)] = WrappedArray((Nice,325000.0), (Paris,333333.3333333333), (Lyon,166500.0))</span>
+</code></pre>
+<p>Again if we try to aggregate a column that can&apos;t be aggregated, we get a compilation error</p>
+<pre><code class="lang-scala">apartmentsTypedDS.groupBy(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>)).agg(avg(apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>)))                                                         ^
+<span class="hljs-comment">// &lt;console&gt;:39: error: could not find implicit value for parameter averageable: frameless.CatalystAverageable[String,Out]</span>
+<span class="hljs-comment">//        apartmentsTypedDS.groupBy(apartmentsTypedDS(&apos;city)).agg(avg(apartmentsTypedDS(&apos;city)))                                                         ^</span>
+<span class="hljs-comment">//                                                                   ^</span>
+<span class="hljs-comment">// &lt;console&gt;:39: warning: postfix operator ^ should be enabled</span>
+<span class="hljs-comment">// by making the implicit value scala.language.postfixOps visible.</span>
+<span class="hljs-comment">// This can be achieved by adding the import clause &apos;import scala.language.postfixOps&apos;</span>
+<span class="hljs-comment">// or by setting the compiler option -language:postfixOps.</span>
+<span class="hljs-comment">// See the Scaladoc for value scala.language.postfixOps for a discussion</span>
+<span class="hljs-comment">// why the feature should be explicitly enabled.</span>
+<span class="hljs-comment">//        apartmentsTypedDS.groupBy(apartmentsTypedDS(&apos;city)).agg(avg(apartmentsTypedDS(&apos;city)))                                                         ^</span>
+<span class="hljs-comment">//                                                                                                                                                       ^</span>
+</code></pre>
+<p>Next, we combine <code>select</code> and <code>groupBy</code> to calculate the average price/surface ratio per city:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> aptds = apartmentsTypedDS <span class="hljs-comment">// For shorter expressions</span>
+<span class="hljs-comment">// aptds: frameless.TypedDataset[Apartment] = [city: string, surface: int ... 1 more field]</span>
+
+<span class="hljs-keyword">val</span> cityPriceRatio =  aptds.select(aptds(<span class="hljs-symbol">&apos;city</span>), aptds(<span class="hljs-symbol">&apos;price</span>) / aptds(<span class="hljs-symbol">&apos;surface</span>))
+<span class="hljs-comment">// cityPriceRatio: frameless.TypedDataset[(String, Double)] = [_1: string, _2: double]</span>
+
+cityPriceRatio.groupBy(cityPriceRatio(<span class="hljs-symbol">&apos;_1</span>)).agg(avg(cityPriceRatio(<span class="hljs-symbol">&apos;_2</span>))).show().run()
+<span class="hljs-comment">// +-----+------------------+</span>
+<span class="hljs-comment">// |   _1|                _2|</span>
+<span class="hljs-comment">// +-----+------------------+</span>
+<span class="hljs-comment">// | Nice| 4391.891891891892|</span>
+<span class="hljs-comment">// |Paris| 6833.333333333333|</span>
+<span class="hljs-comment">// | Lyon|2682.5970548862115|</span>
+<span class="hljs-comment">// +-----+------------------+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<h2 id="joins">Joins</h2>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CityPopulationInfo</span>(<span class="hljs-params">name: <span class="hljs-type">String</span>, population: <span class="hljs-type">Int</span></span>)</span>
+
+<span class="hljs-keyword">val</span> cityInfo = <span class="hljs-type">Seq</span>(
+  <span class="hljs-type">CityPopulationInfo</span>(<span class="hljs-string">&quot;Paris&quot;</span>, <span class="hljs-number">2229621</span>),
+  <span class="hljs-type">CityPopulationInfo</span>(<span class="hljs-string">&quot;Lyon&quot;</span>, <span class="hljs-number">500715</span>),
+  <span class="hljs-type">CityPopulationInfo</span>(<span class="hljs-string">&quot;Nice&quot;</span>, <span class="hljs-number">343629</span>)
+)
+
+<span class="hljs-keyword">val</span> citiInfoTypedDS = <span class="hljs-type">TypedDataset</span>.create(cityInfo)
+</code></pre>
+<p>Here is how to join the population information to the apartment&apos;s dataset.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> withCityInfo = apartmentsTypedDS.join(citiInfoTypedDS, apartmentsTypedDS(<span class="hljs-symbol">&apos;city</span>), citiInfoTypedDS(<span class="hljs-symbol">&apos;name</span>))
+<span class="hljs-comment">// withCityInfo: frameless.TypedDataset[(Apartment, CityPopulationInfo)] = [_1: struct&lt;city: string, surface: int ... 1 more field&gt;, _2: struct&lt;name: string, population: int&gt;]</span>
+
+withCityInfo.show().run()
+<span class="hljs-comment">// +--------------------+---------------+</span>
+<span class="hljs-comment">// |                  _1|             _2|</span>
+<span class="hljs-comment">// +--------------------+---------------+</span>
+<span class="hljs-comment">// | [Paris,50,300000.0]|[Paris,2229621]|</span>
+<span class="hljs-comment">// |[Paris,100,450000.0]|[Paris,2229621]|</span>
+<span class="hljs-comment">// | [Paris,25,250000.0]|[Paris,2229621]|</span>
+<span class="hljs-comment">// |  [Lyon,83,200000.0]|  [Lyon,500715]|</span>
+<span class="hljs-comment">// |  [Lyon,45,133000.0]|  [Lyon,500715]|</span>
+<span class="hljs-comment">// |  [Nice,74,325000.0]|  [Nice,343629]|</span>
+<span class="hljs-comment">// +--------------------+---------------+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>The joined TypedDataset has type <code>TypedDataset[(Apartment, CityPopulationInfo)]</code>.</p>
+<p>We can then select which information we want to continue to work with:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AptPriceCity</span>(<span class="hljs-params">city: <span class="hljs-type">String</span>, aptPrice: <span class="hljs-type">Double</span>, cityPopulation: <span class="hljs-type">Int</span></span>)</span>
+<span class="hljs-comment">// defined class AptPriceCity</span>
+
+withCityInfo.select(
+   withCityInfo.colMany(<span class="hljs-symbol">&apos;_2</span>, <span class="hljs-symbol">&apos;name</span>), withCityInfo.colMany(<span class="hljs-symbol">&apos;_1</span>, <span class="hljs-symbol">&apos;price</span>), withCityInfo.colMany(<span class="hljs-symbol">&apos;_2</span>, <span class="hljs-symbol">&apos;population</span>)
+).as[<span class="hljs-type">AptPriceCity</span>].show().run
+<span class="hljs-comment">// +-----+--------+--------------+</span>
+<span class="hljs-comment">// | city|aptPrice|cityPopulation|</span>
+<span class="hljs-comment">// +-----+--------+--------------+</span>
+<span class="hljs-comment">// |Paris|300000.0|       2229621|</span>
+<span class="hljs-comment">// |Paris|450000.0|       2229621|</span>
+<span class="hljs-comment">// |Paris|250000.0|       2229621|</span>
+<span class="hljs-comment">// | Lyon|200000.0|        500715|</span>
+<span class="hljs-comment">// | Lyon|133000.0|        500715|</span>
+<span class="hljs-comment">// | Nice|325000.0|        343629|</span>
+<span class="hljs-comment">// +-----+--------+--------------+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="./" class="navigation navigation-prev " aria-label="Previous page: Introduction">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="TypedDatasetVsSparkDataset.html" class="navigation navigation-next " aria-label="Next page: Comparing TypedDatasets with Spark's Datasets">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"next":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"path":"TypedDatasetVsSparkDataset.md","ref":"TypedDatasetVsSparkDataset.md","articles":[]},"previous":{"title":"Introduction","level":"1.1","depth":1,"path":"README.md","ref":"README.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"GettingStarted.md","mtime":"2017-05-02T07:22:45.952Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-02T07:23:02.064Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

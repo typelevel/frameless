@@ -1,0 +1,478 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Comparing TypedDatasets with Spark's Datasets · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="TypedEncoder.html" />
+    
+    
+    <link rel="prev" href="GettingStarted.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    TypedDataset: Feature Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.3" data-path="TypedDataset.html">
+            
+                <a href="TypedDataset.html">
+            
+                    
+                    Comparing TypedDatasets with Spark's Datasets
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="TypedEncoder.html">
+            
+                <a href="TypedEncoder.html">
+            
+                    
+                    Typed Encoders in Frameless
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Injection.html">
+            
+                <a href="Injection.html">
+            
+                    
+                    Injection: Creating Custom Encoders
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Cats.html">
+            
+                <a href="Cats.html">
+            
+                    
+                    Using Cats with RDDs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="TypedDataFrame.html">
+            
+                <a href="TypedDataFrame.html">
+            
+                    
+                    Proof of Concept: TypedDataFrame
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Comparing TypedDatasets with Spark's Datasets</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="typeddataset">TypedDataset</h1>
+<h2 id="comparing-frameless-typeddatasets-with-standard-spark-datasets">Comparing Frameless TypedDatasets with standard Spark Datasets</h2>
+<p><strong>Goal:</strong>
+  This tutorial compares the standard Spark Datasets api with the one provided by
+  frameless&apos; TypedDataset. It shows how TypedDatsets allows for an expressive and
+  type-safe api with no compromises on performance.</p>
+<p>For this tutorial we first create a simple dataset and save it on disk as a parquet file.
+<a href="https://parquet.apache.org/" target="_blank">Parquet</a> is a popular columnar format and well supported by Spark.
+It&apos;s important to note that when operating on parquet datasets, Spark knows that each column is stored
+separately, so if we only need a subset of the columns Spark will optimize for this and avoid reading
+the entire dataset. This is a rather simplistic view of how Spark and parquet work together but it
+will serve us well for the context of this discussion.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> spark.implicits._
+<span class="hljs-comment">// import spark.implicits._</span>
+
+<span class="hljs-comment">// Our example case class Foo acting here as a schema</span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span>(<span class="hljs-params">i: <span class="hljs-type">Long</span>, j: <span class="hljs-type">String</span></span>)</span>
+<span class="hljs-comment">// defined class Foo</span>
+
+<span class="hljs-comment">// Assuming spark is loaded and SparkSession is bind to spark</span>
+<span class="hljs-keyword">val</span> initialDs = spark.createDataset( <span class="hljs-type">Foo</span>(<span class="hljs-number">1</span>, <span class="hljs-string">&quot;Q&quot;</span>) :: <span class="hljs-type">Foo</span>(<span class="hljs-number">10</span>, <span class="hljs-string">&quot;W&quot;</span>) :: <span class="hljs-type">Foo</span>(<span class="hljs-number">100</span>, <span class="hljs-string">&quot;E&quot;</span>) :: <span class="hljs-type">Nil</span> )
+<span class="hljs-comment">// initialDs: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]</span>
+
+<span class="hljs-comment">// Assuming you are on Linux or Mac OS</span>
+initialDs.write.parquet(<span class="hljs-string">&quot;/tmp/foo&quot;</span>)
+
+<span class="hljs-keyword">val</span> ds = spark.read.parquet(<span class="hljs-string">&quot;/tmp/foo&quot;</span>).as[<span class="hljs-type">Foo</span>]
+<span class="hljs-comment">// ds: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]</span>
+
+ds.show()
+<span class="hljs-comment">// +---+---+</span>
+<span class="hljs-comment">// |  i|  j|</span>
+<span class="hljs-comment">// +---+---+</span>
+<span class="hljs-comment">// | 10|  W|</span>
+<span class="hljs-comment">// |100|  E|</span>
+<span class="hljs-comment">// |  1|  Q|</span>
+<span class="hljs-comment">// +---+---+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
+Let&apos;s try to only use field <code>i</code> from Foo and see how Spark&apos;s Catalyst (the query optimizer)
+optimizes this.</p>
+<pre><code class="lang-scala"><span class="hljs-comment">// Using a standard Spark TypedColumn in select()</span>
+<span class="hljs-keyword">val</span> filteredDs = ds.filter($<span class="hljs-string">&quot;i&quot;</span> === <span class="hljs-number">10</span>).select($<span class="hljs-string">&quot;i&quot;</span>.as[<span class="hljs-type">Long</span>])
+<span class="hljs-comment">// filteredDs: org.apache.spark.sql.Dataset[Long] = [i: bigint]</span>
+
+filteredDs.show()
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// |  i|</span>
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// | 10|</span>
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>The <code>filteredDs</code> is of type <code>Dataset[Long]</code>. Since we only access field <code>i</code> from <code>Foo</code> the type is correct.
+Unfortunately, this syntax requires handholding by explicitly setting the <code>TypedColumn</code> in the <code>select</code> statement
+to return type <code>Long</code> (look at the <code>as[Long]</code> statement). We will discuss this limitation next in more detail.
+Now, let&apos;s take a quick look at the optimized Physical Plan that Spark&apos;s Catalyst generated.</p>
+<pre><code class="lang-scala">filteredDs.explain()
+<span class="hljs-comment">// == Physical Plan ==</span>
+<span class="hljs-comment">// *Project [i#476L]</span>
+<span class="hljs-comment">// +- *Filter (isnotnull(i#476L) &amp;&amp; (i#476L = 10))</span>
+<span class="hljs-comment">//    +- *BatchedScan parquet [i#476L] Format: ParquetFormat, InputPaths: file:/tmp/foo, PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+</code></pre>
+<p>The last line is very important (see <code>ReadSchema</code>). The schema read
+from the parquet file only required reading column <code>i</code> without needing to access column <code>j</code>.
+This is great! We have both an optimized query plan and type-safety!</p>
+<p>Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
+a non existing column <code>x</code>:</p>
+<pre><code class="lang-scala">scala&gt; ds.filter($<span class="hljs-string">&quot;i&quot;</span> === <span class="hljs-number">10</span>).select($<span class="hljs-string">&quot;x&quot;</span>.as[<span class="hljs-type">Long</span>])
+org.apache.spark.sql.<span class="hljs-type">AnalysisException</span>: cannot resolve &apos;`x`&apos; given input columns: [i, j];;
+<span class="hljs-symbol">&apos;Project</span> [<span class="hljs-symbol">&apos;x</span>]
++- <span class="hljs-type">Filter</span> (i#<span class="hljs-number">476</span>L = cast(<span class="hljs-number">10</span> as bigint))
+   +- <span class="hljs-type">Relation</span>[i#<span class="hljs-number">476</span>L,j#<span class="hljs-number">477</span>] parquet
+
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-keyword">package</span>$<span class="hljs-type">AnalysisErrorAt</span>.failAnalysis(<span class="hljs-keyword">package</span>.scala:<span class="hljs-number">42</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1</span>$$anonfun$apply$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">77</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1</span>$$anonfun$apply$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">74</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>$$anonfun$transformUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">308</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>$$anonfun$transformUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">308</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">69</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.transformUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">307</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpressionUp$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">269</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">2</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">279</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">2</span>$<span class="hljs-number">1.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">283</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$map$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">234</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$map$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">234</span>)
+  at scala.collection.immutable.<span class="hljs-type">List</span>.foreach(<span class="hljs-type">List</span>.scala:<span class="hljs-number">381</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$<span class="hljs-class"><span class="hljs-keyword">class</span>.<span class="hljs-title">map</span>(<span class="hljs-params"><span class="hljs-type">TraversableLike</span>.scala:234</span>)</span>
+  at scala.collection.immutable.<span class="hljs-type">List</span>.map(<span class="hljs-type">List</span>.scala:<span class="hljs-number">285</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">2</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">283</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$<span class="hljs-number">8.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">288</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.mapProductIterator(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">186</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpressionsUp(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">288</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1.</span>apply(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">74</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1.</span>apply(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">67</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.foreachUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">126</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$<span class="hljs-class"><span class="hljs-keyword">class</span>.<span class="hljs-title">checkAnalysis</span>(<span class="hljs-params"><span class="hljs-type">CheckAnalysis</span>.scala:67</span>)</span>
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.checkAnalysis(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">58</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.assertAnalyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">49</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">161</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">167</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.select(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">1023</span>)
+  ... <span class="hljs-number">458</span> elided
+</code></pre>
+<p>There are two things to improve here. First, we would want to avoid the <code>at[Long]</code> casting that we are required
+to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible
+type. Second, we want a solution where reference to a
+non existing column name fails at compilation time.
+The standard Spark Dataset can achieve this using the following syntax.</p>
+<pre><code class="lang-scala">ds.filter(_.i == <span class="hljs-number">10</span>).map(_.i).show()
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |value|</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |   10|</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>This looks great! It reminds us the familiar syntax from Scala.
+The two closures in filter and map are functions that operate on <code>Foo</code> and the
+compiler will helps us capture all the mistakes we mentioned above.</p>
+<pre><code class="lang-scala">scala&gt; ds.filter(_.i == <span class="hljs-number">10</span>).map(_.x).show()
+&lt;console&gt;:<span class="hljs-number">23</span>: error: value x is not a member of <span class="hljs-type">Foo</span>
+       ds.filter(_.i == <span class="hljs-number">10</span>).map(_.x).show()
+                                  ^
+</code></pre>
+<p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
+<pre><code class="lang-scala">ds.filter(_.i == <span class="hljs-number">10</span>).map(_.i).explain()
+<span class="hljs-comment">// == Physical Plan ==</span>
+<span class="hljs-comment">// *SerializeFromObject [input[0, bigint, true] AS value#512L]</span>
+<span class="hljs-comment">// +- *MapElements &lt;function1&gt;, obj#511: bigint</span>
+<span class="hljs-comment">//    +- *DeserializeToObject newInstance(class $line14.$read$$iw$$iw$$iw$$iw$Foo), obj#510: $line14.$read$$iw$$iw$$iw$$iw$Foo</span>
+<span class="hljs-comment">//       +- *Filter &lt;function1&gt;.apply</span>
+<span class="hljs-comment">//          +- *BatchedScan parquet [i#476L,j#477] Format: ParquetFormat, InputPaths: file:/tmp/foo, PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;</span>
+</code></pre>
+<p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
+Reading the parquet file will required loading all the fields of <code>Foo</code>. This might be ok for
+small datasets or for datasets with few columns, but will be extremely slow for most practical
+applications.
+Intuitively, Spark currently doesn&apos;t have a way to look inside the code we pass in these two
+closures. It only knows that they both take one argument of type <code>Foo</code>, but it has no way of knowing if
+we use just one or all of <code>Foo</code>&apos;s fields.</p>
+<p>The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax
+with a fully optimized query plan.</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+<span class="hljs-comment">// import frameless.TypedDataset</span>
+
+<span class="hljs-keyword">val</span> fds = <span class="hljs-type">TypedDataset</span>.create(ds)
+<span class="hljs-comment">// fds: frameless.TypedDataset[Foo] = [i: bigint, j: string]</span>
+
+fds.filter( fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span> ).select( fds(<span class="hljs-symbol">&apos;i</span>) ).show().run()
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// | _1|</span>
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// | 10|</span>
+<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">//</span>
+</code></pre>
+<p>And the optimized Physical Plan:</p>
+<pre><code class="lang-scala">fds.filter( fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span> ).select( fds(<span class="hljs-symbol">&apos;i</span>) ).explain()
+<span class="hljs-comment">// == Physical Plan ==</span>
+<span class="hljs-comment">// *Project [i#476L AS _1#568L]</span>
+<span class="hljs-comment">// +- *Filter (isnotnull(i#476L) &amp;&amp; (i#476L = 10))</span>
+<span class="hljs-comment">//    +- *BatchedScan parquet [i#476L] Format: ParquetFormat, InputPaths: file:/tmp/foo, PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+</code></pre>
+<p>And the compiler is our friend.</p>
+<pre><code class="lang-scala">scala&gt; fds.filter( fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span> ).select( fds(<span class="hljs-symbol">&apos;x</span>) )
+&lt;console&gt;:<span class="hljs-number">25</span>: error: <span class="hljs-type">No</span> column <span class="hljs-type">Symbol</span> <span class="hljs-keyword">with</span> shapeless.tag.<span class="hljs-type">Tagged</span>[<span class="hljs-type">String</span>(<span class="hljs-string">&quot;x&quot;</span>)] of <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">A</span> <span class="hljs-title">in</span> <span class="hljs-title">Foo</span></span>
+       fds.filter( fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span> ).select( fds(<span class="hljs-symbol">&apos;x</span>) )
+                                               ^
+</code></pre>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="GettingStarted.html" class="navigation navigation-prev " aria-label="Previous page: TypedDataset: Feature Overview">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="TypedEncoder.html" class="navigation navigation-next " aria-label="Next page: Typed Encoders in Frameless">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"next":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"previous":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"GettingStarted.md","ref":"GettingStarted.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedDataset.md","mtime":"2016-12-05T08:05:40.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2016-12-05T08:08:45.590Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
