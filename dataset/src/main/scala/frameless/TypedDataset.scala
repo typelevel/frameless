@@ -30,6 +30,23 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
+  /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type.
+    * Unlike `as` the projection U may include a subset of the columns of T and the column names and types must agree.
+    *
+    * {{{
+    *   case class Foo(i: Int, j: String)
+    *   case class Bar(j: String)
+    *
+    *   val t: TypedDataset[Foo] = ...
+    *   val b: TypedDataset[Bar] = t.project[Bar]
+    *
+    *   case class BarErr(e: String)
+    *   // The following does not compile because `Foo` doesn't have a field with name `e`
+    *   val e: TypedDataset[BarErr] = t.project[BarErr]
+    * }}}
+    */
+  def project[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = projector.apply(this)
+
   /** Returns the number of elements in the [[TypedDataset]].
     *
     * Differs from `Dataset#count` by wrapping it's result into a [[Job]].
