@@ -45,6 +45,10 @@ lazy val docs = project
     "org.apache.spark" %% "spark-core" % sparkVersion,
     "org.apache.spark" %% "spark-sql"  % sparkVersion
   ))
+  .settings(
+    sourceDirectory in GitBook := sourceDirectory.value / ".." / "target" / "tut",
+    siteSubdirName  in GitBook := "../..")
+  .enablePlugins(GitBookPlugin)
   .dependsOn(dataset, cats)
 
 lazy val framelessSettings = Seq(

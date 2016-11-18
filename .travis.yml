@@ -5,6 +5,9 @@ scala:
 
 sbt_args: "-J-Xmx2G"
 
+before_script:
+- npm install -g gitbook-cli
+
 script:
 - scripts/travis-publish.sh
 
