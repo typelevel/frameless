@@ -1,5 +1,5 @@
 # Getting started
-This tutorial introduce `TypedDataset`s through a small toy example.
+This tutorial introduces `TypedDataset`s through a small toy example.
 The following imports are needed to make all code examples compile.
 ```tut:book
 import org.apache.spark.{SparkConf, SparkContext}
@@ -70,7 +70,7 @@ import frameless.implicits.widen._
 val priceBySurfaceUnit = appartmentsTypedDS.select(appartmentsTypedDS('price)/appartmentsTypedDS('surface))
 priceBySurfaceUnit.collect.run()
 ``` 
-Looks like it worked, but that `cast` looks unsafe right ? Actually it is safe.
+Looks like it worked, but that `cast` looks unsafe right? Actually it is safe.
 Let's try to cast a `TypedColumn` of `String` to `Double`: 
 ```tut:book:fail
 appartmentsTypedDS('city).cast[Double]                            ^
