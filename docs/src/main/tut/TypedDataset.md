@@ -23,7 +23,7 @@ org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 **Goal:** 
   This tutorial compares the standard Spark Datasets api with the one provided by
   frameless' TypedDataset. It shows how TypedDatsets allows for an expressive and 
-  typesafe api with no compromises on performance. 
+  type-safe api with no compromises on performance. 
  
  
 For this tutorial we first create a simple dataset and save it on disk as a parquet file. 
@@ -72,7 +72,7 @@ filteredDs.explain()
 
 The last line is very important (see `ReadSchema`). The schema read 
 from the parquet file only required reading column `i` without needing to access column `j`.
-This is great! We have both an optimized query plan and typesafety! 
+This is great! We have both an optimized query plan and type-safety! 
 
 
 Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access 
@@ -83,8 +83,8 @@ a non existing column `x`:
 ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
-There are two things to improve here. Fist, we would want to avoid the `at[Long]` casting that we are required
-to type for typesafely. This is clearly an area where we can introduce a bug by casting to an incompatible 
+There are two things to improve here. First, we would want to avoid the `at[Long]` casting that we are required
+to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible 
 type. Second, we want a solution where reference to a 
 non existing column name fails at compilation time. 
 The standard Spark Dataset can achieve this using the following syntax.
@@ -117,7 +117,7 @@ closures. It only knows that they both take one argument of type `Foo`, but it h
 we use just one or all of `Foo`'s fields. 
  
  
-The TypedDataset in frameless solves this problem. It allows for a simple and typesafe syntax 
+The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax 
 with a fully optimized query plan. 
 
 

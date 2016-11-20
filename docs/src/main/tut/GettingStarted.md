@@ -56,7 +56,7 @@ val cities: TypedDataset[String] = apartmentsTypedDS.select(apartmentsTypedDS('c
 
 This is completely safe, for instance suppose we misspell `city`:
 ```tut:book:fail
-apartmentsTypedDS.select(apartmentsTypedDS('citi))                                          ^
+apartmentsTypedDS.select(apartmentsTypedDS('citi))
 ```
 This gets caught at compile-time.
 With `Dataset` the error appears at run-time.
@@ -94,11 +94,11 @@ priceBySurfaceUnit.collect.run()
 Looks like it worked, but that `cast` looks unsafe right? Actually it is safe.
 Let's try to cast a `TypedColumn` of `String` to `Double`: 
 ```tut:book:fail
-apartmentsTypedDS('city).cast[Double]                            ^
+apartmentsTypedDS('city).cast[Double]
 ``` 
 The compile-time error tells us that to perform the cast, an evidence (in the form of `CatalystCast[String, Double]`) must be available.
 
-Check [here](https://github.com/adelbertc/frameless/blob/566bde7/core/src/main/scala/frameless/CatalystCast.scala) for the set of available `CatalystCast`.
+Check [here](https://github.com/adelbertc/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala) for the set of available `CatalystCast`.
  
 ## TypeSafe TypedDataset casting and projections 
 
@@ -114,7 +114,7 @@ as the types in `U` and `T` align.
 The cast is valid and the expression compiles: 
  
 ```tut:book
-case class UpdatedSurface(citi: String, surface: Int)
+case class UpdatedSurface(city: String, surface: Int)
 val updated = apartmentsTypedDS.select(apartmentsTypedDS('city), apartmentsTypedDS('surface) + 2).as[UpdatedSurface]
 updated.show(2).run()
 ```
