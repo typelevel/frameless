@@ -58,8 +58,8 @@ This is completely safe, for instance suppose we misspell `city`:
 ```tut:book:fail
 apartmentsTypedDS.select(apartmentsTypedDS('citi))
 ```
-This gets caught at compile-time.
-With `Dataset` the error appears at run-time.
+This gets caught at compile-time, whereas
+with traditional Spark `Dataset` the error appears at run-time.
 ```tut:book:fail
 apartmentsDS.select('citi)
 ``` 
@@ -69,7 +69,7 @@ apartmentsDS.select('citi)
 apartmentsTypedDS.select(apartmentsTypedDS('surface) * 10, apartmentsTypedDS('surface) + 2).show().run()
 ```
 
-*Note: that unlike the standard Spark api here `show()` is lazy. It requires to apply `run()` for the
+*Note that unlike the standard Spark api, here `show()` is lazy. It requires to apply `run()` for the
  `show` job to materialize.*  
 
 
@@ -222,7 +222,7 @@ Again if we try to aggregate a column that can't be aggregated, we get a compila
 apartmentsTypedDS.groupBy(apartmentsTypedDS('city)).agg(avg(apartmentsTypedDS('city)))                                                         ^
 ```
 
-Finally, we conclude with an example combining `select` and `groupBy` 
+Next, we combine `select` and `groupBy` 
 to calculate the average price/surface ratio per city:
 
 ```tut:book
@@ -233,7 +233,40 @@ val cityPriceRatio =  aptds.select(aptds('city), aptds('price)/aptds('surface) )
 cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show().run()  
 ``` 
 
+
+## Joins 
+
+```tut:silent
+case class CityPopulationInfo(name: String, population: Int)
+
+val cityInfo = Seq(
+    CityPopulationInfo("Paris", 2229621),
+    CityPopulationInfo("Lyon", 500715),
+    CityPopulationInfo("Nice", 343629)
+    )
+    
+val citiInfoTypedDS = TypedDataset.create(cityInfo)    
+```
+
+Here is how to join the population information to the apartment's dataset. 
+
+```tut:book
+val withCityInfo = apartmentsTypedDS.join(citiInfoTypedDS, apartmentsTypedDS('city), citiInfoTypedDS('name))
+
+withCityInfo.show().run()
+```
+
+The joined TypedDataset has type `TypedDataset[(Apartment, CityPopulationInfo)]`. 
  
+We can then select which information we want to continue to work with:
+ 
+```tut:book
+case class AptPriceCity(city: String, aptPrice: Double, cityPopulation: Int)
+
+withCityInfo.select( 
+   withCityInfo.colMany('_2, 'name), withCityInfo.colMany('_1, 'price), withCityInfo.colMany('_2, 'population) 
+).as[AptPriceCity].show().run
+```
 
 ```tut:invisible
 spark.stop()
