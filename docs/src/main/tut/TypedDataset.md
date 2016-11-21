@@ -1,35 +1,32 @@
 # TypedDataset
 
-
 ```tut:invisible
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 val conf = new SparkConf().setMaster("local[*]").setAppName("test").set("spark.ui.enabled", "false").set("spark.app.id", "tut-dataset")
-val spark = SparkSession.builder().config(conf).getOrCreate() 
+val spark = SparkSession.builder().config(conf).getOrCreate()
 
 System.clearProperty("spark.master.port")
 System.clearProperty("spark.driver.port")
 System.clearProperty("spark.hostPort")
 System.setProperty("spark.cleaner.ttl", "300")
 
-// We are using this directory so let's make sure it is clean first 
+// We are using this directory so let's make sure it is clean first
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 ```
 
 ## Comparing Frameless TypedDatasets with standard Spark Datasets
 
-
-**Goal:** 
+**Goal:**
   This tutorial compares the standard Spark Datasets api with the one provided by
-  frameless' TypedDataset. It shows how TypedDatsets allows for an expressive and 
-  type-safe api with no compromises on performance. 
- 
- 
-For this tutorial we first create a simple dataset and save it on disk as a parquet file. 
-[Parquet](https://parquet.apache.org/) is a popular columnar format and well supported by Spark. 
-It's important to note that when operating on parquet datasets, Spark knows that each column is stored 
-separately, so if we only need a subset of the columns Spark will optimize for this and avoid reading 
+  frameless' TypedDataset. It shows how TypedDatsets allows for an expressive and
+  type-safe api with no compromises on performance.
+
+For this tutorial we first create a simple dataset and save it on disk as a parquet file.
+[Parquet](https://parquet.apache.org/) is a popular columnar format and well supported by Spark.
+It's important to note that when operating on parquet datasets, Spark knows that each column is stored
+separately, so if we only need a subset of the columns Spark will optimize for this and avoid reading
 the entire dataset. This is a rather simplistic view of how Spark and parquet work together but it
 will serve us well for the context of this discussion.
 
@@ -50,9 +47,9 @@ val ds = spark.read.parquet("/tmp/foo").as[Foo]
 ds.show()
 ```
 
-The value `ds` holds the content of the `initialDs` read from a parquet file. 
-Let's try to only use field `i` from Foo and see how Spark's Catalyst (the query optimizer) 
-optimizes this. 
+The value `ds` holds the content of the `initialDs` read from a parquet file.
+Let's try to only use field `i` from Foo and see how Spark's Catalyst (the query optimizer)
+optimizes this.
 
 ```tut:book
 // Using a standard Spark TypedColumn in select()
@@ -63,19 +60,18 @@ filteredDs.show()
 
 The `filteredDs` is of type `Dataset[Long]`. Since we only access field `i` from `Foo` the type is correct.
 Unfortunately, this syntax requires handholding by explicitly setting the `TypedColumn` in the `select` statement
-to return type `Long` (look at the `as[Long]` statement). We will discuss this limitation next in more detail. 
+to return type `Long` (look at the `as[Long]` statement). We will discuss this limitation next in more detail.
 Now, let's take a quick look at the optimized Physical Plan that Spark's Catalyst generated.
 
 ```tut:book
 filteredDs.explain()
 ```
 
-The last line is very important (see `ReadSchema`). The schema read 
+The last line is very important (see `ReadSchema`). The schema read
 from the parquet file only required reading column `i` without needing to access column `j`.
-This is great! We have both an optimized query plan and type-safety! 
+This is great! We have both an optimized query plan and type-safety!
 
-
-Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access 
+Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
 a non existing column `x`:
 
 
@@ -84,25 +80,24 @@ ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
 There are two things to improve here. First, we would want to avoid the `at[Long]` casting that we are required
-to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible 
-type. Second, we want a solution where reference to a 
-non existing column name fails at compilation time. 
+to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible
+type. Second, we want a solution where reference to a
+non existing column name fails at compilation time.
 The standard Spark Dataset can achieve this using the following syntax.
- 
+
 ```tut:book
 ds.filter(_.i == 10).map(_.i).show()
 ```
 
-This looks great! It reminds us the familiar syntax from Scala. 
-The two closures in filter and map are functions that operate on `Foo` and the 
+This looks great! It reminds us the familiar syntax from Scala.
+The two closures in filter and map are functions that operate on `Foo` and the
 compiler will helps us capture all the mistakes we mentioned above.
 
 ```tut:fail
 ds.filter(_.i == 10).map(_.x).show()
 ```
 
-Unfortunately, this syntax does not allow Spark to optimize the code. 
-
+Unfortunately, this syntax does not allow Spark to optimize the code.
 
 ```tut:book
 ds.filter(_.i == 10).map(_.i).explain()
@@ -111,15 +106,13 @@ ds.filter(_.i == 10).map(_.i).explain()
 As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
 Reading the parquet file will required loading all the fields of `Foo`. This might be ok for
 small datasets or for datasets with few columns, but will be extremely slow for most practical
-applications. 
-Intuitively, Spark currently doesn't have a way to look inside the code we pass in these two 
+applications.
+Intuitively, Spark currently doesn't have a way to look inside the code we pass in these two
 closures. It only knows that they both take one argument of type `Foo`, but it has no way of knowing if
-we use just one or all of `Foo`'s fields. 
- 
- 
-The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax 
-with a fully optimized query plan. 
+we use just one or all of `Foo`'s fields.
 
+The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax
+with a fully optimized query plan.
 
 ```tut:book
 import frameless.TypedDataset
@@ -130,7 +123,6 @@ fds.filter( fds('i) === 10 ).select( fds('i) ).show().run()
 
 And the optimized Physical Plan:
 
-
 ```tut:book
 fds.filter( fds('i) === 10 ).select( fds('i) ).explain()
 ```
@@ -140,8 +132,6 @@ And the compiler is our friend.
 ```tut:fail
 fds.filter( fds('i) === 10 ).select( fds('x) )
 ```
-
-
 
 ```tut:invisible
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
