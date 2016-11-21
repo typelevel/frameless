@@ -1,7 +1,9 @@
 # Getting started
+
 This tutorial introduces `TypedDataset`s through a small toy example.
 The following imports are needed to make all code examples compile.
-```tut:book
+
+```tut:silent
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
@@ -13,80 +15,273 @@ implicit val sqlContext = spark.sqlContext
 spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._
-``` 
+```
+
 ## Creating TypedDataset instances
+
 We start by defining a simple case class that will be the basis of our examples.
-```tut:book
-case class Appartment(city: String, surface: Int, price: Double)
-``` 
-And let's define a few `Appartment` instances:
-```tut:book
-val appartments = Seq(
-    Appartment("Paris", 50, 300000.0),
-    Appartment("Paris", 100, 450000.0),
-    Appartment("Paris", 25, 250000.0),
-    Appartment("Lyon", 83, 200000.0),
-    Appartment("Lyon", 45, 133000.0),
-    Appartment("Nice", 74, 325000.0)
-    )
+
+```tut:silent
+case class Apartment(city: String, surface: Int, price: Double)
 ```
-We are now ready to instantiate a `TypedDataset[Appartment]`:
-```tut:book
-val appartmentsTypedDS = TypedDataset.create(appartments)
+
+And let's define a few `Apartment` instances:
+
+```tut:silent
+val apartments = Seq(
+  Apartment("Paris", 50, 300000.0),
+  Apartment("Paris", 100, 450000.0),
+  Apartment("Paris", 25, 250000.0),
+  Apartment("Lyon", 83, 200000.0),
+  Apartment("Lyon", 45, 133000.0),
+  Apartment("Nice", 74, 325000.0)
+)
 ```
+
+We are now ready to instantiate a `TypedDataset[Apartment]`:
+
+```tut:book
+val apartmentsTypedDS = TypedDataset.create(apartments)
+```
+
 We can also create it from an existing `Dataset`:
+
 ```tut:book
-val appartmentsDS = spark.createDataset(appartments)
-val appartmentsTypedDS = TypedDataset.create(appartmentsDS)
+val apartmentsDS = spark.createDataset(apartments)
+val apartmentsTypedDS = TypedDataset.create(apartmentsDS)
 ```
+
+Or use the frameless syntax:
+
+```tut:book
+import frameless.syntax._
+
+val apartmentsTypedDS2 = spark.createDataset(apartments).typed
+```
+
 ## Typesafe column referencing
-This is how we select a particular column from a `TypedDataset`: 
+This is how we select a particular column from a `TypedDataset`:
+
 ```tut:book
-val cities: TypedDataset[String] = appartmentsTypedDS.select(appartmentsTypedDS('city))
+val cities: TypedDataset[String] = apartmentsTypedDS.select(apartmentsTypedDS('city))
 ```
-This is completely safe, for instance suppose we made a typo:
+
+This is completely safe, for instance suppose we misspell `city`:
+
 ```tut:book:fail
-appartmentsTypedDS.select(appartmentsTypedDS('citi))                                          ^
+apartmentsTypedDS.select(apartmentsTypedDS('citi))
 ```
-This gets caught at compile-time.
-With `Dataset` the error appears at run-time.
+
+This gets caught at compile-time, whereas with traditional Spark `Dataset` the error appears at run-time.
+
 ```tut:book:fail
-appartmentsDS.select('citi)
-``` 
-Let us now try to get the price by surface unit: 
-```tut:book:fail
-val priceBySurfaceUnit = appartmentsTypedDS.select(appartmentsTypedDS('price)/appartmentsTypedDS('surface))                                                                          ^
+apartmentsDS.select('citi)
 ```
-Argh! Looks like we can't divide a `TypedColumn` of `Double` by `Int`. 
-Well, we can cast our `Int`s to `Double`s explicitely to proceed with the computation.
+
+`select()` supports arbitrary column operations:
+
 ```tut:book
-val priceBySurfaceUnit = appartmentsTypedDS.select(appartmentsTypedDS('price)/appartmentsTypedDS('surface).cast[Double])
-priceBySurfaceUnit.collect.run()
-``` 
-Or perform the cast implicitely :
+apartmentsTypedDS.select(apartmentsTypedDS('surface) * 10, apartmentsTypedDS('surface) + 2).show().run()
+```
+
+*Note that unlike the standard Spark api, here `show()` is lazy. It requires to apply `run()` for the
+ `show` job to materialize.*
+
+
+Let us now try to compute the price by surface unit:
+
+```tut:book:fail
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface))                                                                          ^
+```
+
+Argh! Looks like we can't divide a `TypedColumn` of `Double` by `Int`.
+Well, we can cast our `Int`s to `Double`s explicitly to proceed with the computation.
+
+```tut:book
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface).cast[Double])
+priceBySurfaceUnit.collect().run()
+```
+
+Alternatively, we can perform the cast implicitly:
+
 ```tut:book
 import frameless.implicits.widen._
 
-val priceBySurfaceUnit = appartmentsTypedDS.select(appartmentsTypedDS('price)/appartmentsTypedDS('surface))
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface))
 priceBySurfaceUnit.collect.run()
-``` 
+```
+
 Looks like it worked, but that `cast` looks unsafe right? Actually it is safe.
-Let's try to cast a `TypedColumn` of `String` to `Double`: 
+Let's try to cast a `TypedColumn` of `String` to `Double`:
+
 ```tut:book:fail
-appartmentsTypedDS('city).cast[Double]                            ^
-``` 
+apartmentsTypedDS('city).cast[Double]
+```
+
 The compile-time error tells us that to perform the cast, an evidence (in the form of `CatalystCast[String, Double]`) must be available.
-To check the list of available `CatalystCast` instances https://github.com/adelbertc/frameless/blob/566bde7/core/src/main/scala/frameless/CatalystCast.scala. 
-## GroupBy and Aggregations
-Let's suppose we wanted to retrieve the average appartment price in each city
+
+Check [here](https://github.com/adelbertc/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala) for the set of available `CatalystCast`.
+
+## TypeSafe TypedDataset casting and projections
+
+With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
+For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
+`TypedDataset[(String, Int, Boolean)]`.
+We often want to give more expressive types to the result of our computations.
+
+`as[T]` allows us to safely cast a `TypedDataset[U]` to another of type `TypedDataset[T]` as long
+as the types in `U` and `T` align.
+
+The cast is valid and the expression compiles:
+
 ```tut:book
-val priceByCity = appartmentsTypedDS.groupBy(appartmentsTypedDS('city)).agg(avg(appartmentsTypedDS('price)))
+case class UpdatedSurface(city: String, surface: Int)
+val updated = apartmentsTypedDS.select(apartmentsTypedDS('city), apartmentsTypedDS('surface) + 2).as[UpdatedSurface]
+updated.show(2).run()
+```
+
+Next we try to cast a `(String, String)` to an `UpdatedSurface` (which has types `String`, `Int`).
+The cast is not valid and the expression does not compile:
+
+```tut:book:fail
+apartmentsTypedDS.select(apartmentsTypedDS('city), apartmentsTypedDS('city)).as[UpdatedSurface]
+```
+
+### Projections
+
+We often want to work with a subset of the fields in a dataset.
+Projections allows to easily select the fields we are interested
+while preserving their initial name and types for extra safety.
+
+Here is an example using the `TypedDataset[Apartment]` with an additional column:
+
+```tut:book
+import frameless.implicits.widen._
+
+val aptds = apartmentsTypedDS // For shorter expressions
+
+case class ApartmentDetails(city: String, price: Double, surface: Int, ratio: Double)
+val aptWithRatio = aptds.select(aptds('city), aptds('price), aptds('surface), aptds('price) / aptds('surface)).as[ApartmentDetails]
+```
+
+Suppose we only want to work with `city` and `ratio`:
+
+```tut:book
+case class CityInfo(city: String, ratio: Double)
+
+val cityRatio = aptWithRatio.project[CityInfo]
+
+cityRatio.show(2).run()
+```
+
+Suppose we only want to work with `price` and `ratio`:
+
+```tut:book
+case class PriceInfo(ratio: Double, price: Double)
+
+val priceInfo = aptWithRatio.project[PriceInfo]
+
+priceInfo.show(2).run()
+```
+
+We see here that the order of the fields doesn't matter as long as the
+names and the corresponding types agree. However, if we make a mistake in
+any of the names and/or their types, then we get a compilation error.
+
+Say we make a typo in a field name:
+
+```tut:silent
+case class PriceInfo2(ratio: Double, pricEE: Double)
+```
+
+```tut:book:fail
+aptWithRatio.project[PriceInfo2]
+```
+
+Say we make a mistake in the corresponding type:
+
+```tut:silent
+case class PriceInfo3(ratio: Int, price: Double) // ratio should be Double
+```
+
+```tut:book:fail
+aptWithRatio.project[PriceInfo3]
+```
+
+## User Defined Functions
+
+Frameless supports lifting any Scala function (up to five arguments) to the
+context of a particular `TypedDataset`:
+
+```tut:book
+// The function we want to use as UDF
+val priceModifier =
+    (name: String, price:Double) => if(name == "Paris") price * 2.0 else price
+
+val udf = apartmentsTypedDS.makeUDF(priceModifier)
+
+val aptds = apartmentsTypedDS // For shorter expressions
+
+val adjustedPrice = aptds.select(aptds('city), udf(aptds('city), aptds('price)))
+
+adjustedPrice.show().run()
+```
+
+## GroupBy and Aggregations
+Let's suppose we wanted to retrieve the average apartment price in each city
+```tut:book
+val priceByCity = apartmentsTypedDS.groupBy(apartmentsTypedDS('city)).agg(avg(apartmentsTypedDS('price)))
 priceByCity.collect().run()
-``` 
+```
 Again if we try to aggregate a column that can't be aggregated, we get a compilation error
 ```tut:book:fail
-appartmentsTypedDS.groupBy(appartmentsTypedDS('city)).agg(avg(appartmentsTypedDS('city)))                                                         ^
+apartmentsTypedDS.groupBy(apartmentsTypedDS('city)).agg(avg(apartmentsTypedDS('city)))                                                         ^
 ```
+
+Next, we combine `select` and `groupBy` to calculate the average price/surface ratio per city:
+
+```tut:book
+val aptds = apartmentsTypedDS // For shorter expressions
+
+val cityPriceRatio =  aptds.select(aptds('city), aptds('price) / aptds('surface))
+
+cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show().run()
+```
+
+## Joins
+
+```tut:silent
+case class CityPopulationInfo(name: String, population: Int)
+
+val cityInfo = Seq(
+  CityPopulationInfo("Paris", 2229621),
+  CityPopulationInfo("Lyon", 500715),
+  CityPopulationInfo("Nice", 343629)
+)
+
+val citiInfoTypedDS = TypedDataset.create(cityInfo)
+```
+
+Here is how to join the population information to the apartment's dataset.
+
+```tut:book
+val withCityInfo = apartmentsTypedDS.join(citiInfoTypedDS, apartmentsTypedDS('city), citiInfoTypedDS('name))
+
+withCityInfo.show().run()
+```
+
+The joined TypedDataset has type `TypedDataset[(Apartment, CityPopulationInfo)]`.
+
+We can then select which information we want to continue to work with:
+
+```tut:book
+case class AptPriceCity(city: String, aptPrice: Double, cityPopulation: Int)
+
+withCityInfo.select(
+   withCityInfo.colMany('_2, 'name), withCityInfo.colMany('_1, 'price), withCityInfo.colMany('_2, 'population)
+).as[AptPriceCity].show().run
+```
+
 ```tut:invisible
 spark.stop()
-``` 
+```
