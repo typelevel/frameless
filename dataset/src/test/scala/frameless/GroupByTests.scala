@@ -11,13 +11,16 @@ class GroupByTests extends TypedDatasetSuite {
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Numeric,
       Out: TypedEncoder : Numeric
-    ](data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    ](data: List[X2[A, B]])(
+      implicit
+      summable: CatalystSummable[B, Out],
+      summer: Sum4Tests[B, Out]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
       val datasetSumByA = dataset.groupByMany(A).agg(sum(B)).collect().run.toVector.sortBy(_._1)
-      val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
+      val sumByA = data.groupBy(_.a).mapValues(bs => summer.sum(bs.map(_.b))).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
     }
@@ -30,13 +33,16 @@ class GroupByTests extends TypedDatasetSuite {
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Numeric,
       Out: TypedEncoder
-    ](data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    ](data: List[X2[A, B]])(
+      implicit
+      summable: CatalystSummable[B, Out],
+      summer: Sum4Tests[B, Out]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
       val datasetSumByA = dataset.groupBy(A).agg(sum(B)).collect().run.toVector.sortBy(_._1)
-      val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
+      val sumByA = data.groupBy(_.a).mapValues(bs => summer.sum(bs.map(_.b))).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
     }
@@ -57,7 +63,7 @@ class GroupByTests extends TypedDatasetSuite {
       val datasetSumByA = dataset.groupBy(A)
         .mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
         .collect().run().toVector.sortBy(_._1)
-      val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
+      val sumByA = data.groupBy(_.a).mapValues(bs => bs.map(_.b).sum).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
     }
@@ -73,7 +79,11 @@ class GroupByTests extends TypedDatasetSuite {
       OutB: TypedEncoder,
       OutC: TypedEncoder
     ](data: List[X3[A, B, C]])
-      (implicit summableB: CatalystSummable[B, OutB], summableC: CatalystSummable[C, OutC]): Prop = {
+      (implicit
+       summableB: CatalystSummable[B, OutB],
+       summableC: CatalystSummable[C, OutC],
+       summerB: Sum4Tests[B, OutB],
+       summerC: Sum4Tests[C, OutC]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -85,7 +95,7 @@ class GroupByTests extends TypedDatasetSuite {
         .collect().run.toVector.sortBy(_._1)
 
       val sumByAB = data.groupBy(_.a).mapValues { xs =>
-        (xs.map(_.b).sum, xs.map(_.c).sum)
+        (summerB.sum(xs.map(_.b)), summerC.sum(xs.map(_.c)))
       }.toVector.map {
         case (a, (b, c)) => (a, b, c)
       }.sortBy(_._1)
@@ -105,7 +115,11 @@ class GroupByTests extends TypedDatasetSuite {
       OutC: TypedEncoder,
       OutD: TypedEncoder
     ](data: List[X4[A, B, C, D]])
-      (implicit summableC: CatalystSummable[C, OutC], summableD: CatalystSummable[D, OutD]): Prop = {
+      (implicit
+       summableC: CatalystSummable[C, OutC],
+       summableD: CatalystSummable[D, OutD],
+       summerC: Sum4Tests[C, OutC],
+       summerD: Sum4Tests[D, OutD]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -118,7 +132,7 @@ class GroupByTests extends TypedDatasetSuite {
         .collect().run.toVector.sortBy(x => (x._1, x._2))
 
       val sumByAB = data.groupBy(x => (x.a, x.b)).mapValues { xs =>
-        (xs.map(_.c).sum, xs.map(_.d).sum)
+        (summerC.sum(xs.map(_.c)), summerD.sum(xs.map(_.d)))
       }.toVector.map {
         case ((a, b), (c, d)) => (a, b, c, d)
       }.sortBy(x => (x._1, x._2))
@@ -135,7 +149,8 @@ class GroupByTests extends TypedDatasetSuite {
       B: TypedEncoder : Ordering,
       C: TypedEncoder : Numeric,
       OutC: TypedEncoder
-    ](data: List[X3[A, B, C]])(implicit summableC: CatalystSummable[C, OutC]): Prop = {
+    ](data: List[X3[A, B, C]])(
+      implicit summableC: CatalystSummable[C, OutC]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
