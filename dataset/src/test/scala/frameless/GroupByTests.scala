@@ -25,6 +25,8 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByA ?= sumByA
     }
 
+    check(forAll(prop[Int, Short, Long] _))
+    check(forAll(prop[Int, Int, Long] _))
     check(forAll(prop[Int, Long, Long] _))
   }
 
@@ -47,6 +49,8 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByA ?= sumByA
     }
 
+    check(forAll(prop[Int, Short, Long] _))
+    check(forAll(prop[Int, Int, Long] _))
     check(forAll(prop[Int, Long, Long] _))
   }
 
@@ -63,7 +67,7 @@ class GroupByTests extends TypedDatasetSuite {
       val datasetSumByA = dataset.groupBy(A)
         .mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
         .collect().run().toVector.sortBy(_._1)
-      val sumByA = data.groupBy(_.a).mapValues(bs => bs.map(_.b).sum).toVector.sortBy(_._1)
+      val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
     }
@@ -103,6 +107,8 @@ class GroupByTests extends TypedDatasetSuite {
       datasetSumByAB ?= sumByAB
     }
 
+    check(forAll(prop[String, Short, BigDecimal, Long, BigDecimal] _))
+    check(forAll(prop[String, Int, BigDecimal, Long, BigDecimal] _))
     check(forAll(prop[String, Long, BigDecimal, Long, BigDecimal] _))
   }
 
@@ -149,8 +155,7 @@ class GroupByTests extends TypedDatasetSuite {
       B: TypedEncoder : Ordering,
       C: TypedEncoder : Numeric,
       OutC: TypedEncoder
-    ](data: List[X3[A, B, C]])(
-      implicit summableC: CatalystSummable[C, OutC]): Prop = {
+    ](data: List[X3[A, B, C]])(implicit summableC: CatalystSummable[C, OutC]): Prop = {
       val dataset = TypedDataset.create(data).coalesce(2)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
