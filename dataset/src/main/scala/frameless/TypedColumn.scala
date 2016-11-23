@@ -218,7 +218,7 @@ sealed class TypedAggregateAndColumn[T, A, U](expr: Expression)(
   implicit
   val aencoder: TypedEncoder[A],
   uencoder: TypedEncoder[U]
-) extends TypedColumn[T, A](expr) with TypedAggregate[T, A] {
+) extends TypedColumn[T, U](expr) with TypedAggregate[T, A] {
 
   def this(column: Column)(implicit aencoder: TypedEncoder[A], uencoder: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
