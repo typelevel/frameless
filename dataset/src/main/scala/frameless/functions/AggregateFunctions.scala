@@ -50,19 +50,25 @@ trait AggregateFunctions {
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.stddev(column.untyped))
   }
 
-  def max[A: Ordering: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  // FIXME should be CatalystOrdering
+  def max[A: Ordering, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.max(column.untyped))
   }
 
-  def min[A: Ordering: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  // FIXME should be CatalystOrdering
+  def min[A: Ordering, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.min(column.untyped))
   }
 
-  def first[A: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def first[A, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.first(column.untyped))
   }
 
-  def last[A: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def last[A, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.last(column.untyped))
   }
 }
