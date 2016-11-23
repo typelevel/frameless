@@ -15,7 +15,7 @@ class GroupByTests extends TypedDatasetSuite {
       summable: CatalystSummable[B, Out],
       widen: B => Out
     ): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
@@ -38,7 +38,7 @@ class GroupByTests extends TypedDatasetSuite {
       summable: CatalystSummable[B, Out],
       widen: B => Out
     ): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
@@ -56,7 +56,7 @@ class GroupByTests extends TypedDatasetSuite {
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Numeric
     ](data: List[X2[A, B]]): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
@@ -85,7 +85,7 @@ class GroupByTests extends TypedDatasetSuite {
       widenb: B => OutB,
       widenc: C => OutC
     ): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
@@ -122,7 +122,7 @@ class GroupByTests extends TypedDatasetSuite {
       widenc: C => OutC,
       widend: D => OutD
     ): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
@@ -151,7 +151,7 @@ class GroupByTests extends TypedDatasetSuite {
       B: TypedEncoder : Ordering,
       C: TypedEncoder : Numeric
     ](data: List[X3[A, B, C]]): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
@@ -176,7 +176,7 @@ class GroupByTests extends TypedDatasetSuite {
       A: TypedEncoder,
       B: TypedEncoder
     ](data: Vector[X2[A, B]]): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
@@ -199,7 +199,7 @@ class GroupByTests extends TypedDatasetSuite {
       A: TypedEncoder : Ordering,
       B: TypedEncoder : Ordering
     ](data: Vector[X2[A, B]]): Prop = {
-      val dataset = TypedDataset.create(data).coalesce(2)
+      val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
