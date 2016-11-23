@@ -23,71 +23,46 @@ trait AggregateFunctions {
   def sum[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Out])
-  : TypedAggregateAndColumn[T, A, Out] = {
-    val zeroExpr = Literal.create(summable.zero, encoder2.targetDataType)
+    oencoder: TypedEncoder[Out]
+  ): TypedAggregateAndColumn[T, Out, Out] = {
+    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
     val sumExpr = expr(untyped.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregateAndColumn[T, A, Out](sumOrZero)
+    new TypedAggregateAndColumn[T, Out, Out](sumOrZero)
   }
 
   def avg[A, T, Out](column: TypedColumn[T, A])(
     implicit
     averageable: CatalystAverageable[A, Out],
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[Out]]
-  ): TypedAggregateAndColumn[T, A, Option[Out]] = {
-    new TypedAggregateAndColumn[T, A, Option[Out]](untyped.avg(column.untyped))
+    oencoder: TypedEncoder[Out]
+  ): TypedAggregateAndColumn[T, Out, Option[Out]] = {
+    new TypedAggregateAndColumn[T, Out, Option[Out]](untyped.avg(column.untyped))
   }
 
-  def variance[A, T](column: TypedColumn[T, A])(
-    implicit
-    variance: Variance[A],
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def variance[A: Variance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.variance(column.untyped))
   }
 
-  def stddev[A: Variance, T](column: TypedColumn[T, A])(
-    implicit
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def stddev[A: Variance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+    import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.stddev(column.untyped))
   }
 
-  def max[A: Ordering, T](column: TypedColumn[T, A])(
-    implicit
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def max[A: Ordering: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.max(column.untyped))
   }
 
-  def min[A: Ordering, T](column: TypedColumn[T, A])(
-    implicit
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def min[A: Ordering: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.min(column.untyped))
   }
 
-  def first[A, T](column: TypedColumn[T, A])(
-    implicit
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def first[A: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.first(column.untyped))
   }
 
-  def last[A, T](column: TypedColumn[T, A])(
-    implicit
-    encoder1: TypedEncoder[A],
-    encoder2: TypedEncoder[Option[A]]
-  ): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def last[A: TypedEncoder, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.last(column.untyped))
   }
 }
