@@ -14,16 +14,16 @@ System.setProperty("spark.cleaner.ttl", "300")
 
 Data aggregation is one of the most important operations when working with Spark (and data in general).
 For example, we often have to compute the `min`, `max`, `avg`, etc. from a set of columns grouped by
-different predicates. This section shows how **cats** simplifies these tasks in Spark by 
-leveraging a large collection of Type Classes for ordering and aggregating data.       
+different predicates. This section shows how **cats** simplifies these tasks in Spark by
+leveraging a large collection of Type Classes for ordering and aggregating data.
 
-All the examples below assume you have previously imported `cats.implicits`.  
- 
+All the examples below assume you have previously imported `cats.implicits`.
+
 ```tut:book
 import cats.implicits._
 ```
 
-Cats offers ways to sort and aggregate tuples of arbitrary arity. 
+Cats offers ways to sort and aggregate tuples of arbitrary arity.
 
 ```tut:book
 import frameless.cats.implicits._
@@ -35,13 +35,13 @@ println(data.cmax)
 println(data.cmin)
 ```
 
-The following example aggregates all the elements with a common key.  
+The following example aggregates all the elements with a common key.
 
 ```tut:book
 type User = String
 type TransactionCount = Int
 
-val allData: RDD[(User,TransactionCount)] = 
+val allData: RDD[(User,TransactionCount)] =
    sc.makeRDD(("Bob", 12) :: ("Joe", 1) :: ("Anna", 100) :: ("Bob", 20) :: ("Joe", 2) :: Nil)
 
 val totalPerUser =  allData.csumByKey
@@ -49,11 +49,11 @@ val totalPerUser =  allData.csumByKey
 totalPerUser.collectAsMap
 ```
 
-The same example would work for more complex keys. 
+The same example would work for more complex keys.
 
 ```tut:book
-val allDataComplexKeu = 
-   sc.makeRDD( ("Bob", Map("task1" -> 10)) :: 
+val allDataComplexKeu =
+   sc.makeRDD( ("Bob", Map("task1" -> 10)) ::
     ("Joe", Map("task1" -> 1, "task2" -> 3)) :: ("Bob", Map("task1" -> 10, "task2" -> 1)) :: ("Joe", Map("task3" -> 4)) :: Nil )
 
 val overalTasksPerUser = allDataComplexKeu.csumByKey
@@ -82,8 +82,8 @@ val daysCombined = day1 |+| day2
 daysCombined.collect()
 ```
 
-Note how the user's timeseries from different days have been aggregated together. 
-The `|+|` (Semigroup) operator for key-value pair RDD will execute a full-outer-join 
+Note how the user's timeseries from different days have been aggregated together.
+The `|+|` (Semigroup) operator for key-value pair RDD will execute a full-outer-join
 on the key and combine values using the default Semigroup for the value type.
 
 In `cats`:
@@ -94,5 +94,4 @@ Map(1 -> 2, 2 -> 3) |+| Map(1 -> 4, 2 -> -1)
 
 ```tut:invisible
 sc.stop()
-sc = null
 ```
