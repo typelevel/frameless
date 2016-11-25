@@ -22,8 +22,6 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("sum") {
-    case class Sum4Tests[A, B](sum: Seq[A] => B)
-
     def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
       summable: CatalystSummable[A, Out],
@@ -41,13 +39,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
-    // Replicate Spark's behaviour : Ints and Shorts are cast to Long
-    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
-    implicit def summerDecimal = Sum4Tests[BigDecimal, BigDecimal](_.sum)
-    implicit def summerDouble = Sum4Tests[Double, Double](_.sum)
-    implicit def summerLong = Sum4Tests[Long, Long](_.sum)
-    implicit def summerInt = Sum4Tests[Int, Long](_.map(_.toLong).sum)
-    implicit def summerShort = Sum4Tests[Short, Long](_.map(_.toLong).sum)
+    import Sum4Tests._
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Long, Long] _))
@@ -57,8 +49,6 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("avg") {
-    case class  Averager4Tests[A: Numeric, B: Numeric](avg: Seq[A] => B)
-
     def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
       averageable: CatalystAverageable[A, Out],
@@ -80,13 +70,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       }
     }
 
-    // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
-    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
-    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
-    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
-    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
+    import Averager4Tests._
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Double, Double] _))
@@ -97,8 +81,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("stddev") {
 
-    def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
+      variance: CatalystVariance[A, Out],
       eoa: TypedEncoder[Option[A]],
       ex1: TypedEncoder[X1[A]]
     ): Prop = {
@@ -111,17 +96,20 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       xs match {
         case Nil => datasetStd ?= None
         case _ :: Nil => datasetStd match {
-          case Some(x) => if (implicitly[Numeric[A]].toDouble(x).isNaN) proved else falsified
+          case Some(x) => if (implicitly[Numeric[Out]].toDouble(x).isNaN) proved else falsified
           case _ => falsified
         }
         case _ => datasetStd match {
-          case Some(x) => approximatelyEqual(std, implicitly[Numeric[A]].toDouble(x))
+          case Some(x) => approximatelyEqual(std, implicitly[Numeric[Out]].toDouble(x))
           case _ => falsified
         }
       }
     }
 
-    check(forAll(prop[Double] _))
+    check(forAll(prop[Int, Double] _))
+    check(forAll(prop[Long, Double] _))
+    check(forAll(prop[Short, Double] _))
+    check(forAll(prop[Double, Double] _))
   }
 
   test("count") {
@@ -150,7 +138,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("max") {
-    def prop[A: TypedEncoder : Ordering](xs: List[A])(
+    def prop[A: TypedEncoder : Ordering : CatalystOrdered](xs: List[A])(
       implicit
       ex1: TypedEncoder[X1[A]],
       eoa: TypedEncoder[Option[A]]
@@ -177,7 +165,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("min") {
-    def prop[A: TypedEncoder : Ordering](xs: List[A])(
+    def prop[A: TypedEncoder : Ordering : CatalystOrdered](xs: List[A])(
       implicit
       ex1: TypedEncoder[X1[A]],
       eoa: TypedEncoder[Option[A]]

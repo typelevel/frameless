@@ -209,6 +209,11 @@ sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {
   def aencoder: TypedEncoder[A]
 }
 
+/** Represents the result of an aggregation function
+  * @tparam T The type of TypedDataset elements
+  * @tparam A Aggregation type
+  * @tparam U Selected type
+  */
 sealed class TypedAggregateAndColumn[T, A, U](expr: Expression)(
   implicit
   val aencoder: TypedEncoder[A],
