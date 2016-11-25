@@ -13,9 +13,14 @@ sealed trait UntypedExpression[T] {
   def expr: Expression
 }
 
-/** Documentation marked "apache/spark" is thanks to apache/spark Contributors
+/** Expression used in `select`-like constructions.
+  *
+  * Documentation marked "apache/spark" is thanks to apache/spark Contributors
   * at https://github.com/apache/spark, licensed under Apache v2.0 available at
   * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * @tparam T type of dataset
+  * @tparam U type of column
   */
 sealed class TypedColumn[T, U](
   val expr: Expression)(
@@ -204,11 +209,22 @@ sealed class TypedColumn[T, U](
     self.untyped.cast(TypedEncoder[A].targetDataType).typed
 }
 
+/** Expression used in `groupBy`-like constructions.
+  *
+  * @tparam T type of dataset
+  * @tparam A type of column for `groupBy`
+  */
 sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {
   def expr: Expression
   def aencoder: TypedEncoder[A]
 }
 
+/** Expression used both in `groupBy` and `select`-like constructions.
+  *
+  * @tparam T type of dataset
+  * @tparam A type of column for `groupBy`
+  * @tparam U type of column for `select`
+  */
 sealed class TypedAggregateAndColumn[T, A, U](expr: Expression)(
   implicit
   val aencoder: TypedEncoder[A],

@@ -21,14 +21,24 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
   }
 
+  def sparkSchema[A: TypedEncoder, U](f: TypedColumn[X1[A], A] => TypedColumn[X1[A], U]): Prop = {
+    val df = TypedDataset.create[X1[A]](Nil)
+    val col = f(df.col('a))
+
+    import col.uencoder
+
+    val sumDf = df.select(col)
+
+    TypedExpressionEncoder.targetStructType(sumDf.encoder) ?= sumDf.dataset.schema
+  }
+
   test("sum") {
     case class Sum4Tests[A, B](sum: Seq[A] => B)
 
-    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
       summable: CatalystSummable[A, Out],
-      summer: Sum4Tests[A, Out],
-      ex1: TypedEncoder[X1[A]]
+      summer: Sum4Tests[A, Out]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
@@ -54,17 +64,21 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Int, Long] _))
     check(forAll(prop[Short, Long] _))
+
+    check(sparkSchema[BigDecimal, BigDecimal](sum))
+    check(sparkSchema[Long, Long](sum))
+    check(sparkSchema[Int, Long](sum))
+    check(sparkSchema[Double, Double](sum))
+    check(sparkSchema[Short, Long](sum))
   }
 
   test("avg") {
-    case class  Averager4Tests[A: Numeric, B: Numeric](avg: Seq[A] => B)
+    case class Averager4Tests[A, B](avg: Seq[A] => B)
 
-    def prop[A: TypedEncoder : Numeric, Out: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
       implicit
       averageable: CatalystAverageable[A, Out],
-      averager: Averager4Tests[A, Out],
-      eob: TypedEncoder[Option[Out]],
-      ex1: TypedEncoder[X1[A]]
+      averager: Averager4Tests[A, Out]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
@@ -97,11 +111,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("stddev") {
 
-    def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A])(
-      implicit
-      eoa: TypedEncoder[Option[A]],
-      ex1: TypedEncoder[X1[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
@@ -137,12 +147,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("count('a)") {
-    def prop[A: TypedEncoder](xs: List[A])(implicit ex1: TypedEncoder[X1[A]]): Prop = {
+    def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val Vector(datasetCount) = dataset.select(count(A)).collect().run().toVector
+      val datasetCount = dataset.select(count(A)).collect().run()
 
-      datasetCount ?= xs.size.toLong
+      datasetCount ?= List(xs.size.toLong)
     }
 
     check(forAll(prop[Int] _))
@@ -150,22 +160,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("max") {
-    def prop[A: TypedEncoder : Ordering](xs: List[A])(
-      implicit
-      ex1: TypedEncoder[X1[A]],
-      eoa: TypedEncoder[Option[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val datasetMax = dataset.select(max(A)).collect().run().toList.head
+      val datasetMax = dataset.select(max(A)).collect().run().toList
 
-      xs match {
-        case Nil => datasetMax.isEmpty
-        case xs => datasetMax match {
-          case Some(m) => xs.max ?= m
-          case _ => falsified
-        }
-      }
+      datasetMax ?= List(xs.reduceOption(o.max))
     }
 
     check(forAll(prop[Long] _))
@@ -177,22 +177,13 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("min") {
-    def prop[A: TypedEncoder : Ordering](xs: List[A])(
-      implicit
-      ex1: TypedEncoder[X1[A]],
-      eoa: TypedEncoder[Option[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetMin = dataset.select(min(A)).collect().run().toList.head
-      xs match {
-        case Nil => datasetMin.isEmpty
-        case xs => datasetMin match {
-          case Some(m) => xs.min ?= m
-          case _ => falsified
-        }
-      }
+      val datasetMin = dataset.select(min(A)).collect().run().toList
+
+      datasetMin ?= List(xs.reduceOption(o.min))
     }
 
     check(forAll(prop[Long] _))
@@ -204,23 +195,13 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("first") {
-    def prop[A: TypedEncoder](xs: List[A])(
-      implicit
-      ex1: TypedEncoder[X1[A]],
-      eoa: TypedEncoder[Option[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetFirst :: Nil = dataset.select(first(A)).collect().run().toList
+      val datasetFirst = dataset.select(first(A)).collect().run().toList
 
-      xs match {
-        case Nil => datasetFirst.isEmpty
-        case x::_ => datasetFirst match {
-          case Some(m) => x ?= m
-          case _ => falsified
-        }
-      }
+      datasetFirst ?= List(xs.headOption)
     }
 
     check(forAll(prop[BigDecimal] _))
@@ -233,23 +214,13 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("last") {
-    def prop[A: TypedEncoder](xs: List[A])(
-      implicit
-      ex1: TypedEncoder[X1[A]],
-      eoa: TypedEncoder[Option[A]]
-    ): Prop = {
+    def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetLast :: Nil = dataset.select(last(A)).collect().run().toList
+      val datasetLast = dataset.select(last(A)).collect().run().toList
 
-      xs match {
-        case Nil => datasetLast.isEmpty
-        case xs => datasetLast match {
-          case Some(m) => xs.last ?= m
-          case _ => falsified
-        }
-      }
+      datasetLast ?= List(xs.lastOption)
     }
 
     check(forAll(prop[BigDecimal] _))
