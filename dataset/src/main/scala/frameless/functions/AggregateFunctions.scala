@@ -40,24 +40,24 @@ trait AggregateFunctions {
     new TypedAggregateAndColumn[T, Out, Option[Out]](untyped.avg(column.untyped))
   }
 
-  def variance[A: Variance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.variance(column.untyped))
+  // In Spark variance always returns Double
+  // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#186
+  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
+    new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.variance(column.untyped))
   }
 
-  def stddev[A: Variance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.stddev(column.untyped))
+  // In Spark stddev always returns Double
+  // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#155
+  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
+    new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.stddev(column.untyped))
   }
 
-  // FIXME should be CatalystOrdering
-  def max[A: Ordering, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.max(column.untyped))
   }
 
-  // FIXME should be CatalystOrdering
-  def min[A: Ordering, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
+  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
     import column.uencoder
     new TypedAggregateAndColumn[T, A, Option[A]](untyped.min(column.untyped))
   }

@@ -111,7 +111,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   test("stddev") {
 
-    def prop[A: TypedEncoder : Variance : Fractional : Numeric](xs: List[A]): Prop = {
+    def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
@@ -121,16 +121,20 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       xs match {
         case Nil => datasetStd ?= None
         case _ :: Nil => datasetStd match {
-          case Some(x) => if (implicitly[Numeric[A]].toDouble(x).isNaN) proved else falsified
+          case Some(x) => if (x.isNaN) proved else falsified
           case _ => falsified
         }
         case _ => datasetStd match {
-          case Some(x) => approximatelyEqual(std, implicitly[Numeric[A]].toDouble(x))
+          case Some(x) => approximatelyEqual(std, x)
           case _ => falsified
         }
       }
     }
 
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[BigDecimal] _))
     check(forAll(prop[Double] _))
   }
 
@@ -160,7 +164,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("max") {
-    def prop[A: TypedEncoder](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
       val datasetMax = dataset.select(max(A)).collect().run().toList
@@ -177,7 +181,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("min") {
-    def prop[A: TypedEncoder](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
