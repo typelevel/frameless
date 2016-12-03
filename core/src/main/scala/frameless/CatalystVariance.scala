@@ -1,8 +1,7 @@
 package frameless
 
 /**
-  * When taking variance, Spark doesn't change this type:
-  * - Double     -> Double
+  * Spark's variance and stddev functions always return Double
   */
 trait CatalystVariance[T]
 

@@ -41,13 +41,13 @@ trait AggregateFunctions {
   }
 
   // In Spark variance always returns Double
-  // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#186
+  // https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#186
   def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
     new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.variance(column.untyped))
   }
 
   // In Spark stddev always returns Double
-  // https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#155
+  // https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#155
   def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
     new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.stddev(column.untyped))
   }
