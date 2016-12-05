@@ -1,4 +1,4 @@
-# TypedEncoder
+# Typed Encoder
 
 ```tut:invisible
 import org.apache.spark.{SparkConf, SparkContext}
