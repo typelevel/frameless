@@ -1,4 +1,4 @@
-# Getting started
+# TypedDataset: Feature Overview
 
 This tutorial introduces `TypedDataset`s through a small toy example.
 The following imports are needed to make all code examples compile.

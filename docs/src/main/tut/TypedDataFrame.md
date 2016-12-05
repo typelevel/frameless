@@ -1,4 +1,4 @@
-# TypedDataFrame
+# Proof of Concept: TypedDataFrame
 
 `TypedDataFrame` is the API developed in the early stages of frameless to manipulate Spark `DataFrame`s in a type-safe manner. With the introduction of `Dataset` in Spark 1.6, `DataFrame` seems deprecated and won't be the focus of future developments of frameless. However, the design is interesting enough for being documented.
 
