@@ -1,4 +1,4 @@
-# Injection
+# Injection: Creating Custom Encoders
 ```tut:invisible
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession

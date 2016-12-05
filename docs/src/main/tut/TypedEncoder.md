@@ -1,4 +1,4 @@
-# TypedEncoder
+# Typed Encoders in Frameless
 
 ```tut:invisible
 import org.apache.spark.{SparkConf, SparkContext}

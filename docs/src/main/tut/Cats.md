@@ -1,4 +1,4 @@
-# Cats
+# Using Cats with RDDs
 
 ```tut:invisible
 import org.apache.spark.{SparkConf, SparkContext => SC}

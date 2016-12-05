@@ -1,4 +1,4 @@
-# TypedDataset
+# Comparing TypedDatasets with Spark's Datasets
 
 ```tut:invisible
 import org.apache.spark.SparkConf
@@ -15,8 +15,6 @@ System.setProperty("spark.cleaner.ttl", "300")
 // We are using this directory so let's make sure it is clean first
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 ```
-
-## Comparing Frameless TypedDatasets with standard Spark Datasets
 
 **Goal:**
   This tutorial compares the standard Spark Datasets api with the one provided by
