@@ -8,21 +8,30 @@
 Frameless is a proof-of-concept library for working with [Spark](http://spark.apache.org/) using more expressive types.
 It consists of the following modules:
 
-* `cats` for using Spark with [cats](https://github.com/typelevel/cats)
-* `dataframe` (deprecated) for more strongly typed `DataFrame`s
-* `dataset` for more strongly typed `Dataset`s
+* `dataset` for more strongly typed `Dataset`s  (supports Spark 2.0.x)
+* `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 0.7.x)
+
 
 The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
 associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.
 
+## Documentation
+
+* [TypedDataset: Feature Overview](http://olivierblanvillain.github.io/frameless/GettingStarted.html)
+* [Comparing TypedDatasets with Spark's Datasets](http://olivierblanvillain.github.io/frameless/TypedDatasetVsSparkDataset.html)
+* [Typed Encoders in Frameless](http://olivierblanvillain.github.io/frameless/TypedEncoder.html)
+* [Injection: Creating Custom Encoders](http://olivierblanvillain.github.io/frameless/Injection.html)
+* [Using Cats with RDDs](http://olivierblanvillain.github.io/frameless/Cats.html)
+* [Proof of Concept: TypedDataFrame](http://olivierblanvillain.github.io/frameless/TypedDataFrame.html)
 
 ## Why?
 
 Benefits of using `TypedDataset` compared to vanilla `Dataset`:
 
 * Typesafe columns referencing and expressions
-* Customizable, typecafe encoders
+* Customizable, typesafe encoders
+* Typesafe casting and projections
 * Enhanced type signature for some built-in functions
 
 ## Quick Start
@@ -36,12 +45,11 @@ To use frameless add the following dependencies as needed:
 ```scala
 resolvers += Resolver.sonatypeRepo("releases")
 
-val framelessVersion = "0.1.0"
+val framelessVersion = "0.2.0"
 
 libraryDependencies ++= List(
   "io.github.adelbertc" %% "frameless-cats"      % framelessVersion,
-  "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion,
-  "io.github.adelbertc" %% "frameless-dataframe" % framelessVersion
+  "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion
 )
 ```
 
