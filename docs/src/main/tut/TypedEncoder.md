@@ -10,7 +10,7 @@ implicit val sqlContext = spark.sqlContext
 System.setProperty("spark.cleaner.ttl", "300")
 ```
 
-Spark uses Reflection to derive it's `Encorder`s, which is why they can fail at run time. For example, because Spark does not supports `java.util.Date`, the following leads to an error:
+Spark uses Reflection to derive it's `Encoder`s, which is why they can fail at run time. For example, because Spark does not supports `java.util.Date`, the following leads to an error:
 
 ```tut
 import org.apache.spark.sql.Dataset
