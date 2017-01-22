@@ -40,7 +40,7 @@ Frameless is compiled against Scala 2.11.x.
 Note that while Frameless is still getting off the ground, it is very possible that breaking changes will be
 made for at least the next few versions.
 
-To use frameless add the following dependencies as needed:
+To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
 resolvers += Resolver.sonatypeRepo("releases")
@@ -52,6 +52,21 @@ libraryDependencies ++= List(
   "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion
 )
 ```
+
+An easy way to bootstrap a Frameless sbt project:
+
+- if you have [Giter8][g8] installed then simply:
+
+```bash
+g8 imarios/frameless.g8
+```
+- with sbt >= 0.13.13:
+
+```bash
+sbt new imarios/frameless.g8
+```
+Typing `sbt console` inside your project will bring up a shell with Frameless
+and all its dependencies loaded (including Spark). 
 
 ## Development
 We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
@@ -66,3 +81,5 @@ We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull req
 ## License
 Code is provided under the Apache 2.0 license available at http://opensource.org/licenses/Apache-2.0,
 as well as in the LICENSE file. This is the same license used as Spark.
+
+[g8]: http://www.foundweekends.org/giter8/
