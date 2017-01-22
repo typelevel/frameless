@@ -2,13 +2,14 @@ package frameless
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import org.scalactic.anyvals.PosZInt
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
 
 class TypedDatasetSuite extends FunSuite with Checkers {
   // Limit size of generated collections and number of checks because Travis
   implicit override val generatorDrivenConfig =
-    PropertyCheckConfig(maxSize = 10, minSuccessful = 10)
+    PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
 
   val appID = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
 
