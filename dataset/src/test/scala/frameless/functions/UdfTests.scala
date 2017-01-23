@@ -4,30 +4,44 @@ package functions
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
-class UdfTest extends TypedDatasetSuite {
+class UdfTests extends TypedDatasetSuite {
 
   test("one argument udf") {
-    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder]
-    (data: Vector[X3[A, B, C]], f1: A => A): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder](data: Vector[X1[A]], f1: A => B): Prop = {
       val dataset = TypedDataset.create(data)
-      val u1 = udf[X3[A, B, C], A, A](f1)
+      val u1 = udf[X1[A], A, B](f1)
       val u2 = dataset.makeUDF(f1)
       val A = dataset.col[A]('a)
 
-      val dataset21 = dataset.select(u1(A)).collect().run().toVector
-      val dataset22 = dataset.select(u2(A)).collect().run().toVector
+      // filter forces whole codegen
+      val codegen = dataset.filter(_ => true).select(u1(A)).collect().run().toVector
+
+      // otherwise it uses local relation
+      val local = dataset.select(u2(A)).collect().run().toVector
+
       val d = data.map(x => f1(x.a))
 
-      (dataset21 ?= d) && (dataset22 ?= d)
+      (codegen ?= d) && (local ?= d)
     }
 
-    check(forAll(prop[Int, Int, Int] _))
-    check(forAll(prop[String, Int, Int] _))
-//    check(forAll(prop[Option[Int], X2[Double, Long], Int] _)) Cause: java.lang.ClassCastException: java.lang.Integer cannot be cast to scala.Option
-//    check(forAll(prop[Option[Vector[String]], Int, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[String, String] _))
+    check(forAll(prop[Option[Int], Option[Int]] _))
+    check(forAll(prop[X1[Int], X1[Int]] _))
+    check(forAll(prop[X1[Option[Int]], X1[Option[Int]]] _))
+
+    // TODO doesn't work for the same reason as `collect`
+    // check(forAll(prop[X1[Option[X1[Int]]], X1[Option[X1[Option[Int]]]]] _))
+
+    check(forAll(prop[Option[Vector[String]], Option[Vector[String]]] _))
+
+    def prop2[A: TypedEncoder, B: TypedEncoder](f: A => B)(a: A): Prop = prop(Vector(X1(a)), f)
+
+    check(forAll(prop2[Int, Option[Int]](x => if (x % 2 == 0) Some(x) else None) _))
+    check(forAll(prop2[Option[Int], Int](x => x getOrElse 0) _))
   }
 
-  ignore("multiple one argument udf") {
+  test("multiple one argument udf") {
     def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder]
     (data: Vector[X3[A, B, C]], f1: A => A, f2: B => B, f3: C => C): Prop = {
       val dataset = TypedDataset.create(data)
