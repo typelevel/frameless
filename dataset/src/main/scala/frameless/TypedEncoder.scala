@@ -283,7 +283,8 @@ object TypedEncoder {
     }
 
     def extractorFor(path: Expression): Expression = {
-      if (ScalaReflection.isNativeType(underlying.targetDataType)) {
+      // if source `path` is already native for Spark, no need to `map`
+      if (ScalaReflection.isNativeType(underlying.sourceDataType)) {
         NewInstance(
           classOf[GenericArrayData],
           path :: Nil,
