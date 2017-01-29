@@ -32,4 +32,12 @@ object implicits {
     // implicit def floatToDouble[T](col: TypedColumn[T, Float]): TypedColumn[T, Double] = col.cast[Double]
     // implicit def floatToBigDecimal[T](col: TypedColumn[T, Float]): TypedColumn[T, BigDecimal] = col.cast[BigDecimal]
   }
+
+  object injections {
+    implicit val javaBoolean: Injection[java.lang.Boolean, Boolean] = Injection(a => a, b => b)
+    implicit val javaInt: Injection[java.lang.Integer, Int] = Injection(a => a, b => b)
+    implicit val javaDouble: Injection[java.lang.Double, Double] = Injection(a => a, b => b)
+    implicit val javaFloat: Injection[java.lang.Float, Float] = Injection(a => a, b => b)
+    implicit val javaLong: Injection[java.lang.Long, Long] = Injection(a => a, b => b)
+  }
 }

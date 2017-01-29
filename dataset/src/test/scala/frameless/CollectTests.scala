@@ -7,6 +7,8 @@ import org.scalacheck.Prop._
 import scala.reflect.ClassTag
 
 class CollectTests extends TypedDatasetSuite {
+  import implicits.injections._
+
   test("collect()") {
     check(forAll(prop[X2[Int, Int]] _))
     check(forAll(prop[X2[String, String]] _))
@@ -38,7 +40,9 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Option[SQLDate]] _))
     check(forAll(prop[Option[SQLTimestamp]] _))
 
-    check(forAll(prop[Vector[Int]] _))
+    check(forAll(prop[Vector[Boolean]] _))
+    check(forAll(prop[Vector[java.lang.Boolean]] _))
+    check(forAll(prop[Vector[(java.lang.Float, Option[java.lang.Long])]] _))
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Vector[X2[Int, Int]]] _))
 

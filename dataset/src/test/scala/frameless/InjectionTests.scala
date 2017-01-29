@@ -41,7 +41,7 @@ object Food {
     )
 }
 
-// Supposingly coming from a java lib, shapeless can't derive stuff for this one :(
+// Supposedly coming from a java lib, shapeless can't derive stuff for this one :(
 class LocalDateTime {
   var instant: Long = _
 
