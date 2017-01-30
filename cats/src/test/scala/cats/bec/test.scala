@@ -2,9 +2,9 @@ package cats
 package bec
 
 import cats.implicits._
+import org.scalactic.anyvals.PosInt
 import org.scalatest.Matchers
-import org.scalacheck.Arbitrary
-import Arbitrary._
+import org.scalatest.compatible.Assertion
 import org.apache.spark.rdd.RDD
 import org.scalatest._
 import prop._
@@ -28,7 +28,7 @@ trait SparkTests {
 }
 
 object Tests {
-  def innerPairwise(mx: Map[String, Int], my: Map[String, Int], check: (Any, Any) => Unit)(implicit sc: SC): Unit = {
+  def innerPairwise(mx: Map[String, Int], my: Map[String, Int], check: (Any, Any) => Assertion)(implicit sc: SC): Assertion = {
     import frameless.cats.implicits._
     import frameless.cats.inner._
     val xs = sc.parallelize(mx.toSeq)
@@ -49,13 +49,13 @@ object Tests {
       check(xs.cmaxByKey.collectAsMap, mx)
       check(zs.cmin, zs.collect.min)
       check(zs.cmax, zs.collect.max)
-    }
+    } else check(1,1)
   }
 }
 
 class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
   implicit override val generatorDrivenConfig =
-    PropertyCheckConfig(maxSize = 10)
+    PropertyCheckConfiguration(minSize = PosInt(10))
 
   property("spark is working") {
     sc.parallelize(Array(1, 2, 3)).collect shouldBe Array(1,2,3)
@@ -64,7 +64,7 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
   property("inner pairwise monoid") {
     // Make sure we have non-empty map
     forAll { (xh: (String, Int), mx: Map[String, Int], yh: (String, Int), my: Map[String, Int]) =>
-      Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _)
+      Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _ )
     }
   }
 

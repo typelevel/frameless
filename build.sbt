@@ -1,8 +1,8 @@
 val sparkVersion = "2.0.2"
-val catsv = "0.7.2"
-val scalatest = "2.2.5"
+val catsv = "0.8.1"
+val scalatest = "3.0.0"
 val shapeless = "2.3.0"
-val scalacheck = "1.12.5"
+val scalacheck = "1.13.4"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, docs)
