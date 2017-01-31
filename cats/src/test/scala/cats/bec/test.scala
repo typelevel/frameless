@@ -9,6 +9,8 @@ import org.apache.spark.rdd.RDD
 import org.scalatest._
 import prop._
 import org.apache.spark.{SparkConf, SparkContext => SC}
+import org.scalatest.compatible.Assertion
+import org.scalactic.anyvals.PosInt
 
 import scala.reflect.ClassTag
 
@@ -28,7 +30,7 @@ trait SparkTests {
 }
 
 object Tests {
-  def innerPairwise(mx: Map[String, Int], my: Map[String, Int], check: (Any, Any) => Unit)(implicit sc: SC): Unit = {
+  def innerPairwise(mx: Map[String, Int], my: Map[String, Int], check: (Any, Any) => Assertion)(implicit sc: SC): Assertion = {
     import frameless.cats.implicits._
     import frameless.cats.inner._
     val xs = sc.parallelize(mx.toSeq)
@@ -49,13 +51,13 @@ object Tests {
       check(xs.cmaxByKey.collectAsMap, mx)
       check(zs.cmin, zs.collect.min)
       check(zs.cmax, zs.collect.max)
-    }
+    } else check(1, 1)
   }
 }
 
 class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
   implicit override val generatorDrivenConfig =
-    PropertyCheckConfig(maxSize = 10)
+    PropertyCheckConfiguration(minSize = PosInt(10))
 
   property("spark is working") {
     sc.parallelize(Array(1, 2, 3)).collect shouldBe Array(1,2,3)
