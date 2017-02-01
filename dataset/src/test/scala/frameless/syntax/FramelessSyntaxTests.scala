@@ -9,10 +9,10 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
   def prop[A, B](data: Vector[X2[A, B]])(
     implicit ev: TypedEncoder[X2[A, B]]
   ): Prop = {
-    val dataset = TypedDataset.create(data).dataset
+    val dataset = TypedDataset.create(data)
     val dataframe = dataset.toDF()
 
-    dataset.typed.collect().run().toVector ?= dataframe.toTyped[X2[A, B]].collect().run().toVector
+    dataset.collect().run().toVector ?= dataframe.unsafeTyped[X2[A, B]].collect().run().toVector
   }
 
   test("dataset typed - toTyped") {
