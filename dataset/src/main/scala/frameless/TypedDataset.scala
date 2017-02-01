@@ -2,11 +2,11 @@ package frameless
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
-import org.apache.spark.sql.{Column, Dataset, FramelessInternals, SQLContext}
+import org.apache.spark.sql._
 import shapeless._
 import shapeless.ops.hlist.{ToTraversable, Tupler}
 
@@ -481,29 +481,42 @@ object TypedDataset {
     TypedDataset.create[A](dataset)
   }
 
-  def create[A: TypedEncoder](dataset: Dataset[A]): TypedDataset[A] = {
+  def create[A: TypedEncoder](dataset: Dataset[A]): TypedDataset[A] = createUnsafe(dataset.toDF())
+
+  /**
+    * Creates a [[frameless.TypedDataset]] from a Spark [[org.apache.spark.sql.DataFrame]].
+    * Note that the names and types need to align!
+    *
+    * This is an unsafe operation: If the schemas do not align,
+    * the error will be captured at runtime (not during compilation).
+    */
+  def createUnsafe[A: TypedEncoder](df: DataFrame): TypedDataset[A] = {
     val e = TypedEncoder[A]
-    val output = dataset.queryExecution.analyzed.output
+    val output: Seq[Attribute] = df.queryExecution.analyzed.output
 
-    val fields = TypedExpressionEncoder.targetStructType(e)
-    val colNames = fields.map(_.name)
+    val targetFields = TypedExpressionEncoder.targetStructType(e)
+    val targetColNames: Seq[String] = targetFields.map(_.name)
 
-    val shouldReshape = output.size != fields.size || output.zip(colNames).exists {
+    if (output.size != targetFields.size) {
+      throw new IllegalStateException(
+        s"Unsupported creation of TypedDataset with ${targetFields.size} column(s) " +
+          s"from a DataFrame with ${output.size} columns. " +
+          "Try to `select()` the proper columns in the right order before calling `create()`.")
+    }
+
+    // Adapt names if they are not the same (note: types still might not match)
+    val shouldReshape = output.zip(targetColNames).exists {
       case (expr, colName) => expr.name != colName
     }
 
-    // NOTE: if output.size != fields.size Spark would generate Exception
-    // It means that something has gone completely wrong and frameless schema has diverged from Spark one
-
-    val reshaped =
-      if (shouldReshape) dataset.toDF(colNames: _*)
-      else dataset
+    val reshaped = if (shouldReshape) df.toDF(targetColNames: _*) else df
 
     new TypedDataset[A](reshaped.as[A](TypedExpressionEncoder[A]))
   }
 
   /** Prefer `TypedDataset.create` over `TypedDataset.unsafeCreate` unless you
     * know what you are doing. */
+  @deprecated("Prefer TypedDataset.create over TypedDataset.unsafeCreate", "0.3.0")
   def unsafeCreate[A: TypedEncoder](dataset: Dataset[A]): TypedDataset[A] = {
     new TypedDataset[A](dataset)
   }

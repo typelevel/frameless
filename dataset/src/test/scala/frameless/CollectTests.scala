@@ -41,6 +41,10 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Vector[Int]] _))
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Vector[X2[Int, Int]]] _))
+
+    check(forAll(prop[X1[Vector[Food]]] _))
+    check(forAll(prop[X1[Vector[X1[Food]]]] _))
+    check(forAll(prop[X1[Vector[X1[Int]]]] _))
   }
 }
 
