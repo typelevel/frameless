@@ -25,4 +25,9 @@ package object frameless {
   implicit def arbTuple1[A: Arbitrary] = Arbitrary {
     Arbitrary.arbitrary[A].map(Tuple1(_))
   }
+
+  // see issue with scalacheck non serializable Vector: https://github.com/rickynils/scalacheck/issues/315
+  implicit def arbVector[A](implicit A: Arbitrary[A]): Arbitrary[Vector[A]] =
+    Arbitrary(Gen.listOf(A.arbitrary).map(_.toVector))
+
 }
