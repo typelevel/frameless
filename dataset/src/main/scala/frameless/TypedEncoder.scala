@@ -271,7 +271,7 @@ object TypedEncoder {
           underlying.targetDataType
         ),
         "array",
-        ScalaReflection.dataTypeFor[Array[Any]]
+        ScalaReflection.dataTypeFor[Array[AnyRef]]
       )
 
       StaticInvoke(

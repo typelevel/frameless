@@ -133,7 +133,7 @@ case class FramelessUdf[T, R](
     val internalTerm = ctx.freshName("internal")
     val internalNullTerm = ctx.freshName("internalNull")
     val internalTpe = ctx.boxedType(rencoder.sourceDataType)
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.targetDataType)
+    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.sourceDataType)
 
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
@@ -156,12 +156,15 @@ case class FramelessUdf[T, R](
 
     val resultEval = rencoder.extractorFor(internalExpr).genCode(ctx)
 
+    ctx.addMutableState(internalTpe, internalTerm, "")
+    ctx.addMutableState("boolean", internalNullTerm, "")
+
     ev.copy(code = s"""
       ${argsCode.mkString("\n")}
 
-      $internalTpe $internalTerm =
+      $internalTerm =
         ($internalTpe)$funcTerm.apply(${funcArguments.mkString(", ")});
-      boolean $internalNullTerm = $internalTerm == null;
+      $internalNullTerm = $internalTerm == null;
 
       ${resultEval.code}
       """,
