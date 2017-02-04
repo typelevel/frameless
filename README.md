@@ -1,7 +1,7 @@
 # Frameless
 
-[![Travis Badge](https://travis-ci.org/adelbertc/frameless.svg?branch=master)](https://travis-ci.org/adelbertc/frameless)
-[![Codecov Badge](https://codecov.io/gh/adelbertc/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/adelbertc/frameless)
+[![Travis Badge](https://travis-ci.org/typelevel/frameless.svg?branch=master)](https://travis-ci.org/adelbertc/frameless)
+[![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/adelbertc/frameless)
 [![Maven Badge](https://img.shields.io/maven-central/v/io.github.adelbertc/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.adelbertc/frameless-dataset_2.11)
 [![Gitter Badge](https://badges.gitter.im/adelbertc/frameless.svg)](https://gitter.im/adelbertc/frameless?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
