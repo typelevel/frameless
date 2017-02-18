@@ -62,11 +62,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * It is statically checked that column with such name exists and has type `A`.
     */
-  def apply[A](column: Witness.Lt[Symbol])(
-    implicit
-    exists: TypedColumn.Exists[T, column.T, A],
+  def apply[A](selector: T => A)(implicit
     encoder: TypedEncoder[A]
-  ): TypedColumn[T, A] = col(column)
+  ): TypedColumn[T, A] = macro frameless.column.ColumnMacros.fromFunction[T, A]
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *

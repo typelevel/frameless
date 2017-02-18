@@ -29,6 +29,41 @@ class ColTests extends TypedDatasetSuite {
     ()
   }
 
+  test("colApply") {
+    val x4 = TypedDataset.create[X4[Int, String, Long, Boolean]](Nil)
+    val t4 = TypedDataset.create[(Int, String, Long, Boolean)](Nil)
+    val x4x4 = TypedDataset.create[X4X4[Int, String, Long, Boolean]](Nil)
+
+    x4(_.a)
+    t4(_._1)
+    x4[Int](_.a)
+    t4[Int](_._1)
+
+    illTyped("x4[String](_.a)", "type mismatch;\n found   : Int\n required: String")
+
+    x4(_.b)
+    t4(_._2)
+
+    x4[String](_.b)
+    t4[String](_._2)
+
+    illTyped("x4[Int](_.b)", "type mismatch;\n found   : String\n required: Int")
+
+    x4x4(_.xa.a)
+    x4x4[Int](_.xa.a)
+    x4x4(_.xa.b)
+    x4x4[String](_.xa.b)
+
+    x4x4(_.xb.a)
+    x4x4[Int](_.xb.a)
+    x4x4(_.xb.b)
+    x4x4[String](_.xb.b)
+
+    illTyped("x4x4[String](_.xa.a)", "type mismatch;\n found   : Int\n required: String")
+
+    ()
+  }
+
   test("colMany") {
     type X2X2 = X2[X2[Int, String], X2[Long, Boolean]]
     val x2x2 = TypedDataset.create[X2X2](Nil)

@@ -271,6 +271,7 @@ object TypedColumn {
       lgen: LabelledGeneric.Aux[T, H],
       selector: Selector.Aux[H, K, V]
     ): Exists[T, K, V] = new Exists[T, K, V] {}
+
   }
 
   implicit class OrderedTypedColumnSyntax[T, U: CatalystOrdered](col: TypedColumn[T, U]) {

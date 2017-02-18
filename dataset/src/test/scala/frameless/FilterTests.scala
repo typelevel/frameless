@@ -22,7 +22,7 @@ class FilterTests extends TypedDatasetSuite {
   test("filter with  arithmetic expressions: addition") {
     check(forAll { (data: Vector[X1[Int]]) =>
       val ds = TypedDataset.create(data)
-      val res = ds.filter((ds('a) + 1) === (ds('a) + 1)).collect().run().toVector
+      val res = ds.filter((ds(_.a) + 1) === (ds(_.a) + 1)).collect().run().toVector
       res ?= data
     })
   }
@@ -31,7 +31,7 @@ class FilterTests extends TypedDatasetSuite {
     val t = X1(1) :: X1(2) :: X1(3) :: Nil
     val tds: TypedDataset[X1[Int]] = TypedDataset.create(t)
 
-    assert(tds.filter(tds('a) * 2 === 2).collect().run().toVector === Vector(X1(1)))
-    assert(tds.filter(tds('a) * 3 === 3).collect().run().toVector === Vector(X1(1)))
+    assert(tds.filter(tds(_.a) * 2 === 2).collect().run().toVector === Vector(X1(1)))
+    assert(tds.filter(tds(_.a) * 3 === 3).collect().run().toVector === Vector(X1(1)))
   }
 }
