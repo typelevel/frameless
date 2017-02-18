@@ -22,7 +22,16 @@ sealed abstract class Job[A](implicit sc: SparkContext) { self =>
       }
     }
   }
+
+  def map[B](fn: A => B): Job[B] = new Job[B]()(sc) {
+    def run(): B = fn(Job.this.run())
+  }
+
+  def flatMap[B](fn: A => Job[B]): Job[B] = new Job[B]()(sc) {
+    def run(): B = fn(Job.this.run()).run()
+  }
 }
+
 
 object Job {
   def apply[A](a: => A)(implicit sc: SparkContext): Job[A] = new Job[A] {
