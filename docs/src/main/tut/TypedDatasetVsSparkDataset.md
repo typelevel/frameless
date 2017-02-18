@@ -116,19 +116,19 @@ with a fully optimized query plan.
 import frameless.TypedDataset
 val fds = TypedDataset.create(ds)
 
-fds.filter( fds('i) === 10 ).select( fds('i) ).show().run()
+fds.filter( fds(_.i) === 10 ).select( fds(_.i) ).show().run()
 ```
 
 And the optimized Physical Plan:
 
 ```tut:book
-fds.filter( fds('i) === 10 ).select( fds('i) ).explain()
+fds.filter( fds(_.i) === 10 ).select( fds(_.i) ).explain()
 ```
 
 And the compiler is our friend.
 
 ```tut:fail
-fds.filter( fds('i) === 10 ).select( fds('x) )
+fds.filter( fds(_.i) === 10 ).select( fds(_.x) )
 ```
 
 ```tut:invisible
