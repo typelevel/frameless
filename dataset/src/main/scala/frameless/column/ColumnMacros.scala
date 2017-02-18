@@ -9,16 +9,20 @@ class ColumnMacros(val c: whitebox.Context) {
   import c.universe._
 
   // could be used to reintroduce apply('foo)
+  // $COVERAGE-OFF$ Currently unused
   def fromSymbol[A : WeakTypeTag, B : WeakTypeTag](selector: c.Expr[scala.Symbol])(encoder: c.Expr[TypedEncoder[B]]): Tree = {
     val B = weakTypeOf[B].dealias
     val witness = c.typecheck(q"_root_.shapeless.Witness.apply(${selector.tree})")
     c.typecheck(q"${c.prefix}.col[$B]($witness)")
   }
+  // $COVERAGE-ON$
 
   def fromFunction[A : WeakTypeTag, B : WeakTypeTag](selector: c.Expr[A => B])(encoder: c.Expr[TypedEncoder[B]]): Tree = {
-    def fail(tree: Tree) = c.abort(
-      tree.pos,
-      s"Could not create a column identifier from $tree - try using _.a.b syntax")
+    def fail(tree: Tree) = {
+      val err =
+        s"Could not create a column identifier from $tree - try using _.a.b syntax"
+      c.abort(tree.pos, err)
+    }
 
     val A = weakTypeOf[A].dealias
     val B = weakTypeOf[B].dealias
@@ -28,7 +32,9 @@ class ColumnMacros(val c: whitebox.Context) {
         case `argName`(strs) => strs.mkString(".")
         case other => fail(other)
       }
+      // $COVERAGE-OFF$ - cannot be reached as typechecking will fail in this case before macro is even invoked
       case other => fail(other)
+      // $COVERAGE-ON$
     }
 
     val typedCol = appliedType(
@@ -50,7 +56,9 @@ class ColumnMacros(val c: whitebox.Context) {
       tree match {
         case Ident(`name`) => Some(Queue.empty)
         case Select(This(strs), nested) => Some(strs enqueue nested.toString)
+        // $COVERAGE-OFF$ - Not sure if this case can ever come up and Encoder will still work
         case Apply(This(strs), List()) => Some(strs)
+        // $COVERAGE-ON$
         case _ => None
       }
     }

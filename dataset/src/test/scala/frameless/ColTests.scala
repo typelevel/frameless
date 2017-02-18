@@ -60,6 +60,7 @@ class ColTests extends TypedDatasetSuite {
     x4x4[String](_.xb.b)
 
     illTyped("x4x4[String](_.xa.a)", "type mismatch;\n found   : Int\n required: String")
+    illTyped("x4x4(item => item.xa.a * 20)", "Could not create a column identifier from item\\.xa\\.a\\.\\*\\(20\\) - try using _\\.a\\.b syntax")
 
     ()
   }
