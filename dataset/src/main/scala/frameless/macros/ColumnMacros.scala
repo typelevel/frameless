@@ -160,9 +160,18 @@ class ColumnMacros(val c: whitebox.Context) {
 
     // substitute these operators with functions (or other trees)
     // i.e. two string columns can't be + together; they must be concat(a, b) instead.
-    val subOperators: Map[MethodSymbol, (Tree, Tree) => Tree] = Map(
+    val subBinaryOperators: Map[MethodSymbol, (Tree, Tree) => Tree] = Map(
       weakTypeOf[String].member(TermName("+").encodedName).asMethod ->
         ((lhs, rhs) => q"org.apache.spark.sql.functions.concat($lhs, $rhs)")
+    )
+
+    val subUnaryOperators: Map[MethodSymbol, Tree => Tree] = Map(
+      weakTypeOf[String].member(TermName("length")).asMethod ->
+        (lhs => q"org.apache.spark.sql.functions.length($lhs)"),
+      weakTypeOf[Array[_]].typeConstructor.member(TermName("length")).asMethod ->
+        (lhs => q"org.apache.spark.sql.functions.size($lhs)"),
+      weakTypeOf[Vector[_]].typeConstructor.member(TermName("length")).asMethod ->
+        (lhs => q"org.apache.spark.sql.functions.size($lhs)")
     )
 
     def unapply(tree: Tree): Option[Either[List[(Tree, String)], Expr]] = tree match {
@@ -172,12 +181,34 @@ class ColumnMacros(val c: whitebox.Context) {
         Some(Right(Column(tree.tpe, strs.mkString("."))))
 
       // A unary operator - the operator must exist on org.apache.spark.sql.Column
-      case Select(This(rhsE), op: TermName) => Some {
-        if(isColumnOp(op, 0)) {
-          rhsE.right.map {
-            rhs => UnaryRAOperator(tree.tpe, rhs, op)
+      case sel @ Select(This(rhsE), op: TermName) => Some {
+        subUnaryOperators.get(sel.symbol.asMethod)
+          .map {
+            sub => rhsE.right.map(rhs => TrustMeBro(tree.tpe, sub(Expr.refold(rhs))))
+          }.getOrElse {
+            if(isColumnOp(op, 0)) {
+              rhsE.right.map {
+                rhs => UnaryRAOperator(tree.tpe, rhs, op)
+              }
+            } else addError(rhsE)(tree, s"${op.decodedName} is not a valid column operator")
           }
-        } else addError(rhsE)(tree, s"${op.decodedName} is not a valid column operator")
+      }
+
+      // A unary operator (which is a no-arg method) - the operator must exist on org.apache.spark.sql.Column
+      case Apply(sel @ Select(This(rhsE), op: TermName), List()) => Some {
+        subUnaryOperators.get(sel.symbol.asMethod)
+          .map {
+            sub => rhsE.right.map(rhs => TrustMeBro(tree.tpe, sub(Expr.refold(rhs))))
+          }.getOrElse {
+
+          if(isColumnOp(op, 0)) {
+            // $COVERAGE-OFF$ - can't find a unary column op that isn't substituted and is a no-arg apply tree
+            rhsE.right.map {
+              rhs => UnaryRAOperator(tree.tpe, rhs, op)
+            }
+            // $COVERAGE-ON$
+          } else addError(rhsE)(tree, s"${op.decodedName} is not a valid column operator")
+        }
       }
 
       // A literal constant (would it be useful to distinguish this from non-constant literal?
@@ -212,20 +243,19 @@ class ColumnMacros(val c: whitebox.Context) {
 
       // A binary operator - the operator must exist on org.apache.spark.sql.Column
       case Apply(sel @ Select(This(lhsE), op: TermName), List(This(rhsE))) => Some {
-        if (isColumnOp(op, 1)) {
-          (lhsE, rhsE) match {
-            case (Right(lhs), Right(rhs)) => Right {
-              subOperators.get(sel.symbol.asMethod).map {
-                sub =>
-                  val trusted = sub(Expr.refold(lhs), Expr.refold(rhs))
-                  TrustMeBro(tree.tpe, trusted)
-              }.getOrElse {
-                BinaryOperator(tree.tpe, lhs, op, rhs)
-              }
-            }
-            case (lhs, rhs) => failFrom(lhs, rhs)
-          }
-        } else addError(lhsE, rhsE)(tree, s"${op.decodedName} is not a valid column operator")
+        subBinaryOperators.get(sel.symbol.asMethod).map {
+          sub => requireBoth(lhsE, rhsE)(
+            (lhs, rhs) => failFrom(lhs, rhs),
+            (lhs, rhs) => Right(TrustMeBro(tree.tpe, sub(Expr.refold(lhs), Expr.refold(rhs))))
+          )
+        }.getOrElse {
+          if (isColumnOp(op, 1)) {
+            requireBoth(lhsE, rhsE)(
+              (lhs, rhs) => failFrom(lhs, rhs),
+              (lhs, rhs) => Right(BinaryOperator(tree.tpe, lhs, op, rhs))
+            )
+          } else addError(lhsE, rhsE)(tree, s"${op.decodedName} is not a valid column operator")
+        }
       }
 
       // A function application - what to do with this? How can we check if it's an OK function?
@@ -242,15 +272,10 @@ class ColumnMacros(val c: whitebox.Context) {
 
     private def isColumnOp(name: TermName, numArgs: Int): Boolean = {
       val sym = weakTypeOf[org.apache.spark.sql.Column].member(name)
-      if(sym.isMethod) {
+      sym.isMethod && {
         val bothEmptyArgs = numArgs == 0 && sym.asMethod.paramLists.isEmpty
         val matchingArgCounts = sym.asMethod.paramLists.map(_.length) == List(numArgs)
-        if (bothEmptyArgs || matchingArgCounts)
-          true
-        else
-          false
-      } else {
-        false
+        bothEmptyArgs || matchingArgCounts
       }
     }
 
@@ -325,6 +350,14 @@ class ColumnMacros(val c: whitebox.Context) {
         _    => accum
       )
     }
+  }
+
+  def requireBoth[A, B, C](first: Either[A, B], second: Either[A, B])(
+    oneLeft: (Either[A, B], Either[A, B]) => C,
+    bothRight: (B, B) => C
+  ): C = (first, second) match {
+    case (Right(f), Right(s)) => bothRight(f, s)
+    case _                    => oneLeft(first, second)
   }
 
   case class NameExtractor(name: TermName) {

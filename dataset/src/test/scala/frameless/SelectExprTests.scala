@@ -58,6 +58,16 @@ class SelectExprTests extends TypedDatasetSuite with Matchers {
       ((11.0, "foofoo"), 10.0),
       ((22.0, "barfoo"), 15.0)
     )
+
+    val ds3 = ds.selectExpr(x => (x.a, x.c.length))
+  }
+
+  test("substitute length() on Array and Vector") {
+    val ds = TypedDataset.create(Seq(
+      X2(Array(1, 2, 3), Vector(1, 2))
+    ))
+    val ds2 = ds.selectExpr(x => (x.a.length, x.b.length))
+    ds2.collect().run() should contain theSameElementsAs Seq((3, 2))
   }
 
   test("selectExpr constructing a case class") {

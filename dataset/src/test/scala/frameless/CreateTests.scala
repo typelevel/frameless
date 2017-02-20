@@ -1,6 +1,6 @@
 package frameless
 
-import org.scalacheck.Prop
+import org.scalacheck.{Arbitrary, Prop}
 import org.scalacheck.Prop._
 import org.scalatest.Matchers
 
@@ -26,6 +26,44 @@ class CreateTests extends TypedDatasetSuite with Matchers {
       Vector[Vector[X2[Vector[(Person, X1[Char])], Country]]],
       X3[Food, Country, String],
       Vector[(Food, Country)]] _))
+  }
+
+  test("array fields") {
+
+    def prop[T](implicit arb: Arbitrary[Array[T]], encoder: TypedEncoder[X1[Array[T]]]) = forAll {
+      data: Array[T] =>
+        val Seq(X1(arr)) = TypedDataset.create(Seq(X1(data))).collect().run()
+        Prop(arr.sameElements(data))
+    }
+
+    check(prop[Boolean])
+    check(prop[Byte])
+    check(prop[Short])
+    check(prop[Int])
+    check(prop[Long])
+    check(prop[Float])
+    check(prop[Double])
+    check(prop[X1[String]])
+
+  }
+
+  test("vector fields") {
+
+    def prop[T](implicit arb: Arbitrary[Vector[T]], encoder: TypedEncoder[X1[Vector[T]]]) = forAll {
+      data: Vector[T] =>
+        val Seq(X1(vec)) = TypedDataset.create(Seq(X1(data))).collect().run()
+        Prop(vec == data)
+    }
+
+    check(prop[Boolean])
+    check(prop[Byte])
+    check(prop[Short])
+    check(prop[Int])
+    check(prop[Long])
+    check(prop[Float])
+    check(prop[Double])
+    check(prop[X1[String]])
+
   }
 
   test("not alligned columns should throw an exception") {

@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.util.GenericArrayData
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
+
 import scala.reflect.ClassTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
@@ -264,15 +265,30 @@ object TypedEncoder {
     def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
     def constructorFor(path: Expression): Expression = {
-      val arrayData = Invoke(
-        MapObjects(
-          underlying.constructorFor,
-          path,
-          underlying.targetDataType
-        ),
-        "array",
-        ScalaReflection.dataTypeFor[Array[AnyRef]]
-      )
+      val arrayData = Option(underlying.sourceDataType)
+        .filter(ScalaReflection.isNativeType)
+        .filter(_ == underlying.targetDataType)
+        .collect {
+          case BooleanType => "toBooleanArray" -> ScalaReflection.dataTypeFor[Array[Boolean]]
+          case ByteType    => "toByteArray"    -> ScalaReflection.dataTypeFor[Array[Byte]]
+          case ShortType   => "toShortArray"   -> ScalaReflection.dataTypeFor[Array[Short]]
+          case IntegerType => "toIntArray"     -> ScalaReflection.dataTypeFor[Array[Int]]
+          case LongType    => "toLongArray"    -> ScalaReflection.dataTypeFor[Array[Long]]
+          case FloatType   => "toFloatArray"   -> ScalaReflection.dataTypeFor[Array[Float]]
+          case DoubleType  => "toDoubleArray"  -> ScalaReflection.dataTypeFor[Array[Double]]
+        }.map {
+        case (method, typ) => Invoke(path, method, typ)
+      }.getOrElse {
+        Invoke(
+          MapObjects(
+            underlying.constructorFor,
+            path,
+            underlying.targetDataType
+          ),
+          "array",
+          ScalaReflection.dataTypeFor[Array[AnyRef]]
+        )
+      }
 
       StaticInvoke(
         TypedEncoderUtils.getClass,
@@ -280,6 +296,58 @@ object TypedEncoder {
         "mkVector",
         arrayData :: Nil
       )
+    }
+
+    def extractorFor(path: Expression): Expression = {
+      // if source `path` is already native for Spark, no need to `map`
+      if (ScalaReflection.isNativeType(underlying.sourceDataType)) {
+        NewInstance(
+          classOf[GenericArrayData],
+          path :: Nil,
+          dataType = ArrayType(underlying.targetDataType, underlying.nullable)
+        )
+      } else {
+        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
+      }
+    }
+  }
+
+  implicit def arrayEncoder[A](
+    implicit
+    underlying: TypedEncoder[A],
+    classTag: ClassTag[Array[A]]
+  ): TypedEncoder[Array[A]] = new TypedEncoder[Array[A]]() {
+    def nullable: Boolean = false
+
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Array[A]](classTag)
+
+    def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
+
+    def constructorFor(path: Expression): Expression = {
+      Option(underlying.sourceDataType)
+        .filter(ScalaReflection.isNativeType)
+        .filter(_ == underlying.targetDataType)
+        .collect {
+          case BooleanType => "toBooleanArray" -> ScalaReflection.dataTypeFor[Array[Boolean]]
+          case ByteType    => "toByteArray"    -> ScalaReflection.dataTypeFor[Array[Byte]]
+          case ShortType   => "toShortArray"   -> ScalaReflection.dataTypeFor[Array[Short]]
+          case IntegerType => "toIntArray"     -> ScalaReflection.dataTypeFor[Array[Int]]
+          case LongType    => "toLongArray"    -> ScalaReflection.dataTypeFor[Array[Long]]
+          case FloatType   => "toFloatArray"   -> ScalaReflection.dataTypeFor[Array[Float]]
+          case DoubleType  => "toDoubleArray"  -> ScalaReflection.dataTypeFor[Array[Double]]
+        }.map {
+          case (method, typ) => Invoke(path, method, typ)
+        }.getOrElse {
+          Invoke(
+            MapObjects(
+              underlying.constructorFor,
+              path,
+              underlying.targetDataType
+            ),
+            "array",
+            ScalaReflection.dataTypeFor[Array[AnyRef]]
+          )
+        }
     }
 
     def extractorFor(path: Expression): Expression = {
