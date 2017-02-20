@@ -1,15 +1,17 @@
 package frameless.macros
 
 import frameless.{TypedColumn, TypedEncoder}
+import org.apache.spark.sql.ColumnName
 
 import scala.collection.immutable.Queue
-import scala.reflect.macros.whitebox
+import scala.reflect.macros.{TypecheckException, whitebox}
 
 class ColumnMacros(val c: whitebox.Context) {
   import c.universe._
 
   private val TypedExpressionEncoder = reify(frameless.TypedExpressionEncoder)
   private val TypedDataset = reify(frameless.TypedDataset)
+  private val ColumnName = weakTypeOf[ColumnName]
 
   private def toColumn[A : WeakTypeTag, B : WeakTypeTag](
     selectorStr: String,
@@ -25,7 +27,7 @@ class ColumnMacros(val c: whitebox.Context) {
 
 
     val datasetCol = c.typecheck(
-      q"${c.prefix}.dataset.col($selectorStr).as[$B]($TypedExpressionEncoder.apply[$B]($encoder))"
+      q"new $ColumnName($selectorStr).as[$B]($TypedExpressionEncoder.apply[$B]($encoder))"
     )
 
     c.typecheck(q"new $typedCol($datasetCol)")
@@ -84,18 +86,18 @@ class ColumnMacros(val c: whitebox.Context) {
               List(Expr.refold(colExpr))
             case Left(errs) =>
               errs match {
-                case (tree, err) :: Nil => fail(tree)(err)
+                case (tree, err) :: Nil => fail(tree)(s": $err")
                 case multi =>
                   multi foreach {
                     case (tree, err) => c.error(tree.pos, err)
                   }
-                  fail(body)("multiple errors composing projection")
+                  fail(body)(": multiple errors composing projection")
               }
           }
 
           case other =>
             val o = other
-            fail(o)("could not compose projection")
+            fail(o)(": could not compose projection")
         }
         val df = q"${c.prefix}.dataset.toDF().select(..$selectCols)"
         val ds = q"$df.as[$B]($TypedExpressionEncoder.apply[$B])"
@@ -118,9 +120,11 @@ class ColumnMacros(val c: whitebox.Context) {
     def refold(expr: Expr): Tree = expr match {
       case LiteralExpr(tpe, tree) => q"org.apache.spark.sql.functions.lit($tree)"
       case Column(tpe, selectorStr) =>
-        q"new org.apache.spark.sql.ColumnName($selectorStr)"
+        q"new $ColumnName($selectorStr)"
+      // $COVERAGE-OFF$ - Functions can't currently be used (and currently give an error before this is reached)
       case FunctionApplication(tpe, src, fn, args) =>
         c.abort(c.enclosingPosition, "Functions not yet supported in selectExpr")
+      // $COVERAGE-ON$
       case BinaryOperator(tpe, lhs, op, rhs) =>
         val lhsTree = refold(lhs)
         val rhsTree = refold(rhs)
@@ -147,6 +151,8 @@ class ColumnMacros(val c: whitebox.Context) {
   case class FunctionApplication(tpe: Type, src: Tree, fn: TermName, args: List[Expr]) extends Expr   // SQL function
   case class Column(tpe: Type, selectorStr: String) extends Expr                         // Column of this dataset
   case class LiteralExpr(tpe: Type, tree: Tree) extends Expr                             // Literal expression
+
+  // manually added tree (temporary until functions can be implemented; needed for operator substitution)
   case class TrustMeBro(tpe: Type, tree: Tree) extends Expr
 
   case class ExprExtractor(Rooted: NameExtractor) {
@@ -162,7 +168,7 @@ class ColumnMacros(val c: whitebox.Context) {
     def unapply(tree: Tree): Option[Either[List[(Tree, String)], Expr]] = tree match {
 
       // A single column with no expression around it
-      case Rooted(strs) if tree.symbol.asMethod.isCaseAccessor =>
+      case Rooted(strs) if tree.symbol.isMethod && tree.symbol.asMethod.isCaseAccessor =>
         Some(Right(Column(tree.tpe, strs.mkString("."))))
 
       // A unary operator - the operator must exist on org.apache.spark.sql.Column
@@ -171,13 +177,7 @@ class ColumnMacros(val c: whitebox.Context) {
           rhsE.right.map {
             rhs => UnaryRAOperator(tree.tpe, rhs, op)
           }
-        } else {
-          val err = (tree, s"${op.decodedName} is not a valid column operator")
-          rhsE match {
-            case Left(errs) => Left(err :: errs)
-            case Right(_)   => Left(err :: Nil)
-          }
-        }
+        } else addError(rhsE)(tree, s"${op.decodedName} is not a valid column operator")
       }
 
       // A literal constant (would it be useful to distinguish this from non-constant literal?
@@ -194,15 +194,7 @@ class ColumnMacros(val c: whitebox.Context) {
               }.toMap
               Construct(tree.tpe, names)
           }
-        } else {
-          val err = (tree, "Only constructor can be used here")
-          Left {
-            argsE match {
-              case Left(errs) => err :: errs
-              case Right(_) => err :: Nil
-            }
-          }
-        }
+        } else addError(argsE)(tree, "Only constructor can be used here")
       }
       // Constructing a tuple or parameterized case class
       case Apply(ta @ TypeApply(sel @ Select(qualifier, TermName("apply")), typArgs), AllExprs(argsE)) => Some {
@@ -215,25 +207,14 @@ class ColumnMacros(val c: whitebox.Context) {
               }.toMap
               Construct(tree.tpe, names)
           }
-        } else {
-          val err = (tree, "Only constructor can be used here")
-          Left {
-            argsE match {
-              case Left(errs) => err :: errs
-              case Right(_) => err :: Nil
-            }
-          }
-        }
+        } else addError(argsE)(tree, "Only constructor can be used here")
       }
 
       // A binary operator - the operator must exist on org.apache.spark.sql.Column
-      case Apply(sel @ Select(This(lhsE), op: TermName), List(This(rhsE))) if isColumnOp(op, 1) =>
-        Some {
+      case Apply(sel @ Select(This(lhsE), op: TermName), List(This(rhsE))) => Some {
+        if (isColumnOp(op, 1)) {
           (lhsE, rhsE) match {
-            case (Left(errsL), Left(errsR)) => Left(errsL ::: errsR)
-            case (errs @ Left(_), Right(_)) => errs
-            case (Right(_), errs @ Left(_)) => errs
-            case (Right(lhs), Right(rhs))   => Right {
+            case (Right(lhs), Right(rhs)) => Right {
               subOperators.get(sel.symbol.asMethod).map {
                 sub =>
                   val trusted = sub(Expr.refold(lhs), Expr.refold(rhs))
@@ -242,14 +223,19 @@ class ColumnMacros(val c: whitebox.Context) {
                 BinaryOperator(tree.tpe, lhs, op, rhs)
               }
             }
+            case (lhs, rhs) => failFrom(lhs, rhs)
           }
-        }
+        } else addError(lhsE, rhsE)(tree, s"${op.decodedName} is not a valid column operator")
+      }
 
       // A function application - what to do with this? How can we check if it's an OK function?
       // Check org.apache.spark.sql.functions?
       // I think we have to port all spark functions to typed versions so we can typecheck here
       case Apply(Select(src, fn: TermName), AllExprs(argsE)) =>
-        Some(argsE.right.map(args => FunctionApplication(tree.tpe, src, fn, args)))
+        Some(Left(List((tree, "Function application not currently supported"))))
+        //Some(argsE.right.map(args => FunctionApplication(tree.tpe, src, fn, args)))
+
+      case Apply(_, _) => Some(Left(List((tree, "Function application not currently supported"))))
 
       case _ => None
     }
@@ -276,7 +262,15 @@ class ColumnMacros(val c: whitebox.Context) {
 
       val MethodType(params, _) = tree.tpe
 
-      if(tree.symbol.isMethod && result.companion =:= qualifier.tpe) {
+      val companion = Option(result.companion).filterNot(_ == NoType).getOrElse {
+        try {
+          c.typecheck(Ident(result.typeSymbol.name.toTermName)).tpe
+        } catch {
+          case TypecheckException(_, _) => NoType
+        }
+      }
+
+      if(tree.symbol.isMethod && companion =:= qualifier.tpe) {
         // must have same args as primary constructor
         val meth = tree.symbol.asMethod
         result.members.find(s => s.isConstructor && s.asMethod.isPrimaryConstructor) match {
@@ -309,19 +303,27 @@ class ColumnMacros(val c: whitebox.Context) {
         eithersOpt.map {
           eithers =>
             eithers.foldRight[Either[List[(Tree, String)], List[Expr]]](Right(Nil)) {
-              (next, accum) => next match {
-                case Left(err) => accum match {
-                  case Left(errs) => Left(err :: errs)
-                  case Right(_) =>   Left(err :: Nil)
-                }
-                case Right(expr) => accum match {
-                  case l @ Left(errs) => l
-                  case Right(exprs) => Right(expr :: exprs)
-                }
-              }
+              (next, accum) => next.fold(
+                err  => Left(err :: accum.left.toOption.getOrElse(Nil)),
+                expr => accum.right.map(expr :: _)
+              )
             }
         }
       }
+    }
+  }
+
+  def addError[A](
+    exprs: Either[List[(Tree, String)], A]*)(
+    tree: Tree, err: String
+  ): Either[List[(Tree, String)], Expr] = failFrom(exprs: _*).left.map(_ :+ (tree -> err))
+
+  def failFrom[A](exprs: Either[List[(Tree, String)], A]*): Left[List[(Tree, String)], Expr] = Left {
+    exprs.foldLeft[List[(Tree, String)]](Nil) {
+      (accum, next) => next.fold(
+        errs => accum ::: errs,
+        _    => accum
+      )
     }
   }
 
@@ -331,9 +333,6 @@ class ColumnMacros(val c: whitebox.Context) {
       tree match {
         case Ident(`name`) => Some(Queue.empty)
         case Select(This(strs), nested) => Some(strs enqueue nested.toString)
-        // $COVERAGE-OFF$ - Not sure if this case can ever come up and Encoder will still work
-        case Apply(This(strs), List()) => Some(strs)
-        // $COVERAGE-ON$
         case _ => None
       }
     }
