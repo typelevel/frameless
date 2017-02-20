@@ -64,7 +64,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def apply[A](selector: T => A)(implicit
     encoder: TypedEncoder[A]
-  ): TypedColumn[T, A] = macro frameless.column.ColumnMacros.fromFunction[T, A]
+  ): TypedColumn[T, A] = macro frameless.macros.ColumnMacros.fromFunction[T, A]
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -316,6 +316,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
     }
   }
+
+  def selectExpr[B](expr: T => B)(implicit encoder: TypedEncoder[B]): TypedDataset[B] =
+    macro frameless.macros.ColumnMacros.fromExpr[T, B]
 
   /** Type-safe projection from type T to Tuple2[A,B]
     * {{{
