@@ -28,10 +28,8 @@ class ColumnMacros(val c: whitebox.Context) {
     val B = weakTypeOf[B].dealias
 
     val selectorStr = selector.tree match {
-      case Function(List(ValDef(_, ArgName(argName), argTyp, _)), body) => body match {
-        case `argName`(strs) => strs.mkString(".")
-        case other => fail(other)
-      }
+      case NameExtractor(str) => str
+      case Function(_, body)  => fail(body)
       // $COVERAGE-OFF$ - cannot be reached as typechecking will fail in this case before macro is even invoked
       case other => fail(other)
       // $COVERAGE-ON$
@@ -50,21 +48,23 @@ class ColumnMacros(val c: whitebox.Context) {
     c.typecheck(q"new $typedCol($datasetCol)")
   }
 
-  case class NameExtractor(name: TermName) {
-    private val This = this
+  case class NameExtractor(name: TermName) { Self =>
     def unapply(tree: Tree): Option[Queue[String]] = {
       tree match {
         case Ident(`name`) => Some(Queue.empty)
-        case Select(This(strs), nested) => Some(strs enqueue nested.toString)
+        case Select(Self(strs), nested) => Some(strs enqueue nested.toString)
         // $COVERAGE-OFF$ - Not sure if this case can ever come up and Encoder will still work
-        case Apply(This(strs), List()) => Some(strs)
+        case Apply(Self(strs), List()) => Some(strs)
         // $COVERAGE-ON$
         case _ => None
       }
     }
   }
 
-  object ArgName {
-    def unapply(name: TermName): Option[NameExtractor] = Some(NameExtractor(name))
+  object NameExtractor {
+    def unapply(tree: Tree): Option[String] = tree match {
+      case Function(List(ValDef(_, name, argTyp, _)), body) => NameExtractor(name).unapply(body).map(_.mkString("."))
+      case _ => None
+    }
   }
 }
