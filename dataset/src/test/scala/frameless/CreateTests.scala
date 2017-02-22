@@ -44,6 +44,7 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     check(prop[Float])
     check(prop[Double])
     check(prop[X1[String]])
+    check(prop[String])
 
   }
 
@@ -63,6 +64,27 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     check(prop[Float])
     check(prop[Double])
     check(prop[X1[String]])
+    check(prop[String])
+
+  }
+
+  test("map fields") {
+
+    def prop[A, B](implicit arb: Arbitrary[Map[A, B]], encoder: TypedEncoder[X1[Map[A, B]]]) = forAll {
+      data: Map[A, B] =>
+        val Seq(X1(map)) = TypedDataset.create(Seq(X1(data))).collect().run()
+        Prop(map == data)
+    }
+
+    check(prop[String, Boolean])
+    check(prop[String, Byte])
+    check(prop[String, Short])
+    check(prop[String, Int])
+    check(prop[String, Long])
+    check(prop[String, Float])
+    check(prop[String, Double])
+    check(prop[String, X1[String]])
+    check(prop[String, String])
 
   }
 

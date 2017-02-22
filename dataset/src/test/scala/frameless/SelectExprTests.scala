@@ -136,8 +136,49 @@ class SelectExprTests extends TypedDatasetSuite with Matchers {
 
   }
 
+  test("quoted functions expanded to spark native column functions") {
+    import frameless.functions.quoted._
+    val ds = TypedDataset.create(Seq(X4(10, 20.0, "foo", 10L), X4(-20, 30.0, "bar", 20L)))
+
+    def test[U : TypedEncoder](expected: U*)(fn: TypedDataset[X4[Int, Double, String, Long]] => TypedDataset[U]) =
+      fn(ds).collect().run() should contain theSameElementsAs expected
+
+    def testConv[T, U : TypedEncoder](expected: T*)(fn: TypedDataset[X4[Int, Double, String, Long]] => TypedDataset[U])(conv: U => T) =
+      fn(ds).collect().run().map(conv) should contain theSameElementsAs expected
+
+    test(10, 20)(_.selectExpr(x => abs(x.a)))
+    testConv(List(10, 10, 10), List(-20, -20, -20))(_.selectExpr(x => array(x.a, x.a, x.a)))(_.toList)
+    test(Map("foo" -> 10), Map("bar" -> -20))(_.selectExpr(x => map(x.c -> x.a)))
+    test("foo", "bar")(_.selectExpr(x => coalesce(null, x.c)))
+    test(("foo", ""), ("bar", ""))(_.selectExpr(x => (x.c, input_file_name())))
+    test((false, true), (false, true))(_.selectExpr(x => (isnan(x.b), isnan(Double.NaN))))
+    test((false, true), (false, true))(_.selectExpr(x => (isnull(x.c), isnull(null: String))))
+    test(0L, 1L)(_.selectExpr(x => monotonically_increasing_id()))
+    test(20.0, 30.0)(_.selectExpr(x => nanvl(Double.NaN, x.b)))
+    test(-10, 20)(_.selectExpr(x => negate(x.a)))
+
+    // no way to compare output, but test to make sure the functions can be executed
+    ds.selectExpr(x => (x.a, rand(10L), rand(), randn(10L), randn())).collect().run()
+
+    test(math.sqrt(20.0), math.sqrt(30.0))(_.selectExpr(x => sqrt(x.b)))
+    test("ten", "not ten")(_.selectExpr(x => when(x.a == 10, "ten") otherwise "not ten"))
+    test(~10, ~(-20))(_.selectExpr(x => bitwiseNOT(x.a)))
+    test(
+      (math.acos(20.0 / 32.0), math.asin(20.0 / 32.0), math.atan(20.0), math.atan2(20.0, 20.0)),
+      (math.acos(30.0 / 32.0), math.asin(30.0 / 32.0), math.atan(30.0), math.atan2(30.0, 30.0))
+    )(_.selectExpr(x => (acos(x.b / 32), asin(x.b / 32), atan(x.b), atan2(x.b, x.b))))
+    test(java.lang.Long.toBinaryString(10L), java.lang.Long.toBinaryString(20L))(_.selectExpr(x => bin(x.d)))
+
+    // aggregate functions
+    test(2L)(_.selectExpr(x => count(x.a)))
+    test(2L)(_.selectExpr(x => countDistinct(x.a)))
+    test(2L)(_.selectExpr(x => countDistinct(x.a, x.b)))
+
+    illTyped("val a: Int = 22.22")
+  }
+
   //TODO: could we just UDF the function in this case?
-  test("functions not yet supported") {
+  test("arbitrary functions not yet supported") {
     def strfun(s: String) = s"fun${s}fun"
 
     object Fun {

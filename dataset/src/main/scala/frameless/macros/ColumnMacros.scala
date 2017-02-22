@@ -1,7 +1,8 @@
 package frameless.macros
 
+import frameless.functions.quoted.QuotedFunc
 import frameless.{TypedColumn, TypedEncoder}
-import org.apache.spark.sql.ColumnName
+import org.apache.spark.sql, sql.ColumnName
 
 import scala.collection.immutable.Queue
 import scala.reflect.macros.{TypecheckException, whitebox}
@@ -121,10 +122,12 @@ class ColumnMacros(val c: whitebox.Context) {
       case LiteralExpr(tpe, tree) => q"org.apache.spark.sql.functions.lit($tree)"
       case Column(tpe, selectorStr) =>
         q"new $ColumnName($selectorStr)"
-      // $COVERAGE-OFF$ - Functions can't currently be used (and currently give an error before this is reached)
       case FunctionApplication(tpe, src, fn, args) =>
-        c.abort(c.enclosingPosition, "Functions not yet supported in selectExpr")
-      // $COVERAGE-ON$
+        val argTrees = args.map {
+          case Left(tree) => tree
+          case Right(argExpr) => Expr.refold(argExpr)
+        }
+        q"$src.$fn(..$argTrees)"
       case BinaryOperator(tpe, lhs, op, rhs) =>
         val lhsTree = refold(lhs)
         val rhsTree = refold(rhs)
@@ -148,7 +151,7 @@ class ColumnMacros(val c: whitebox.Context) {
   case class Construct(tpe: Type, args: Map[String, Expr]) extends Expr                  // Construct tuple or case class
   case class UnaryRAOperator(tpe: Type, rhs: Expr, op: TermName) extends Expr            // Unary right-associative op
   case class BinaryOperator(tpe: Type, lhs: Expr, op: TermName, rhs: Expr) extends Expr  // Binary op
-  case class FunctionApplication(tpe: Type, src: Tree, fn: TermName, args: List[Expr]) extends Expr   // SQL function
+  case class FunctionApplication(tpe: Type, src: Tree, fn: TermName, args: List[Either[Tree, Expr]]) extends Expr   // SQL function
   case class Column(tpe: Type, selectorStr: String) extends Expr                         // Column of this dataset
   case class LiteralExpr(tpe: Type, tree: Tree) extends Expr                             // Literal expression
 
@@ -250,22 +253,70 @@ class ColumnMacros(val c: whitebox.Context) {
           )
         }.getOrElse {
           if (isColumnOp(op, 1)) {
+            // special case - substitute === for ==
+            val realOp = if(op.decodedName.toString == "==") TermName("===").encodedName.toTermName else op
             requireBoth(lhsE, rhsE)(
               (lhs, rhs) => failFrom(lhs, rhs),
-              (lhs, rhs) => Right(BinaryOperator(tree.tpe, lhs, op, rhs))
+              (lhs, rhs) => Right(BinaryOperator(tree.tpe, lhs, realOp, rhs))
             )
           } else addError(lhsE, rhsE)(tree, s"${op.decodedName} is not a valid column operator")
         }
       }
 
-      // A function application - what to do with this? How can we check if it's an OK function?
-      // Check org.apache.spark.sql.functions?
-      // I think we have to port all spark functions to typed versions so we can typecheck here
-      case Apply(Select(src, fn: TermName), AllExprs(argsE)) =>
-        Some(Left(List((tree, "Function application not currently supported"))))
+      // A function application
+      case Apply(fn @ (Select(_, _) | TypeApply(_, _)), argTrees) => Some {
+        // if the function is annotated with a QuotedFunc, it gets rewritten to the native spark function
+        fn.symbol.annotations.find(_.tree.tpe <:< weakTypeOf[QuotedFunc]).map {
+          annot => annot.tree match {
+            case Apply(Select(New(tpt), _), List(sparkFuncTree)) =>
+              val Function(sparkFnArgs, body) = sparkFuncTree match {
+                case SingleExpression(f@Function(_, _)) => f
+                case Select(SingleExpression(f @ Function(_, _)), TermName("tupled")) => f
+                case other =>
+                  val o = other
+                  println(o)
+                  EmptyTree
+              }
+
+
+              val sparkArgs = if(sparkFnArgs.nonEmpty) {
+                sparkFnArgs.zipAll(argTrees.map(Some(_)), sparkFnArgs.last, None).flatMap {
+                  case (_, None) => Nil
+                  case (ValDef(_, _, typ, _), Some(This(Right(expr)))) if typ.tpe <:< weakTypeOf[sql.Column] =>
+                    List(Right(expr))
+                  case (ValDef(_, _, typ, _), Some(This(Right(expr)))) if typ.tpe <:< weakTypeOf[Seq[sql.Column]] =>
+                    List(Right(expr))
+                  case (ValDef(_, _, typ, _), Some(Tuple2Tree(This(Right(a)), This(Right(b)))))
+                    if typ.tpe <:< weakTypeOf[Seq[(sql.Column, sql.Column)]] =>
+                    List(Right(a), Right(b))
+                  case (arg, Some(argTree)) =>
+                    List(Left(argTree))
+                }
+              } else {
+                Nil
+              }
+
+              val (src, term) = body match {
+                case Apply(Select(q, t), _) => (q, t)
+              }
+
+              Right(FunctionApplication(tree.tpe, src, term.toTermName, sparkArgs))
+            case other =>
+              println(other)
+              Left(List((tree, "Function application not currently supported")))
+          }
+        }.getOrElse {
+          Left(List((tree, "Function application not currently supported")))
+        }
+
+      }
         //Some(argsE.right.map(args => FunctionApplication(tree.tpe, src, fn, args)))
 
+      case Apply(This(fn), implicitArgs) => Some(fn)
+
       case Apply(_, _) => Some(Left(List((tree, "Function application not currently supported"))))
+
+      case Typed(This(expr), _) => Some(expr)
 
       case _ => None
     }
@@ -373,5 +424,22 @@ class ColumnMacros(val c: whitebox.Context) {
 
   object ArgName {
     def unapply(name: TermName): Option[NameExtractor] = Some(NameExtractor(name))
+  }
+
+  object Tuple2Tree {
+    def unapply(tree: Tree): Option[(Tree, Tree)] = tree match {
+      case q"($a, $b)" => Some((a, b))
+      case q"$predef.ArrowAssoc[..$tptA]($a).->[..$tptB]($b)" => Some((a, b))
+      case other =>
+        None
+    }
+  }
+
+  object SingleExpression {
+    def unapply(tree: Tree): Option[Tree] = tree match {
+      case Block(Nil, expr) => Some(expr)
+      case Block(_, _)      => None
+      case other            => Some(other)
+    }
   }
 }
