@@ -288,11 +288,9 @@ object TypedEncoder {
     implicit
     underlying: TypedEncoder[A]
   ): TypedEncoder[Vector[A]] = new CollectionEncoder[Vector, A]() {
-    val nullable: Boolean = false
-
-    val sourceDataType: DataType = FramelessInternals.objectTypeFor[Vector[A]](classTag)
-
-    val targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
+    def nullable: Boolean = false
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Vector[A]](classTag)
+    def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
     def constructorFor(path: Expression): Expression = {
       StaticInvoke(
@@ -321,9 +319,9 @@ object TypedEncoder {
     implicit
     underlying: TypedEncoder[A]
   ): TypedEncoder[Array[A]] = new CollectionEncoder[Array, A]() {
-    val nullable: Boolean = false
-    val sourceDataType: DataType = FramelessInternals.objectTypeFor[Array[A]](classTag)
-    val targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
+    def nullable: Boolean = false
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Array[A]](classTag)
+    def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
     def constructorFor(path: Expression): Expression = arrayData(path)
 
@@ -346,9 +344,9 @@ object TypedEncoder {
     encodeA: TypedEncoder[A],
     encodeB: TypedEncoder[B]
   ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
-    val nullable: Boolean = false
-    val sourceDataType = FramelessInternals.objectTypeFor[Map[A, B]]
-    val targetDataType = MapType(encodeA.targetDataType, encodeB.targetDataType, encodeB.nullable)
+    def nullable: Boolean = false
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
+    def targetDataType: DataType = MapType(encodeA.targetDataType, encodeB.targetDataType, encodeB.nullable)
 
     private def wrap(arrayData: Expression) = {
       StaticInvoke(
@@ -359,7 +357,7 @@ object TypedEncoder {
     }
 
     def constructorFor(path: Expression): Expression = {
-      val keyArrayType = ArrayType(encodeA.targetDataType, false)
+      val keyArrayType = ArrayType(encodeA.targetDataType, containsNull = false)
       val keyData = wrap(arrayEncoder[A].constructorFor(Invoke(path, "keyArray", keyArrayType)))
 
       val valueArrayType = ArrayType(encodeB.targetDataType, encodeB.nullable)
