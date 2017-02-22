@@ -29,7 +29,7 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 //   - import TypedEncoder.usingInjection
 //   - import TypedEncoder.usingDerivation
 // """)
-object TypedEncoder extends TypedEncoder0 {
+object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
   implicit val unitEncoder: TypedEncoder[Unit] = new TypedEncoder[Unit] {
@@ -469,9 +469,6 @@ object TypedEncoder extends TypedEncoder0 {
         trb.extractorFor(invoke)
       }
     }
-}
-
-sealed trait TypedEncoder0 { self: TypedEncoder.type =>
 
   /** Encodes things as records if there is not Injection defined */
   implicit def usingDerivation[F, G <: HList](
