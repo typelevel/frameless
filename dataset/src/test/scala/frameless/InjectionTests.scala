@@ -3,7 +3,6 @@ package frameless
 import frameless.CollectTests.prop
 import org.scalacheck._
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
 
 sealed trait Country
 case object France extends Country
@@ -113,22 +112,7 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[I[Option[Int]]].nullable)
   }
 
-  test("TypedEncoder[Person] is ambiguous") {
-    illTyped("implicitly[TypedEncoder[Person]]", "ambiguous implicit values.*")
-  }
-
-  test("Resolve ambiguity by importing usingInjection") {
-    import TypedEncoder.usingInjection
-
-    check(forAll(prop[X1[Person]] _))
-    check(forAll(prop[X1[X1[Person]]] _))
-    check(forAll(prop[X2[Person, Person]] _))
-    check(forAll(prop[Person] _))
-
-    assert(TypedEncoder[Person].targetDataType == TypedEncoder[(Int, String)].targetDataType)
-  }
-
-  test("Resolve ambiguity by importing usingDerivation") {
+  test("Use derivation instead by importing usingDerivation") {
     import TypedEncoder.usingDerivation
     assert(implicitly[TypedEncoder[Person]].isInstanceOf[RecordEncoder[Person, _]])
     check(forAll(prop[Person] _))
