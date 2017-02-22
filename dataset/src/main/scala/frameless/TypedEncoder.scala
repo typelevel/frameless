@@ -8,7 +8,6 @@ import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
-
 import scala.reflect.ClassTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
@@ -35,11 +34,9 @@ object TypedEncoder {
     def nullable: Boolean = true
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[Unit]
-
     def targetDataType: DataType = NullType
 
     def constructorFor(path: Expression): Expression = Literal.create((), sourceDataType)
-
     def extractorFor(path: Expression): Expression = Literal.create(null, targetDataType)
   }
 
@@ -47,7 +44,6 @@ object TypedEncoder {
     def nullable: Boolean = true
 
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[String]
-
     def targetDataType: DataType = StringType
 
     def extractorFor(path: Expression): Expression =
@@ -61,11 +57,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = BooleanType
-
     def targetDataType: DataType = BooleanType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -73,11 +67,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = IntegerType
-
     def targetDataType: DataType = IntegerType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -85,11 +77,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = LongType
-
     def targetDataType: DataType = LongType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -97,11 +87,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ShortType
-
     def targetDataType: DataType = ShortType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -110,7 +98,6 @@ object TypedEncoder {
 
     implicit val charAsString: Injection[java.lang.Character, String] = new Injection[java.lang.Character, String] {
       def apply(a: java.lang.Character): String = String.valueOf(a)
-
       def invert(b: String): java.lang.Character = {
         require(b.length == 1)
         b.charAt(0)
@@ -123,11 +110,9 @@ object TypedEncoder {
 
     // this line fixes underlying encoder
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[java.lang.Character]
-
     def targetDataType: DataType = StringType
 
     def extractorFor(path: Expression): Expression = underlying.extractorFor(path)
-
     def constructorFor(path: Expression): Expression = underlying.constructorFor(path)
   }
 
@@ -135,11 +120,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ByteType
-
     def targetDataType: DataType = ByteType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -147,11 +130,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = FloatType
-
     def targetDataType: DataType = FloatType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -159,11 +140,9 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = DoubleType
-
     def targetDataType: DataType = DoubleType
 
     def extractorFor(path: Expression): Expression = path
-
     def constructorFor(path: Expression): Expression = path
   }
 
@@ -171,7 +150,6 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[BigDecimal]
-
     def targetDataType: DataType = DecimalType.SYSTEM_DEFAULT
 
     def extractorFor(path: Expression): Expression =
@@ -185,7 +163,6 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLDate]
-
     def targetDataType: DataType = DateType
 
     def extractorFor(path: Expression): Expression =
@@ -205,7 +182,6 @@ object TypedEncoder {
     def nullable: Boolean = false
 
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLTimestamp]
-
     def targetDataType: DataType = TimestampType
 
     def extractorFor(path: Expression): Expression =
@@ -228,7 +204,6 @@ object TypedEncoder {
     def nullable: Boolean = true
 
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
-
     def targetDataType: DataType = underlying.targetDataType
 
     def extractorFor(path: Expression): Expression = {
@@ -347,9 +322,7 @@ object TypedEncoder {
     underlying: TypedEncoder[A]
   ): TypedEncoder[Array[A]] = new CollectionEncoder[Array, A]() {
     val nullable: Boolean = false
-
     val sourceDataType: DataType = FramelessInternals.objectTypeFor[Array[A]](classTag)
-
     val targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
     def constructorFor(path: Expression): Expression = arrayData(path)
@@ -377,15 +350,6 @@ object TypedEncoder {
     val sourceDataType = FramelessInternals.objectTypeFor[Map[A, B]]
     val targetDataType = MapType(encodeA.targetDataType, encodeB.targetDataType, encodeB.nullable)
 
-    // needed to construct Map using `ArrayBasedMapData.toScalaMap` (avoids an extra MapObjects)
-    private val arrayA = arrayEncoder[A]
-    private val arrayB = arrayEncoder[B]
-
-    // needed to extract keys/values from map - toArray requires an implicit and can't be called from codegen Java
-    private val vectorA = vectorEncoder[A]
-    private val vectorB = vectorEncoder[B]
-
-
     private def wrap(arrayData: Expression) = {
       StaticInvoke(
         scala.collection.mutable.WrappedArray.getClass,
@@ -396,10 +360,10 @@ object TypedEncoder {
 
     def constructorFor(path: Expression): Expression = {
       val keyArrayType = ArrayType(encodeA.targetDataType, false)
-      val keyData = wrap(arrayA.constructorFor(Invoke(path, "keyArray", keyArrayType)))
+      val keyData = wrap(arrayEncoder[A].constructorFor(Invoke(path, "keyArray", keyArrayType)))
 
       val valueArrayType = ArrayType(encodeB.targetDataType, encodeB.nullable)
-      val valueData = wrap(arrayB.constructorFor(Invoke(path, "valueArray", valueArrayType)))
+      val valueData = wrap(arrayEncoder[B].constructorFor(Invoke(path, "valueArray", valueArrayType)))
 
       StaticInvoke(
         ArrayBasedMapData.getClass,
@@ -413,15 +377,15 @@ object TypedEncoder {
         Invoke(
           Invoke(path, "keysIterator", FramelessInternals.objectTypeFor[scala.collection.Iterator[A]]),
           "toVector",
-          vectorA.sourceDataType)
-      val convertedKeys = arrayA.extractorFor(keys)
+          vectorEncoder[A].sourceDataType)
+      val convertedKeys = arrayEncoder[A].extractorFor(keys)
 
       val values =
         Invoke(
           Invoke(path, "valuesIterator", FramelessInternals.objectTypeFor[scala.collection.Iterator[B]]),
           "toVector",
-          vectorB.sourceDataType)
-      val convertedValues = arrayB.extractorFor(values)
+          vectorEncoder[B].sourceDataType)
+      val convertedValues = arrayEncoder[B].extractorFor(values)
 
       NewInstance(
         classOf[ArrayBasedMapData],
@@ -433,22 +397,22 @@ object TypedEncoder {
 
   /** Encodes things using injection if there is one defined */
   implicit def usingInjection[A: ClassTag, B]
-  (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
-    new TypedEncoder[A] {
-      def nullable: Boolean = trb.nullable
-      def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
-      def targetDataType: DataType = trb.targetDataType
+    (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
+      new TypedEncoder[A] {
+        def nullable: Boolean = trb.nullable
+        def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
+        def targetDataType: DataType = trb.targetDataType
 
-      def constructorFor(path: Expression): Expression = {
-        val bexpr = trb.constructorFor(path)
-        Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
-      }
+        def constructorFor(path: Expression): Expression = {
+          val bexpr = trb.constructorFor(path)
+          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
+        }
 
-      def extractorFor(path: Expression): Expression = {
-        val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
-        trb.extractorFor(invoke)
+        def extractorFor(path: Expression): Expression = {
+          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
+          trb.extractorFor(invoke)
+        }
       }
-    }
 
   /** Encodes things as records if there is not Injection defined */
   implicit def usingDerivation[F, G <: HList](
