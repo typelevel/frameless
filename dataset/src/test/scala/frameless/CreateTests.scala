@@ -68,7 +68,7 @@ class CreateTests extends TypedDatasetSuite with Matchers {
 
   }
 
-  test("map fields") {
+  test("map fields (scala.Predef.Map / scala.collection.immutable.Map)") {
 
     def prop[A, B](implicit arb: Arbitrary[Map[A, B]], encoder: TypedEncoder[X1[Map[A, B]]]) = forAll {
       data: Map[A, B] =>
