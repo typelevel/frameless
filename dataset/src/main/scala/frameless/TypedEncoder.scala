@@ -378,11 +378,11 @@ object TypedEncoder {
     val sourceDataType = FramelessInternals.objectTypeFor[Map[A, B]]
     val targetDataType = MapType(encodeA.targetDataType, encodeB.targetDataType, encodeB.nullable)
 
-    implicit val classTagArrayA = implicitly[ClassTag[A]].wrap
-    implicit val classTagArrayB = implicitly[ClassTag[B]].wrap
-
+    // needed to construct Map using `ArrayBasedMapData.toScalaMap` (avoids an extra MapObjects)
     private val arrayA = arrayEncoder[A]
     private val arrayB = arrayEncoder[B]
+
+    // needed to extract keys/values from map - toArray requires an implicit and can't be called from codegen Java
     private val vectorA = vectorEncoder[A]
     private val vectorB = vectorEncoder[B]
 
