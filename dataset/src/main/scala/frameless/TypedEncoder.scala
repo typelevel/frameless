@@ -283,7 +283,7 @@ object TypedEncoder {
     classTag: ClassTag[F[A]]
   ) extends TypedEncoder[F[A]] {
 
-    protected def arrayData(path: Expression) = Option(underlying.sourceDataType)
+    protected def arrayData(path: Expression): Expression = Option(underlying.sourceDataType)
       .filter(ScalaReflection.isNativeType)
       .filter(_ == underlying.targetDataType)
       .collect {
@@ -295,19 +295,18 @@ object TypedEncoder {
         case FloatType   => "toFloatArray"   -> ScalaReflection.dataTypeFor[Array[Float]]
         case DoubleType  => "toDoubleArray"  -> ScalaReflection.dataTypeFor[Array[Double]]
       }.map {
-      case (method, typ) => Invoke(path, method, typ)
-    }.getOrElse {
-      Invoke(
-        MapObjects(
-          underlying.constructorFor,
-          path,
-          underlying.targetDataType
-        ),
-        "array",
-        FramelessInternals.objectTypeFor[Array[A]]
-      )
-    }
-
+        case (method, typ) => Invoke(path, method, typ)
+      }.getOrElse {
+        Invoke(
+          MapObjects(
+            underlying.constructorFor,
+            path,
+            underlying.targetDataType
+          ),
+          "array",
+          FramelessInternals.objectTypeFor[Array[A]]
+        )
+      }
   }
 
   implicit def vectorEncoder[A : ClassTag](
