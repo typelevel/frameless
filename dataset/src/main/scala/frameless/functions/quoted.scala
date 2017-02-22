@@ -26,6 +26,7 @@ object quoted {
   class sparkColumnOp[A, B](referrent: Column => A => B) extends StaticAnnotation with QuotedFunc
   class sparkAggregate[A, B](referent: A => B) extends StaticAnnotation with QuotedFunc
   class sparkWindowFunction[A, B](referent: A => B) extends StaticAnnotation with QuotedFunc
+  class sparkWindowFunction0[B](referent: () => B) extends StaticAnnotation with QuotedFunc
 
   @sparkFunction(sf.abs)
   def abs[T : Numeric](t: T): T = implicitly[Numeric[T]].abs(t)
@@ -171,7 +172,7 @@ object quoted {
   def hypot(a: Double, b: Double): Double = math.hypot(a, b)
 
   @sparkFunction((cols: Seq[Column]) => sf.least(cols:_*))
-  def least[T : Ordering](first: T, rest: T*) = rest.foldLeft(first)(implicitly[Ordering[T]].min)
+  def least[T : Ordering](first: T, rest: T*): T = rest.foldLeft(first)(implicitly[Ordering[T]].min)
 
   @sparkFunction(sf.log(_:Column))
   def log(n: Double): Double = math.log(n)
@@ -293,5 +294,148 @@ object quoted {
   @sparkAggregate(((col: Column, cols: Seq[Column]) => sf.countDistinct(col, cols:_*)).tupled)
   @compileTimeOnly(aggMsg)
   def countDistinct(columns: Any*): Long = ???
+
+  @sparkAggregate((sf.covar_pop(_:Column,_:Column)).tupled)
+  @compileTimeOnly(aggMsg)
+  def covar_pop(a: Double, b: Double): Double = ???
+
+  @sparkAggregate((sf.covar_samp(_:Column,_:Column)).tupled)
+  @compileTimeOnly(aggMsg)
+  def covar_samp(a: Double, b: Double): Double = ???
+
+  @sparkAggregate((sf.first(_:Column,_:Boolean)).tupled)
+  @compileTimeOnly(aggMsg)
+  def first[T](col: T, ignoreNulls: Boolean) = ???
+
+  @sparkAggregate(sf.first(_:Column))
+  @compileTimeOnly(aggMsg)
+  def first[T](col: T): T = first(col, ignoreNulls = false)
+
+  @sparkAggregate(sf.grouping(_:Column))
+  @compileTimeOnly(aggMsg)
+  def grouping(col: Any): Int = ???
+
+  @sparkAggregate((cols: Seq[Column]) => sf.grouping_id(cols:_*))
+  @compileTimeOnly(aggMsg)
+  def grouping_id(cols: Any*): Int = ???
+
+  @sparkAggregate(sf.kurtosis(_:Column))
+  @compileTimeOnly(aggMsg)
+  def kurtosis(col: Double): Double = ???
+
+  @sparkAggregate((sf.last(_:Column,_:Boolean)).tupled)
+  @compileTimeOnly(aggMsg)
+  def last[T](col: T, ignoreNulls: Boolean) = ???
+
+  @sparkAggregate(sf.last(_:Column))
+  @compileTimeOnly(aggMsg)
+  def last[T](col: T): T = last(col, ignoreNulls = false)
+
+  @sparkAggregate(sf.max(_:Column))
+  @compileTimeOnly(aggMsg)
+  def max[T : Ordering](col: T): T = ???
+
+  @sparkAggregate(sf.mean(_:Column))
+  @compileTimeOnly(aggMsg)
+  def mean[T : Numeric](col: T): T = ???
+
+  @sparkAggregate(sf.min(_:Column))
+  @compileTimeOnly(aggMsg)
+  def min[T : Ordering](col: T): T = ???
+
+  @sparkAggregate(sf.skewness(_:Column))
+  @compileTimeOnly(aggMsg)
+  def skewness(col: Double): Double = ???
+
+  @sparkAggregate(sf.stddev(_:Column))
+  @compileTimeOnly(aggMsg)
+  def stddev(col: Double): Double = ???
+
+  @sparkAggregate(sf.stddev_samp(_:Column))
+  @compileTimeOnly(aggMsg)
+  def stddev_samp(col: Double): Double = ???
+
+  @sparkAggregate(sf.stddev_pop(_:Column))
+  @compileTimeOnly(aggMsg)
+  def stddev_pop(col: Double): Double = ???
+
+  @sparkAggregate(sf.sum(_:Column))
+  @compileTimeOnly(aggMsg)
+  def sum[T : Numeric](col: T): T = ???
+
+  @sparkAggregate(sf.sumDistinct(_:Column))
+  @compileTimeOnly(aggMsg)
+  def sumDistinct[T : Numeric](col: T): T = ???
+
+  @sparkAggregate(sf.variance(_:Column))
+  @compileTimeOnly(aggMsg)
+  def variance[T : Numeric](col: T): T = ???
+
+  @sparkAggregate(sf.var_samp(_:Column))
+  @compileTimeOnly(aggMsg)
+  def var_samp[T : Numeric](col: T): T = ???
+
+  @sparkAggregate(sf.var_pop(_:Column))
+  @compileTimeOnly(aggMsg)
+  def var_pop[T : Numeric](col: T): T = ???
+
+  //////////////////////
+  // Window functions //
+  //////////////////////
+
+  @sparkWindowFunction0(sf.cume_dist)
+  @compileTimeOnly(aggMsg)
+  def cume_dist(): Double = ???
+
+  @sparkWindowFunction0(sf.dense_rank)
+  @compileTimeOnly(aggMsg)
+  def dense_rank(): Double = ???
+
+  @sparkWindowFunction((sf.lag(_:Column,_:Int)).tupled)
+  @compileTimeOnly(aggMsg)
+  def lag[T](col: T, offset: Int): T = ???
+
+  @sparkWindowFunction((sf.lead(_:Column,_:Int)).tupled)
+  @compileTimeOnly(aggMsg)
+  def lead[T](col: T, offset: Int): T = ???
+
+  @sparkWindowFunction(sf.ntile)
+  @compileTimeOnly(aggMsg)
+  def ntile(n: Int): Int = ???
+
+  @sparkWindowFunction0(sf.percent_rank)
+  @compileTimeOnly(aggMsg)
+  def percent_rank(): Double = ???
+
+  @sparkWindowFunction0(sf.rank)
+  @compileTimeOnly(aggMsg)
+  def rank(): Int = ???
+
+  @sparkWindowFunction0(sf.row_number)
+  @compileTimeOnly(aggMsg)
+  def row_number(): Long = ???
+
+  ////////////////////
+  // Misc functions //
+  ////////////////////
+
+  @sparkFunction(sf.md5)
+  def md5(col: Array[Byte]): String = org.apache.commons.codec.digest.DigestUtils.md5Hex(col)
+
+  @sparkFunction(sf.sha1)
+  def sha1(col: Array[Byte]): String = org.apache.commons.codec.digest.DigestUtils.sha1Hex(col)
+
+  @sparkFunction((sf.sha2(_, _)).tupled)
+  @compileTimeOnly("Implemented only in frameless expressions")
+  def sha2(col: Array[Byte], numBits: Int): String = ???
+
+  @sparkFunction(sf.crc32)
+  @compileTimeOnly("Implemented only in frameless expressions")
+  def sha2(col: Array[Byte]): Long = ???
+
+  @sparkFunction(sf.hash)
+  @compileTimeOnly("Implemented only in frameless expressions")
+  def hash(cols: Any*): Int = ???
+
 
 }
