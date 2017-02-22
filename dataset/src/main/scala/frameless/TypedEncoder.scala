@@ -450,27 +450,28 @@ object TypedEncoder extends TypedEncoder0 {
     }
 
   }
+
+  /** Encodes things using injection if there is one defined */
+  implicit def usingInjection[A: ClassTag, B]
+  (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
+    new TypedEncoder[A] {
+      def nullable: Boolean = trb.nullable
+      def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
+      def targetDataType: DataType = trb.targetDataType
+
+      def constructorFor(path: Expression): Expression = {
+        val bexpr = trb.constructorFor(path)
+        Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
+      }
+
+      def extractorFor(path: Expression): Expression = {
+        val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
+        trb.extractorFor(invoke)
+      }
+    }
 }
 
 sealed trait TypedEncoder0 { self: TypedEncoder.type =>
-  /** Encodes things using injection if there is one defined */
-  implicit def usingInjection[A: ClassTag, B]
-    (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
-      new TypedEncoder[A] {
-        def nullable: Boolean = trb.nullable
-        def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
-        def targetDataType: DataType = trb.targetDataType
-
-        def constructorFor(path: Expression): Expression = {
-          val bexpr = trb.constructorFor(path)
-          Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
-        }
-
-        def extractorFor(path: Expression): Expression = {
-          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
-          trb.extractorFor(invoke)
-        }
-      }
 
   /** Encodes things as records if there is not Injection defined */
   implicit def usingDerivation[F, G <: HList](
