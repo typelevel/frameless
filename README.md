@@ -3,7 +3,7 @@
 [![Travis Badge](https://travis-ci.org/typelevel/frameless.svg?branch=master)](https://travis-ci.org/typelevel/frameless)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
 [![Maven Badge](https://img.shields.io/maven-central/v/io.github.adelbertc/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.adelbertc/frameless-dataset_2.11)
-[![Gitter Badge](https://badges.gitter.im/adelbertc/frameless.svg)](https://gitter.im/adelbertc/frameless?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter Badge](https://badges.gitter.im/typelevel/frameless.svg)](https://gitter.im/typelevel/frameless)
 
 Frameless is a proof-of-concept library for working with [Spark](http://spark.apache.org/) using more expressive types.
 It consists of the following modules:
