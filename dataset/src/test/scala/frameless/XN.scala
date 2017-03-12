@@ -64,3 +64,5 @@ object X5 {
   implicit def ordering[A: Ordering, B: Ordering, C: Ordering, D: Ordering, E: Ordering]: Ordering[X5[A, B, C, D, E]] =
     Ordering.Tuple5[A, B, C, D, E].on(x => (x.a, x.b, x.c, x.d, x.e))
 }
+
+case class X4X4[A, B, C, D](xa: X4[A, B, C, D], xb: X4[A, B, C, D])

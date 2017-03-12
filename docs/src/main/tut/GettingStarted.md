@@ -63,13 +63,13 @@ val apartmentsTypedDS2 = spark.createDataset(apartments).typed
 This is how we select a particular column from a `TypedDataset`:
 
 ```tut:book
-val cities: TypedDataset[String] = apartmentsTypedDS.select(apartmentsTypedDS('city))
+val cities: TypedDataset[String] = apartmentsTypedDS.select(apartmentsTypedDS(_.city))
 ```
 
 This is completely safe, for instance suppose we misspell `city`:
 
 ```tut:book:fail
-apartmentsTypedDS.select(apartmentsTypedDS('citi))
+apartmentsTypedDS.select(apartmentsTypedDS(_.citi))
 ```
 
 This gets caught at compile-time, whereas with traditional Spark `Dataset` the error appears at run-time.
@@ -81,7 +81,7 @@ apartmentsDS.select('citi)
 `select()` supports arbitrary column operations:
 
 ```tut:book
-apartmentsTypedDS.select(apartmentsTypedDS('surface) * 10, apartmentsTypedDS('surface) + 2).show().run()
+apartmentsTypedDS.select(apartmentsTypedDS(_.surface) * 10, apartmentsTypedDS(_.surface) + 2).show().run()
 ```
 
 *Note that unlike the standard Spark api, here `show()` is lazy. It requires to apply `run()` for the
@@ -91,14 +91,14 @@ apartmentsTypedDS.select(apartmentsTypedDS('surface) * 10, apartmentsTypedDS('su
 Let us now try to compute the price by surface unit:
 
 ```tut:book:fail
-val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface))                                                                          ^
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(_.price)/apartmentsTypedDS(_.surface))                                                                          ^
 ```
 
 Argh! Looks like we can't divide a `TypedColumn` of `Double` by `Int`.
 Well, we can cast our `Int`s to `Double`s explicitly to proceed with the computation.
 
 ```tut:book
-val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface).cast[Double])
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(_.price)/apartmentsTypedDS(_.surface).cast[Double])
 priceBySurfaceUnit.collect().run()
 ```
 
@@ -107,7 +107,7 @@ Alternatively, we can perform the cast implicitly:
 ```tut:book
 import frameless.implicits.widen._
 
-val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS('price)/apartmentsTypedDS('surface))
+val priceBySurfaceUnit = apartmentsTypedDS.select(apartmentsTypedDS(_.price)/apartmentsTypedDS(_.surface))
 priceBySurfaceUnit.collect.run()
 ```
 
@@ -115,7 +115,7 @@ Looks like it worked, but that `cast` looks unsafe right? Actually it is safe.
 Let's try to cast a `TypedColumn` of `String` to `Double`:
 
 ```tut:book:fail
-apartmentsTypedDS('city).cast[Double]
+apartmentsTypedDS(_.city).cast[Double]
 ```
 
 The compile-time error tells us that to perform the cast, an evidence (in the form of `CatalystCast[String, Double]`) must be available.
@@ -136,7 +136,7 @@ The cast is valid and the expression compiles:
 
 ```tut:book
 case class UpdatedSurface(city: String, surface: Int)
-val updated = apartmentsTypedDS.select(apartmentsTypedDS('city), apartmentsTypedDS('surface) + 2).as[UpdatedSurface]
+val updated = apartmentsTypedDS.select(apartmentsTypedDS(_.city), apartmentsTypedDS(_.surface) + 2).as[UpdatedSurface]
 updated.show(2).run()
 ```
 
@@ -144,7 +144,7 @@ Next we try to cast a `(String, String)` to an `UpdatedSurface` (which has types
 The cast is not valid and the expression does not compile:
 
 ```tut:book:fail
-apartmentsTypedDS.select(apartmentsTypedDS('city), apartmentsTypedDS('city)).as[UpdatedSurface]
+apartmentsTypedDS.select(apartmentsTypedDS(_.city), apartmentsTypedDS(_.city)).as[UpdatedSurface]
 ```
 
 ### Projections
@@ -161,7 +161,7 @@ import frameless.implicits.widen._
 val aptds = apartmentsTypedDS // For shorter expressions
 
 case class ApartmentDetails(city: String, price: Double, surface: Int, ratio: Double)
-val aptWithRatio = aptds.select(aptds('city), aptds('price), aptds('surface), aptds('price) / aptds('surface)).as[ApartmentDetails]
+val aptWithRatio = aptds.select(aptds(_.city), aptds(_.price), aptds(_.surface), aptds(_.price) / aptds(_.surface)).as[ApartmentDetails]
 ```
 
 Suppose we only want to work with `city` and `ratio`:
@@ -222,7 +222,7 @@ val udf = apartmentsTypedDS.makeUDF(priceModifier)
 
 val aptds = apartmentsTypedDS // For shorter expressions
 
-val adjustedPrice = aptds.select(aptds('city), udf(aptds('city), aptds('price)))
+val adjustedPrice = aptds.select(aptds(_.city), udf(aptds(_.city), aptds(_.price)))
 
 adjustedPrice.show().run()
 ```
@@ -230,12 +230,12 @@ adjustedPrice.show().run()
 ## GroupBy and Aggregations
 Let's suppose we wanted to retrieve the average apartment price in each city
 ```tut:book
-val priceByCity = apartmentsTypedDS.groupBy(apartmentsTypedDS('city)).agg(avg(apartmentsTypedDS('price)))
+val priceByCity = apartmentsTypedDS.groupBy(apartmentsTypedDS(_.city)).agg(avg(apartmentsTypedDS(_.price)))
 priceByCity.collect().run()
 ```
 Again if we try to aggregate a column that can't be aggregated, we get a compilation error
 ```tut:book:fail
-apartmentsTypedDS.groupBy(apartmentsTypedDS('city)).agg(avg(apartmentsTypedDS('city)))                                                         ^
+apartmentsTypedDS.groupBy(apartmentsTypedDS(_.city)).agg(avg(apartmentsTypedDS(_.city)))                                                         ^
 ```
 
 Next, we combine `select` and `groupBy` to calculate the average price/surface ratio per city:
@@ -243,9 +243,9 @@ Next, we combine `select` and `groupBy` to calculate the average price/surface r
 ```tut:book
 val aptds = apartmentsTypedDS // For shorter expressions
 
-val cityPriceRatio =  aptds.select(aptds('city), aptds('price) / aptds('surface))
+val cityPriceRatio =  aptds.select(aptds(_.city), aptds(_.price) / aptds(_.surface))
 
-cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show().run()
+cityPriceRatio.groupBy(cityPriceRatio(_._1)).agg(avg(cityPriceRatio(_._2))).show().run()
 ```
 
 ## Joins
@@ -265,7 +265,7 @@ val citiInfoTypedDS = TypedDataset.create(cityInfo)
 Here is how to join the population information to the apartment's dataset.
 
 ```tut:book
-val withCityInfo = apartmentsTypedDS.join(citiInfoTypedDS, apartmentsTypedDS('city), citiInfoTypedDS('name))
+val withCityInfo = apartmentsTypedDS.join(citiInfoTypedDS, apartmentsTypedDS(_.city), citiInfoTypedDS(_.name))
 
 withCityInfo.show().run()
 ```
@@ -278,7 +278,7 @@ We can then select which information we want to continue to work with:
 case class AptPriceCity(city: String, aptPrice: Double, cityPopulation: Int)
 
 withCityInfo.select(
-   withCityInfo.colMany('_2, 'name), withCityInfo.colMany('_1, 'price), withCityInfo.colMany('_2, 'population)
+   withCityInfo(_._2.name), withCityInfo(_._1.price), withCityInfo(_._2.population)
 ).as[AptPriceCity].show().run
 ```
 

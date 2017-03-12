@@ -297,7 +297,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) + const).collect().run().toVector
+      val dataset2 = ds.select(ds(_.a) + const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.plus(a, const) }
 
       dataset2 ?= data2
@@ -319,7 +319,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) * const).collect().run().toVector
+      val dataset2 = ds.select(ds(_.a) * const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.times(a, const) }
 
       dataset2 ?= data2
@@ -341,7 +341,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) - const).collect().run().toVector
+      val dataset2 = ds.select(ds(_.a) - const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.minus(a, const) }
 
       dataset2 ?= data2
@@ -363,7 +363,7 @@ class SelectTests extends TypedDatasetSuite {
       val ds = TypedDataset.create(data)
 
       if (const != 0) {
-        val dataset2 = ds.select(ds('a) / const).collect().run().toVector.asInstanceOf[Vector[A]]
+        val dataset2 = ds.select(ds(_.a) / const).collect().run().toVector.asInstanceOf[Vector[A]]
         val data2 = data.map { case X1(a) => frac.div(a, const) }
         dataset2 ?= data2
       } else 0 ?= 0
@@ -379,17 +379,17 @@ class SelectTests extends TypedDatasetSuite {
     assert(t.select(t.col('_1)).collect().run().toList === List(2))
     // Issue #54
     val fooT = t.select(t.col('_1)).map(x => Tuple1.apply(x)).as[Foo]
-    assert(fooT.select(fooT('i)).collect().run().toList === List(2))
+    assert(fooT.select(fooT(_.i)).collect().run().toList === List(2))
   }
 
   test("unary - on arithmetic") {
     val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
-    assert(e.select(-e('_1)).collect().run().toVector === Vector(-1, -2, -2))
-    assert(e.select(-(e('_1) + e('_3))).collect().run().toVector === Vector(-3L, -6L, -3L))
+    assert(e.select(-e(_._1)).collect().run().toVector === Vector(-1, -2, -2))
+    assert(e.select(-(e(_._1) + e(_._3))).collect().run().toVector === Vector(-3L, -6L, -3L))
   }
 
   test("unary - on strings should not type check") {
     val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
-    illTyped("""e.select( -e('_2) )""")
+    illTyped("""e.select( -e(_._2) )""")
   }
 }

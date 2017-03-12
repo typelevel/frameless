@@ -4,6 +4,10 @@ val scalatest = "3.0.1"
 val shapeless = "2.3.2"
 val scalacheck = "1.13.4"
 
+// spark has scalatest and scalactic as a runtime dependency
+// which can mess things up if you use a different version in your project
+val exclusions = Seq(ExclusionRule("org.scalatest"), ExclusionRule("org.scalactic"))
+
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, docs)
   .settings(framelessSettings: _*)
@@ -22,7 +26,7 @@ lazy val cats = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.typelevel"    %% "cats"       % catsv,
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided"))
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(exclusions: _*)))
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
@@ -31,8 +35,8 @@ lazy val dataset = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(exclusions: _*),
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided" excludeAll(exclusions: _*)
   ))
   .dependsOn(core % "test->test;compile->compile")
 
