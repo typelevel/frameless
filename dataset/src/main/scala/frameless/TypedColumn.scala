@@ -1,6 +1,7 @@
 package frameless
 
 import frameless.syntax._
+import frameless.functions._
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{Column, FramelessInternals}
@@ -49,7 +50,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: U): TypedColumn[T, Boolean] = (untyped === other).typed
+  def ===(other: U): TypedColumn[T, Boolean] = (untyped === lit(other).untyped).typed
 
   /** Equality test.
     * {{{
