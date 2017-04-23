@@ -1,8 +1,9 @@
 package frameless
 
 import frameless.ops._
+
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
@@ -215,6 +216,36 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
+  /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
+  private def resolveSelfJoin(join: Join): Join = {
+    val selfJoinFix = self.dataset.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+
+    if (selfJoinFix) {
+      val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
+      val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
+
+      if (!hasConflict) {
+        val cond = plan.condition.map(_.transform {
+          case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
+            if a.sameRef(b) =>
+            val leftDs = FramelessInternals.ofRows(dataset.sparkSession, plan.left)
+            val rightDs = FramelessInternals.ofRows(dataset.sparkSession, plan.right)
+
+            catalyst.expressions.EqualTo(
+              FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
+              FramelessInternals.resolveExpr(rightDs, Seq(b.name))
+            )
+        })
+
+        plan.copy(condition = cond)
+      } else {
+        join
+      }
+    } else {
+      join
+    }
+  }
+
   def join[A, B](
     right: TypedDataset[A],
     leftCol: TypedColumn[T, B],
@@ -226,7 +257,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
     val condition = EqualTo(leftCol.expr, rightCol.expr)
 
-    val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, Inner, Some(condition)))
+    val join = resolveSelfJoin(Join(leftPlan, rightPlan, Inner, Some(condition)))
+    val joined = FramelessInternals.executePlan(dataset, join)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
 
@@ -249,7 +281,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
     val condition = EqualTo(leftCol.expr, rightCol.expr)
 
-    val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
+    val join = resolveSelfJoin(Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
+    val joined = FramelessInternals.executePlan(dataset, join)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
 
