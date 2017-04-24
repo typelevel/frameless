@@ -83,7 +83,8 @@ class UdfTests extends TypedDatasetSuite {
       (dataset21 ?= d) && (dataset22 ?= d)
     }
 
-    check(forAll(prop[Int, Int, Int] _))
+    check(forAll(prop[Vector[X4[Long, X1[Int], Vector[X2[X1[Long], Vector[X1[Int]]]], Long]], Vector[Int],
+      X3[X1[Long], Vector[Char], String]] _))
     check(forAll(prop[String, Int, Int] _))
   }
 
