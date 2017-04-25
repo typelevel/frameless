@@ -388,9 +388,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder](
+  def select[A](
     ca: TypedColumn[T, A]
   ): TypedDataset[A] = {
+    implicit val ea = ca.uencoder
+
     val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
@@ -415,67 +417,90 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder](
+  def select[A, B](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B]
-  ): TypedDataset[(A, B)] = selectMany(ca, cb)
+  ): TypedDataset[(A, B)] = {
+    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder;
+
+    selectMany(ca, cb)
+  }
 
   /** Type-safe projection from type T to Tuple3[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
+  def select[A, B, C](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B],
     cc: TypedColumn[T, C]
-  ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
+  ): TypedDataset[(A, B, C)] = {
+    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+
+    selectMany(ca, cb, cc)
+  }
 
   /** Type-safe projection from type T to Tuple4[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
+  def select[A, B, C, D](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D]
-  ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+    implicit val ed = cd.uencoder;
+
+    selectMany(ca, cb, cc, cd)
+  }
 
   /** Type-safe projection from type T to Tuple5[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder](
+  def select[A, B, C, D, E](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E]
-  ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
+  ): TypedDataset[(A, B, C, D, E)] = {
+    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+    implicit val ed = cd.uencoder; implicit val ee = ce.uencoder;
+
+    selectMany(ca, cb, cc, cd, ce)
+  }
 
   /** Type-safe projection from type T to Tuple6[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder](
+  def select[A, B, C, D, E, F](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F]
-  ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
+  ): TypedDataset[(A, B, C, D, E, F)] = {
+    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+    implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+
+    selectMany(ca, cb, cc, cd, ce, cf)
+  }
 
   /** Type-safe projection from type T to Tuple7[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder](
+ def select[A, B, C, D, E, F, G](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -483,14 +508,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G]
-  ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
+  ): TypedDataset[(A, B, C, D, E, F, G)] = {
+   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+   implicit val eg = cg.uencoder;
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg)
+ }
 
   /** Type-safe projection from type T to Tuple8[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -499,14 +530,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H]
-  ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+  ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
+   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder;
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+ }
 
   /** Type-safe projection from type T to Tuple9[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -516,14 +553,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
+   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder; implicit val ei = ci.uencoder;
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+ }
 
   /** Type-safe projection from type T to Tuple10[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder, J: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I, J](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -534,7 +577,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I],
      cj: TypedColumn[T, J]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
+   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder; implicit val ei = ci.uencoder;
+   implicit val ej = cj.uencoder;
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+ }
 
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
