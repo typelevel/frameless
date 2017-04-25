@@ -24,6 +24,97 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   private implicit val sparkContext = dataset.sqlContext.sparkContext
 
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A](ca: TypedAggregate[T, A]): TypedDataset[A] = {
+    implicit val ea = ca.aencoder
+
+    val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
+
+    // now we need to unpack `Tuple1[A]` to `A`
+
+    TypedEncoder[A].targetDataType match {
+      case StructType(_) =>
+        // if column is struct, we use all it's fields
+        val df = tuple1
+          .dataset
+          .selectExpr("_1.*")
+          .as[A](TypedExpressionEncoder[A])
+
+        TypedDataset.create(df)
+      case other =>
+        // for primitive types `Tuple1[A]` has the same schema as `A`
+        TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
+    }
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B]
+  ): TypedDataset[(A, B)] = {
+    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder
+    aggMany(ca, cb)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C]
+  ): TypedDataset[(A, B, C)] = {
+    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder; implicit val ec = cc.aencoder
+    aggMany(ca, cb, cc)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C, D](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C],
+    cd: TypedAggregate[T, D]
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder; implicit val ec = cc.aencoder;
+    implicit val ed = cd.aencoder
+
+    aggMany(ca, cb, cc, cd)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  object aggMany extends ProductArgs {
+    def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
+      implicit
+      tc: AggregateTypes.Aux[T, U, Out0],
+      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      tupler: Tupler.Aux[Out0, Out],
+      encoder: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+
+      val cols = toTraversable(columns).map(c => new Column(c.expr))
+
+      val selected = dataset.toDF()
+        .agg(cols.head.alias("_1"), cols.tail: _*)
+        .as[Out](TypedExpressionEncoder[Out])
+        .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
+
+      TypedDataset.create[Out](selected)
+    }
+  }
+
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
     implicit val uencoder = as.encoder

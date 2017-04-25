@@ -28,6 +28,46 @@ class GroupByTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Long, Long] _))
   }
 
+  test("agg(sum('a))") {
+    def prop[A: TypedEncoder : Numeric](data: List[X1[A]])(
+      implicit
+      summable: CatalystSummable[A, A]
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col[A]('a)
+
+      val datasetSum = dataset.agg(sum(A)).collect().run.toVector
+      val listSum = data.map(_.a).sum
+
+      datasetSum ?= Vector(listSum)
+    }
+
+    check(forAll(prop[Long] _))
+  }
+
+  test("agg(sum('a), sum('b))") {
+    def prop[
+      A: TypedEncoder : Numeric,
+      B: TypedEncoder : Numeric
+    ](data: List[X2[A, B]])(
+      implicit
+      as: CatalystSummable[A, A],
+      bs: CatalystSummable[B, B]
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+
+      val datasetSum = dataset.agg(sum(A), sum(B)).collect().run.toVector
+      val listSumA = data.map(_.a).sum
+      val listSumB = data.map(_.b).sum
+
+      datasetSum ?= Vector((listSumA, listSumB))
+    }
+
+    check(forAll(prop[Long, Long] _))
+  }
+
   test("groupBy('a).agg(sum('b))") {
     def prop[
       A: TypedEncoder : Ordering,
