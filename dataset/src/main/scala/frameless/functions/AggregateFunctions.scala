@@ -18,31 +18,30 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def count[T](): TypedAggregateAndColumn[T, Long, Long] = {
-    new TypedAggregateAndColumn(untyped.count(untyped.lit(1)))
+  def count[T](): TypedAggregate[T, Long] = {
+    new TypedAggregate(untyped.count(untyped.lit(1)))
   }
 
-  /** Aggregate function: returns the number of items in a group. Compared to count()
-    * this function will not count null values of the given column.
+  /** Aggregate function: returns the number of items in a group for which the selected column is not null.
     *
     * apache/spark
     */
-  def count[T](column: TypedColumn[T, _]): TypedAggregateAndColumn[T, Long, Long] = {
-    new TypedAggregateAndColumn[T, Long, Long](untyped.count(column.untyped))
+  def count[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.count(column.untyped))
   }
 
   /** Aggregate function: returns the number of distinct items in a group.
     *
     * apache/spark
     */
-  def countDistinct[T](column: TypedColumn[T, _]): TypedAggregateAndColumn[T, Long, Long] = {
-    new TypedAggregateAndColumn[T, Long, Long](untyped.countDistinct(column.untyped))
+  def countDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.countDistinct(column.untyped))
   }
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     */
-  def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregateAndColumn[T, Long, Long] = {
-    new TypedAggregateAndColumn[T, Long, Long](untyped.approxCountDistinct(column.untyped))
+  def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.approxCountDistinct(column.untyped))
   }
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
@@ -51,24 +50,24 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregateAndColumn[T, Long, Long] = {
-    new TypedAggregateAndColumn[T, Long, Long](untyped.approxCountDistinct(column.untyped, rsd))
+  def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.approxCountDistinct(column.untyped, rsd))
   }
 
   /** Aggregate function: returns a list of objects with duplicates.
     *
     * apache/spark
     */
-  def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Vector[A], Vector[A]] = {
-    new TypedAggregateAndColumn[T, Vector[A], Vector[A]](untyped.collect_list(column.untyped))
+  def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
+    new TypedAggregate[T, Vector[A]](untyped.collect_list(column.untyped))
   }
 
   /** Aggregate function: returns a set of objects with duplicate elements eliminated.
     *
     * apache/spark
     */
-  def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Vector[A], Vector[A]] = {
-    new TypedAggregateAndColumn[T, Vector[A], Vector[A]](untyped.collect_set(column.untyped))
+  def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
+    new TypedAggregate[T, Vector[A]](untyped.collect_set(column.untyped))
   }
 
   /** Aggregate function: returns the sum of all values in the given column.
@@ -79,12 +78,12 @@ trait AggregateFunctions {
     implicit
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregateAndColumn[T, Out, Out] = {
+  ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
     val sumExpr = expr(untyped.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregateAndColumn[T, Out, Out](sumOrZero)
+    new TypedAggregate[T, Out](sumOrZero)
   }
 
   /** Aggregate function: returns the sum of distinct values in the column.
@@ -95,12 +94,12 @@ trait AggregateFunctions {
     implicit
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregateAndColumn[T, Out, Out] = {
+  ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
     val sumExpr = expr(untyped.sumDistinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregateAndColumn[T, Out, Out](sumOrZero)
+    new TypedAggregate[T, Out](sumOrZero)
   }
 
   /** Aggregate function: returns the average of the values in a group.
@@ -111,8 +110,8 @@ trait AggregateFunctions {
     implicit
     averageable: CatalystAverageable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregateAndColumn[T, Out, Option[Out]] = {
-    new TypedAggregateAndColumn[T, Out, Option[Out]](untyped.avg(column.untyped))
+  ): TypedAggregate[T, Out] = {
+    new TypedAggregate[T, Out](untyped.avg(column.untyped))
   }
 
 
@@ -123,8 +122,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
-    new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.variance(column.untyped))
+  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
+    new TypedAggregate[T, Option[Double]](untyped.variance(column.untyped))
   }
 
   /** Aggregate function: returns the sample standard deviation.
@@ -134,26 +133,26 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, Double, Option[Double]] = {
-    new TypedAggregateAndColumn[T, Double, Option[Double]](untyped.stddev(column.untyped))
+  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
+    new TypedAggregate[T, Option[Double]](untyped.stddev(column.untyped))
   }
 
   /** Aggregate function: returns the maximum value of the column in a group.
     *
     * apache/spark
     */
-  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.max(column.untyped))
+  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+    implicit val c = column.uencoder
+    new TypedAggregate[T, Option[A]](untyped.max(column.untyped))
   }
 
   /** Aggregate function: returns the minimum value of the column in a group.
     *
     * apache/spark
     */
-  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.min(column.untyped))
+  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+    implicit val c = column.uencoder
+    new TypedAggregate[T, Option[A]](untyped.min(column.untyped))
   }
 
   /** Aggregate function: returns the first value in a group.
@@ -163,9 +162,9 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def first[A, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.first(column.untyped))
+  def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+    implicit val c = column.uencoder
+    new TypedAggregate[T, Option[A]](untyped.first(column.untyped))
   }
 
   /**
@@ -176,8 +175,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def last[A, T](column: TypedColumn[T, A]): TypedAggregateAndColumn[T, A, Option[A]] = {
-    import column.uencoder
-    new TypedAggregateAndColumn[T, A, Option[A]](untyped.last(column.untyped))
+  def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+    implicit val c = column.uencoder
+    new TypedAggregate[T, Option[A]](untyped.last(column.untyped))
   }
 }
