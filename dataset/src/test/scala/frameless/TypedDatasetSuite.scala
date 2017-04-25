@@ -6,11 +6,7 @@ import org.scalactic.anyvals.PosZInt
 import org.scalatest.FunSuite
 import org.scalatest.prop.Checkers
 
-class TypedDatasetSuite extends FunSuite with Checkers {
-  // Limit size of generated collections and number of checks because Travis
-  implicit override val generatorDrivenConfig =
-    PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
-
+trait SparkTesting {
   val appID = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
 
   val conf = new SparkConf()
@@ -22,4 +18,12 @@ class TypedDatasetSuite extends FunSuite with Checkers {
   implicit def session = SparkSession.builder().config(conf).getOrCreate()
   implicit def sc = session.sparkContext
   implicit def sqlContext = session.sqlContext
+}
+
+class TypedDatasetSuite extends FunSuite with Checkers with SparkTesting {
+  // Limit size of generated collections and number of checks because Travis
+  implicit override val generatorDrivenConfig =
+    PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
+
+
 }
