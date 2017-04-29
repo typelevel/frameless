@@ -25,7 +25,7 @@ We start by defining a case class:
 case class Apartment(city: String, surface: Int, price: Double)
 ```
 
-Let's define few `Apartment` instances:
+And few `Apartment` instances:
 
 ```tut:silent
 val apartments = Seq(
@@ -44,7 +44,7 @@ We are now ready to instantiate a `TypedDataset[Apartment]:`
 val aptTypedDs = TypedDataset.create(apartments)
 ```
 
-We can also create it from an existing `Dataset:`
+We can also create one from an existing Spark `Dataset:`
 
 ```tut:book
 val aptDs = spark.createDataset(apartments)
@@ -56,7 +56,7 @@ Or use the Frameless syntax:
 ```tut:book
 import frameless.syntax._
 
-val aptTypedDs2 = spark.createDataset(apartments).typed
+val aptTypedDs2 = aptDs.typed
 ```
 
 ## Typesafe column referencing
@@ -88,7 +88,7 @@ Note that unlike the standard Spark API where some operations are lazy and some 
 In the above example, `show()` is lazy. It requires to apply `run()` for the `show` job to materialize.
 
 
-Let us now try to compute the price by surface unit:
+Next we compute the price by surface unit:
 
 ```tut:book:fail
 val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs('price) / aptTypedDs('surface))
@@ -134,7 +134,7 @@ for the set of available `CatalystCast.`
 With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
 `TypedDataset[(String, Int, Boolean)]`. To select more than ten columns use the `selectMany()` method. 
-Select has better IDE support that the macro based selectMany, so prefer `select()` for the general case. 
+Select has better IDE support than the macro based selectMany, so prefer `select()` for the general case. 
 
 We often want to give more expressive types to the result of our computations.
 `as[T]` allows us to safely cast a `TypedDataset[U]` to another of type `TypedDataset[T]` as long
