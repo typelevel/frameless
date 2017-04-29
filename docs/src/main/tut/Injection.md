@@ -12,7 +12,7 @@ spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._
 ``` 
-Injection lets us define encoders for types that do not have one, by injecting `A` into an encodable type `B`.
+Injection lets us define encoders for types that do not have one by injecting `A` into an encodable type `B`.
 This is the definition of the injection typeclass: 
 ```scala
 trait Injection[A, B] extends Serializable {
@@ -47,6 +47,13 @@ implicit val dateToLongInjection = new Injection[java.util.Date, Long] {
 }
 ``` 
 
+We can be less verbose using the `Injection.apply` function:
+
+```tut:book
+import frameless._
+implicit val dateToLongInjection = Injection((_: java.util.Date).getTime(), new java.util.Date((_: Long)))
+```
+
 Now we can create our `TypedDataset`: 
 
 ```tut:book
@@ -71,7 +78,7 @@ case class Person(age: Int, gender: Gender)
 val people = Seq(Person(42, Male))
 ``` 
 
-Again if we try to create a `TypedDataset`, we get an error.
+Again if we try to create a `TypedDataset`, we get a compilation error.
 
 ```tut:book:fail
 val personDS = TypedDataset.create(people)
