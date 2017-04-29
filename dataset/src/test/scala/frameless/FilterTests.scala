@@ -19,11 +19,37 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
   }
 
-  test("filter with  arithmetic expressions: addition") {
+  test("filter('a =!= lit(b))") {
+    def prop[A: TypedEncoder](elem: A, data: Vector[X1[A]])(implicit ex1: TypedEncoder[X1[A]]): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col('a)
+
+      val dataset2 = dataset.filter(A =!= elem).collect().run().toVector
+      val data2 = data.filter(_.a != elem)
+
+      dataset2 ?= data2
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[Char] _))
+    check(forAll(prop[SQLTimestamp] _))
+    //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
+  }
+
+  test("filter with arithmetic expressions: addition") {
     check(forAll { (data: Vector[X1[Int]]) =>
       val ds = TypedDataset.create(data)
       val res = ds.filter((ds('a) + 1) === (ds('a) + 1)).collect().run().toVector
       res ?= data
+    })
+  }
+
+  test("filter with values (not columns): addition") {
+    check(forAll { (data: Vector[X1[Int]], const: Int) =>
+      val ds = TypedDataset.create(data)
+      val res = ds.filter(ds('a) > const).collect().run().toVector
+      res ?= data.filter(_.a > const)
     })
   }
 

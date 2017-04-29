@@ -2,7 +2,7 @@ package frameless
 package functions
 
 import frameless.functions.aggregate._
-import org.scalacheck.Prop
+import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 
 class AggregateFunctionsTests extends TypedDatasetSuite {
@@ -72,6 +72,40 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(sparkSchema[Short, Long](sum))
   }
 
+  test("sumDistinct") {
+    case class Sum4Tests[A, B](sum: Seq[A] => B)
+
+    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
+      implicit
+      summable: CatalystSummable[A, Out],
+      summer: Sum4Tests[A, Out]
+    ): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val datasetSum: List[Out] = dataset.select(sumDistinct(A)).collect().run().toList
+
+      datasetSum match {
+        case x :: Nil => approximatelyEqual(summer.sum(xs), x)
+        case other => falsified
+      }
+    }
+
+    // Replicate Spark's behaviour : Ints and Shorts are cast to Long
+    // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
+    implicit def summerLong = Sum4Tests[Long, Long](_.toSet.sum)
+    implicit def summerInt = Sum4Tests[Int, Long]( x => x.toSet.map((_:Int).toLong).sum)
+    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_:Short).toLong).sum)
+
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Short, Long] _))
+
+    check(sparkSchema[Long, Long](sum))
+    check(sparkSchema[Int, Long](sum))
+    check(sparkSchema[Short, Long](sum))
+  }
+
   test("avg") {
     case class Averager4Tests[A, B](avg: Seq[A] => B)
 
@@ -109,26 +143,33 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short, Double] _))
   }
 
-  test("stddev") {
+  test("stddev and variance") {
+    def verifyStat[A: Numeric](xs: List[A],
+                               datasetEstimate: Option[Double],
+                               rddBasedEstimate: Double) = {
+      xs match {
+        case Nil => datasetEstimate ?= None
+        case _ :: Nil => datasetEstimate match {
+          case Some(x) => if (x.isNaN) proved else falsified
+          case _ => falsified
+        }
+        case _ => datasetEstimate match {
+          case Some(x) => approximatelyEqual(rddBasedEstimate, x)
+          case _ => falsified
+        }
+      }
+    }
 
     def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
       val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
+      val Vector(datasetVar) = dataset.select(variance(A)).collect().run().toVector
       val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
+      val `var` = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleVariance()
 
-      xs match {
-        case Nil => datasetStd ?= None
-        case _ :: Nil => datasetStd match {
-          case Some(x) => if (x.isNaN) proved else falsified
-          case _ => falsified
-        }
-        case _ => datasetStd match {
-          case Some(x) => approximatelyEqual(std, x)
-          case _ => falsified
-        }
-      }
+      verifyStat(xs, datasetStd, std) && verifyStat(xs, datasetVar, `var`)
     }
 
     check(forAll(prop[Short] _))
@@ -234,5 +275,97 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short] _))
     check(forAll(prop[Byte] _))
     check(forAll(prop[String] _))
+  }
+
+  // Generator for simplified and focused aggregation examples
+  def getLowCardinalityKVPairs: Gen[Vector[(Int, Int)]] = {
+    val kvPairGen: Gen[(Int, Int)] = for {
+      k <- Gen.const(1) // key
+      v <- Gen.choose(10, 100) // values
+    } yield (k, v)
+
+    Gen.listOfN(200, kvPairGen).map(_.toVector)
+  }
+
+  test("countDistinct") {
+    check {
+      forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
+        val tds = TypedDataset.create(xs)
+        val tdsRes: Seq[(Int, Long)] = tds.groupBy(tds('_1)).agg(countDistinct(tds('_2))).collect().run()
+        tdsRes.toMap ?= xs.groupBy(_._1).mapValues(_.map(_._2).distinct.size.toLong).toSeq.toMap
+      }
+    }
+  }
+
+  test("approxCountDistinct") {
+    // Simple version of #approximatelyEqual()
+    // Default maximum estimation error of HyperLogLog in Spark is 5%
+    def approxEqual(actual: Long, estimated: Long, allowedDeviationPercentile: Double = 0.05): Boolean = {
+      val delta: Long = Math.abs(actual - estimated)
+      delta / actual.toDouble < allowedDeviationPercentile * 2
+    }
+
+    check {
+      forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
+        val tds = TypedDataset.create(xs)
+        val tdsRes: Seq[(Int, Long, Long)] =
+          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2))).collect().run()
+        tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2) }
+      }
+    }
+
+    check {
+      forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
+        val tds = TypedDataset.create(xs)
+        val allowedError = 0.1 // 10%
+        val tdsRes: Seq[(Int, Long, Long)] =
+          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
+        tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2, allowedError) }
+      }
+    }
+  }
+
+  test("collectList") {
+    def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
+      val tds = TypedDataset.create(xs)
+      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectList(tds('b))).collect().run()
+
+      tdsRes.toMap.mapValues(_.sorted) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toVector.sorted)
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("collectSet") {
+    def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
+      val tds = TypedDataset.create(xs)
+      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectSet(tds('b))).collect().run()
+
+      tdsRes.toMap.mapValues(_.toSet) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toSet)
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("lit") {
+    def prop[A: TypedEncoder](xs: List[X1[A]], l: A): Prop = {
+      val tds = TypedDataset.create(xs)
+      tds.select(tds('a), lit(l)).collect().run() ?= xs.map(x => (x.a, l))
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Vector[Vector[Int]]] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Vector[Byte]] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[Vector[Long]] _))
+    check(forAll(prop[BigDecimal] _))
   }
 }

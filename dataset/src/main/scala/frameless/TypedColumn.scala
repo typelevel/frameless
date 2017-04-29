@@ -61,6 +61,24 @@ sealed class TypedColumn[T, U](
     */
   def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (untyped === other.untyped).typed
 
+  /** Inequality test.
+    * {{{
+    *   df.filter( df.col('a) =!= df.col('b) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def =!=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (self.untyped =!= other.untyped).typed
+
+  /** Inequality test.
+    * {{{
+    *   df.filter( df.col('a) =!= "a" )
+    * }}}
+    *
+    * apache/spark
+    */
+  def =!=(other: U): TypedColumn[T, Boolean] = (self.untyped =!= lit(other).untyped).typed
+
   /** Sum of this expression and another expression.
     * {{{
     *   // The following selects the sum of a person's height and weight.
@@ -69,8 +87,8 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def plus(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
-    self.untyped.plus(u.untyped).typed
+  def plus(other: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
+    self.untyped.plus(other.untyped).typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -279,5 +297,10 @@ object TypedColumn {
     def <=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped <= other.untyped).typed
     def >(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped > other.untyped).typed
     def >=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (col.untyped >= other.untyped).typed
+
+    def <(other: U): TypedColumn[T, Boolean] = (col.untyped < lit(other)(col.uencoder).untyped).typed
+    def <=(other: U): TypedColumn[T, Boolean] = (col.untyped <= lit(other)(col.uencoder).untyped).typed
+    def >(other: U): TypedColumn[T, Boolean] = (col.untyped > lit(other)(col.uencoder).untyped).typed
+    def >=(other: U): TypedColumn[T, Boolean] = (col.untyped >= lit(other)(col.uencoder).untyped).typed
   }
 }
