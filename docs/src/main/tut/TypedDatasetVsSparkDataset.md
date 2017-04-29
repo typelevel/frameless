@@ -131,8 +131,42 @@ And the compiler is our friend.
 fds.filter( fds('i) === 10 ).select( fds('x) )
 ```
 
+## Differences in Encoders
+
+Encoders in Spark's `Datasets` are partially type-safe. If you try to create a `Dataset` using  a type that is not 
+ a Scala `Product` then you get a compilation error:
+
+```tut:book
+class Bar(i: Int)
+```
+
+`Bar` is not a case class and not a Product, so the following correctly gives a compilation error in Spark:
+
+```tut:fail
+spark.createDataset(Seq(new Bar(1)))
+```
+
+However, this guard is not entirely type-safe. There is nothing preventing us from creating a case class for which 
+Spark will not be able to extract an encoder at runtime:
+
+```tut:book
+case class MyDate(jday: java.util.Date)
+``` 
+
+The following statement compiles, but fails during runtime:
+
+```tut:book:fail
+val myDateDs = spark.createDataset(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+```
+
+In comparison, a TypedDataset will notify about the encoding problem at compile time: 
+
+```tut:book:fail
+TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+```
+
+
 ```tut:invisible
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
-
 spark.stop()
 ```
