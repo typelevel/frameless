@@ -140,20 +140,18 @@ Encoders in Spark's `Datasets` are partially type-safe. If you try to create a `
 class Bar(i: Int)
 ```
 
-`Bar` is not a case class and not a Product, so the following correctly gives a compilation error in Spark:
+`Bar` is neither a case class nor a `Product`, so the following correctly gives a compilation error in Spark:
 
 ```tut:fail
 spark.createDataset(Seq(new Bar(1)))
 ```
 
-However, this guard is not entirely type-safe. There is nothing preventing us from creating a case class for which 
-Spark will not be able to extract an encoder at runtime:
+However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
+For example, using the following case class leads to a runtime failure:
 
 ```tut:book
 case class MyDate(jday: java.util.Date)
-``` 
-
-The following statement compiles, but fails during runtime:
+```
 
 ```tut:book:fail
 val myDateDs = spark.createDataset(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))

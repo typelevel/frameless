@@ -38,13 +38,13 @@ val apartments = Seq(
 )
 ```
 
-We are now ready to instantiate a `TypedDataset[Apartment]:`
+We are now ready to instantiate a `TypedDataset[Apartment]`:
 
 ```tut:book
 val aptTypedDs = TypedDataset.create(apartments)
 ```
 
-We can also create one from an existing Spark `Dataset:`
+We can also create one from an existing Spark `Dataset`:
 
 ```tut:book
 val aptDs = spark.createDataset(apartments)
@@ -66,7 +66,7 @@ This is how we select a particular column from a `TypedDataset`:
 val cities: TypedDataset[String] = aptTypedDs.select(aptTypedDs('city))
 ```
 
-This is completely type-safe, for instance suppose we misspell `city` as `citi:`
+This is completely type-safe, for instance suppose we misspell `city` as `citi`:
 
 ```tut:book:fail
 aptTypedDs.select(aptTypedDs('citi))
@@ -115,7 +115,7 @@ priceBySurfaceUnit.collect.run()
 ```
 
 Looks like it worked, but that `cast` seems unsafe right? Actually it is safe.
-Let's try to cast a `TypedColumn` of `String` to `Double:`
+Let's try to cast a `TypedColumn` of `String` to `Double`:
 
 ```tut:book:fail
 aptTypedDs('city).cast[Double]
@@ -172,7 +172,7 @@ case class ApartmentDetails(city: String, price: Double, surface: Int, ratio: Do
 val aptWithRatio = aptds.select(aptds('city), aptds('price), aptds('surface), aptds('price) / aptds('surface)).as[ApartmentDetails]
 ```
 
-Suppose we only want to work with `city` and `ratio:`
+Suppose we only want to work with `city` and `ratio`:
 
 ```tut:book
 case class CityInfo(city: String, ratio: Double)
@@ -182,7 +182,7 @@ val cityRatio = aptWithRatio.project[CityInfo]
 cityRatio.show(2).run()
 ```
 
-Suppose we only want to work with `price` and `ratio:`
+Suppose we only want to work with `price` and `ratio`:
 
 ```tut:book
 case class PriceInfo(ratio: Double, price: Double)

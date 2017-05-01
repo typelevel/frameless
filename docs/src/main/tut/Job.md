@@ -1,12 +1,12 @@
 # Job\[A\]
 
-On a `TypedDataset` all operations are lazy. An operation will either return a new 
-transformed `TypedDataset` or it will return a `Job[A]`, where A is the result of running a
+All operations on `TypedDataset` are lazy. An operation either returns a new 
+transformed `TypedDataset` or a `Job[A]`, where `A` is the result of running a
 non-lazy computation in Spark. `Job` serves several functions: 
 
-- Makes all operations on a `TypedDataset` lazy, which gives less surprises compared to having
-few operations being lazy and other being strict
-- Allows the programmer to be more explicit when an expensive blocking operation needs to happen
+- Makes all operations on a `TypedDataset` lazy, which makes them more predictable compared to having
+few operations being lazy and other being strict:
+- Allows the programmer to make expensive blocking operations explicit
 - Allows for Spark jobs to be lazily sequenced using monadic composition via for-comprehension
 - Provides an obvious place where you can annotate/name your Spark jobs to make it easier
 to track different parts of your application in the Spark UI
@@ -32,13 +32,17 @@ import spark.implicits._
 ```tut:book
 val ds = TypedDataset.create(1 to 20)
 
-val countAndTakeJob = for(c <- ds.count(); sample <- ds.take((c/5).toInt)) yield sample
+val countAndTakeJob = 
+  for {
+    count <- ds.count() 
+    sample <- ds.take((count/5).toInt)
+  } yield sample
 
 countAndTakeJob.run()
 ```
 
-The `countAndTakeJob` can either be executed using `run()` (as we show above) or it can be 
-pass along to other parts of the program to be further composed into more complex sequences
+The `countAndTakeJob` can either be executed using `run()` (as we show above) or it can 
+be passed along to other parts of the program to be further composed into more complex sequences
 of Spark jobs. 
 
 ```tut:book
