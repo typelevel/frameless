@@ -2,5 +2,6 @@
 - [Comparing TypedDatasets with Spark's Datasets](TypedDatasetVsSparkDataset.md)
 - [Typed Encoders in Frameless](TypedEncoder.md)
 - [Injection: Creating Custom Encoders](Injection.md)
+- [Job\[A\]](Job.md)
 - [Using Cats with RDDs](Cats.md)
 - [Proof of Concept: TypedDataFrame](TypedDataFrame.md)

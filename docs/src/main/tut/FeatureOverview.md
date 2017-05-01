@@ -86,7 +86,7 @@ aptTypedDs.select(aptTypedDs('surface) * 10, aptTypedDs('surface) + 2).show().ru
 
 Note that unlike the standard Spark API where some operations are lazy and some are not, **TypedDatasets have all operations to be lazy.** 
 In the above example, `show()` is lazy. It requires to apply `run()` for the `show` job to materialize.
-
+A more detailed explanation of `Job` is given [here](Job.md).
 
 Next we compute the price by surface unit:
 
