@@ -16,7 +16,12 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
   def sourceDataType: DataType
   def targetDataType: DataType
 
+  /** From Catalyst representation to T
+    */
   def constructorFor(path: Expression): Expression
+
+  /** T to Catalyst representation
+    */
   def extractorFor(path: Expression): Expression
 }
 
