@@ -45,6 +45,10 @@ lazy val docs = project
     "org.apache.spark" %% "spark-core" % sparkVersion,
     "org.apache.spark" %% "spark-sql"  % sparkVersion
   ))
+  .settings(
+    sourceDirectory in GitBook := sourceDirectory.value / ".." / "target" / "tut",
+    siteSubdirName  in GitBook := "../../")
+  .enablePlugins(GitBookPlugin)
   .dependsOn(dataset, cats)
 
 lazy val framelessSettings = Seq(
@@ -159,3 +163,18 @@ lazy val credentialSettings = Seq(
     password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
+
+syslinkReadme := syslinkReadmeImpl.value
+lazy val syslinkReadme = taskKey[Unit]("syslink for website generation")
+lazy val syslinkReadmeImpl = Def.task {
+  val from = baseDirectory.value / "README.md"
+  val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
+  try {
+    if (!to.exists)
+      java.nio.file.Files.createSymbolicLink(to.toPath, from.toPath)
+  } catch {
+    case e: UnsupportedOperationException =>
+      // If the OS doesn't support symbolic links, copy instead...
+      sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true)
+  }
+}

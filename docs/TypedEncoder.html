@@ -1,0 +1,388 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Typed Encoders in Frameless · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="Injection.html" />
+    
+    
+    <link rel="prev" href="TypedDatasetVsSparkDataset.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="GettingStarted.html">
+            
+                <a href="GettingStarted.html">
+            
+                    
+                    TypedDataset: Feature Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="TypedDatasetVsSparkDataset.html">
+            
+                <a href="TypedDatasetVsSparkDataset.html">
+            
+                    
+                    Comparing TypedDatasets with Spark's Datasets
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.4" data-path="TypedEncoder.html">
+            
+                <a href="TypedEncoder.html">
+            
+                    
+                    Typed Encoders in Frameless
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Injection.html">
+            
+                <a href="Injection.html">
+            
+                    
+                    Injection: Creating Custom Encoders
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Cats.html">
+            
+                <a href="Cats.html">
+            
+                    
+                    Using Cats with RDDs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="TypedDataFrame.html">
+            
+                <a href="TypedDataFrame.html">
+            
+                    
+                    Proof of Concept: TypedDataFrame
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Typed Encoders in Frameless</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="typed-encoders-in-frameless">Typed Encoders in Frameless</h1>
+<p>Spark uses Reflection to derive it&apos;s <code>Encoder</code>s, which is why they can fail at run time. For example, because Spark does not supports <code>java.util.Date</code>, the following leads to an error:</p>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">Dataset</span>
+<span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">Dataset</span>
+
+scala&gt; <span class="hljs-keyword">import</span> spark.implicits._
+<span class="hljs-keyword">import</span> spark.implicits._
+
+scala&gt; <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DateRange</span>(<span class="hljs-params">s: java.util.<span class="hljs-type">Date</span>, e: java.util.<span class="hljs-type">Date</span></span>)</span>
+defined <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DateRange</span></span>
+</code></pre>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">val</span> ds: <span class="hljs-type">Dataset</span>[<span class="hljs-type">DateRange</span>] = sqlContext.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-type">DateRange</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>)))
+java.lang.<span class="hljs-type">UnsupportedOperationException</span>: <span class="hljs-type">No</span> <span class="hljs-type">Encoder</span> found <span class="hljs-keyword">for</span> java.util.<span class="hljs-type">Date</span>
+- field (<span class="hljs-class"><span class="hljs-keyword">class</span></span>: <span class="hljs-string">&quot;java.util.Date&quot;</span>, name: <span class="hljs-string">&quot;s&quot;</span>)
+- root <span class="hljs-class"><span class="hljs-keyword">class</span></span>: <span class="hljs-string">&quot;DateRange&quot;</span>
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">ScalaReflection</span>$.org$apache$spark$sql$catalyst$<span class="hljs-type">ScalaReflection</span>$$serializerFor(<span class="hljs-type">ScalaReflection</span>.scala:<span class="hljs-number">598</span>)
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">ScalaReflection</span>$$anonfun$<span class="hljs-number">9.</span>apply(<span class="hljs-type">ScalaReflection</span>.scala:<span class="hljs-number">592</span>)
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">ScalaReflection</span>$$anonfun$<span class="hljs-number">9.</span>apply(<span class="hljs-type">ScalaReflection</span>.scala:<span class="hljs-number">583</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$flatMap$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">241</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$flatMap$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">241</span>)
+  at scala.collection.immutable.<span class="hljs-type">List</span>.foreach(<span class="hljs-type">List</span>.scala:<span class="hljs-number">381</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>$<span class="hljs-class"><span class="hljs-keyword">class</span>.<span class="hljs-title">flatMap</span>(<span class="hljs-params"><span class="hljs-type">TraversableLike</span>.scala:241</span>)</span>
+  at scala.collection.immutable.<span class="hljs-type">List</span>.flatMap(<span class="hljs-type">List</span>.scala:<span class="hljs-number">344</span>)
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">ScalaReflection</span>$.org$apache$spark$sql$catalyst$<span class="hljs-type">ScalaReflection</span>$$serializerFor(<span class="hljs-type">ScalaReflection</span>.scala:<span class="hljs-number">583</span>)
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">ScalaReflection</span>$.serializerFor(<span class="hljs-type">ScalaReflection</span>.scala:<span class="hljs-number">425</span>)
+  at org.apache.spark.sql.catalyst.encoders.<span class="hljs-type">ExpressionEncoder</span>$.apply(<span class="hljs-type">ExpressionEncoder</span>.scala:<span class="hljs-number">61</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Encoders</span>$.product(<span class="hljs-type">Encoders</span>.scala:<span class="hljs-number">274</span>)
+  at org.apache.spark.sql.<span class="hljs-type">SQLImplicits</span>.newProductEncoder(<span class="hljs-type">SQLImplicits</span>.scala:<span class="hljs-number">47</span>)
+  ... <span class="hljs-number">230</span> elided
+</code></pre>
+<p>As shown by the stack trace, this runtime error goes thought <a href="https://github.com/apache/spark/blob/19cf208063f035d793d2306295a251a9af7e32f6/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/ScalaReflection.scala" target="_blank">ScalaReflection</a> to try to derive an <code>Encoder</code> for <code>Dataset</code> schema. Beside the annoyance of not detecting this error at compile time, a more important limitation of the reflection based approach is it&apos;s inability to be extended for custom types. See this Stack Overflow question for a summary of the current situation (as of 2.0) in vanilla Spark: <a href="http://stackoverflow.com/a/39442829/2311362" target="_blank">How to store custom objects in a Dataset?</a>.</p>
+<p>Frameless introduces a new type class called <code>TypeEncoder</code> to solve these issues. <code>TypeEncoder</code>s are passed around as implicit parameters to every frameless method to ensure that the data being manipulated is <code>Encoder</code>. It uses a standard implicit resolution coupled with shapeless type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the code <code>java.util.Date</code> example won&apos;t compile with frameless:</p>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+<span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+</code></pre>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">DateRange</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">DateRange</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>)))
+&lt;console&gt;:<span class="hljs-number">27</span>: error: could not find <span class="hljs-keyword">implicit</span> value <span class="hljs-keyword">for</span> parameter encoder: frameless.<span class="hljs-type">TypedEncoder</span>[<span class="hljs-type">DateRange</span>]
+       <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">DateRange</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">DateRange</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>)))
+                                                            ^
+</code></pre>
+<p>Type class derivation takes case or recursively constructing (and proving the existence) <code>TypeEncoder</code>s for case classes. The following works as expected:</p>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span>(<span class="hljs-params">d: <span class="hljs-type">Double</span>, s: <span class="hljs-type">String</span></span>)</span>
+defined <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span></span>
+
+scala&gt; <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span>(<span class="hljs-params">i: <span class="hljs-type">Int</span>, b: <span class="hljs-type">Bar</span></span>)</span>
+defined <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
+
+scala&gt; <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">Foo</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">Foo</span>(<span class="hljs-number">1</span>, <span class="hljs-type">Bar</span>(<span class="hljs-number">1.1</span>, <span class="hljs-string">&quot;s&quot;</span>))))
+ds: frameless.<span class="hljs-type">TypedDataset</span>[<span class="hljs-type">Foo</span>] = [i: int, b: struct&lt;d: double, s: string&gt;]
+
+scala&gt; ds.collect()
+res1: frameless.<span class="hljs-type">Job</span>[<span class="hljs-type">Seq</span>[<span class="hljs-type">Foo</span>]] = frameless.<span class="hljs-type">Job</span>$$anon$<span class="hljs-number">4</span>@<span class="hljs-number">4</span>b1b6a75
+</code></pre>
+<p>But any non-encodable in the case class hierarchy will be detected at compile time:</p>
+<pre><code class="lang-scala">scala&gt; <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BarDate</span>(<span class="hljs-params">d: <span class="hljs-type">Double</span>, s: <span class="hljs-type">String</span>, d: java.util.<span class="hljs-type">Date</span></span>)</span>
+&lt;console&gt;:<span class="hljs-number">25</span>: error: d is already defined as value d
+       <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BarDate</span>(<span class="hljs-params">d: <span class="hljs-type">Double</span>, s: <span class="hljs-type">String</span>, d: java.util.<span class="hljs-type">Date</span></span>)</span>
+                                                ^
+&lt;console&gt;:<span class="hljs-number">25</span>: error: <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">mismatch</span></span>;
+ found   : java.util.<span class="hljs-type">Date</span>
+ required: <span class="hljs-type">Double</span>
+       <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BarDate</span>(<span class="hljs-params">d: <span class="hljs-type">Double</span>, s: <span class="hljs-type">String</span>, d: java.util.<span class="hljs-type">Date</span></span>)</span>
+                          ^
+
+scala&gt; <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooDate</span>(<span class="hljs-params">i: <span class="hljs-type">Int</span>, b: <span class="hljs-type">BarDate</span></span>)</span>
+&lt;console&gt;:<span class="hljs-number">25</span>: error: not found: <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">BarDate</span></span>
+       <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooDate</span>(<span class="hljs-params">i: <span class="hljs-type">Int</span>, b: <span class="hljs-type">BarDate</span></span>)</span>
+                                     ^
+
+scala&gt; <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">FooDate</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">FooDate</span>(<span class="hljs-number">1</span>, <span class="hljs-type">BarDate</span>(<span class="hljs-number">1.1</span>, <span class="hljs-string">&quot;s&quot;</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>))))
+&lt;console&gt;:<span class="hljs-number">25</span>: error: not found: <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">FooDate</span></span>
+       <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">FooDate</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">FooDate</span>(<span class="hljs-number">1</span>, <span class="hljs-type">BarDate</span>(<span class="hljs-number">1.1</span>, <span class="hljs-string">&quot;s&quot;</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>))))
+                            ^
+&lt;console&gt;:<span class="hljs-number">25</span>: error: not found: value <span class="hljs-type">FooDate</span>
+       <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">FooDate</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">FooDate</span>(<span class="hljs-number">1</span>, <span class="hljs-type">BarDate</span>(<span class="hljs-number">1.1</span>, <span class="hljs-string">&quot;s&quot;</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>))))
+                                                               ^
+&lt;console&gt;:<span class="hljs-number">25</span>: error: not found: value <span class="hljs-type">BarDate</span>
+       <span class="hljs-keyword">val</span> ds: <span class="hljs-type">TypedDataset</span>[<span class="hljs-type">FooDate</span>] = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">FooDate</span>(<span class="hljs-number">1</span>, <span class="hljs-type">BarDate</span>(<span class="hljs-number">1.1</span>, <span class="hljs-string">&quot;s&quot;</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>))))
+                                                                          ^
+</code></pre>
+<p>It should be noted that once derived, reflection based <code>Encoder</code>s and implicitly derived <code>TypeEncoder</code>s have identical performances. The derivation mechanism is different, but the objects generated to encode and decode JVM object in the Spark internal representation behave the same at run-time.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="TypedDatasetVsSparkDataset.html" class="navigation navigation-prev " aria-label="Previous page: Comparing TypedDatasets with Spark's Datasets">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="Injection.html" class="navigation navigation-next " aria-label="Next page: Injection: Creating Custom Encoders">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"next":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"previous":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"path":"TypedDatasetVsSparkDataset.md","ref":"TypedDatasetVsSparkDataset.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedEncoder.md","mtime":"2017-05-02T07:22:49.613Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-02T07:23:02.064Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
