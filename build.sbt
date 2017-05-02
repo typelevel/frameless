@@ -47,7 +47,7 @@ lazy val docs = project
   ))
   .settings(
     sourceDirectory in GitBook := sourceDirectory.value / ".." / "target" / "tut",
-    siteSubdirName  in GitBook := "../..")
+    siteSubdirName  in GitBook := "../../")
   .enablePlugins(GitBookPlugin)
   .dependsOn(dataset, cats)
 
