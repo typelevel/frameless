@@ -19,11 +19,11 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
 
     check(forAll(prop[Long] _))
     check(forAll(prop[Char] _))
-    check(forAll(prop[X2[Int,Option[Long]]] _))
+    check(forAll(prop[X2[Int, Option[Long]]] _))
   }
 
   test("sort on vector test") {
-    def prop[A: TypedEncoder: Ordering](xs: List[X1[Vector[A]]]): Prop = {
+    def prop[A: TypedEncoder : Ordering](xs: List[X1[Vector[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.select(sort(tds('a))).collect().run().toVector
