@@ -49,7 +49,7 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "io.github.adelbertc",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.11.11",
   scalacOptions ++= commonScalacOptions,
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
