@@ -47,7 +47,7 @@ ds.collect()
 But any non-encodable in the case class hierarchy will be detected at compile time:
 
 ```tut:fail
-case class BarDate(d: Double, s: String, d: java.util.Date)
+case class BarDate(d: Double, s: String, t: java.util.Date)
 case class FooDate(i: Int, b: BarDate)
 val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, "s", new java.util.Date))))
 ```
