@@ -171,13 +171,13 @@ class GroupByTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Long] _))
   }
 
-  test("groupBy('a).agg(sum('b), sum('c))") {
+  test("groupBy('a).agg(sum('b), sum('c)) to groupBy('a).agg(sum('a), sum('b), sum('a), sum('b), sum('a))") {
     def prop[
-      A: TypedEncoder : Ordering,
-      B: TypedEncoder,
-      C: TypedEncoder,
-      OutB: TypedEncoder : Numeric,
-      OutC: TypedEncoder: Numeric
+    A: TypedEncoder : Ordering,
+    B: TypedEncoder,
+    C: TypedEncoder,
+    OutB: TypedEncoder : Numeric,
+    OutC: TypedEncoder : Numeric
     ](data: List[X3[A, B, C]])(
       implicit
       summableB: CatalystSummable[B, OutB],
@@ -190,21 +190,128 @@ class GroupByTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
-      val datasetSumByAB = dataset
+      val framelessSumBC = dataset
         .groupBy(A)
         .agg(sum(B), sum(C))
         .collect().run.toVector.sortBy(_._1)
 
-      val sumByAB = data.groupBy(_.a).mapValues { xs =>
+      val scalaSumBC = data.groupBy(_.a).mapValues { xs =>
         (xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum)
       }.toVector.map {
         case (a, (b, c)) => (a, b, c)
       }.sortBy(_._1)
 
-      datasetSumByAB ?= sumByAB
+      val framelessSumBCB = dataset
+        .groupBy(A)
+        .agg(sum(B), sum(C), sum(B))
+        .collect().run.toVector.sortBy(_._1)
+
+      val scalaSumBCB = data.groupBy(_.a).mapValues { xs =>
+        (xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum, xs.map(_.b).map(widenb).sum)
+      }.toVector.map {
+        case (a, (b1, c, b2)) => (a, b1, c, b2)
+      }.sortBy(_._1)
+
+      val framelessSumBCBC = dataset
+        .groupBy(A)
+        .agg(sum(B), sum(C), sum(B), sum(C))
+        .collect().run.toVector.sortBy(_._1)
+
+      val scalaSumBCBC = data.groupBy(_.a).mapValues { xs =>
+        (xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum, xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum)
+      }.toVector.map {
+        case (a, (b1, c1, b2, c2)) => (a, b1, c1, b2, c2)
+      }.sortBy(_._1)
+
+      val framelessSumBCBCB = dataset
+        .groupBy(A)
+        .agg(sum(B), sum(C), sum(B), sum(C), sum(B))
+        .collect().run.toVector.sortBy(_._1)
+
+      val scalaSumBCBCB = data.groupBy(_.a).mapValues { xs =>
+        (xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum, xs.map(_.b).map(widenb).sum, xs.map(_.c).map(widenc).sum, xs.map(_.b).map(widenb).sum)
+      }.toVector.map {
+        case (a, (b1, c1, b2, c2, b3)) => (a, b1, c1, b2, c2, b3)
+      }.sortBy(_._1)
+
+      (framelessSumBC ?= scalaSumBC)
+        .&&(framelessSumBCB ?= scalaSumBCB)
+        .&&(framelessSumBCBC ?= scalaSumBCBC)
+        .&&(framelessSumBCBCB ?= scalaSumBCBCB)
     }
 
     check(forAll(prop[String, Long, BigDecimal, Long, BigDecimal] _))
+  }
+
+  test("groupBy('a, 'b).agg(sum('c)) to groupBy('a, 'b).agg(sum('c),sum('c),sum('c),sum('c),sum('c))") {
+    def prop[
+    A: TypedEncoder : Ordering,
+    B: TypedEncoder : Ordering,
+    C: TypedEncoder,
+    OutC: TypedEncoder: Numeric
+    ](data: List[X3[A, B, C]])(
+      implicit
+      summableC: CatalystSummable[C, OutC],
+      widenc: C => OutC
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
+
+      val framelessSumC = dataset
+        .groupBy(A,B)
+        .agg(sum(C))
+        .collect().run.toVector.sortBy(x => (x._1,x._2))
+
+      val scalaSumC = data.groupBy(x => (x.a,x.b)).mapValues { xs =>
+        xs.map(_.c).map(widenc).sum
+      }.toVector.map { case ((a, b), c) => (a, b, c) }.sortBy(x => (x._1,x._2))
+
+      val framelessSumCC = dataset
+        .groupBy(A,B)
+        .agg(sum(C), sum(C))
+        .collect().run.toVector.sortBy(x => (x._1,x._2))
+
+      val scalaSumCC = data.groupBy(x => (x.a,x.b)).mapValues { xs =>
+        val s = xs.map(_.c).map(widenc).sum; (s,s)
+      }.toVector.map { case ((a, b), (c1, c2)) => (a, b, c1, c2) }.sortBy(x => (x._1,x._2))
+
+      val framelessSumCCC = dataset
+        .groupBy(A,B)
+        .agg(sum(C), sum(C), sum(C))
+        .collect().run.toVector.sortBy(x => (x._1,x._2))
+
+      val scalaSumCCC = data.groupBy(x => (x.a,x.b)).mapValues { xs =>
+        val s = xs.map(_.c).map(widenc).sum; (s,s,s)
+      }.toVector.map { case ((a, b), (c1, c2, c3)) => (a, b, c1, c2, c3) }.sortBy(x => (x._1,x._2))
+
+      val framelessSumCCCC = dataset
+        .groupBy(A,B)
+        .agg(sum(C), sum(C), sum(C), sum(C))
+        .collect().run.toVector.sortBy(x => (x._1,x._2))
+
+      val scalaSumCCCC = data.groupBy(x => (x.a,x.b)).mapValues { xs =>
+        val s = xs.map(_.c).map(widenc).sum; (s,s,s,s)
+      }.toVector.map { case ((a, b), (c1, c2, c3, c4)) => (a, b, c1, c2, c3, c4) }.sortBy(x => (x._1,x._2))
+
+      val framelessSumCCCCC = dataset
+        .groupBy(A,B)
+        .agg(sum(C), sum(C), sum(C), sum(C), sum(C))
+        .collect().run.toVector.sortBy(x => (x._1,x._2))
+
+      val scalaSumCCCCC = data.groupBy(x => (x.a,x.b)).mapValues { xs =>
+        val s = xs.map(_.c).map(widenc).sum; (s,s,s,s,s)
+      }.toVector.map { case ((a, b), (c1, c2, c3, c4, c5)) => (a, b, c1, c2, c3, c4, c5) }.sortBy(x => (x._1,x._2))
+
+      (framelessSumC ?= scalaSumC) &&
+        (framelessSumCC ?= scalaSumCC) &&
+        (framelessSumCCC ?= scalaSumCCC) &&
+        (framelessSumCCCC ?= scalaSumCCCC) &&
+        (framelessSumCCCCC ?= scalaSumCCCCC)
+    }
+
+    check(forAll(prop[String, Long, BigDecimal, BigDecimal] _))
   }
 
   test("groupBy('a, 'b).agg(sum('c), sum('d))") {

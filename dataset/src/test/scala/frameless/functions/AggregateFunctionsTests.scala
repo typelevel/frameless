@@ -150,7 +150,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetStdOpt = dataset.agg(stddev(A)).collect().run().toVector.headOption
       val datasetVarOpt = dataset.agg(variance(A)).collect().run().toVector.headOption
-      
+
       val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
       val `var` = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleVariance()
 
