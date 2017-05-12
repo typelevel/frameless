@@ -142,42 +142,31 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short, Double] _))
   }
 
-//  test("stddev and variance") {
-//    def verifyStat[A: Numeric](xs: List[A],
-//                               datasetEstimate: Option[Double],
-//                               rddBasedEstimate: Double) = {
-//      xs match {
-//        case Nil => datasetEstimate ?= None
-//        case _ :: Nil => datasetEstimate match {
-//          case Some(x) => if (x.isNaN) proved else falsified
-//          case _ => falsified
-//        }
-//        case _ => datasetEstimate match {
-//          case Some(x) => approximatelyEqual(rddBasedEstimate, x)
-//          case _ => falsified
-//        }
-//      }
-//    }
-//
-//    def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
-//      val numeric = implicitly[Numeric[A]]
-//      val dataset = TypedDataset.create(xs.map(X1(_)))
-//      val A = dataset.col[A]('a)
-//
-//      val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
-//      val Vector(datasetVar) = dataset.select(variance(A)).collect().run().toVector
-//      val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
-//      val `var` = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleVariance()
-//
-//      verifyStat(xs, datasetStd, std) && verifyStat(xs, datasetVar, `var`)
-//    }
-//
-//    check(forAll(prop[Short] _))
-//    check(forAll(prop[Int] _))
-//    check(forAll(prop[Long] _))
-//    check(forAll(prop[BigDecimal] _))
-//    check(forAll(prop[Double] _))
-//  }
+  test("stddev and variance") {
+    def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
+      val numeric = implicitly[Numeric[A]]
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[A]('a)
+
+      val datasetStdOpt = dataset.agg(stddev(A)).collect().run().toVector.headOption
+      val datasetVarOpt = dataset.agg(variance(A)).collect().run().toVector.headOption
+      
+      val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
+      val `var` = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleVariance()
+
+      (datasetStdOpt, datasetVarOpt) match {
+        case (Some(datasetStd), Some(datasetVar)) =>
+          approximatelyEqual(datasetStd, std) && approximatelyEqual(datasetVar, `var`)
+        case _ => proved
+      }
+    }
+
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Double] _))
+  }
 
   test("count") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
@@ -208,9 +197,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val datasetMax: Seq[Option[A]] = dataset.agg(max(A)).collect().run().toList
+      val datasetMax = dataset.agg(max(A)).collect().run().toList
 
-      datasetMax ?= List(xs.reduceOption(o.max))
+      datasetMax ?= xs.reduceOption(o.max).toList
     }
 
     check(forAll(prop[Long] _))
@@ -228,7 +217,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetMin = dataset.agg(min(A)).collect().run().toList
 
-      datasetMin ?= List(xs.reduceOption(o.min))
+      datasetMin ?= xs.reduceOption(o.min).toList
     }
 
     check(forAll(prop[Long] _))
@@ -246,7 +235,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetFirst = dataset.agg(first(A)).collect().run().toList
 
-      datasetFirst ?= List(xs.headOption)
+      datasetFirst ?= xs.headOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))
@@ -265,7 +254,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetLast = dataset.agg(last(A)).collect().run().toList
 
-      datasetLast ?= List(xs.lastOption)
+      datasetLast ?= xs.lastOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))

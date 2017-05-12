@@ -392,4 +392,9 @@ class SelectTests extends TypedDatasetSuite {
     val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
     illTyped("""e.select( -e('_2) )""")
   }
+
+  test("select with aggregation operations is not supported") {
+    val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
+    illTyped("""e.select(frameless.functions.aggregate.sum(e('_1)))""")
+  }
 }

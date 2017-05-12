@@ -99,27 +99,27 @@ class GroupedBy1Ops[K1, V](
   private implicit def eg1 = g1.uencoder
 
   def agg[U1](c1: TypedAggregate[V, U1]): TypedDataset[(K1, U1)] = {
-    implicit val e1 = c1.aencoder
+    implicit val e1 = c1.uencoder
     underlying.agg(c1)
   }
 
   def agg[U1, U2](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2]): TypedDataset[(K1, U1, U2)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder
     underlying.agg(c1, c2)
   }
 
   def agg[U1, U2, U3](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3]): TypedDataset[(K1, U1, U2, U3)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder
     underlying.agg(c1, c2, c3)
   }
 
   def agg[U1, U2, U3, U4](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3], c4: TypedAggregate[V, U4]): TypedDataset[(K1, U1, U2, U3, U4)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder; implicit val e4 = c4.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder; implicit val e4 = c4.uencoder
     underlying.agg(c1, c2, c3, c4)
   }
 
   def agg[U1, U2, U3, U4, U5](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3], c4: TypedAggregate[V, U4], c5: TypedAggregate[V, U5]): TypedDataset[(K1, U1, U2, U3, U4, U5)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder; implicit val e4 = c4.aencoder; implicit val e5 = c5.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder; implicit val e4 = c4.uencoder; implicit val e5 = c5.uencoder
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
@@ -142,27 +142,27 @@ class GroupedBy2Ops[K1, K2, V](
   private implicit def eg2 = g2.uencoder
 
   def agg[U1](c1: TypedAggregate[V, U1]): TypedDataset[(K1, K2, U1)] = {
-    implicit val e1 = c1.aencoder
+    implicit val e1 = c1.uencoder
     underlying.agg(c1)
   }
 
   def agg[U1, U2](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2]): TypedDataset[(K1, K2, U1, U2)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder
     underlying.agg(c1, c2)
   }
 
   def agg[U1, U2, U3](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3]): TypedDataset[(K1, K2, U1, U2, U3)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder
     underlying.agg(c1, c2, c3)
   }
 
   def agg[U1, U2, U3, U4](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3], c4: TypedAggregate[V, U4]): TypedDataset[(K1, K2, U1, U2, U3, U4)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder; implicit val e4 = c4.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder; implicit val e4 = c4.uencoder
     underlying.agg(c1 , c2 , c3 , c4)
   }
 
   def agg[U1, U2, U3, U4, U5](c1: TypedAggregate[V, U1], c2: TypedAggregate[V, U2], c3: TypedAggregate[V, U3], c4: TypedAggregate[V, U4], c5: TypedAggregate[V, U5]): TypedDataset[(K1, K2, U1, U2, U3, U4, U5)] = {
-    implicit val e1 = c1.aencoder; implicit val e2 = c2.aencoder; implicit val e3 = c3.aencoder; implicit val e4 = c4.aencoder; implicit val e5 = c5.aencoder
+    implicit val e1 = c1.uencoder; implicit val e2 = c2.uencoder; implicit val e3 = c3.uencoder; implicit val e4 = c4.uencoder; implicit val e5 = c5.uencoder
     underlying.agg(c1, c2, c3, c4, c5)
   }
 

@@ -30,15 +30,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * apache/spark
     */
   def agg[A](ca: TypedAggregate[T, A]): TypedDataset[A] = {
-    implicit val ea = ca.aencoder
-
+    implicit val ea = ca.uencoder
     val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
-
     TypedEncoder[A].targetDataType match {
       case StructType(_) =>
-        // if column is struct, we use all it's fields
+        // if column is struct, we use all its fields
         val df = tuple1
           .dataset
           .selectExpr("_1.*")
@@ -59,7 +57,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     ca: TypedAggregate[T, A],
     cb: TypedAggregate[T, B]
   ): TypedDataset[(A, B)] = {
-    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder
+    implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
     aggMany(ca, cb)
   }
 
@@ -72,7 +70,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     cb: TypedAggregate[T, B],
     cc: TypedAggregate[T, C]
   ): TypedDataset[(A, B, C)] = {
-    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder; implicit val ec = cc.aencoder
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
     aggMany(ca, cb, cc)
   }
 
@@ -86,9 +84,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     cc: TypedAggregate[T, C],
     cd: TypedAggregate[T, D]
   ): TypedDataset[(A, B, C, D)] = {
-    implicit val ea = ca.aencoder; implicit val eb = cb.aencoder; implicit val ec = cc.aencoder;
-    implicit val ed = cd.aencoder
-
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
     aggMany(ca, cb, cc, cd)
   }
 
@@ -454,7 +450,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B]
   ): TypedDataset[(A, B)] = {
-    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder;
+    implicit val (ea,eb) = (ca.uencoder, cb.uencoder)
 
     selectMany(ca, cb)
   }
@@ -469,7 +465,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     cb: TypedColumn[T, B],
     cc: TypedColumn[T, C]
   ): TypedDataset[(A, B, C)] = {
-    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
 
     selectMany(ca, cb, cc)
   }
@@ -485,9 +481,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D]
   ): TypedDataset[(A, B, C, D)] = {
-    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-    implicit val ed = cd.uencoder;
-
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
     selectMany(ca, cb, cc, cd)
   }
 
@@ -503,8 +497,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E]
   ): TypedDataset[(A, B, C, D, E)] = {
-    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-    implicit val ed = cd.uencoder; implicit val ee = ce.uencoder;
+    implicit val (ea, eb, ec, ed, ee) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder)
 
     selectMany(ca, cb, cc, cd, ce)
   }
@@ -522,8 +516,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F]
   ): TypedDataset[(A, B, C, D, E, F)] = {
-    implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-    implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
+    implicit val (ea, eb, ec, ed, ee, ef) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder)
 
     selectMany(ca, cb, cc, cd, ce, cf)
   }
@@ -542,9 +536,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G]
   ): TypedDataset[(A, B, C, D, E, F, G)] = {
-   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
-   implicit val eg = cg.uencoder;
+   implicit val (ea, eb, ec, ed, ee, ef, eg) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder)
 
    selectMany(ca, cb, cc, cd, ce, cf, cg)
  }
@@ -564,9 +557,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H]
   ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
-   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
-   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder;
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder)
 
    selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
  }
@@ -587,9 +579,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I]
   ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
-   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
-   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder; implicit val ei = ci.uencoder;
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder)
 
    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
  }
@@ -611,10 +602,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ci: TypedColumn[T, I],
      cj: TypedColumn[T, J]
   ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
-   implicit val ea = ca.uencoder; implicit val eb = cb.uencoder; implicit val ec = cc.uencoder;
-   implicit val ed = cd.uencoder; implicit val ee = ce.uencoder; implicit val ef = cf.uencoder;
-   implicit val eg = cg.uencoder; implicit val eh = ch.uencoder; implicit val ei = ci.uencoder;
-   implicit val ej = cj.uencoder;
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder)
    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
  }
 

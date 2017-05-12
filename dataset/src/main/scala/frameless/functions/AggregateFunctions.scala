@@ -122,8 +122,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
-    new TypedAggregate[T, Option[Double]](untyped.variance(column.untyped))
+  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
+    new TypedAggregate[T, Double](untyped.variance(column.untyped))
   }
 
   /** Aggregate function: returns the sample standard deviation.
@@ -133,26 +133,26 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
-    new TypedAggregate[T, Option[Double]](untyped.stddev(column.untyped))
+  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
+    new TypedAggregate[T, Double](untyped.stddev(column.untyped))
   }
 
   /** Aggregate function: returns the maximum value of the column in a group.
     *
     * apache/spark
     */
-  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, Option[A]](untyped.max(column.untyped))
+    new TypedAggregate[T, A](untyped.max(column.untyped))
   }
 
   /** Aggregate function: returns the minimum value of the column in a group.
     *
     * apache/spark
     */
-  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, Option[A]](untyped.min(column.untyped))
+    new TypedAggregate[T, A](untyped.min(column.untyped))
   }
 
   /** Aggregate function: returns the first value in a group.
@@ -162,9 +162,9 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+  def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, Option[A]](untyped.first(column.untyped))
+    new TypedAggregate[T, A](untyped.first(column.untyped))
   }
 
   /**
@@ -175,8 +175,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, Option[A]] = {
+  def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, Option[A]](untyped.last(column.untyped))
+    new TypedAggregate[T, A](untyped.last(column.untyped))
   }
 }

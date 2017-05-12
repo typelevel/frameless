@@ -36,7 +36,7 @@ class GroupByTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val datasetSum = dataset.agg(sum(A)).collect().run.toVector
+      val datasetSum = dataset.agg(sum(A)).collect().run().toVector
       val listSum = data.map(_.a).sum
 
       datasetSum ?= Vector(listSum)
@@ -58,7 +58,7 @@ class GroupByTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val datasetSum = dataset.agg(sum(A), sum(B)).collect().run.toVector
+      val datasetSum = dataset.agg(sum(A), sum(B)).collect().run().toVector
       val listSumA = data.map(_.a).sum
       val listSumB = data.map(_.b).sum
 
@@ -66,6 +66,66 @@ class GroupByTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop[Long, Long] _))
+  }
+
+  test("agg(sum('a), sum('b), sum('c))") {
+    def prop[
+    A: TypedEncoder : Numeric,
+    B: TypedEncoder : Numeric,
+    C: TypedEncoder : Numeric
+    ](data: List[X3[A, B, C]])(
+      implicit
+      as: CatalystSummable[A, A],
+      bs: CatalystSummable[B, B],
+      cs: CatalystSummable[C, C]
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
+
+      val datasetSum = dataset.agg(sum(A), sum(B), sum(C)).collect().run().toVector
+      val listSumA = data.map(_.a).sum
+      val listSumB = data.map(_.b).sum
+      val listSumC = data.map(_.c).sum
+
+      datasetSum ?= Vector((listSumA, listSumB, listSumC))
+    }
+
+    check(forAll(prop[Long, Long, Long] _))
+  }
+
+  test("agg(sum('a), sum('b), min('c), max('d))") {
+    def prop[
+    A: TypedEncoder : Numeric,
+    B: TypedEncoder : Numeric,
+    C: TypedEncoder : Numeric,
+    D: TypedEncoder : Numeric
+    ](data: List[X4[A, B, C, D]])(
+      implicit
+      as: CatalystSummable[A, A],
+      bs: CatalystSummable[B, B],
+      co: CatalystOrdered[C],
+      fo: CatalystOrdered[D]
+    ): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
+      val D = dataset.col[D]('d)
+
+      val datasetSum = dataset.agg(sum(A), sum(B), min(C), max(D)).collect().run().toVector
+      val listSumA = data.map(_.a).sum
+      val listSumB = data.map(_.b).sum
+      val listMinC = if(data.isEmpty) implicitly[Numeric[C]].fromInt(0) else data.map(_.c).min
+      val listMaxD = if(data.isEmpty) implicitly[Numeric[D]].fromInt(0) else data.map(_.d).max
+
+      datasetSum ?= Vector(if (data.isEmpty) null else (listSumA, listSumB, listMinC, listMaxD))
+    }
+
+    check(forAll(prop[Long, Long, Long, Int] _))
+    check(forAll(prop[Long, Long, Short, Short] _))
+    check(forAll(prop[Long, Long, Double, BigDecimal] _))
   }
 
   test("groupBy('a).agg(sum('b))") {
