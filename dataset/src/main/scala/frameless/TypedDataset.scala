@@ -25,6 +25,93 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   private implicit val sparkContext = dataset.sqlContext.sparkContext
 
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A](ca: TypedAggregate[T, A]): TypedDataset[A] = {
+    implicit val ea = ca.uencoder
+    val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
+
+    // now we need to unpack `Tuple1[A]` to `A`
+    TypedEncoder[A].targetDataType match {
+      case StructType(_) =>
+        // if column is struct, we use all its fields
+        val df = tuple1
+          .dataset
+          .selectExpr("_1.*")
+          .as[A](TypedExpressionEncoder[A])
+
+        TypedDataset.create(df)
+      case other =>
+        // for primitive types `Tuple1[A]` has the same schema as `A`
+        TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
+    }
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B]
+  ): TypedDataset[(A, B)] = {
+    implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
+    aggMany(ca, cb)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C]
+  ): TypedDataset[(A, B, C)] = {
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
+    aggMany(ca, cb, cc)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C, D](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C],
+    cd: TypedAggregate[T, D]
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
+    aggMany(ca, cb, cc, cd)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  object aggMany extends ProductArgs {
+    def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
+      implicit
+      tc: AggregateTypes.Aux[T, U, Out0],
+      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      tupler: Tupler.Aux[Out0, Out],
+      encoder: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+
+      val cols = toTraversable(columns).map(c => new Column(c.expr))
+
+      val selected = dataset.toDF()
+        .agg(cols.head.alias("_1"), cols.tail: _*)
+        .as[Out](TypedExpressionEncoder[Out])
+        .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
+
+      TypedDataset.create[Out](selected)
+    }
+  }
+
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
     implicit val uencoder = as.encoder
@@ -330,9 +417,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder](
+  def select[A](
     ca: TypedColumn[T, A]
   ): TypedDataset[A] = {
+    implicit val ea = ca.uencoder
+
     val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
@@ -357,67 +446,88 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder](
+  def select[A, B](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B]
-  ): TypedDataset[(A, B)] = selectMany(ca, cb)
+  ): TypedDataset[(A, B)] = {
+    implicit val (ea,eb) = (ca.uencoder, cb.uencoder)
+
+    selectMany(ca, cb)
+  }
 
   /** Type-safe projection from type T to Tuple3[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
+  def select[A, B, C](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B],
     cc: TypedColumn[T, C]
-  ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
+  ): TypedDataset[(A, B, C)] = {
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
+
+    selectMany(ca, cb, cc)
+  }
 
   /** Type-safe projection from type T to Tuple4[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
+  def select[A, B, C, D](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D]
-  ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
+    selectMany(ca, cb, cc, cd)
+  }
 
   /** Type-safe projection from type T to Tuple5[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder](
+  def select[A, B, C, D, E](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E]
-  ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
+  ): TypedDataset[(A, B, C, D, E)] = {
+    implicit val (ea, eb, ec, ed, ee) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder)
+
+    selectMany(ca, cb, cc, cd, ce)
+  }
 
   /** Type-safe projection from type T to Tuple6[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder](
+  def select[A, B, C, D, E, F](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F]
-  ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
+  ): TypedDataset[(A, B, C, D, E, F)] = {
+    implicit val (ea, eb, ec, ed, ee, ef) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder)
+
+    selectMany(ca, cb, cc, cd, ce, cf)
+  }
 
   /** Type-safe projection from type T to Tuple7[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder](
+ def select[A, B, C, D, E, F, G](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -425,14 +535,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G]
-  ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
+  ): TypedDataset[(A, B, C, D, E, F, G)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg)
+ }
 
   /** Type-safe projection from type T to Tuple8[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -441,14 +556,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H]
-  ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+  ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+ }
 
   /** Type-safe projection from type T to Tuple9[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -458,14 +578,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+ }
 
   /** Type-safe projection from type T to Tuple10[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder, J: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I, J](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -476,7 +601,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I],
      cj: TypedColumn[T, J]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder)
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+ }
 
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(

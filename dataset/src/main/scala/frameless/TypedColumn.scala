@@ -232,26 +232,14 @@ sealed class TypedColumn[T, U](
 /** Expression used in `groupBy`-like constructions.
   *
   * @tparam T type of dataset
-  * @tparam A type of column for `groupBy`
+  * @tparam U type of column for `groupBy`
   */
-sealed trait TypedAggregate[T, A] extends UntypedExpression[T] {
-  def expr: Expression
-  def aencoder: TypedEncoder[A]
-}
-
-/** Expression used both in `groupBy` and `select`-like constructions.
-  *
-  * @tparam T type of dataset
-  * @tparam A type of column for `groupBy`
-  * @tparam U type of column for `select`
-  */
-sealed class TypedAggregateAndColumn[T, A, U](expr: Expression)(
+sealed class TypedAggregate[T, U](val expr: Expression)(
   implicit
-  val aencoder: TypedEncoder[A],
-  uencoder: TypedEncoder[U]
-) extends TypedColumn[T, U](expr) with TypedAggregate[T, A] {
+  val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T] {
 
-  def this(column: Column)(implicit aencoder: TypedEncoder[A], uencoder: TypedEncoder[U]) {
+  def this(column: Column)(implicit uenc: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
   }
 }

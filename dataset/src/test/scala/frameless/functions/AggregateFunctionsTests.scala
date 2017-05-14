@@ -21,13 +21,11 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
   }
 
-  def sparkSchema[A: TypedEncoder, U](f: TypedColumn[X1[A], A] => TypedColumn[X1[A], U]): Prop = {
+  def sparkSchema[A: TypedEncoder, U](f: TypedColumn[X1[A], A] => TypedAggregate[X1[A], U]): Prop = {
     val df = TypedDataset.create[X1[A]](Nil)
     val col = f(df.col('a))
 
-    import col.uencoder
-
-    val sumDf = df.select(col)
+    val sumDf = df.agg(col)
 
     TypedExpressionEncoder.targetStructType(sumDf.encoder) ?= sumDf.dataset.schema
   }
@@ -43,7 +41,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum: List[Out] = dataset.select(sum(A)).collect().run().toList
+      val datasetSum: List[Out] = dataset.agg(sum(A)).collect().run().toList
 
       datasetSum match {
         case x :: Nil => approximatelyEqual(summer.sum(xs), x)
@@ -83,7 +81,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum: List[Out] = dataset.select(sumDistinct(A)).collect().run().toList
+      val datasetSum: List[Out] = dataset.agg(sumDistinct(A)).collect().run().toList
 
       datasetSum match {
         case x :: Nil => approximatelyEqual(summer.sum(xs), x)
@@ -117,13 +115,14 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetAvg): Vector[Option[Out]] = dataset.select(avg(A)).collect().run().toVector
+      val datasetAvg: Vector[Out] = dataset.agg(avg(A)).collect().run().toVector
 
-      xs match {
-        case Nil => datasetAvg ?= None
-        case _ :: _ => datasetAvg match {
+      if (datasetAvg.size > 2) falsified
+      else xs match {
+        case Nil => datasetAvg ?= Vector()
+        case _ :: _ => datasetAvg.headOption match {
           case Some(x) => approximatelyEqual(averager.avg(xs), x)
-          case other => falsified
+          case None => falsified
         }
       }
     }
@@ -144,32 +143,22 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("stddev and variance") {
-    def verifyStat[A: Numeric](xs: List[A],
-                               datasetEstimate: Option[Double],
-                               rddBasedEstimate: Double) = {
-      xs match {
-        case Nil => datasetEstimate ?= None
-        case _ :: Nil => datasetEstimate match {
-          case Some(x) => if (x.isNaN) proved else falsified
-          case _ => falsified
-        }
-        case _ => datasetEstimate match {
-          case Some(x) => approximatelyEqual(rddBasedEstimate, x)
-          case _ => falsified
-        }
-      }
-    }
-
     def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
+      val numeric = implicitly[Numeric[A]]
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val Vector(datasetStd) = dataset.select(stddev(A)).collect().run().toVector
-      val Vector(datasetVar) = dataset.select(variance(A)).collect().run().toVector
+      val datasetStdOpt = dataset.agg(stddev(A)).collect().run().toVector.headOption
+      val datasetVarOpt = dataset.agg(variance(A)).collect().run().toVector.headOption
+
       val std = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleStdev()
       val `var` = sc.parallelize(xs.map(implicitly[Numeric[A]].toDouble)).sampleVariance()
 
-      verifyStat(xs, datasetStd, std) && verifyStat(xs, datasetVar, `var`)
+      (datasetStdOpt, datasetVarOpt) match {
+        case (Some(datasetStd), Some(datasetVar)) =>
+          approximatelyEqual(datasetStd, std) && approximatelyEqual(datasetVar, `var`)
+        case _ => proved
+      }
     }
 
     check(forAll(prop[Short] _))
@@ -182,7 +171,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("count") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs)
-      val Vector(datasetCount) = dataset.select(count()).collect().run().toVector
+      val Vector(datasetCount) = dataset.agg(count()).collect().run().toVector
 
       datasetCount ?= xs.size.toLong
     }
@@ -195,7 +184,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val datasetCount = dataset.select(count(A)).collect().run()
+      val datasetCount = dataset.agg(count(A)).collect().run()
 
       datasetCount ?= List(xs.size.toLong)
     }
@@ -208,9 +197,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
-      val datasetMax = dataset.select(max(A)).collect().run().toList
+      val datasetMax = dataset.agg(max(A)).collect().run().toList
 
-      datasetMax ?= List(xs.reduceOption(o.max))
+      datasetMax ?= xs.reduceOption(o.max).toList
     }
 
     check(forAll(prop[Long] _))
@@ -226,9 +215,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetMin = dataset.select(min(A)).collect().run().toList
+      val datasetMin = dataset.agg(min(A)).collect().run().toList
 
-      datasetMin ?= List(xs.reduceOption(o.min))
+      datasetMin ?= xs.reduceOption(o.min).toList
     }
 
     check(forAll(prop[Long] _))
@@ -244,9 +233,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetFirst = dataset.select(first(A)).collect().run().toList
+      val datasetFirst = dataset.agg(first(A)).collect().run().toList
 
-      datasetFirst ?= List(xs.headOption)
+      datasetFirst ?= xs.headOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))
@@ -263,9 +252,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetLast = dataset.select(last(A)).collect().run().toList
+      val datasetLast = dataset.agg(last(A)).collect().run().toList
 
-      datasetLast ?= List(xs.lastOption)
+      datasetLast ?= xs.lastOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))
