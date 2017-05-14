@@ -48,7 +48,7 @@ lazy val docs = project
   .dependsOn(dataset, cats)
 
 lazy val framelessSettings = Seq(
-  organization := "io.github.adelbertc",
+  organization := "org.typelevel",
   scalaVersion := "2.11.11",
   scalacOptions ++= commonScalacOptions,
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
