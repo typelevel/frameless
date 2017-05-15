@@ -256,6 +256,28 @@ val cityPriceRatio =  aptds.select(aptds('city), aptds('price) / aptds('surface)
 cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show().run()
 ```
 
+### Entire TypedDataset Aggregation
+
+We often want to aggregate the entire `TypedDataset` and skip the `groupBy()` clause.
+In `Frameless` you can do this using the `agg()` operator directly on the `TypedDataset`. 
+In the following example, we compute the average price, the average surface,  
+the minimum surface, and the set of cities for the entire dataset. 
+
+```tut:book
+case class Stats(
+   avgPrice: Double, 
+   avgSurface: Double, 
+   minSurface: Int, 
+   allCities: Vector[String])
+ 
+aptds.agg(
+   avg(aptds('price)), 
+   avg(aptds('surface)),
+   min(aptds('surface)),
+   collectSet(aptds('city))
+).as[Stats].show().run() 
+```
+
 ## Joins
 
 ```tut:silent
