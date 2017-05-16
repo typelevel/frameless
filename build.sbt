@@ -131,16 +131,41 @@ lazy val publishSettings = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository := Function.const(false),
   pomExtra in Global := {
-    <url>https://github.com/adelbertc/frameless</url>
+    <url>https://github.com/typelevel/frameless</url>
     <scm>
-      <url>git@github.com:adelbertc/frameless.git</url>
-      <connection>scm:git:git@github.com:adelbertc/frameless.git</connection>
+      <url>git@github.com:typelevel/frameless.git</url>
+      <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
     </scm>
     <developers>
+      <developer>
+        <id>OlivierBlanvillain</id>
+        <name>Olivier Blanvillain</name>
+        <url>https://github.com/OlivierBlanvillain/</url>
+      </developer>
       <developer>
         <id>adelbertc</id>
         <name>Adelbert Chang</name>
         <url>https://github.com/adelbertc/</url>
+      </developer>
+      <developer>
+        <id>imarios</id>
+        <name>Marios Iliofotou</name>
+        <url>https://github.com/imarios/</url>
+      </developer>
+      <developer>
+        <id>kanterov</id>
+        <name>Gleb Kanterov</name>
+        <url>https://github.com/kanterov/</url>
+      </developer>
+      <developer>
+        <id>non</id>
+        <name>Erik Osheim</name>
+        <url>https://github.com/non/</url>
+      </developer>
+      <developer>
+        <id>jeremyrsmith</id>
+        <name>Jeremy Smith</name>
+        <url>https://github.com/jeremyrsmith/</url>
       </developer>
     </developers>
   }
