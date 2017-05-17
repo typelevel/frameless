@@ -66,13 +66,14 @@ g8 imarios/frameless.g8
 sbt new imarios/frameless.g8
 ```
 Typing `sbt console` inside your project will bring up a shell with Frameless
-and all its dependencies loaded (including Spark). 
+and all its dependencies loaded (including Spark).
 
 ## Development
 We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
 (people who can merge pull requests) are:
 
 * [adelbertc](https://github.com/adelbertc)
+* [imarios](https://github.com/imarios)
 * [jeremyrsmith](https://github.com/jeremyrsmith)
 * [kanterov](https://github.com/kanterov)
 * [non](https://github.com/non)
