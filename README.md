@@ -2,14 +2,14 @@
 
 [![Travis Badge](https://travis-ci.org/typelevel/frameless.svg?branch=master)](https://travis-ci.org/typelevel/frameless)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
-[![Maven Badge](https://img.shields.io/maven-central/v/io.github.adelbertc/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.adelbertc/frameless-dataset_2.11)
+[![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.11)
 [![Gitter Badge](https://badges.gitter.im/typelevel/frameless.svg)](https://gitter.im/typelevel/frameless)
 
 Frameless is a proof-of-concept library for working with [Spark](http://spark.apache.org/) using more expressive types.
 It consists of the following modules:
 
 * `dataset` for more strongly typed `Dataset`s  (supports Spark 2.0.x)
-* `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 0.7.x)
+* `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 0.9.x)
 
 
 The Frameless project and contributors support the
@@ -27,7 +27,7 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 
 ## Why?
 
-Benefits of using `TypedDataset` compared to vanilla `Dataset`:
+Benefits of using `TypedDataset` compared to the standard Spark `Dataset` API:
 
 * Typesafe columns referencing and expressions
 * Customizable, typesafe encoders
@@ -45,11 +45,11 @@ To use Frameless in your project add the following in your `build.sbt` file as n
 ```scala
 resolvers += Resolver.sonatypeRepo("releases")
 
-val framelessVersion = "0.2.0"
+val framelessVersion = "0.3.0"
 
 libraryDependencies ++= List(
-  "io.github.adelbertc" %% "frameless-cats"      % framelessVersion,
-  "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion
+  "org.typelevel" %% "frameless-cats"      % framelessVersion,
+  "org.typelevel" %% "frameless-dataset"   % framelessVersion
 )
 ```
 
