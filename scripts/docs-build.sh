@@ -2,7 +2,7 @@
 
 set -eux
 
-sbt tut
+sbt copyReadme tut
 
 gitbook="node_modules/gitbook-cli/bin/gitbook.js"
 
