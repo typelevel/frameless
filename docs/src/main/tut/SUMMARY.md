@@ -1,4 +1,4 @@
-- [TypedDataset: Feature Overview](GettingStarted.md)
+- [TypedDataset: Feature Overview](FeatureOverview.md)
 - [Comparing TypedDatasets with Spark's Datasets](TypedDatasetVsSparkDataset.md)
 - [Typed Encoders in Frameless](TypedEncoder.md)
 - [Injection: Creating Custom Encoders](Injection.md)
