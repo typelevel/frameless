@@ -252,7 +252,7 @@ This is the definition of the injection typeclass:</p>
 <span class="hljs-comment">// defined class Person</span>
 
 <span class="hljs-keyword">val</span> people = <span class="hljs-type">Seq</span>(<span class="hljs-type">Person</span>(<span class="hljs-number">42</span>, <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>))
-<span class="hljs-comment">// people: Seq[Person] = List(Person(42,Mon May 22 09:53:10 CEST 2017))</span>
+<span class="hljs-comment">// people: Seq[Person] = List(Person(42,Tue May 23 10:57:10 CEST 2017))</span>
 </code></pre>
 <p>And an instance of a <code>TypedDataset</code>:</p>
 <pre><code class="lang-scala"><span class="hljs-keyword">val</span> personDS = <span class="hljs-type">TypedDataset</span>.create(people)
@@ -269,14 +269,14 @@ But we can define a injection from <code>java.util.Date</code> to an encodable t
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">apply</span></span>(d: java.util.<span class="hljs-type">Date</span>): <span class="hljs-type">Long</span> = d.getTime()
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">invert</span></span>(l: <span class="hljs-type">Long</span>): java.util.<span class="hljs-type">Date</span> = <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>(l)
 }
-<span class="hljs-comment">// dateToLongInjection: frameless.Injection[java.util.Date,Long] = $anon$1@6cd5eaec</span>
+<span class="hljs-comment">// dateToLongInjection: frameless.Injection[java.util.Date,Long] = $anon$1@6d6cc4bc</span>
 </code></pre>
 <p>We can be less verbose using the <code>Injection.apply</code> function:</p>
 <pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless._
 <span class="hljs-comment">// import frameless._</span>
 
 <span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> dateToLongInjection = <span class="hljs-type">Injection</span>((_: java.util.<span class="hljs-type">Date</span>).getTime(), <span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>((_: <span class="hljs-type">Long</span>)))
-<span class="hljs-comment">// dateToLongInjection: frameless.Injection[java.util.Date,Long] = frameless.Injection$$anon$1@7a09999d</span>
+<span class="hljs-comment">// dateToLongInjection: frameless.Injection[java.util.Date,Long] = frameless.Injection$$anon$1@79ea3da5</span>
 </code></pre>
 <p>Now we can create our <code>TypedDataset</code>:</p>
 <pre><code class="lang-scala"><span class="hljs-keyword">val</span> personDS = <span class="hljs-type">TypedDataset</span>.create(people)
@@ -321,7 +321,7 @@ But we can define a injection from <code>java.util.Date</code> to an encodable t
     <span class="hljs-keyword">case</span> <span class="hljs-number">2</span> =&gt; <span class="hljs-type">Female</span>
     <span class="hljs-keyword">case</span> <span class="hljs-number">3</span> =&gt; <span class="hljs-type">Other</span>
   })
-<span class="hljs-comment">// genderToInt: frameless.Injection[Gender,Int] = frameless.Injection$$anon$1@2ac4b462</span>
+<span class="hljs-comment">// genderToInt: frameless.Injection[Gender,Int] = frameless.Injection$$anon$1@70fdc07e</span>
 </code></pre>
 <p>And now we can create our <code>TypedDataset</code>:</p>
 <pre><code class="lang-scala"><span class="hljs-keyword">val</span> personDS = <span class="hljs-type">TypedDataset</span>.create(people)
@@ -370,7 +370,7 @@ But we can define a injection from <code>java.util.Date</code> to an encodable t
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"next":{"title":"Job[A]","level":"1.6","depth":1,"path":"Job.md","ref":"Job.md","articles":[]},"previous":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Injection.md","mtime":"2017-05-22T07:53:17.890Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-22T07:54:13.738Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"next":{"title":"Job[A]","level":"1.6","depth":1,"path":"Job.md","ref":"Job.md","articles":[]},"previous":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Injection.md","mtime":"2017-05-23T08:57:16.378Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-23T08:59:39.758Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
