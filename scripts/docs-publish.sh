@@ -19,7 +19,7 @@ git commit -am "Rebuild documentation ($commit)"
 
 echo "Verify that you didn't break anything:"
 echo "  $ python -m SimpleHTTPServer 8000"
-echo "  $ xdg-open http://localhost:8000/docs/book/"
+echo "  $ xdg-open http://localhost:8000/"
 echo ""
 echo "Then push to the gh-pages branch:"
 echo "  $ git push gh-pages"
