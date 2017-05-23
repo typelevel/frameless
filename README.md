@@ -22,6 +22,7 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 * [Comparing TypedDatasets with Spark's Datasets](http://typelevel.github.io/frameless/docs/book/TypedDatasetVsSparkDataset.html)
 * [Typed Encoders in Frameless](http://typelevel.github.io/frameless/docs/book/TypedEncoder.html)
 * [Injection: Creating Custom Encoders](http://typelevel.github.io/frameless/docs/book/Injection.html)
+* [Job\[A\]](http://typelevel.github.io/frameless/docs/book/Job.htmlé)
 * [Using Cats with RDDs](http://typelevel.github.io/frameless/docs/book/Cats.html)
 * [Proof of Concept: TypedDataFrame](http://typelevel.github.io/frameless/docs/book/TypedDataFrame.html)
 
