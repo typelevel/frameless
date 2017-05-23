@@ -13,4 +13,6 @@ fi
 
 $gitbook build docs/target/tut docs/book
 
+mv docs/book/* .
+
 exit 0
