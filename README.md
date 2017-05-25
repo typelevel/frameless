@@ -18,12 +18,13 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 
 ## Documentation
 
-* [TypedDataset: Feature Overview](http://olivierblanvillain.github.io/frameless/GettingStarted.html)
-* [Comparing TypedDatasets with Spark's Datasets](http://olivierblanvillain.github.io/frameless/TypedDatasetVsSparkDataset.html)
-* [Typed Encoders in Frameless](http://olivierblanvillain.github.io/frameless/TypedEncoder.html)
-* [Injection: Creating Custom Encoders](http://olivierblanvillain.github.io/frameless/Injection.html)
-* [Using Cats with RDDs](http://olivierblanvillain.github.io/frameless/Cats.html)
-* [Proof of Concept: TypedDataFrame](http://olivierblanvillain.github.io/frameless/TypedDataFrame.html)
+* [TypedDataset: Feature Overview](http://typelevel.org/frameless/FeatureOverview.html)
+* [Comparing TypedDatasets with Spark's Datasets](http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html)
+* [Typed Encoders in Frameless](http://typelevel.org/frameless/TypedEncoder.html)
+* [Injection: Creating Custom Encoders](http://typelevel.org/frameless/Injection.html)
+* [Job\[A\]](http://typelevel.org/frameless/Job.html)
+* [Using Cats with RDDs](http://typelevel.org/frameless/Cats.html)
+* [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Why?
 
