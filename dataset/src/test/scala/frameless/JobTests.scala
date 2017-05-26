@@ -22,11 +22,9 @@ class JobTests extends FreeSpec with SparkTesting with GeneratorDrivenPropertyCh
     "composition" in forAll {
       i: Int => Job(i).map(f1).map(f2).run() shouldEqual Job(i).map(f1 andThen f2).run()
     }
-
   }
 
   "flatMap" - {
-
     val f1: Int => Job[Int] = (i: Int) => Job(i + 1)
     val f2: Int => Job[Int] = (i: Int) => Job(i * i)
 
@@ -43,4 +41,12 @@ class JobTests extends FreeSpec with SparkTesting with GeneratorDrivenPropertyCh
     }
   }
 
+  "properties" - {
+    "read back" in forAll {
+      (k:String, v: String) =>
+        val scopedKey = "frameless.tests." + k
+        Job(1).withLocalProperty(scopedKey,v).run()
+        sc.getLocalProperty(scopedKey) shouldBe v
+    }
+  }
 }
