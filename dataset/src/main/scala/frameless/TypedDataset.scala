@@ -270,20 +270,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
     Job(dataset.foreachPartition(func))
 
-  /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
-    * `func` must be commutative and associative or the result may be non-deterministic.
-    *
-    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
-    */
-  def reduceOption(func: (T, T) => T): Job[Option[T]] =
-    Job {
-      try {
-        Option(dataset.reduce(func))
-      } catch {
-        case e: UnsupportedOperationException => None
-      }
-    }
-
   def groupBy[K1](
     c1: TypedColumn[T, K1]
   ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)

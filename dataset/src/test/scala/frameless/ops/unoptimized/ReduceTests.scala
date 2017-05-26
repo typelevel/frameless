@@ -1,4 +1,6 @@
 package frameless
+package ops
+package unoptimized
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._

@@ -82,13 +82,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def transform[U](t: TypedDataset[T] => TypedDataset[U]): TypedDataset[U] =
     t(this)
 
-  /** Returns a new [[TypedDataset]] that only contains elements where `func` returns `true`.
-    *
-    * apache/spark
-    */
-  def filter(func: T => Boolean): TypedDataset[T] =
-    TypedDataset.create(dataset.filter(func))
-
   /** Returns a new Dataset by taking the first `n` rows. The difference between this function
     * and `head` is that `head` is an action and returns an array (by triggering query execution)
     * while `limit` returns a new Dataset.
@@ -97,28 +90,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def limit(n: Int): TypedDataset[T] =
     TypedDataset.create(dataset.limit(n))
-
-  /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
-    *
-    * apache/spark
-    */
-  def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
-    TypedDataset.create(dataset.map(func)(TypedExpressionEncoder[U]))
-
-  /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
-    *
-    * apache/spark
-    */
-  def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
-    TypedDataset.create(dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
-
-  /** Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
-    * and then flattening the results.
-    *
-    * apache/spark
-    */
-  def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
-    TypedDataset.create(dataset.flatMap(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] by sampling a fraction of records.
     *

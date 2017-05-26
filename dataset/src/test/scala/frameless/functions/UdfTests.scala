@@ -8,13 +8,14 @@ class UdfTests extends TypedDatasetSuite {
 
   test("one argument udf") {
     def prop[A: TypedEncoder, B: TypedEncoder](data: Vector[X1[A]], f1: A => B): Prop = {
-      val dataset = TypedDataset.create(data)
+      val dataset: TypedDataset[X1[A]] = TypedDataset.create(data)
       val u1 = udf[X1[A], A, B](f1)
       val u2 = dataset.makeUDF(f1)
       val A = dataset.col[A]('a)
 
       // filter forces whole codegen
-      val codegen = dataset.filter(_ => true).select(u1(A)).collect().run().toVector
+      import frameless.ops.unoptimized._
+      val codegen = dataset.filter((_:X1[A]) => true).select(u1(A)).collect().run().toVector
 
       // otherwise it uses local relation
       val local = dataset.select(u2(A)).collect().run().toVector

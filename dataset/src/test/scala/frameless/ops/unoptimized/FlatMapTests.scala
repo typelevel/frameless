@@ -1,7 +1,9 @@
 package frameless
+package ops
+package unoptimized
 
-import org.scalacheck.Prop._
 import org.scalacheck.Prop
+import org.scalacheck.Prop._
 
 class FlatMapTests extends TypedDatasetSuite {
   test("flatMap") {
