@@ -53,4 +53,20 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     check(forAll(prop[Char] _))
     check(forAll(prop[String] _))
   }
+
+  test("explode on vectors") {
+    def prop[A: TypedEncoder](xs: List[X1[Vector[A]]]): Prop = {
+      val tds = TypedDataset.create(xs)
+
+      val framelessResults = tds.select(explode(tds('a))).collect().run().toSet
+      val scalaResults = xs.flatMap(_.a).toSet
+
+      framelessResults ?= scalaResults
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Char] _))
+    check(forAll(prop[String] _))
+  }
 }

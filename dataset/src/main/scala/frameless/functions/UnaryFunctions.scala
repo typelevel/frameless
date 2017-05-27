@@ -28,6 +28,15 @@ trait UnaryFunctions {
     */
   def sortDescending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
     new TypedColumn[T, V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = false))(column.uencoder)
+
+
+  /** Creates a new row for each element in the given collection. The column types
+    * eligible for this operation are constrained by CatalystExplodableCollection.
+    *
+    * apache/spark
+    */
+  def explode[T, A: TypedEncoder, V[_] : CatalystExplodableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, A] =
+    new TypedColumn[T, A](sparkFunctions.explode(column.untyped))
 }
 
 trait CatalystSizableCollection[V[_]] {
@@ -38,6 +47,12 @@ object CatalystSizableCollection {
   implicit def sizableVector: CatalystSizableCollection[Vector] = new CatalystSizableCollection[Vector] {
     def sizeOp(col: Column): Column = sparkFunctions.size(col)
   }
+}
+
+trait CatalystExplodableCollection[V[_]]
+
+object CatalystExplodableCollection {
+  implicit def explodableVector: CatalystExplodableCollection[Vector] = new CatalystExplodableCollection[Vector] {}
 }
 
 trait CatalystSortableCollection[V[_]] {
