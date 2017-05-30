@@ -168,6 +168,17 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
+  test("litAggr") {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](xs: List[A], b: B, c: C): Prop = {
+      val dataset = TypedDataset.create(xs)
+      val (r1, rb, rc, rcount) = dataset.agg(litAggr(1), litAggr(b), litAggr(c), count()).collect().run().head
+      (rcount ?= xs.size.toLong) && (r1 ?= 1) && (rb ?= b) && (rc ?= c)
+    }
+
+    check(forAll(prop[Boolean, Int, String] _))
+    check(forAll(prop[Option[Boolean], Vector[Option[Vector[Char]]], Long] _))
+  }
+
   test("count") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs)
