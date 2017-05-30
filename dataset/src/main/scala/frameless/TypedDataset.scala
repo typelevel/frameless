@@ -23,7 +23,7 @@ import shapeless.ops.hlist.{ToTraversable, Tupler}
 class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
-  private implicit val sparkContext = dataset.sqlContext.sparkContext
+  private implicit val spark: SparkSession = dataset.sparkSession
 
   /** Aggregates on the entire Dataset without groups.
     *
@@ -305,7 +305,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
   private def resolveSelfJoin(join: Join): Join = {
-    val selfJoinFix = self.dataset.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+    val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
 
     if (selfJoinFix) {
       val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
@@ -315,8 +315,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         val cond = plan.condition.map(_.transform {
           case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
             if a.sameRef(b) =>
-            val leftDs = FramelessInternals.ofRows(dataset.sparkSession, plan.left)
-            val rightDs = FramelessInternals.ofRows(dataset.sparkSession, plan.right)
+            val leftDs = FramelessInternals.ofRows(spark, plan.left)
+            val rightDs = FramelessInternals.ofRows(spark, plan.right)
 
             catalyst.expressions.EqualTo(
               FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
