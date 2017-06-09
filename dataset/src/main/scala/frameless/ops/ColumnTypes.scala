@@ -21,8 +21,8 @@ object ColumnTypes {
 
   implicit def deriveHNil[T]: ColumnTypes.Aux[T, HNil, HNil] = new ColumnTypes[T, HNil] { type Out = HNil }
 
-  implicit def deriveCons[T, H, TT <: HList, ColTypes <: HList](
-    implicit tail: ColumnTypes.Aux[T, TT, ColTypes]
-  ): ColumnTypes.Aux[T, TypedColumn[T, H] :: TT, H :: ColTypes] =
-    new ColumnTypes[T, TypedColumn[T, H] :: TT] {type Out = H :: ColTypes}
+  implicit def deriveCons[T, H, TT <: HList, V <: HList](
+    implicit tail: ColumnTypes.Aux[T, TT, V]
+  ): ColumnTypes.Aux[T, TypedColumn[T, H] :: TT, H :: V] =
+    new ColumnTypes[T, TypedColumn[T, H] :: TT] {type Out = H :: V}
 }
