@@ -38,4 +38,9 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
   }
+
+  test("toString") {
+    val t = TypedDataset.create((1,2)::Nil)
+    t('_1).toString ?= t.dataset.col("_1").toString()
+  }
 }
