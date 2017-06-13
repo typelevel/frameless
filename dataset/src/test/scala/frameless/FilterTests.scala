@@ -79,4 +79,44 @@ class FilterTests extends TypedDatasetSuite {
     assert(tds.filter(tds('a) * 2 === 2).collect().run().toVector === Vector(X1(1)))
     assert(tds.filter(tds('a) * 3 === 3).collect().run().toVector === Vector(X1(1)))
   }
+
+  test("Option equality/inequality for columns") {
+    def prop[A <: Option[_] : TypedEncoder](a: A, b: A): Prop = {
+      val data = X2(a, b) :: X2(a, a) :: Nil
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col('a)
+      val B = dataset.col('b)
+
+      (data.filter(x => x.a == x.b).toSet ?= dataset.filter(A === B).collect().run().toSet).
+        &&(data.filter(x => x.a != x.b).toSet ?= dataset.filter(A =!= B).collect().run().toSet).
+        &&(data.filter(x => x.a == None).toSet ?= dataset.filter(A.isNone).collect().run().toSet).
+        &&(data.filter(x => x.a == None).toSet ?= dataset.filter(A.isNotNone === false).collect().run().toSet)
+    }
+
+    check(forAll(prop[Option[Int]] _))
+    check(forAll(prop[Option[Boolean]] _))
+    check(forAll(prop[Option[SQLDate]] _))
+    check(forAll(prop[Option[SQLTimestamp]] _))
+    //check(forAll(prop[Option[X1[String]]] _))
+  }
+
+  test("Option equality/inequality for lit") {
+    def prop[A <: Option[_] : TypedEncoder](a: A, b: A, cLit: A): Prop = {
+      val data = X2(a, b) :: X2(a, cLit) :: Nil
+      val dataset = TypedDataset.create(data)
+      val colA = dataset.col('a)
+
+      (data.filter(x => x.a == cLit).toSet ?= dataset.filter(colA === cLit).collect().run().toSet).
+        &&(data.filter(x => x.a != cLit).toSet ?= dataset.filter(colA =!= cLit).collect().run().toSet).
+        &&(data.filter(x => x.a == None).toSet ?= dataset.filter(colA.isNone).collect().run().toSet).
+        &&(data.filter(x => x.a == None).toSet ?= dataset.filter(colA.isNotNone === false).collect().run().toSet)
+    }
+
+    check(forAll(prop[Option[Int]] _))
+    check(forAll(prop[Option[Boolean]] _))
+    check(forAll(prop[Option[SQLDate]] _))
+    check(forAll(prop[Option[SQLTimestamp]] _))
+    check(forAll(prop[Option[String]] _))
+    //check(forAll(prop[Option[X1[String]]] _)) // Throws exception java.lang.IllegalArgumentException: Cannot compare UnsafeRow to org.apache.spark.sql.catalyst.expressions.GenericInternalRow
+  }
 }
