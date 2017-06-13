@@ -13,6 +13,7 @@ import scala.annotation.implicitNotFound
 sealed trait UntypedExpression[T] {
   def expr: Expression
   def uencoder: TypedEncoder[_]
+  override def toString: String = expr.toString()
 }
 
 /** Expression used in `select`-like constructions.
