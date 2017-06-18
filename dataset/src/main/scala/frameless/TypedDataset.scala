@@ -1,7 +1,6 @@
 package frameless
 
 import frameless.ops._
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
@@ -9,7 +8,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{ToTraversable, Tupler}
+import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -621,6 +620,28 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[Out](selected)
     }
+  }
+
+  /** Prepends a new column to the Dataset.
+    *
+    * {{{
+    *   case class X(i: Int, j: Int)
+    *   val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    *   val fNew: TypedDataset[(Int,Int,Boolean)] = f.withColumn(f('j) === 10)
+    * }}}
+    */
+  def withColumn[A: TypedEncoder, H <: HList, FH <: HList, Out](ca: TypedColumn[T, A])(
+    implicit
+    genOfA: Generic.Aux[T, H],
+    init: Prepend.Aux[H, A :: HNil, FH],
+    tupularFormForFH: Tupler.Aux[FH, Out],
+    encoder: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    // Giving a random name to the new column (the proper name will be given by the Tuple-based encoder)
+    val selected = dataset.toDF().withColumn("I1X3T9CU1OP0128JYIO76TYZZA3AXHQ18RMI", ca.untyped)
+      .as[Out](TypedExpressionEncoder[Out])
+
+    TypedDataset.create[Out](selected)
   }
 }
 
