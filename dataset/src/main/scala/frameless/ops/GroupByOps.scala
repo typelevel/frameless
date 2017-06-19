@@ -5,7 +5,7 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless._
-import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
+import shapeless.ops.hlist.{Length, FilterNot, Mapped, Prepend, ToTraversable, Tupler}
 
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
@@ -83,9 +83,10 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
     self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
   }
 
-  def pivot[P: CatalystPivotable, Values <: HList](pivotColumn: TypedColumn[T, P],
-                                values: Values)(
-    implicit validValues: MatchesAll[Values, P]
+  def pivot[P: CatalystPivotable, Values <: HList](
+    pivotColumn: TypedColumn[T, P],
+    values: Values)(
+    implicit validValues: FilterNot.Aux[Values, P, HNil]
   ): Pivot[T, TK, P, Values] = Pivot(self, groupedBy, pivotColumn, values)
 }
 
@@ -136,11 +137,12 @@ class GroupedBy1Ops[K1, V](
     underlying.flatMapGroups(GroupedByManyOps.tuple1(f))
   }
 
-  // Select the column we want to pivot
-  def pivot[P: CatalystPivotable, Values <: HList](pivotColumn: TypedColumn[V, P],
-                                values: Values)(
-    implicit validValues: MatchesAll[Values, P])
-  : Pivot[V, TypedColumn[V,K1] :: HNil, P, Values] = Pivot(self, g1 :: HNil, pivotColumn, values)
+  def pivot[P: CatalystPivotable, Values <: HList](
+    pivotColumn: TypedColumn[V, P],
+    values: Values)(
+    implicit validValues: FilterNot.Aux[Values, P, HNil]
+  ): Pivot[V, TypedColumn[V,K1] :: HNil, P, Values] =
+    Pivot(self, g1 :: HNil, pivotColumn, values)
 }
 
 
@@ -186,20 +188,22 @@ class GroupedBy2Ops[K1, K2, V](
     underlying.flatMapGroups(f)
   }
 
-  def pivot[P: CatalystPivotable, Values <: HList](pivotColumn: TypedColumn[V, P],
-                                values: Values)(
-    implicit validValues: MatchesAll[Values, P]
+  def pivot[P: CatalystPivotable, Values <: HList](
+    pivotColumn: TypedColumn[V, P],
+    values: Values)(
+    implicit validValues: FilterNot.Aux[Values, P, HNil]
   ): Pivot[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P, Values] =
     Pivot(self, g1 :: g2 :: HNil, pivotColumn, values)
 }
 
 /** Represents a typed Pivot operation.
   */
-final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList]
-(ds: TypedDataset[T],
- groupedBy: GroupedColumns,
- pivotedBy: TypedColumn[T, PivotType],
- values: Values) {
+final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList](
+  ds: TypedDataset[T],
+  groupedBy: GroupedColumns,
+  pivotedBy: TypedColumn[T, PivotType],
+  values: Values
+) {
 
   object agg extends ProductArgs {
     def applyProduct[
@@ -213,9 +217,6 @@ final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList]
     Out](aggrColumns: AggrColumns)(
       implicit
       tc: AggregateTypes.Aux[T, AggrColumns, AggrColumnTypes],
-      tl1: ToList[GroupedColumns, Any],
-      tl2: ToList[AggrColumns, Any],
-      tl3: ToList[Values, Any],
       columnTypes: ColumnTypes.Aux[T, GroupedColumns, GroupedColumnTypes],
       len: Length.Aux[Values, NumValues],
       rep: Repeat.Aux[AggrColumnTypes, NumValues, TypesForPivotedValues],
@@ -224,11 +225,17 @@ final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList]
       toTuple: Tupler.Aux[OutAsHList, Out],
       encoder: TypedEncoder[Out]
     ): TypedDataset[Out] = {
-      val y: Seq[Column] = aggrColumns.toList[Any].map(_.asInstanceOf[TypedAggregate[_,_]].expr).map(i => new Column(i))
+      def mapAny[X](h: HList)(f: Any => X): List[X] =
+        h match {
+          case HNil    => Nil
+          case x :: xs => f(x) :: mapAny(xs)(f)
+        }
+
+      val aggCols: Seq[Column] = mapAny(aggrColumns)(x => new Column(x.asInstanceOf[TypedAggregate[_,_]].expr))
       val tmp = ds.dataset.toDF()
-        .groupBy(groupedBy.toList[Any].map(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
-        .pivot(pivotedBy.untyped.toString, values.toList[Any])
-        .agg(y.head, y.tail:_*)
+        .groupBy(mapAny(groupedBy)(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
+        .pivot(pivotedBy.untyped.toString, mapAny(values)(identity))
+        .agg(aggCols.head, aggCols.tail:_*)
         .as[Out](TypedExpressionEncoder[Out])
       TypedDataset.create(tmp)
     }

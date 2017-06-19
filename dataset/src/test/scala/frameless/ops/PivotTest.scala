@@ -4,6 +4,7 @@ package ops
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 import shapeless._
+import org.scalacheck.Arbitrary.arbitrary
 import frameless.functions.aggregate._
 import org.apache.spark.sql.{functions => sparkFunctions}
 
@@ -12,8 +13,8 @@ class PivotTest extends TypedDatasetSuite {
     val kvPairGen: Gen[X4[String, String, Int, Boolean]] = for {
       a <- Gen.oneOf(Seq("1", "2", "3", "4"))
       b <- Gen.oneOf(Seq("a", "b", "c"))
-      c <- Gen.choose(1, 20)
-      d <- Gen.oneOf(Seq(true, false))
+      c <- arbitrary[Int]
+      d <- arbitrary[Boolean]
     } yield X4(a, b, c, d)
 
     Gen.listOfN(4, kvPairGen).map(_.toVector)

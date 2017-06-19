@@ -4,7 +4,14 @@ package ops
 import shapeless.{HList, Nat, Succ}
 import shapeless.ops.hlist.Prepend
 
-/* By Jeremy Smith */
+/** Typeclass supporting repeating L-typed HLists N times.
+  *
+  * Repeat[Int :: String :: HNil, Nat._2].Out =:=
+  * Int :: String :: Int :: String :: HNil
+  *
+  * By Jeremy Smith. To be replaced by `shapeless.ops.hlists.Repeat`
+  * once (https://github.com/milessabin/shapeless/pull/730 is published.
+  */
 trait Repeat[L <: HList, N <: Nat] {
   type Out <: HList
 }
