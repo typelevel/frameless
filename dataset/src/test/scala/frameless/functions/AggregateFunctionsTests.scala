@@ -373,7 +373,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: TypedEncoder](xs: List[X3[Int, A, A]])(implicit frac: Fractional[A], encEv:Encoder[(Int, A, A)]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(implicit encEv:Encoder[(Int, A, B)]): Prop = {
 
       // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation functino. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
       val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Some(value) else None
@@ -402,7 +402,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       compCorrelation.collect().toMap ?= tdCorrelation.toMap
     }
 
-    check(forAll(prop[Double] _))
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Int, Float] _))
 
   }
 }

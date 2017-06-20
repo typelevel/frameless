@@ -188,7 +188,7 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def corr[A, T](column1: TypedColumn[T, A], column2: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
+  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column1.uencoder
     implicit val c2 = column2.uencoder
     new TypedAggregate[T, Option[Double]](
