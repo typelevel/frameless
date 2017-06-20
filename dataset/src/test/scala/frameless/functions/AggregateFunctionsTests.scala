@@ -372,10 +372,16 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("corr") {
     val spark = session
     import spark.implicits._
+    import frameless.CatalystCast._
 
-    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(implicit encEv:Encoder[(Int, A, B)]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv:Encoder[(Int, A, B)],
+      evCanBeDoubleA:CatalystCast[A, Double],
+      evCanBeDoubleB:CatalystCast[B, Double]
+    ): Prop = {
 
-      // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation functino. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
+      // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation function. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
       val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Some(value) else None
 
       val tds = TypedDataset.create(xs)
@@ -405,7 +411,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
     check(forAll(prop[Int, Int] _))
-    check(forAll(prop[Int, Float] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
 
   }
 }
