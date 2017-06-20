@@ -13,11 +13,11 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     val epsilon = 1E-6
     // Spark has a weird behaviour concerning expressions that should return Inf
     // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
-    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
+    if ((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
     else if (
       (da - db).abs < epsilon ||
-      (da - db).abs < da.abs / 100)
-        proved
+        (da - db).abs < da.abs / 100)
+      proved
     else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
   }
 
@@ -52,9 +52,13 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerDecimal = Sum4Tests[BigDecimal, BigDecimal](_.sum)
+
     implicit def summerDouble = Sum4Tests[Double, Double](_.sum)
+
     implicit def summerLong = Sum4Tests[Long, Long](_.sum)
+
     implicit def summerInt = Sum4Tests[Int, Long](_.map(_.toLong).sum)
+
     implicit def summerShort = Sum4Tests[Short, Long](_.map(_.toLong).sum)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
@@ -92,8 +96,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerLong = Sum4Tests[Long, Long](_.toSet.sum)
-    implicit def summerInt = Sum4Tests[Int, Long]( x => x.toSet.map((_:Int).toLong).sum)
-    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_:Short).toLong).sum)
+
+    implicit def summerInt = Sum4Tests[Int, Long](x => x.toSet.map((_: Int).toLong).sum)
+
+    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_: Short).toLong).sum)
 
     check(forAll(prop[Long, Long] _))
     check(forAll(prop[Int, Long] _))
@@ -129,11 +135,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
-    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
-    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
-    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum / as.size)
+
+    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum / as.size)
+
+    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum / as.size)
+
+    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum / as.size)
+
+    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum / as.size)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Double, Double] _))
@@ -194,7 +204,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("max") {
-    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder : CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
       val datasetMax = dataset.agg(max(A)).collect().run().toList
@@ -211,7 +221,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("min") {
-    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder : CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
@@ -307,8 +317,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
         val tds = TypedDataset.create(xs)
         val allowedError = 0.1 // 10%
-        val tdsRes: Seq[(Int, Long, Long)] =
-          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
+      val tdsRes: Seq[(Int, Long, Long)] =
+        tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
         tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2, allowedError) }
       }
     }
@@ -356,5 +366,95 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
     check(forAll(prop[Vector[Long]] _))
     check(forAll(prop[BigDecimal] _))
+  }
+
+  test("corr") {
+    def stdDev[A](xs: Seq[A])(implicit frac: Fractional[A]): Option[Double] = xs match {
+      case Nil => None
+      case x :: Nil => None //technically this would result in 0 but this makes some pattern matching down the line easier
+      case head :: tail => {
+
+        import frac._
+
+        val size = frac.fromInt(xs.size)
+        val sum = xs.sum
+        val mu = sum / size
+        val one = frac.fromInt(1)
+        val oneNth = (one / size).toDouble()
+
+        Some(
+          math.sqrt(xs.map(
+            x => {
+              val diff = (x - mu).toDouble()
+              diff * diff
+            }
+          ).sum / oneNth)
+        )
+      }
+    }
+
+    def covariance[A](xs: Seq[(A, A)])(implicit frac: Fractional[A]): Option[Double] = xs match {
+      case Nil => None
+      case head :: Nil => Some(0d)
+      case head :: tail => {
+
+        import frac._
+        val iSize = xs.size
+        val size = frac.fromInt(iSize)
+        val one = frac.fromInt(1)
+        val muA = xs.map(_._1).sum / size
+        val muB = xs.map(_._2).sum / size
+
+        Some(xs.map(
+          ab => {
+            val a = ab._1
+            val b = ab._2
+
+            (a - muA).toDouble() * (b - muB).toDouble()
+          }
+        ).sum / (iSize - 1))
+      }
+
+
+    }
+
+    def corrCoefficient[A](xs: Seq[(A, A)])(implicit frac: Fractional[A]): Option[Double] = xs match {
+      case Nil => None
+      case x :: Nil => Some(Double.NaN)
+      case head :: tail => {
+        val as = xs.map(_._1)
+        val bs = xs.map(_._2)
+
+        val covar = covariance(xs)
+        val sigmaA = stdDev(as)
+        val sigmaB = stdDev(bs)
+
+        for {
+          c <- covar
+          sA <- sigmaA
+          sB <- sigmaB
+        } yield (c / (sA * sB))
+      }
+    }
+
+    def prop[A: TypedEncoder](xs: List[X3[Int, A, A]])(implicit frac: Fractional[A]): Prop = {
+
+      val tds = TypedDataset.create(xs)
+      val tdRes= tds.groupBy(tds('a)).agg(corr(tds('b), tds('c))).collect().run()
+
+
+      val comp: Map[Int, Option[Double]] = xs.groupBy(_.a).map(
+        kv => {
+          kv._1 -> kv._2.map(entry => {
+            (entry.b, entry.c)
+          })
+        }
+      ).mapValues(corrCoefficient(_)(frac))
+
+      tdRes.toMap ?= comp
+    }
+
+    check(forAll(prop[Double] _))
+
   }
 }

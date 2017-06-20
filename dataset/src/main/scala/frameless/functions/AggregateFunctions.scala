@@ -179,4 +179,20 @@ trait AggregateFunctions {
     implicit val c = column.uencoder
     new TypedAggregate[T, A](untyped.last(column.untyped))
   }
+
+  /**
+    *Aggregate function: returns the Pearson Correlation Coefficient for two columns.
+    *
+    * @note In Spark corr always returns Double
+    *        [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Corr.scala#95]]
+    *
+    * apache/spark
+    */
+  def corr[A, T](column1: TypedColumn[T, A], column2: TypedColumn[T, A]): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column1.uencoder
+    implicit val c2 = column2.uencoder
+    new TypedAggregate[T, Option[Double]](
+      untyped.corr(column1.untyped, column2.untyped)
+    )
+  }
 }
