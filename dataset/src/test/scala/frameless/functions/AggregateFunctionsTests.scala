@@ -17,8 +17,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     if ((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
     else if (
       (da - db).abs < epsilon ||
-        (da - db).abs < da.abs / 100)
-      proved
+      (da - db).abs < da.abs / 100)
+        proved
     else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
   }
 
@@ -53,13 +53,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerDecimal = Sum4Tests[BigDecimal, BigDecimal](_.sum)
-
     implicit def summerDouble = Sum4Tests[Double, Double](_.sum)
-
     implicit def summerLong = Sum4Tests[Long, Long](_.sum)
-
     implicit def summerInt = Sum4Tests[Int, Long](_.map(_.toLong).sum)
-
     implicit def summerShort = Sum4Tests[Short, Long](_.map(_.toLong).sum)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
@@ -97,9 +93,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerLong = Sum4Tests[Long, Long](_.toSet.sum)
-
     implicit def summerInt = Sum4Tests[Int, Long](x => x.toSet.map((_: Int).toLong).sum)
-
     implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_: Short).toLong).sum)
 
     check(forAll(prop[Long, Long] _))
@@ -137,13 +131,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
     implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum / as.size)
-
     implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum / as.size)
-
     implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum / as.size)
-
     implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum / as.size)
-
     implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum / as.size)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
@@ -205,7 +195,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("max") {
-    def prop[A: TypedEncoder : CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
       val datasetMax = dataset.agg(max(A)).collect().run().toList
@@ -222,7 +212,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("min") {
-    def prop[A: TypedEncoder : CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
@@ -318,8 +308,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
         val tds = TypedDataset.create(xs)
         val allowedError = 0.1 // 10%
-      val tdsRes: Seq[(Int, Long, Long)] =
-        tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
+        val tdsRes: Seq[(Int, Long, Long)] =
+          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
         tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2, allowedError) }
       }
     }
