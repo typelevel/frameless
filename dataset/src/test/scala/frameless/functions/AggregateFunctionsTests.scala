@@ -2,6 +2,7 @@ package frameless
 package functions
 
 import frameless.functions.aggregate._
+import org.apache.spark.sql.Encoder
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 
@@ -369,89 +370,36 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("corr") {
-    def stdDev[A](xs: Seq[A])(implicit frac: Fractional[A]): Option[Double] = xs match {
-      case Nil => None
-      case x :: Nil => None //technically this would result in 0 but this makes some pattern matching down the line easier
-      case head :: tail => {
+    val spark = session
+    import spark.implicits._
 
-        import frac._
+    def prop[A: TypedEncoder](xs: List[X3[Int, A, A]])(implicit frac: Fractional[A], encEv:Encoder[(Int, A, A)]): Prop = {
 
-        val size = frac.fromInt(xs.size)
-        val sum = xs.sum
-        val mu = sum / size
-        val one = frac.fromInt(1)
-        val oneNth = (one / size).toDouble()
-
-        Some(
-          math.sqrt(xs.map(
-            x => {
-              val diff = (x - mu).toDouble()
-              diff * diff
-            }
-          ).sum / oneNth)
-        )
-      }
-    }
-
-    def covariance[A](xs: Seq[(A, A)])(implicit frac: Fractional[A]): Option[Double] = xs match {
-      case Nil => None
-      case head :: Nil => Some(0d)
-      case head :: tail => {
-
-        import frac._
-        val iSize = xs.size
-        val size = frac.fromInt(iSize)
-        val one = frac.fromInt(1)
-        val muA = xs.map(_._1).sum / size
-        val muB = xs.map(_._2).sum / size
-
-        Some(xs.map(
-          ab => {
-            val a = ab._1
-            val b = ab._2
-
-            (a - muA).toDouble() * (b - muB).toDouble()
-          }
-        ).sum / (iSize - 1))
-      }
-
-
-    }
-
-    def corrCoefficient[A](xs: Seq[(A, A)])(implicit frac: Fractional[A]): Option[Double] = xs match {
-      case Nil => None
-      case x :: Nil => Some(Double.NaN)
-      case head :: tail => {
-        val as = xs.map(_._1)
-        val bs = xs.map(_._2)
-
-        val covar = covariance(xs)
-        val sigmaA = stdDev(as)
-        val sigmaB = stdDev(bs)
-
-        for {
-          c <- covar
-          sA <- sigmaA
-          sB <- sigmaB
-        } yield (c / (sA * sB))
-      }
-    }
-
-    def prop[A: TypedEncoder](xs: List[X3[Int, A, A]])(implicit frac: Fractional[A]): Prop = {
+      // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation functino. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
+      val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Some(value) else None
 
       val tds = TypedDataset.create(xs)
-      val tdRes= tds.groupBy(tds('a)).agg(corr(tds('b), tds('c))).collect().run()
+      val tdCorrelation = tds.groupBy(tds('a)).agg(corr(tds('b), tds('c)))
+        .map(
+          kv => (kv._1, kv._2.flatMap(nanHandler))
+        ).collect().run()
 
 
-      val comp: Map[Int, Option[Double]] = xs.groupBy(_.a).map(
-        kv => {
-          kv._1 -> kv._2.map(entry => {
-            (entry.b, entry.c)
-          })
-        }
-      ).mapValues(corrCoefficient(_)(frac))
 
-      tdRes.toMap ?= comp
+      val cDF = spark.createDataset(xs.map(x => {(x.a,x.b,x.c)}))
+      val compCorrelation = cDF
+        .groupBy(cDF("_1"))
+        .agg(org.apache.spark.sql.functions.corr(cDF("_2"), cDF("_3")))
+        .map(
+          row => {
+            val grp = row.getInt(0)
+            val correlationCoefficient = row.getDouble(1)
+            (grp, nanHandler(correlationCoefficient))
+          }
+        )
+
+
+      compCorrelation.collect().toMap ?= tdCorrelation.toMap
     }
 
     check(forAll(prop[Double] _))
