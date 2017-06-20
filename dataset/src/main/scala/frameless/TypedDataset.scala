@@ -304,29 +304,26 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
   private def resolveSelfJoin(join: Join): Join = {
-    val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+    val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
+    val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
 
-    if (selfJoinFix) {
-      val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
-      val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
+    if (!hasConflict) {
+      val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+      if (!selfJoinFix) throw new IllegalStateException("Frameless requires spark.sql.selfJoinAutoResolveAmbiguity to be true")
 
-      if (!hasConflict) {
-        val cond = plan.condition.map(_.transform {
-          case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
-            if a.sameRef(b) =>
-            val leftDs = FramelessInternals.ofRows(spark, plan.left)
-            val rightDs = FramelessInternals.ofRows(spark, plan.right)
+      val cond = plan.condition.map(_.transform {
+        case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
+          if a.sameRef(b) =>
+          val leftDs = FramelessInternals.ofRows(spark, plan.left)
+          val rightDs = FramelessInternals.ofRows(spark, plan.right)
 
-            catalyst.expressions.EqualTo(
-              FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
-              FramelessInternals.resolveExpr(rightDs, Seq(b.name))
-            )
-        })
+          catalyst.expressions.EqualTo(
+            FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
+            FramelessInternals.resolveExpr(rightDs, Seq(b.name))
+          )
+      })
 
-        plan.copy(condition = cond)
-      } else {
-        join
-      }
+      plan.copy(condition = cond)
     } else {
       join
     }

@@ -41,7 +41,7 @@ trait AggregateFunctions {
   /** Aggregate function: returns the approximate number of distinct items in a group.
     */
   def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.approxCountDistinct(column.untyped))
+    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped))
   }
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
@@ -51,7 +51,7 @@ trait AggregateFunctions {
     * apache/spark
     */
   def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.approxCountDistinct(column.untyped, rsd))
+    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped, rsd))
   }
 
   /** Aggregate function: returns a list of objects with duplicates.

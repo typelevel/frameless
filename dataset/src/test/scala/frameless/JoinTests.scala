@@ -74,11 +74,6 @@ class JoinTests extends TypedDatasetSuite {
       count ?= countDs
     }
 
-    for {
-      confVal <- List("true", "false")
-    } {
-      session.conf.set("spark.sql.selfJoinAutoResolveAmbiguity", confVal)
-      check(prop[Int, Int] _)
-    }
+    check(prop[Int, Int] _)
   }
 }
