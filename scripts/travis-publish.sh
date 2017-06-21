@@ -9,7 +9,7 @@ export publish_cmd="publishLocal"
 #   export publish_cmd="common/publish cats/publish dataset/publish dataframe/publish"
 # fi
 
-sbt_cmd="sbt ++$TRAVIS_SCALA_VERSION"
+sbt_cmd="sbt ++$TRAVIS_SCALA_VERSION -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M"
 
 test_cmd="$sbt_cmd test"
 
