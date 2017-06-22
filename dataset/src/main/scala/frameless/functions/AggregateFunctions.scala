@@ -48,7 +48,7 @@ trait AggregateFunctions {
     *
     * @param rsd maximum estimation error allowed (default = 0.05)
     *
-    *            apache/spark
+    * apache/spark
     */
   def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] = {
     new TypedAggregate[T, Long](untyped.approxCountDistinct(column.untyped, rsd))
@@ -120,7 +120,7 @@ trait AggregateFunctions {
     * @note In Spark variance always returns Double
     *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#186]]
     *
-    *       apache/spark
+    * apache/spark
     */
   def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
     new TypedAggregate[T, Double](untyped.variance(column.untyped))
@@ -131,7 +131,7 @@ trait AggregateFunctions {
     * @note In Spark stddev always returns Double
     *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#155]]
     *
-    *       apache/spark
+    * apache/spark
     */
   def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
     new TypedAggregate[T, Double](untyped.stddev(column.untyped))

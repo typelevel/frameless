@@ -14,7 +14,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     val epsilon = 1E-6
     // Spark has a weird behaviour concerning expressions that should return Inf
     // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
-    if ((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
+    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
     else if (
       (da - db).abs < epsilon ||
       (da - db).abs < da.abs / 100)
@@ -93,8 +93,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerLong = Sum4Tests[Long, Long](_.toSet.sum)
-    implicit def summerInt = Sum4Tests[Int, Long](x => x.toSet.map((_: Int).toLong).sum)
-    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_: Short).toLong).sum)
+    implicit def summerInt = Sum4Tests[Int, Long]( x => x.toSet.map((_:Int).toLong).sum)
+    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_:Short).toLong).sum)
 
     check(forAll(prop[Long, Long] _))
     check(forAll(prop[Int, Long] _))
@@ -130,11 +130,11 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
-    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum / as.size)
-    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum / as.size)
-    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum / as.size)
-    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum / as.size)
-    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum / as.size)
+    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
+    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
+    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
 
     check(forAll(prop[BigDecimal, BigDecimal] _))
     check(forAll(prop[Double, Double] _))
@@ -372,12 +372,14 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     ): Prop = {
 
       // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation function. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
-      val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Some(value) else None
+      val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Option(value) else None
+      //making sure that null => None and does not result in 0.0d because of row.getAs[Double]'s use of .asInstanceOf
+      val nanNullHandler : Any => Option[Double] = value=> if (value != null) nanHandler(value.asInstanceOf[Double]) else None
 
       val tds = TypedDataset.create(xs)
       val tdCorrelation = tds.groupBy(tds('a)).agg(corr(tds('b), tds('c)))
         .map(
-          kv => (kv._1, kv._2.flatMap(nanHandler))
+          kv => (kv._1, kv._2.flatMap(nanNullHandler))
         ).collect().run()
 
 
@@ -389,13 +391,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         .map(
           row => {
             val grp = row.getInt(0)
-            val correlationCoefficient = row.getDouble(1)
-            (grp, nanHandler(correlationCoefficient))
+            (grp, nanNullHandler(row.get(1)))
           }
         )
 
 
-      compCorrelation.collect().toMap ?= tdCorrelation.toMap
+      tdCorrelation.toMap ?= compCorrelation.collect().toMap
     }
 
     check(forAll(prop[Double, Double] _))
