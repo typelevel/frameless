@@ -184,7 +184,7 @@ trait AggregateFunctions {
     * Aggregate function: returns the Pearson Correlation Coefficient for two columns.
     *
     * @note In Spark corr always returns Double
-    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Corr.scala#95]]
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Corr.scala#L95]]
     *
     *       apache/spark
     */
