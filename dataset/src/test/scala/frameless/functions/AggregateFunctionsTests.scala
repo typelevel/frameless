@@ -362,19 +362,22 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("corr") {
     val spark = session
     import spark.implicits._
-    import frameless.CatalystCast._
 
     def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
       implicit
-      encEv:Encoder[(Int, A, B)],
-      evCanBeDoubleA:CatalystCast[A, Double],
-      evCanBeDoubleB:CatalystCast[B, Double]
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
     ): Prop = {
 
       // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation function. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
-      val nanHandler : Double => Option[Double] = value => if (!value.equals(Double.NaN)) Option(value) else None
+      val nanHandler: Double => Option[Double] = value => if (!value.equals(Double.NaN)) Option(value) else None
       //making sure that null => None and does not result in 0.0d because of row.getAs[Double]'s use of .asInstanceOf
-      val nanNullHandler : Any => Option[Double] = value=> if (value != null) nanHandler(value.asInstanceOf[Double]) else None
+      val nanNullHandler: Any => Option[Double] = {
+        case null => None
+        case d: Double => nanHandler(d)
+        case _ => ???
+      }
 
       val tds = TypedDataset.create(xs)
       val tdCorrelation = tds.groupBy(tds('a)).agg(corr(tds('b), tds('c)))
@@ -384,7 +387,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
 
 
-      val cDF = spark.createDataset(xs.map(x => {(x.a,x.b,x.c)}))
+      val cDF = session.createDataset(xs.map(x => (x.a,x.b,x.c)))
       val compCorrelation = cDF
         .groupBy(cDF("_1"))
         .agg(org.apache.spark.sql.functions.corr(cDF("_2"), cDF("_3")))
