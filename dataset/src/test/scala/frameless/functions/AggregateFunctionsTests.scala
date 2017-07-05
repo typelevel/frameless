@@ -2,6 +2,7 @@ package frameless
 package functions
 
 import frameless.functions.aggregate._
+import org.apache.spark.sql.Encoder
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 
@@ -356,5 +357,56 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
     check(forAll(prop[Vector[Long]] _))
     check(forAll(prop[BigDecimal] _))
+  }
+
+  test("corr") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
+    ): Prop = {
+
+      // mapping with this function is needed because spark uses Double.NaN for some semantics in the correlation function. ?= for prop testing will use == underlying and will break because Double.NaN != Double.NaN
+      val nanHandler: Double => Option[Double] = value => if (!value.equals(Double.NaN)) Option(value) else None
+      //making sure that null => None and does not result in 0.0d because of row.getAs[Double]'s use of .asInstanceOf
+      val nanNullHandler: Any => Option[Double] = {
+        case null => None
+        case d: Double => nanHandler(d)
+        case _ => ???
+      }
+
+      val tds = TypedDataset.create(xs)
+      val tdCorrelation = tds.groupBy(tds('a)).agg(corr(tds('b), tds('c)))
+        .map(
+          kv => (kv._1, kv._2.flatMap(nanNullHandler))
+        ).collect().run()
+
+
+
+      val cDF = session.createDataset(xs.map(x => (x.a,x.b,x.c)))
+      val compCorrelation = cDF
+        .groupBy(cDF("_1"))
+        .agg(org.apache.spark.sql.functions.corr(cDF("_2"), cDF("_3")))
+        .map(
+          row => {
+            val grp = row.getInt(0)
+            (grp, nanNullHandler(row.get(1)))
+          }
+        )
+
+
+      tdCorrelation.toMap ?= compCorrelation.collect().toMap
+    }
+
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
+
   }
 }
