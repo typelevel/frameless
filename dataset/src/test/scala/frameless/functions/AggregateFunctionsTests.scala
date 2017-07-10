@@ -535,4 +535,40 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal] _))
     check(forAll(prop[Byte] _))
   }
+
+  test("stddev_pop") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(stddev_pop[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_pop)
+
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
+
+  test("stddev_samp") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(stddev_samp[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_samp)
+
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
 }

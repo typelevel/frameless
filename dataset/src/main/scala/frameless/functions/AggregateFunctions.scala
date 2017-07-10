@@ -137,6 +137,44 @@ trait AggregateFunctions {
     new TypedAggregate[T, Double](untyped.stddev(column.untyped))
   }
 
+  /**
+    * Aggregate function: returns the standard deviation of a column by population.
+    *
+    * @note In Spark stddev always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L137]]
+    *
+    *       apache/spark
+    */
+  def stddev_pop[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.stddev_pop(column.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the standard deviation of a column by sample.
+    *
+    * @note In Spark stddev always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L154]]
+    *
+    *       apache/spark
+    */
+  def stddev_samp[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.stddev_samp(column.cast[Double].untyped)
+    )
+  }
+
   /** Aggregate function: returns the maximum value of the column in a group.
     *
     * apache/spark
