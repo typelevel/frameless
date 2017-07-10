@@ -439,4 +439,22 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short, Int] _))
     check(forAll(prop[BigDecimal, Byte] _))
   }
+
+  test("covar_samp") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
+    ): Prop = biVariatePropTemplate(xs)(covar_samp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
+
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
+  }
 }

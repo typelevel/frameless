@@ -204,8 +204,8 @@ trait AggregateFunctions {
   /**
     * Aggregate function: returns the covariance of two collumns.
     *
-    * @note In Spark corr always returns Double
-    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L93]]
+    * @note In Spark covar_pop always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L82]]
     *
     *       apache/spark
     */
@@ -219,6 +219,27 @@ trait AggregateFunctions {
 
     new TypedAggregate[T, Option[Double]](
       untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the covariance of two collumns.
+    *
+    * @note In Spark covar_samp always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L93]]
+    *
+    *       apache/spark
+    */
+  def covar_samp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double],
+    evCanBeDoubleB: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column1.uencoder
+    implicit val c2 = column2.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
     )
   }
 }
