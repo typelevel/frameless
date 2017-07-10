@@ -223,7 +223,7 @@ trait AggregateFunctions {
   }
 
   /**
-    * Aggregate function: returns the covariance of two collumns.
+    * Aggregate function: returns the covariance of two columns.
     *
     * @note In Spark covar_samp always returns Double
     *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L93]]
@@ -240,6 +240,45 @@ trait AggregateFunctions {
 
     new TypedAggregate[T, Option[Double]](
       untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
+
+
+  /**
+    * Aggregate function: returns the kurtosis of a column.
+    *
+    * @note In Spark kurtosis always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L220]]
+    *
+    *       apache/spark
+    */
+  def kurtosis[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.kurtosis(column.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the skewness of a column.
+    *
+    * @note In Spark skewness always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L200]]
+    *
+    *       apache/spark
+    */
+  def skewness[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.skewness(column.cast[Double].untyped)
     )
   }
 }

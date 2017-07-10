@@ -361,7 +361,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
 
-  def biVariatePropTemplate[A: TypedEncoder, B: TypedEncoder]
+  def bivariatePropTemplate[A: TypedEncoder, B: TypedEncoder]
   (
     xs: List[X3[Int,A,B]]
   )
@@ -404,6 +404,48 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     tdBivar.toMap ?= compBivar.collect().toMap
   }
 
+  def univariatePropTemplate[A: TypedEncoder]
+  (
+    xs: List[X2[Int,A]]
+  )
+  (
+
+    framelessFun: (TypedColumn[X2[Int,A], A]) => TypedAggregate[X2[Int,A], Option[Double]],
+    sparkFun: (Column) => Column
+  )
+  (
+    implicit
+    encEv: Encoder[(Int, A)],
+    encEv2: Encoder[(Int,Option[Double])],
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): Prop = {
+
+
+    val tds = TypedDataset.create(xs)
+    //typed implementation of bivar stats function
+    val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b)))
+      .map(
+        kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
+      ).collect().run()
+
+
+
+    val cDF = session.createDataset(xs.map(x => (x.a, x.b)))
+    //comparison implementation of bivar stats functions
+    val compUnivar = cDF
+      .groupBy(cDF("_1"))
+      .agg(sparkFun(cDF("_2")))
+      .map(
+        row => {
+          val grp = row.getInt(0)
+          (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
+        }
+      )
+
+    //should be the same
+    tdUnivar.toMap ?= compUnivar.collect().toMap
+  }
+
   test("corr") {
     val spark = session
     import spark.implicits._
@@ -413,7 +455,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = biVariatePropTemplate(xs)(corr[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.corr)
+    ): Prop = bivariatePropTemplate(xs)(corr[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.corr)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -431,7 +473,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = biVariatePropTemplate(xs)(covar_pop[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_pop)
+    ): Prop = bivariatePropTemplate(xs)(covar_pop[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_pop)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -449,12 +491,48 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = biVariatePropTemplate(xs)(covar_samp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
+    ): Prop = bivariatePropTemplate(xs)(covar_samp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
     check(forAll(prop[Int, Int] _))
     check(forAll(prop[Short, Int] _))
     check(forAll(prop[BigDecimal, Byte] _))
+  }
+
+  test("kurtosis") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(kurtosis[A,X2[Int, A]],org.apache.spark.sql.functions.kurtosis)
+
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
+
+  test("skewness") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(skewness[A,X2[Int, A]],org.apache.spark.sql.functions.skewness)
+
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
   }
 }
