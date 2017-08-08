@@ -171,7 +171,7 @@ object TypedEncoder {
     def targetDataType: DataType = DateType
 
     def extractorFor(path: Expression): Expression =
-      Invoke(path, "days", IntegerType)
+      Invoke(path, "days", DateType)
 
     def constructorFor(path: Expression): Expression =
       StaticInvoke(
@@ -190,7 +190,7 @@ object TypedEncoder {
     def targetDataType: DataType = TimestampType
 
     def extractorFor(path: Expression): Expression =
-      Invoke(path, "us", LongType)
+      Invoke(path, "us", TimestampType)
 
     def constructorFor(path: Expression): Expression =
       StaticInvoke(
