@@ -3,7 +3,7 @@ package org.apache.spark.sql
 import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.QueryExecution
-import org.apache.spark.sql.types.ObjectType
+import org.apache.spark.sql.types.{ObjectType, UserDefinedType}
 
 import scala.reflect.ClassTag
 
@@ -34,4 +34,6 @@ object FramelessInternals {
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
     Dataset.ofRows(sparkSession, logicalPlan)
   }
+
+  type PublicUserDefinedType[A >: Null] = UserDefinedType[A]
 }

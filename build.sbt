@@ -32,7 +32,8 @@ lazy val dataset = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-mllib" % sparkVersion % "test"
   ))
   .dependsOn(core % "test->test;compile->compile")
 
