@@ -4,9 +4,7 @@ import frameless.CollectTests.prop
 import org.apache.spark.sql.SQLContext
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-
 import scala.reflect.ClassTag
-import org.apache.spark.ml.linalg.{Matrix, Vector => MLVector}
 
 class CollectTests extends TypedDatasetSuite {
   test("collect()") {
@@ -51,16 +49,11 @@ class CollectTests extends TypedDatasetSuite {
     // TODO this doesn't work, and never worked...
     // check(forAll(prop[X1[Option[X1[Option[Int]]]]] _))
 
-    check(forAll(prop[MLVector] _))
-    check(forAll(prop[Option[MLVector]] _))
-    check(forAll(prop[X1[MLVector]] _))
-    check(forAll(prop[X2[Int, MLVector]] _))
-    check(forAll(prop[(Long, MLVector)] _))
-    check(forAll(prop[Matrix] _))
-    check(forAll(prop[Option[Matrix]] _))
-    check(forAll(prop[X1[Matrix]] _))
-    check(forAll(prop[X2[Int, Matrix]] _))
-    check(forAll(prop[(Long, Matrix)] _))
+    check(forAll(prop[UdtEncodedClass] _))
+    check(forAll(prop[Option[UdtEncodedClass]] _))
+    check(forAll(prop[X1[UdtEncodedClass]] _))
+    check(forAll(prop[X2[Int, UdtEncodedClass]] _))
+    check(forAll(prop[(Long, UdtEncodedClass)] _))
   }
 }
 

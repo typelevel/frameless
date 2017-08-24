@@ -9,6 +9,7 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
 import scala.reflect.ClassTag
+import frameless.udt.Udt
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
   def nullable: Boolean
@@ -331,20 +332,9 @@ object TypedEncoder {
     classTag: ClassTag[F]
   ): TypedEncoder[F] = new RecordEncoder[F, G]
 
-  type UDT[A >: Null] = FramelessInternals.PublicUserDefinedType[A]
-
-  /**
-    * Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit.
-    *
-    * Example: to use Spark ML's VectorUDT implementation as a TypedEncoder, add the following in your scope:
-    * {{{
-    * import org.apache.spark.ml.linalg.{Vector, SQLDataTypes}
-    * import frameless.TypedEncoder.UDT
-    * implicit val mLVectorUDT: UDT[Vector] = SQLDataTypes.VectorType.asInstanceOf[UDT[Vector]]
-    * }}}
-    * */
-  implicit def usingUDT[A >: Null : UDT : ClassTag]: TypedEncoder[A] = {
-    val udt = implicitly[UDT[A]]
+  /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
+  implicit def usingUdt[A >: Null : Udt : ClassTag]: TypedEncoder[A] = {
+    val udt = implicitly[Udt[A]]
     val udtInstance = NewInstance(udt.getClass, Nil, dataType = ObjectType(udt.getClass))
 
     new TypedEncoder[A] {

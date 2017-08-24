@@ -4,7 +4,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 import frameless.implicits.widen._
-import org.apache.spark.ml.linalg.{Vector => MLVector}
 import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
@@ -27,7 +26,7 @@ class SelectTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int, Int, Int] _))
     check(forAll(prop[X2[Int, Int], Int, Int, Int] _))
     check(forAll(prop[String, Int, Int, Int] _))
-    check(forAll(prop[MLVector, Int, Int, Int] _))
+    check(forAll(prop[UdtEncodedClass, Int, Int, Int] _))
   }
 
   test("select('a, 'b) FROM abcd") {
