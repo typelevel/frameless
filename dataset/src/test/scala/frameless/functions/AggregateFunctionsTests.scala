@@ -422,7 +422,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
 
     val tds = TypedDataset.create(xs)
-    //typed implementation of bivar stats function
+    //typed implementation of univariate stats function
     val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b)))
       .map(
         kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
@@ -473,7 +473,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = bivariatePropTemplate(xs)(covar_pop[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_pop)
+    ): Prop = bivariatePropTemplate(xs)(covarPop[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_pop)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -491,7 +491,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = bivariatePropTemplate(xs)(covar_samp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
+    ): Prop = bivariatePropTemplate(xs)(covarSamp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -544,7 +544,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(stddev_pop[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_pop)
+    ): Prop = univariatePropTemplate(xs)(stddevPop[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_pop)
 
 
     check(forAll(prop[Double] _))
@@ -562,7 +562,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(stddev_samp[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_samp)
+    ): Prop = univariatePropTemplate(xs)(stddevSamp[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_samp)
 
 
     check(forAll(prop[Double] _))

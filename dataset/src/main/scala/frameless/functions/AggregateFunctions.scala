@@ -141,11 +141,11 @@ trait AggregateFunctions {
     * Aggregate function: returns the standard deviation of a column by population.
     *
     * @note In Spark stddev always returns Double
-    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L137]]
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L143]]
     *
     *       apache/spark
     */
-  def stddev_pop[A, T](column: TypedColumn[T, A])(
+  def stddevPop[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
   ): TypedAggregate[T, Option[Double]] = {
@@ -160,11 +160,11 @@ trait AggregateFunctions {
     * Aggregate function: returns the standard deviation of a column by sample.
     *
     * @note In Spark stddev always returns Double
-    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L154]]
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L160]]
     *
     *       apache/spark
     */
-  def stddev_samp[A, T](column: TypedColumn[T, A])(
+  def stddevSamp[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
   ): TypedAggregate[T, Option[Double]] = {
@@ -247,7 +247,7 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covar_pop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
+  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
@@ -268,7 +268,7 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covar_samp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
+  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
