@@ -363,11 +363,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
   def bivariatePropTemplate[A: TypedEncoder, B: TypedEncoder]
   (
-    xs: List[X3[Int,A,B]]
+    xs: List[X3[Int, A, B]]
   )
   (
-
-    framelessFun: (TypedColumn[X3[Int,A,B], A], TypedColumn[X3[Int,A,B], B]) => TypedAggregate[X3[Int,A,B], Option[Double]],
+    framelessFun: (TypedColumn[X3[Int, A, B], A], TypedColumn[X3[Int, A, B], B]) => TypedAggregate[X3[Int, A, B], Option[Double]],
     sparkFun: (Column, Column) => Column
   )
   (
@@ -378,18 +377,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     evCanBeDoubleB: CatalystCast[B, Double]
   ): Prop = {
 
-
     val tds = TypedDataset.create(xs)
-    //typed implementation of bivar stats function
+    // Typed implementation of bivar stats function
     val tdBivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b), tds('c)))
       .map(
         kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
       ).collect().run()
 
-
-
     val cDF = session.createDataset(xs.map(x => (x.a, x.b, x.c)))
-    //comparison implementation of bivar stats functions
+    // Comparison implementation of bivar stats functions
     val compBivar = cDF
       .groupBy(cDF("_1"))
       .agg(sparkFun(cDF("_2"), cDF("_3")))
@@ -400,17 +396,16 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         }
       )
 
-    //should be the same
+    // Should be the same
     tdBivar.toMap ?= compBivar.collect().toMap
   }
 
   def univariatePropTemplate[A: TypedEncoder]
   (
-    xs: List[X2[Int,A]]
+    xs: List[X2[Int, A]]
   )
   (
-
-    framelessFun: (TypedColumn[X2[Int,A], A]) => TypedAggregate[X2[Int,A], Option[Double]],
+    framelessFun: (TypedColumn[X2[Int, A], A]) => TypedAggregate[X2[Int, A], Option[Double]],
     sparkFun: (Column) => Column
   )
   (
@@ -420,7 +415,6 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     evCanBeDoubleA: CatalystCast[A, Double]
   ): Prop = {
 
-
     val tds = TypedDataset.create(xs)
     //typed implementation of univariate stats function
     val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b)))
@@ -428,10 +422,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
       ).collect().run()
 
-
-
     val cDF = session.createDataset(xs.map(x => (x.a, x.b)))
-    //comparison implementation of bivar stats functions
+    // Comparison implementation of bivar stats functions
     val compUnivar = cDF
       .groupBy(cDF("_1"))
       .agg(sparkFun(cDF("_2")))
@@ -442,7 +434,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         }
       )
 
-    //should be the same
+    // Should be the same
     tdUnivar.toMap ?= compUnivar.collect().toMap
   }
 
@@ -473,7 +465,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = bivariatePropTemplate(xs)(covarPop[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_pop)
+    ): Prop = bivariatePropTemplate(xs)(
+      covarPop[A, B, X3[Int, A, B]],
+      org.apache.spark.sql.functions.covar_pop
+    )
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -491,7 +486,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = bivariatePropTemplate(xs)(covarSamp[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.covar_samp)
+    ): Prop = bivariatePropTemplate(xs)(
+      covarSamp[A, B, X3[Int, A, B]],
+      org.apache.spark.sql.functions.covar_samp
+    )
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))
@@ -508,8 +506,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(kurtosis[A,X2[Int, A]],org.apache.spark.sql.functions.kurtosis)
-
+    ): Prop = univariatePropTemplate(xs)(
+      kurtosis[A, X2[Int, A]],
+      org.apache.spark.sql.functions.kurtosis
+    )
 
     check(forAll(prop[Double] _))
     check(forAll(prop[Int] _))
@@ -526,8 +526,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(skewness[A,X2[Int, A]],org.apache.spark.sql.functions.skewness)
-
+    ): Prop = univariatePropTemplate(xs)(
+      skewness[A, X2[Int, A]],
+      org.apache.spark.sql.functions.skewness
+    )
 
     check(forAll(prop[Double] _))
     check(forAll(prop[Int] _))
@@ -544,8 +546,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(stddevPop[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_pop)
-
+    ): Prop = univariatePropTemplate(xs)(
+      stddevPop[A, X2[Int, A]],
+      org.apache.spark.sql.functions.stddev_pop
+    )
 
     check(forAll(prop[Double] _))
     check(forAll(prop[Int] _))
@@ -562,9 +566,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       implicit
       encEv: Encoder[(Int, A)],
       evCanBeDoubleA: CatalystCast[A, Double]
-    ): Prop = univariatePropTemplate(xs)(stddevSamp[A,X2[Int, A]],org.apache.spark.sql.functions.stddev_samp)
-
-
+    ): Prop = univariatePropTemplate(xs)(
+      stddevSamp[A, X2[Int, A]],
+      org.apache.spark.sql.functions.stddev_samp
+    )
     check(forAll(prop[Double] _))
     check(forAll(prop[Int] _))
     check(forAll(prop[Short] _))
