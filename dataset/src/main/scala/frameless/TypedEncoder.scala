@@ -4,7 +4,7 @@ import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.GenericArrayData
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
@@ -258,32 +258,51 @@ object TypedEncoder {
       WrapOption(underlying.constructorFor(path), underlying.sourceDataType)
   }
 
-  implicit def vectorEncoder[A](
+  abstract class CollectionEncoder[F[_], A : ClassTag](implicit
+    underlying: TypedEncoder[A],
+    classTag: ClassTag[F[A]]
+  ) extends TypedEncoder[F[A]] {
+
+    protected def arrayData(path: Expression): Expression = Option(underlying.sourceDataType)
+      .filter(ScalaReflection.isNativeType)
+      .filter(_ == underlying.targetDataType)
+      .collect {
+        case BooleanType => "toBooleanArray" -> ScalaReflection.dataTypeFor[Array[Boolean]]
+        case ByteType    => "toByteArray"    -> ScalaReflection.dataTypeFor[Array[Byte]]
+        case ShortType   => "toShortArray"   -> ScalaReflection.dataTypeFor[Array[Short]]
+        case IntegerType => "toIntArray"     -> ScalaReflection.dataTypeFor[Array[Int]]
+        case LongType    => "toLongArray"    -> ScalaReflection.dataTypeFor[Array[Long]]
+        case FloatType   => "toFloatArray"   -> ScalaReflection.dataTypeFor[Array[Float]]
+        case DoubleType  => "toDoubleArray"  -> ScalaReflection.dataTypeFor[Array[Double]]
+      }.map {
+        case (method, typ) => Invoke(path, method, typ)
+      }.getOrElse {
+        Invoke(
+          MapObjects(
+            underlying.constructorFor,
+            path,
+            underlying.targetDataType
+          ),
+          "array",
+          FramelessInternals.objectTypeFor[Array[A]]
+        )
+      }
+  }
+
+  implicit def vectorEncoder[A : ClassTag](
     implicit
     underlying: TypedEncoder[A]
-  ): TypedEncoder[Vector[A]] = new TypedEncoder[Vector[A]]() {
+  ): TypedEncoder[Vector[A]] = new CollectionEncoder[Vector, A]() {
     def nullable: Boolean = false
-
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[Vector[A]](classTag)
-
     def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
     def constructorFor(path: Expression): Expression = {
-      val arrayData = Invoke(
-        MapObjects(
-          underlying.constructorFor,
-          path,
-          underlying.targetDataType
-        ),
-        "array",
-        ScalaReflection.dataTypeFor[Array[AnyRef]]
-      )
-
       StaticInvoke(
         TypedEncoderUtils.getClass,
         sourceDataType,
         "mkVector",
-        arrayData :: Nil
+        arrayData(path) :: Nil
       )
     }
 
@@ -299,6 +318,84 @@ object TypedEncoder {
         MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
       }
     }
+  }
+
+  implicit def arrayEncoder[A : ClassTag](
+    implicit
+    underlying: TypedEncoder[A]
+  ): TypedEncoder[Array[A]] = new CollectionEncoder[Array, A]() {
+    def nullable: Boolean = false
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Array[A]](classTag)
+    def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
+
+    def constructorFor(path: Expression): Expression = arrayData(path)
+
+    def extractorFor(path: Expression): Expression = {
+      // if source `path` is already native for Spark, no need to `map`
+      if (ScalaReflection.isNativeType(underlying.sourceDataType)) {
+        NewInstance(
+          classOf[GenericArrayData],
+          path :: Nil,
+          dataType = ArrayType(underlying.targetDataType, underlying.nullable)
+        )
+      } else {
+        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
+      }
+    }
+  }
+
+  implicit def mapEncoder[A : ClassTag, B : ClassTag](
+    implicit
+    encodeA: TypedEncoder[A],
+    encodeB: TypedEncoder[B]
+  ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
+    def nullable: Boolean = false
+    def sourceDataType: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
+    def targetDataType: DataType = MapType(encodeA.targetDataType, encodeB.targetDataType, encodeB.nullable)
+
+    private def wrap(arrayData: Expression) = {
+      StaticInvoke(
+        scala.collection.mutable.WrappedArray.getClass,
+        FramelessInternals.objectTypeFor[Seq[_]],
+        "make",
+        arrayData :: Nil)
+    }
+
+    def constructorFor(path: Expression): Expression = {
+      val keyArrayType = ArrayType(encodeA.targetDataType, containsNull = false)
+      val keyData = wrap(arrayEncoder[A].constructorFor(Invoke(path, "keyArray", keyArrayType)))
+
+      val valueArrayType = ArrayType(encodeB.targetDataType, encodeB.nullable)
+      val valueData = wrap(arrayEncoder[B].constructorFor(Invoke(path, "valueArray", valueArrayType)))
+
+      StaticInvoke(
+        ArrayBasedMapData.getClass,
+        sourceDataType,
+        "toScalaMap",
+        keyData :: valueData :: Nil)
+    }
+
+    def extractorFor(path: Expression): Expression = {
+      val keys =
+        Invoke(
+          Invoke(path, "keysIterator", FramelessInternals.objectTypeFor[scala.collection.Iterator[A]]),
+          "toVector",
+          vectorEncoder[A].sourceDataType)
+      val convertedKeys = arrayEncoder[A].extractorFor(keys)
+
+      val values =
+        Invoke(
+          Invoke(path, "valuesIterator", FramelessInternals.objectTypeFor[scala.collection.Iterator[B]]),
+          "toVector",
+          vectorEncoder[B].sourceDataType)
+      val convertedValues = arrayEncoder[B].extractorFor(values)
+
+      NewInstance(
+        classOf[ArrayBasedMapData],
+        convertedKeys :: convertedValues :: Nil,
+        dataType = targetDataType)
+    }
+
   }
 
   /** Encodes things using injection if there is one defined */
