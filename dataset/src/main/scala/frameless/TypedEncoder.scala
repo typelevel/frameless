@@ -28,10 +28,10 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 
 // Waiting on scala 2.12
 // @annotation.implicitAmbiguous(msg =
-// """TypedEncoder[${T}] can be obtained from automatic type class derivation, using the implicit Injection[${T}, ?] or using the implicit UserDefinedType[${T]] in scope.
+// """TypedEncoder[${T}] can be obtained from automatic type class derivation, using the implicit Injection[${T}, ?] or using the implicit UserDefinedType[${T}] in scope.
 // To desambigious this resolution you need to either:
 //   - Remove the implicit Injection[${T}, ?] from scope
-//   - Remove the implicit UDT[${T]] from scope
+//   - Remove the implicit UserDefinedType[${T}] from scope
 //   - import TypedEncoder.usingInjection
 //   - import TypedEncoder.usingDerivation
 //   - import TypedEncoder.usingUserDefinedType
