@@ -1,6 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
+import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
@@ -9,7 +10,6 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
 import scala.reflect.ClassTag
-import frameless.udt.Udt
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
   def nullable: Boolean
@@ -333,8 +333,8 @@ object TypedEncoder {
   ): TypedEncoder[F] = new RecordEncoder[F, G]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
-  implicit def usingUdt[A >: Null : Udt : ClassTag]: TypedEncoder[A] = {
-    val udt = implicitly[Udt[A]]
+  implicit def usingUdt[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {
+    val udt = implicitly[UserDefinedType[A]]
     val udtInstance = NewInstance(udt.getClass, Nil, dataType = ObjectType(udt.getClass))
 
     new TypedEncoder[A] {
