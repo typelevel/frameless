@@ -28,13 +28,13 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 
 // Waiting on scala 2.12
 // @annotation.implicitAmbiguous(msg =
-// """TypedEncoder[${T}] can be obtained from automatic type class derivation, using the implicit Injection[${T}, ?] or using the implicit UDT[${T]] in scope.
+// """TypedEncoder[${T}] can be obtained from automatic type class derivation, using the implicit Injection[${T}, ?] or using the implicit UserDefinedType[${T]] in scope.
 // To desambigious this resolution you need to either:
 //   - Remove the implicit Injection[${T}, ?] from scope
 //   - Remove the implicit UDT[${T]] from scope
 //   - import TypedEncoder.usingInjection
 //   - import TypedEncoder.usingDerivation
-//   - import TypedEncoder.usingUDT
+//   - import TypedEncoder.usingUserDefinedType
 // """)
 object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
@@ -333,7 +333,7 @@ object TypedEncoder {
   ): TypedEncoder[F] = new RecordEncoder[F, G]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
-  implicit def usingUdt[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {
+  implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {
     val udt = implicitly[UserDefinedType[A]]
     val udtInstance = NewInstance(udt.getClass, Nil, dataType = ObjectType(udt.getClass))
 
