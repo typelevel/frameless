@@ -1,6 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
+import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
@@ -27,10 +28,13 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 
 // Waiting on scala 2.12
 // @annotation.implicitAmbiguous(msg =
-// """TypedEncoder[${T}] can be obtained both from automatic type class derivation and using the implicit Injection[${T}, ?] in scope. To desambigious this resolution you need to either:
+// """TypedEncoder[${T}] can be obtained from automatic type class derivation, using the implicit Injection[${T}, ?] or using the implicit UserDefinedType[${T}] in scope.
+// To desambigious this resolution you need to either:
 //   - Remove the implicit Injection[${T}, ?] from scope
+//   - Remove the implicit UserDefinedType[${T}] from scope
 //   - import TypedEncoder.usingInjection
 //   - import TypedEncoder.usingDerivation
+//   - import TypedEncoder.usingUserDefinedType
 // """)
 object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
@@ -327,4 +331,21 @@ object TypedEncoder {
     recordEncoder: Lazy[RecordEncoderFields[G]],
     classTag: ClassTag[F]
   ): TypedEncoder[F] = new RecordEncoder[F, G]
+
+  /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
+  implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {
+    val udt = implicitly[UserDefinedType[A]]
+    val udtInstance = NewInstance(udt.getClass, Nil, dataType = ObjectType(udt.getClass))
+
+    new TypedEncoder[A] {
+      def nullable: Boolean = false
+      def sourceDataType: DataType = ObjectType(udt.userClass)
+      def targetDataType: DataType = udt
+
+      def extractorFor(path: Expression): Expression = Invoke(udtInstance, "serialize", udt, Seq(path))
+
+      def constructorFor(path: Expression): Expression =
+        Invoke(udtInstance, "deserialize", ObjectType(udt.userClass), Seq(path))
+    }
+  }
 }

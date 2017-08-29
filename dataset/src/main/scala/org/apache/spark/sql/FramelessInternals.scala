@@ -34,4 +34,7 @@ object FramelessInternals {
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
     Dataset.ofRows(sparkSession, logicalPlan)
   }
+
+  // because org.apache.spark.sql.types.UserDefinedType is private[spark]
+  type UserDefinedType[A >: Null] =  org.apache.spark.sql.types.UserDefinedType[A]
 }
