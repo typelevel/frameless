@@ -57,7 +57,7 @@ lazy val framelessSettings = Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  fork in Test := false,
+  fork in Test := true,
   parallelExecution in Test := false
 )
 
