@@ -97,7 +97,9 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Option[Boolean]] _))
     check(forAll(prop[Option[SQLDate]] _))
     check(forAll(prop[Option[SQLTimestamp]] _))
-    //check(forAll(prop[Option[X1[String]]] _))
+    check(forAll(prop[Option[X1[String]]] _))
+    check(forAll(prop[Option[X1[X1[String]]]] _))
+    check(forAll(prop[Option[X1[X1[Vector[Option[Int]]]]]] _))
   }
 
   test("Option equality/inequality for lit") {
@@ -117,6 +119,8 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Option[SQLDate]] _))
     check(forAll(prop[Option[SQLTimestamp]] _))
     check(forAll(prop[Option[String]] _))
-    //check(forAll(prop[Option[X1[String]]] _)) // Throws exception java.lang.IllegalArgumentException: Cannot compare UnsafeRow to org.apache.spark.sql.catalyst.expressions.GenericInternalRow
+    check(forAll(prop[Option[X1[String]]] _))
+    check(forAll(prop[Option[X1[X1[String]]]] _))
+    check(forAll(prop[Option[X1[X1[Vector[Option[Int]]]]]] _))
   }
 }

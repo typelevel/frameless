@@ -46,8 +46,8 @@ sealed class TypedColumn[T, U](
 
   private def withExpr(newExpr: Expression): Column = new Column(newExpr)
 
-  private def equalsTo(other: TypedColumn[T, U]): TypedColumn[T, Boolean]= withExpr {
-    if (uencoder.nullable) EqualNullSafe(self.expr, other.expr)
+  private def equalsTo(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
+    if (uencoder.nullable && uencoder.targetDataType.typeName != "struct") EqualNullSafe(self.expr, other.expr)
     else EqualTo(self.expr, other.expr)
   }.typed
 
@@ -95,13 +95,16 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def isNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] = self.untyped.isNull.typed
+  def isNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] =
+    equalsTo(lit[U,T](None.asInstanceOf[U]))
 
   /** True if the current expression is an Option and it's not None.
     *
     * apache/spark
     */
-  def isNotNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] = self.untyped.isNotNull.typed
+  def isNotNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(lit(None.asInstanceOf[U])).expr)
+  }.typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -218,7 +221,8 @@ sealed class TypedColumn[T, U](
     * @param u another column of the same type
     * apache/spark
     */
-  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u.untyped).typed
+  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] =
+    self.untyped.divide(u.untyped).typed
 
   /**
     * Division this expression by another expression.
