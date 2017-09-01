@@ -137,6 +137,44 @@ trait AggregateFunctions {
     new TypedAggregate[T, Double](untyped.stddev(column.untyped))
   }
 
+  /**
+    * Aggregate function: returns the standard deviation of a column by population.
+    *
+    * @note In Spark stddev always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L143]]
+    *
+    *       apache/spark
+    */
+  def stddevPop[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.stddev_pop(column.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the standard deviation of a column by sample.
+    *
+    * @note In Spark stddev always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L160]]
+    *
+    *       apache/spark
+    */
+  def stddevSamp[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.stddev_samp(column.cast[Double].untyped)
+    )
+  }
+
   /** Aggregate function: returns the maximum value of the column in a group.
     *
     * apache/spark
@@ -198,6 +236,87 @@ trait AggregateFunctions {
 
     new TypedAggregate[T, Option[Double]](
       untyped.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the covariance of two collumns.
+    *
+    * @note In Spark covar_pop always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L82]]
+    *
+    *       apache/spark
+    */
+  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double],
+    evCanBeDoubleB: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column1.uencoder
+    implicit val c2 = column2.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the covariance of two columns.
+    *
+    * @note In Spark covar_samp always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Covariance.scala#L93]]
+    *
+    *       apache/spark
+    */
+  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double],
+    evCanBeDoubleB: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column1.uencoder
+    implicit val c2 = column2.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
+
+
+  /**
+    * Aggregate function: returns the kurtosis of a column.
+    *
+    * @note In Spark kurtosis always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L220]]
+    *
+    *       apache/spark
+    */
+  def kurtosis[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.kurtosis(column.cast[Double].untyped)
+    )
+  }
+
+  /**
+    * Aggregate function: returns the skewness of a column.
+    *
+    * @note In Spark skewness always returns Double
+    *       [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/CentralMomentAgg.scala#L200]]
+    *
+    *       apache/spark
+    */
+  def skewness[A, T](column: TypedColumn[T, A])(
+    implicit
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    implicit val c1 = column.uencoder
+
+    new TypedAggregate[T, Option[Double]](
+      untyped.skewness(column.cast[Double].untyped)
     )
   }
 }
