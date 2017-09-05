@@ -58,6 +58,8 @@ class CollectTests extends TypedDatasetSuite {
 }
 
 object CollectTests {
+  import frameless.syntax._
+
   def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SQLContext): Prop =
     TypedDataset.create(data).collect().run().toVector ?= data
 }

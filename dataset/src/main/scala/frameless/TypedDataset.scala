@@ -136,10 +136,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns the number of elements in the [[TypedDataset]].
     *
-    * Differs from `Dataset#count` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def count(): Job[Long] =
-    Job(dataset.count)
+  def count[F[_]]()(implicit F: SparkDelay[F]): F[Long] =
+    F.delay(dataset.count)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -188,20 +188,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
-    * Running this [[Job]] requires moving all the data into the application's driver process, and
+    * Running this operation requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#collect` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#collect` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def collect(): Job[Seq[T]] =
-    Job(dataset.collect())
+  def collect[F[_]]()(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.collect())
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[Job]].
+    * Differs from `Dataset#first` by wrapping it's result into an `Option` and an effect-suspending `F[_]`.
     */
-  def firstOption(): Job[Option[T]] =
-    Job {
+  def firstOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] =
+    F.delay {
       try {
         Option(dataset.first())
       } catch {
@@ -214,12 +214,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Running take requires moving data into the application's driver process, and doing so with
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#take` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#take` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def take(num: Int): Job[Seq[T]] =
-    Job(dataset.take(num))
+  def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.take(num))
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:
@@ -235,12 +235,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
     *   be truncated and all cells will be aligned right
     *
-    * Differs from `Dataset#show` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#show` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def show(numRows: Int = 20, truncate: Boolean = true): Job[Unit] =
-    Job(dataset.show(numRows, truncate))
+  def show[F[_]](numRows: Int = 20, truncate: Boolean = true)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.show(numRows, truncate))
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
@@ -258,17 +258,17 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreach` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreach` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreach(func: T => Unit): Job[Unit] =
-    Job(dataset.foreach(func))
+  def foreach[F[_]](func: T => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreach(func))
 
   /** Runs `func` on each partition of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreachPartition` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
-    Job(dataset.foreachPartition(func))
+  def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreachPartition(func))
 
   def groupBy[K1](
     c1: TypedColumn[T, K1]
