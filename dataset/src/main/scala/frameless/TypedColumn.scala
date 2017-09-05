@@ -44,6 +44,13 @@ sealed class TypedColumn[T, U](
     */
   def untyped: Column = new Column(expr)
 
+  private def withExpr(newExpr: Expression): Column = new Column(newExpr)
+
+  private def equalsTo(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
+    if (uencoder.nullable && uencoder.targetDataType.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    else EqualTo(self.expr, other.expr)
+  }.typed
+
   /** Equality test.
     * {{{
     *   df.filter( df.col('a) === 1 )
@@ -51,7 +58,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: U): TypedColumn[T, Boolean] = (untyped === lit(other).untyped).typed
+  def ===(other: U): TypedColumn[T, Boolean] = equalsTo(lit(other))
 
   /** Equality test.
     * {{{
@@ -60,7 +67,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (untyped === other.untyped).typed
+  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = equalsTo(other)
 
   /** Inequality test.
     * {{{
@@ -69,7 +76,9 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def =!=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (self.untyped =!= other.untyped).typed
+  def =!=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(other).expr)
+  }.typed
 
   /** Inequality test.
     * {{{
@@ -78,7 +87,24 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def =!=(other: U): TypedColumn[T, Boolean] = (self.untyped =!= lit(other).untyped).typed
+  def =!=(other: U): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(lit(other)).expr)
+  }.typed
+
+  /** True if the current expression is an Option and it's None.
+    *
+    * apache/spark
+    */
+  def isNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] =
+    equalsTo(lit[U,T](None.asInstanceOf[U]))
+
+  /** True if the current expression is an Option and it's not None.
+    *
+    * apache/spark
+    */
+  def isNotNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(lit(None.asInstanceOf[U])).expr)
+  }.typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -195,7 +221,8 @@ sealed class TypedColumn[T, U](
     * @param u another column of the same type
     * apache/spark
     */
-  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u.untyped).typed
+  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] =
+    self.untyped.divide(u.untyped).typed
 
   /**
     * Division this expression by another expression.
