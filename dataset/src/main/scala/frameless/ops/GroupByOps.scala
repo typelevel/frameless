@@ -5,7 +5,7 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless._
-import shapeless.ops.hlist.{Length, FilterNot, Mapped, Prepend, ToTraversable, Tupler}
+import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
 
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
@@ -83,11 +83,9 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
     self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
   }
 
-  def pivot[P: CatalystPivotable, Values <: HList](
-    pivotColumn: TypedColumn[T, P],
-    values: Values)(
-    implicit validValues: FilterNot.Aux[Values, P, HNil]
-  ): Pivot[T, TK, P, Values] = Pivot(self, groupedBy, pivotColumn, values)
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]):
+    PivotNotValues[T, TK, P] =
+      PivotNotValues(self, groupedBy, pivotColumn)
 }
 
 object GroupedByManyOps {
@@ -137,12 +135,8 @@ class GroupedBy1Ops[K1, V](
     underlying.flatMapGroups(GroupedByManyOps.tuple1(f))
   }
 
-  def pivot[P: CatalystPivotable, Values <: HList](
-    pivotColumn: TypedColumn[V, P],
-    values: Values)(
-    implicit validValues: FilterNot.Aux[Values, P, HNil]
-  ): Pivot[V, TypedColumn[V,K1] :: HNil, P, Values] =
-    Pivot(self, g1 :: HNil, pivotColumn, values)
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]): PivotNotValues[V, TypedColumn[V,K1] :: HNil, P] =
+    PivotNotValues(self, g1 :: HNil, pivotColumn)
 }
 
 
@@ -188,12 +182,9 @@ class GroupedBy2Ops[K1, K2, V](
     underlying.flatMapGroups(f)
   }
 
-  def pivot[P: CatalystPivotable, Values <: HList](
-    pivotColumn: TypedColumn[V, P],
-    values: Values)(
-    implicit validValues: FilterNot.Aux[Values, P, HNil]
-  ): Pivot[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P, Values] =
-    Pivot(self, g1 :: g2 :: HNil, pivotColumn, values)
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
+    PivotNotValues[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P] =
+      PivotNotValues(self, g1 :: g2 :: HNil, pivotColumn)
 }
 
 /** Represents a typed Pivot operation.
@@ -240,4 +231,16 @@ final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList](
       TypedDataset.create(tmp)
     }
   }
+}
+
+final case class PivotNotValues[T, GroupedColumns <: HList, PivotType](
+  ds: TypedDataset[T],
+  groupedBy: GroupedColumns,
+  pivotedBy: TypedColumn[T, PivotType]
+) extends ProductArgs {
+
+  def onProduct[Values <: HList](values: Values)(
+    implicit
+    validValues: ToList[Values, PivotType] // validValues: FilterNot.Aux[Values, PivotType, HNil] // did not work
+  ): Pivot[T, GroupedColumns, PivotType, Values] = Pivot(ds, groupedBy, pivotedBy, values)
 }

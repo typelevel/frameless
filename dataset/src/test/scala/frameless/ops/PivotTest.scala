@@ -3,7 +3,6 @@ package ops
 
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
-import shapeless._
 import org.scalacheck.Arbitrary.arbitrary
 import frameless.functions.aggregate._
 import org.apache.spark.sql.{functions => sparkFunctions}
@@ -23,9 +22,9 @@ class PivotTest extends TypedDatasetSuite {
   test("X4[Boolean, String, Int, Boolean] pivot on String") {
     def prop(data: Vector[X4[String, String, Int, Boolean]]): Prop = {
       val d = TypedDataset.create(data)
-      val frameless = d.groupBy(d('a))
-        .pivot(d('b), "a" :: "b" :: "c" :: HNil)
-        .agg(sum(d('c)), first(d('d))).collect().run().toVector
+      val frameless = d.groupBy(d('a)).
+        pivot(d('b)).on("a", "b", "c").
+        agg(sum(d('c)), first(d('d))).collect().run().toVector
 
       val spark = d.dataset.groupBy("a")
         .pivot("b", Seq("a", "b", "c"))
@@ -46,18 +45,18 @@ class PivotTest extends TypedDatasetSuite {
   test("Pivot on Boolean") {
     val x: Seq[X3[String, Boolean, Boolean]] = Seq(X3("a", true, true), X3("a", true, true), X3("a", true, false))
     val d = TypedDataset.create(x)
-    d.groupByMany(d('a))
-      .pivot(d('c), true :: false :: HNil)
-      .agg(count[X3[String, Boolean, Boolean]]())
-      .collect().run().toVector ?= Vector(("a", Some(2L), Some(1L))) // two true one false
+    d.groupByMany(d('a)).
+      pivot(d('c)).on(true, false).
+      agg(count[X3[String, Boolean, Boolean]]()).
+      collect().run().toVector ?= Vector(("a", Some(2L), Some(1L))) // two true one false
   }
 
   test("Pivot with groupBy on two columns, pivot on Long") {
     val x: Seq[X3[String, String, Long]] = Seq(X3("a", "x", 1), X3("a", "x", 1), X3("a", "c", 20))
     val d = TypedDataset.create(x)
-    d.groupBy(d('a), d('b))
-      .pivot(d('c), 1L :: 20L :: HNil)
-      .agg(count[X3[String, String, Long]]())
-      .collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
+    d.groupBy(d('a), d('b)).
+      pivot(d('c)).on(1L, 20L).
+      agg(count[X3[String, String, Long]]()).
+      collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
   }
 }
