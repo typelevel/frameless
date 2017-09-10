@@ -19,8 +19,8 @@ class TypedEncoderInstancesTests extends FramelessMlSuite {
   }
 
   test("Matrix encoding is injective using collect()") {
-    val prop = forAll { vector: Matrix =>
-      TypedDataset.create(Seq(vector)).collect().run() ?= Seq(vector)
+    val prop = forAll { matrix: Matrix =>
+      TypedDataset.create(Seq(matrix)).collect().run() ?= Seq(matrix)
     }
     check(prop)
   }
@@ -39,6 +39,8 @@ class TypedEncoderInstancesTests extends FramelessMlSuite {
       val inputsDS = TypedDataset.create(inputs)
 
       val model = new DecisionTreeRegressor()
+
+      // this line would throw a runtime exception if Vector was not encoded as VectorUDT
       val trainedModel = model.fit(inputsDS.dataset)
 
       val randomInput = inputs(Random.nextInt(inputs.length))
