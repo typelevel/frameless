@@ -5,7 +5,8 @@ import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless._
-import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
+import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
+
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
   self: TypedDataset[T],
@@ -16,7 +17,6 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
   toTraversable: ToTraversable.Aux[TK, List, UntypedExpression[T]],
   tupler: Tupler.Aux[K, KT]
 ) {
-
   object agg extends ProductArgs {
     def applyProduct[TC <: HList, C <: HList, Out0 <: HList, Out1](columns: TC)(
       implicit
@@ -82,6 +82,10 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
   private def retainGroupColumns: Boolean = {
     self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
   }
+
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]):
+    PivotNotValues[T, TK, P] =
+      PivotNotValues(self, groupedBy, pivotColumn)
 }
 
 object GroupedByManyOps {
@@ -130,7 +134,11 @@ class GroupedBy1Ops[K1, V](
   def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
     underlying.flatMapGroups(GroupedByManyOps.tuple1(f))
   }
+
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]): PivotNotValues[V, TypedColumn[V,K1] :: HNil, P] =
+    PivotNotValues(self, g1 :: HNil, pivotColumn)
 }
+
 
 class GroupedBy2Ops[K1, K2, V](
   self: TypedDataset[V],
@@ -173,4 +181,66 @@ class GroupedBy2Ops[K1, K2, V](
   def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
     underlying.flatMapGroups(f)
   }
+
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
+    PivotNotValues[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P] =
+      PivotNotValues(self, g1 :: g2 :: HNil, pivotColumn)
+}
+
+/** Represents a typed Pivot operation.
+  */
+final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList](
+  ds: TypedDataset[T],
+  groupedBy: GroupedColumns,
+  pivotedBy: TypedColumn[T, PivotType],
+  values: Values
+) {
+
+  object agg extends ProductArgs {
+    def applyProduct[
+    AggrColumns <: HList,
+    AggrColumnTypes <: HList,
+    GroupedColumnTypes <: HList,
+    NumValues <: Nat,
+    TypesForPivotedValues <: HList,
+    TypesForPivotedValuesOpt <: HList,
+    OutAsHList <: HList,
+    Out](aggrColumns: AggrColumns)(
+      implicit
+      tc: AggregateTypes.Aux[T, AggrColumns, AggrColumnTypes],
+      columnTypes: ColumnTypes.Aux[T, GroupedColumns, GroupedColumnTypes],
+      len: Length.Aux[Values, NumValues],
+      rep: Repeat.Aux[AggrColumnTypes, NumValues, TypesForPivotedValues],
+      opt: Mapped.Aux[TypesForPivotedValues, Option, TypesForPivotedValuesOpt],
+      append: Prepend.Aux[GroupedColumnTypes, TypesForPivotedValuesOpt, OutAsHList],
+      toTuple: Tupler.Aux[OutAsHList, Out],
+      encoder: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+      def mapAny[X](h: HList)(f: Any => X): List[X] =
+        h match {
+          case HNil    => Nil
+          case x :: xs => f(x) :: mapAny(xs)(f)
+        }
+
+      val aggCols: Seq[Column] = mapAny(aggrColumns)(x => new Column(x.asInstanceOf[TypedAggregate[_,_]].expr))
+      val tmp = ds.dataset.toDF()
+        .groupBy(mapAny(groupedBy)(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
+        .pivot(pivotedBy.untyped.toString, mapAny(values)(identity))
+        .agg(aggCols.head, aggCols.tail:_*)
+        .as[Out](TypedExpressionEncoder[Out])
+      TypedDataset.create(tmp)
+    }
+  }
+}
+
+final case class PivotNotValues[T, GroupedColumns <: HList, PivotType](
+  ds: TypedDataset[T],
+  groupedBy: GroupedColumns,
+  pivotedBy: TypedColumn[T, PivotType]
+) extends ProductArgs {
+
+  def onProduct[Values <: HList](values: Values)(
+    implicit
+    validValues: ToList[Values, PivotType] // validValues: FilterNot.Aux[Values, PivotType, HNil] // did not work
+  ): Pivot[T, GroupedColumns, PivotType, Values] = Pivot(ds, groupedBy, pivotedBy, values)
 }
