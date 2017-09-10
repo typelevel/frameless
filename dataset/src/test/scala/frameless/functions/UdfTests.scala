@@ -14,8 +14,7 @@ class UdfTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
 
       // filter forces whole codegen
-      import frameless.ops.unoptimized._
-      val codegen = dataset.filter((_:X1[A]) => true).select(u1(A)).collect().run().toVector
+      val codegen = dataset.deserialized.filter((_:X1[A]) => true).select(u1(A)).collect().run().toVector
 
       // otherwise it uses local relation
       val local = dataset.select(u2(A)).collect().run().toVector

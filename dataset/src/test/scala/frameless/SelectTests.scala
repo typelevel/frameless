@@ -373,13 +373,12 @@ class SelectTests extends TypedDatasetSuite {
   }
 
   test("tests to cover problematic dataframe column names during projections") {
-    import frameless.ops.unoptimized._
     case class Foo(i: Int)
     val e = TypedDataset.create[Foo](Foo(1) :: Nil)
     val t: TypedDataset[(Int, Int)] = e.select(e.col('i) * 2, e.col('i))
     assert(t.select(t.col('_1)).collect().run().toList === List(2))
     // Issue #54
-    val fooT = t.select(t.col('_1)).map(x => Tuple1.apply(x)).as[Foo]
+    val fooT = t.select(t.col('_1)).deserialized.map(x => Tuple1.apply(x)).as[Foo]
     assert(fooT.select(fooT('i)).collect().run().toList === List(2))
   }
 

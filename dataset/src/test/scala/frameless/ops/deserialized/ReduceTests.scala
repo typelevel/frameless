@@ -1,13 +1,15 @@
 package frameless
 package ops
-package unoptimized
+package deserialized
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class ReduceTests extends TypedDatasetSuite {
   def prop[A: TypedEncoder](reduceFunction: (A, A) => A)(data: Vector[A]): Prop =
-    TypedDataset.create(data).reduceOption(reduceFunction).run() =? data.reduceOption(reduceFunction)
+    TypedDataset.create(data).
+      deserialized.
+      reduceOption(reduceFunction).run() =? data.reduceOption(reduceFunction)
 
   test("reduce Int") {
     check(forAll(prop[Int](_ + _) _))
