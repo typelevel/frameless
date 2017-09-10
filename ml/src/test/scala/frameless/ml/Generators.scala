@@ -1,4 +1,5 @@
-package frameless.ml
+package frameless
+package ml
 
 import frameless.arbDouble
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}

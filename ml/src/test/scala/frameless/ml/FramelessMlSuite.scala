@@ -1,4 +1,5 @@
-package frameless.ml
+package frameless
+package ml
 
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
@@ -20,7 +21,7 @@ trait SparkTesting {
   implicit def sqlContext: SQLContext = session.sqlContext
 }
 
-class TypedDatasetSuite extends FunSuite with Checkers with SparkTesting {
+class FramelessMlSuite extends FunSuite with Checkers with SparkTesting {
   // Limit size of generated collections and number of checks because Travis
   implicit override val generatorDrivenConfig =
     PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))

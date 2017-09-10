@@ -1,4 +1,5 @@
-package frameless.ml
+package frameless
+package ml
 
 import frameless.TypedDataset
 import org.scalacheck.Prop._
@@ -8,7 +9,7 @@ import Generators._
 
 import scala.util.Random
 
-class TypedEncoderInstancesTests extends TypedDatasetSuite {
+class TypedEncoderInstancesTests extends FramelessMlSuite {
 
   test("Vector encoding is injective using collect()") {
     val prop = forAll { vector: Vector =>
