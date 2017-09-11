@@ -165,6 +165,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def unpersist(blocking: Boolean = false): TypedDataset[T] =
     TypedDataset.create(dataset.unpersist(blocking))
 
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
   @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
   def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
     deserialized.map(func)
@@ -184,6 +185,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
   def reduceOption(func: (T, T) => T): Job[Option[T]] =
     deserialized.reduceOption(func)
+  // $COVERAGE-ON$
 
   /** Methods on `TypedDataset[T]` that go thought a full serialization and
     * deserialization of `T`, and execute outside of the Catalyst runtime.
