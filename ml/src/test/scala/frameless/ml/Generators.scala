@@ -1,7 +1,6 @@
 package frameless
 package ml
 
-import frameless.arbDouble
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -15,11 +14,15 @@ object Generators {
   }
 
   implicit val arbMatrix: Arbitrary[Matrix] = Arbitrary {
-    Gen.sized { nbRows =>
-      Gen.sized { nbCols =>
-        Gen.listOfN(nbRows * nbCols, arbDouble.arbitrary)
-          .map(values => Matrices.dense(nbRows, nbCols, values.toArray))
-      }
+    Gen.sized { size =>
+      for {
+        nbRows <- Gen.oneOf(0, size)
+        nbCols <- Gen.oneOf(0, size)
+        matrix <- {
+          Gen.listOfN(nbRows * nbCols, arbDouble.arbitrary)
+            .map(values => Matrices.dense(nbRows, nbCols, values.toArray))
+        }
+      } yield matrix
     }
   }
 
