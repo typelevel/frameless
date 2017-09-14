@@ -82,13 +82,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def transform[U](t: TypedDataset[T] => TypedDataset[U]): TypedDataset[U] =
     t(this)
 
-  /** Returns a new [[TypedDataset]] that only contains elements where `func` returns `true`.
-    *
-    * apache/spark
-    */
-  def filter(func: T => Boolean): TypedDataset[T] =
-    TypedDataset.create(dataset.filter(func))
-
   /** Returns a new Dataset by taking the first `n` rows. The difference between this function
     * and `head` is that `head` is an action and returns an array (by triggering query execution)
     * while `limit` returns a new Dataset.
@@ -97,28 +90,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def limit(n: Int): TypedDataset[T] =
     TypedDataset.create(dataset.limit(n))
-
-  /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
-    *
-    * apache/spark
-    */
-  def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
-    TypedDataset.create(dataset.map(func)(TypedExpressionEncoder[U]))
-
-  /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
-    *
-    * apache/spark
-    */
-  def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
-    TypedDataset.create(dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
-
-  /** Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
-    * and then flattening the results.
-    *
-    * apache/spark
-    */
-  def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
-    TypedDataset.create(dataset.flatMap(func)(TypedExpressionEncoder[U]))
 
   /** Returns a new [[TypedDataset]] by sampling a fraction of records.
     *
@@ -193,4 +164,94 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def unpersist(blocking: Boolean = false): TypedDataset[T] =
     TypedDataset.create(dataset.unpersist(blocking))
+
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
+    deserialized.map(func)
+
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
+    deserialized.mapPartitions(func)
+
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
+    deserialized.flatMap(func)
+
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  def filter(func: T => Boolean): TypedDataset[T] =
+    deserialized.filter(func)
+
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  def reduceOption(func: (T, T) => T): Job[Option[T]] =
+    deserialized.reduceOption(func)
+  // $COVERAGE-ON$
+
+  /** Methods on `TypedDataset[T]` that go thought a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    *
+    * @example The correct way to do a projection on a a single columns is to
+    *          use the `select` method as follows:
+    *
+    *          {{{
+    *           ds: TypedDataset[(String, String, String)] -> ds.select(ds('_2)).run()
+    *          }}}
+    *
+    *          Spark provides an alternative way to obtain the same resulting `DataSet`,
+    *          using the `map` method:
+    *
+    *          {{{
+    *           ds: TypedDataset[(String, String, String)] -> ds.deserialized.map(_._2).run()
+    *          }}}
+    *
+    *          This second approach is however substantially slower than the first one,
+    *          and should be avoided as possible. Indeed, under the hood this `map` will
+    *          deserialize the entire `Tuple3` to an full JVM object, call the apply
+    *          method of the `_._2` closure on it, and serialize the resulting String back
+    *          to it's Catalyst representation.
+    */
+  object deserialized {
+    /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
+      *
+      * apache/spark
+      */
+    def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
+      TypedDataset.create(self.dataset.map(func)(TypedExpressionEncoder[U]))
+
+    /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
+      *
+      * apache/spark
+      */
+    def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
+      TypedDataset.create(self.dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
+
+    /** Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
+      * and then flattening the results.
+      *
+      * apache/spark
+      */
+    def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
+      TypedDataset.create(self.dataset.flatMap(func)(TypedExpressionEncoder[U]))
+
+    /** Returns a new [[TypedDataset]] that only contains elements where `func` returns `true`.
+      *
+      * apache/spark
+      */
+    def filter(func: T => Boolean): TypedDataset[T] =
+      TypedDataset.create(self.dataset.filter(func))
+
+    /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
+      * `func` must be commutative and associative or the result may be non-deterministic.
+      *
+      * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
+      */
+    def reduceOption(func: (T, T) => T): Job[Option[T]] =
+      Job {
+        try {
+          Option(self.dataset.reduce(func))
+        } catch {
+          case _: UnsupportedOperationException => None
+        }
+      }(self.dataset.sparkSession)
+  }
 }

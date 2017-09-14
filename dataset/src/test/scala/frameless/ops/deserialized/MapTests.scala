@@ -1,4 +1,6 @@
 package frameless
+package ops
+package deserialized
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -6,7 +8,10 @@ import org.scalacheck.Prop._
 class MapTests extends TypedDatasetSuite {
   test("map") {
     def prop[A: TypedEncoder, B: TypedEncoder](mapFunction: A => B, data: Vector[A]): Prop =
-      TypedDataset.create(data).map(mapFunction).collect().run().toVector =? data.map(mapFunction)
+      TypedDataset.create(data).
+        deserialized.
+        map(mapFunction).
+        collect().run().toVector =? data.map(mapFunction)
 
     check(forAll(prop[Int, Int] _))
     check(forAll(prop[Int, String] _))
