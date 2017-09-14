@@ -59,9 +59,10 @@ lazy val docs = project
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion
+    "org.apache.spark" %% "spark-sql"  % sparkVersion,
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
-  .dependsOn(dataset, cats)
+  .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
