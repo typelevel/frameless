@@ -1,6 +1,6 @@
 # TypedDataset support for Spark ML
 
-The goal of the `frameless-ml` package is to be able to use Spark ML with `TypedDataset` and 
+The goal of the `frameless-ml` module is to be able to use Spark ML with `TypedDataset` and
 to eventually provide a more strongly typed ML API for Spark. Currently, this module is at its very beginning and only 
 provides `TypedEncoder` instances for Spark ML's linear algebra data types.
 
