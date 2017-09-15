@@ -6,7 +6,7 @@ import org.apache.spark.sql.catalyst.expressions.Literal
 package object functions extends Udf with UnaryFunctions {
   object aggregate extends AggregateFunctions
 
-  def lit[A: TypedEncoder, T](value: A): TypedColumn[A] = {
+  def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = {
     val encoder = TypedEncoder[A]
 
     if (ScalaReflection.isNativeType(encoder.sourceDataType) && encoder.targetDataType == encoder.sourceDataType) {

@@ -16,7 +16,7 @@ class WidenTests extends TypedDatasetSuite {
   def widenSum[A: TypedEncoder: CatalystNumeric: Numeric, B: TypedEncoder](a: A, b: B)(
     implicit
     view: B => A,
-    colView: TypedColumn[B] => TypedColumn[A]
+    colView: TypedColumn[X2[A, B], B] => TypedColumn[X2[A, B], A]
   ): Prop = {
     val df = TypedDataset.create(X2(a, b) :: Nil)
     val sum = implicitly[Numeric[A]].plus(a, view(b))
@@ -31,7 +31,7 @@ class WidenTests extends TypedDatasetSuite {
   def widen[A: TypedEncoder, B: TypedEncoder](a: A)(
     implicit
     view: A => B,
-    colView: TypedColumn[A] => TypedColumn[B]
+    colView: TypedColumn[X1[A], A] => TypedColumn[X1[A], B]
   ): Prop = {
     val df = TypedDataset.create(X1(a) :: Nil)
     val got = df.select(colView(df.col('a))).collect().run()

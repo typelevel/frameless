@@ -20,10 +20,10 @@ trait Udf {
     * apache/spark
     */
   def udf[T, A, R: TypedEncoder](f: A => R):
-    TypedColumn[A] => TypedColumn[R] = {
+    TypedColumn[T, A] => TypedColumn[T, R] = {
     u =>
       val scalaUdf = FramelessUdf(f, List(u), TypedEncoder[R])
-      new TypedColumn[R](scalaUdf)
+      new TypedColumn[T, R](scalaUdf)
   }
 
   /** Defines a user-defined function of 2 arguments as user-defined function (UDF).
@@ -32,10 +32,10 @@ trait Udf {
     * apache/spark
     */
   def udf[T, A1, A2, R: TypedEncoder](f: (A1,A2) => R):
-    (TypedColumn[A1], TypedColumn[A2]) => TypedColumn[R] = {
+    (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] = {
     case us =>
-      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression], TypedEncoder[R])
-      new TypedColumn[R](scalaUdf)
+      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+      new TypedColumn[T, R](scalaUdf)
     }
 
   /** Defines a user-defined function of 3 arguments as user-defined function (UDF).
@@ -44,10 +44,10 @@ trait Udf {
     * apache/spark
     */
   def udf[T, A1, A2, A3, R: TypedEncoder](f: (A1,A2,A3) => R):
-  (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3]) => TypedColumn[R] = {
+  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] = {
     case us =>
-      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression], TypedEncoder[R])
-      new TypedColumn[R](scalaUdf)
+      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+      new TypedColumn[T, R](scalaUdf)
     }
 
   /** Defines a user-defined function of 4 arguments as user-defined function (UDF).
@@ -56,10 +56,10 @@ trait Udf {
     * apache/spark
     */
   def udf[T, A1, A2, A3, A4, R: TypedEncoder](f: (A1,A2,A3,A4) => R):
-    (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4]) => TypedColumn[R] = {
+    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = {
     case us =>
-      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression], TypedEncoder[R])
-      new TypedColumn[R](scalaUdf)
+      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+      new TypedColumn[T, R](scalaUdf)
     }
 
   /** Defines a user-defined function of 5 arguments as user-defined function (UDF).
@@ -68,10 +68,10 @@ trait Udf {
     * apache/spark
     */
   def udf[T, A1, A2, A3, A4, A5, R: TypedEncoder](f: (A1,A2,A3,A4,A5) => R):
-    (TypedColumn[A1], TypedColumn[A2], TypedColumn[A3], TypedColumn[A4], TypedColumn[A5]) => TypedColumn[R] = {
+    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = {
     case us =>
-      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression], TypedEncoder[R])
-      new TypedColumn[R](scalaUdf)
+      val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+      new TypedColumn[T, R](scalaUdf)
     }
 }
 
@@ -178,7 +178,7 @@ object FramelessUdf {
   // Spark needs case class with `children` field to mutate it
   def apply[T, R](
     function: AnyRef,
-    cols: Seq[UntypedExpression],
+    cols: Seq[UntypedExpression[T]],
     rencoder: TypedEncoder[R]
   ): FramelessUdf[T, R] = FramelessUdf(
     function = function,

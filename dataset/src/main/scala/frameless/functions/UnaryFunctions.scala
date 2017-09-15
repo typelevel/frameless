@@ -10,24 +10,24 @@ trait UnaryFunctions {
     *
     * apache/spark
     */
-  def size[T, A, V[_] : CatalystSizableCollection](column: TypedColumn[V[A]]): TypedColumn[Int] =
-    new TypedColumn[Int](implicitly[CatalystSizableCollection[V]].sizeOp(column.untyped))
+  def size[T, A, V[_] : CatalystSizableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, Int] =
+    new TypedColumn[T, Int](implicitly[CatalystSizableCollection[V]].sizeOp(column.untyped))
 
   /** Sorts the input array for the given column in ascending order, according to
     * the natural ordering of the array elements.
     *
     * apache/spark
     */
-  def sortAscending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[V[A]]): TypedColumn[V[A]] =
-    new TypedColumn[V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = true))(column.uencoder)
+  def sortAscending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
+    new TypedColumn[T, V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = true))(column.uencoder)
 
   /** Sorts the input array for the given column in descending order, according to
     * the natural ordering of the array elements.
     *
     * apache/spark
     */
-  def sortDescending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[V[A]]): TypedColumn[V[A]] =
-    new TypedColumn[V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = false))(column.uencoder)
+  def sortDescending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
+    new TypedColumn[T, V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = false))(column.uencoder)
 
 
   /** Creates a new row for each element in the given collection. The column types
@@ -35,8 +35,8 @@ trait UnaryFunctions {
     *
     * apache/spark
     */
-  def explode[T, A: TypedEncoder, V[_] : CatalystExplodableCollection](column: TypedColumn[V[A]]): TypedColumn[A] =
-    new TypedColumn[A](sparkFunctions.explode(column.untyped))
+  def explode[T, A: TypedEncoder, V[_] : CatalystExplodableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, A] =
+    new TypedColumn[T, A](sparkFunctions.explode(column.untyped))
 }
 
 trait CatalystSizableCollection[V[_]] {

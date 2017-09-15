@@ -12,12 +12,12 @@ class ColumnTypesTest extends TypedDatasetSuite {
       val d: TypedDataset[X4[A, B, C, D]] = TypedDataset.create(data)
       val hlist = d('a) :: d('b) :: d('c) :: d('d) :: HNil
 
-      type TC[N] = TypedColumn[N]
+      type TC[N] = TypedColumn[X4[A,B,C,D], N]
 
       type IN = TC[A] :: TC[B] :: TC[C] :: TC[D] :: HNil
       type OUT = A :: B :: C :: D :: HNil
 
-      implicitly[ColumnTypes.Aux[IN, OUT]]
+      implicitly[ColumnTypes.Aux[X4[A,B,C,D], IN, OUT]]
       Prop.passed // successful compilation implies test correctness
     }
 

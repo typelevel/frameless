@@ -12,13 +12,13 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def lit[A: TypedEncoder](value: A): TypedColumn[A] = frameless.functions.lit(value)
+  def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = frameless.functions.lit(value)
 
   /** Aggregate function: returns the number of items in a group.
     *
     * apache/spark
     */
-  def count(): TypedAggregate[Long] = {
+  def count[T](): TypedAggregate[T, Long] = {
     new TypedAggregate(untyped.count(untyped.lit(1)))
   }
 
@@ -26,22 +26,22 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def count(column: TypedColumn[_]): TypedAggregate[Long] = {
-    new TypedAggregate[Long](untyped.count(column.untyped))
+  def count[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.count(column.untyped))
   }
 
   /** Aggregate function: returns the number of distinct items in a group.
     *
     * apache/spark
     */
-  def countDistinct(column: TypedColumn[_]): TypedAggregate[Long] = {
-    new TypedAggregate[Long](untyped.countDistinct(column.untyped))
+  def countDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.countDistinct(column.untyped))
   }
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     */
-  def approxCountDistinct(column: TypedColumn[_]): TypedAggregate[Long] = {
-    new TypedAggregate[Long](untyped.approx_count_distinct(column.untyped))
+  def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped))
   }
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
@@ -50,68 +50,68 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def approxCountDistinct(column: TypedColumn[_], rsd: Double): TypedAggregate[Long] = {
-    new TypedAggregate[Long](untyped.approx_count_distinct(column.untyped, rsd))
+  def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] = {
+    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped, rsd))
   }
 
   /** Aggregate function: returns a list of objects with duplicates.
     *
     * apache/spark
     */
-  def collectList[A: TypedEncoder](column: TypedColumn[A]): TypedAggregate[Vector[A]] = {
-    new TypedAggregate[Vector[A]](untyped.collect_list(column.untyped))
+  def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
+    new TypedAggregate[T, Vector[A]](untyped.collect_list(column.untyped))
   }
 
   /** Aggregate function: returns a set of objects with duplicate elements eliminated.
     *
     * apache/spark
     */
-  def collectSet[A: TypedEncoder](column: TypedColumn[A]): TypedAggregate[Vector[A]] = {
-    new TypedAggregate[Vector[A]](untyped.collect_set(column.untyped))
+  def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
+    new TypedAggregate[T, Vector[A]](untyped.collect_set(column.untyped))
   }
 
   /** Aggregate function: returns the sum of all values in the given column.
     *
     * apache/spark
     */
-  def sum[A, Out](column: TypedColumn[A])(
+  def sum[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregate[Out] = {
+  ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
     val sumExpr = expr(untyped.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregate[Out](sumOrZero)
+    new TypedAggregate[T, Out](sumOrZero)
   }
 
   /** Aggregate function: returns the sum of distinct values in the column.
     *
     * apache/spark
     */
-  def sumDistinct[A, Out](column: TypedColumn[A])(
+  def sumDistinct[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregate[Out] = {
+  ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
     val sumExpr = expr(untyped.sumDistinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
-    new TypedAggregate[Out](sumOrZero)
+    new TypedAggregate[T, Out](sumOrZero)
   }
 
   /** Aggregate function: returns the average of the values in a group.
     *
     * apache/spark
     */
-  def avg[A, Out](column: TypedColumn[A])(
+  def avg[A, T, Out](column: TypedColumn[T, A])(
     implicit
     averageable: CatalystAverageable[A, Out],
     oencoder: TypedEncoder[Out]
-  ): TypedAggregate[Out] = {
-    new TypedAggregate[Out](untyped.avg(column.untyped))
+  ): TypedAggregate[T, Out] = {
+    new TypedAggregate[T, Out](untyped.avg(column.untyped))
   }
 
 
@@ -122,8 +122,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def variance[A: CatalystVariance](column: TypedColumn[A]): TypedAggregate[Double] = {
-    new TypedAggregate[Double](untyped.variance(column.untyped))
+  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
+    new TypedAggregate[T, Double](untyped.variance(column.untyped))
   }
 
   /** Aggregate function: returns the sample standard deviation.
@@ -133,8 +133,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def stddev[A: CatalystVariance](column: TypedColumn[A]): TypedAggregate[Double] = {
-    new TypedAggregate[Double](untyped.stddev(column.untyped))
+  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
+    new TypedAggregate[T, Double](untyped.stddev(column.untyped))
   }
 
   /**
@@ -145,13 +145,13 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def stddevPop[A](column: TypedColumn[A])(
+  def stddevPop[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.stddev_pop(column.cast[Double].untyped)
     )
   }
@@ -164,13 +164,13 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def stddevSamp[A](column: TypedColumn[A])(
+  def stddevSamp[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.stddev_samp(column.cast[Double].untyped)
     )
   }
@@ -179,18 +179,18 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def max[A: CatalystOrdered](column: TypedColumn[A]): TypedAggregate[A] = {
+  def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[A](untyped.max(column.untyped))
+    new TypedAggregate[T, A](untyped.max(column.untyped))
   }
 
   /** Aggregate function: returns the minimum value of the column in a group.
     *
     * apache/spark
     */
-  def min[A: CatalystOrdered](column: TypedColumn[A]): TypedAggregate[A] = {
+  def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[A](untyped.min(column.untyped))
+    new TypedAggregate[T, A](untyped.min(column.untyped))
   }
 
   /** Aggregate function: returns the first value in a group.
@@ -200,9 +200,9 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def first[A](column: TypedColumn[A]): TypedAggregate[A] = {
+  def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[A](untyped.first(column.untyped))
+    new TypedAggregate[T, A](untyped.first(column.untyped))
   }
 
   /**
@@ -213,9 +213,9 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def last[A](column: TypedColumn[A]): TypedAggregate[A] = {
+  def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[A](untyped.last(column.untyped))
+    new TypedAggregate[T, A](untyped.last(column.untyped))
   }
 
   /**
@@ -226,15 +226,15 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def corr[A, B](column1: TypedColumn[A], column2: TypedColumn[B])(
+  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column1.uencoder
     implicit val c2 = column2.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
     )
   }
@@ -247,15 +247,15 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarPop[A, B](column1: TypedColumn[A], column2: TypedColumn[B])(
+  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column1.uencoder
     implicit val c2 = column2.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
     )
   }
@@ -268,15 +268,15 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarSamp[A, B](column1: TypedColumn[A], column2: TypedColumn[B])(
+  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column1.uencoder
     implicit val c2 = column2.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
     )
   }
@@ -290,13 +290,13 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def kurtosis[A](column: TypedColumn[A])(
+  def kurtosis[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.kurtosis(column.cast[Double].untyped)
     )
   }
@@ -309,13 +309,13 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def skewness[A](column: TypedColumn[A])(
+  def skewness[A, T](column: TypedColumn[T, A])(
     implicit
     evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[Option[Double]] = {
+  ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
-    new TypedAggregate[Option[Double]](
+    new TypedAggregate[T, Option[Double]](
       untyped.skewness(column.cast[Double].untyped)
     )
   }

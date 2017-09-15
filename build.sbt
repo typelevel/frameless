@@ -68,7 +68,6 @@ lazy val commonScalacOptions = Seq(
   "-feature",
   "-unchecked",
   "-Xfatal-warnings",
-  // "-Xlog-implicits",
   "-Xlint:-missing-interpolator,_",
   "-Yinline-warnings",
   "-Yno-adapted-args",
