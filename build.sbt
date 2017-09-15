@@ -5,7 +5,7 @@ val shapeless = "2.3.2"
 val scalacheck = "1.13.5"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(core, cats, dataset, docs)
+  .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
 
@@ -36,6 +36,22 @@ lazy val dataset = project
   ))
   .dependsOn(core % "test->test;compile->compile")
 
+lazy val ml = project
+  .settings(name := "frameless-ml")
+  .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
+  .settings(framelessTypedDatasetREPL: _*)
+  .settings(publishSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion % "provided"
+  ))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    dataset % "test->test;compile->compile"
+  )
+
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
@@ -43,9 +59,10 @@ lazy val docs = project
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion
+    "org.apache.spark" %% "spark-sql"  % sparkVersion,
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
-  .dependsOn(dataset, cats)
+  .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
