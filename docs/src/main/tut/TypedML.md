@@ -27,10 +27,10 @@ import frameless.TypedDataset
 import org.apache.spark.ml.linalg._
 
 val vector = Vectors.dense(1, 2, 3)
-val vectorDs = TypedDataset.create(Seq(vector))
+val vectorDs = TypedDataset.create(Seq("label" -> vector))
 
 val matrix = Matrices.dense(2, 1, Array(1, 2))
-val matrixDs = TypedDataset.create(Seq(matrix))
+val matrixDs = TypedDataset.create(Seq("label" -> matrix))
 ```
 
 Under the hood, Vector and Matrix are encoded using `org.apache.spark.ml.linalg.VectorUDT` 
