@@ -13,7 +13,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinRight(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinRight(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val leftKeys = left.map(_.a).toSet
@@ -43,7 +43,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinInner(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinInner(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val joined = {
@@ -68,7 +68,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinLeft(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeft(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
@@ -98,7 +98,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinFull(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinFull(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
@@ -159,7 +159,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
-        .joinLeftSemi(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeftSemi(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val joined = {
@@ -184,7 +184,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
-        .joinLeftAnti(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeftAnti(rightDs)(implicit a => leftDs.col('a) === rightDs.col('a))
         .collect().run().toVector.sorted
 
       val joined = {
@@ -208,7 +208,7 @@ class JoinTests extends TypedDatasetSuite {
 
       val count = ds.dataset.join(ds.dataset, ds.dataset.col("a") === ds.dataset.col("a")).count()
 
-      val countDs = ds.joinInner(ds)(ds.col('a) === ds.col('a))
+      val countDs = ds.joinInner(ds)(implicit a => ds.col('a) === ds.col('a))
         .count().run()
 
       count ?= countDs
