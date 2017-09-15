@@ -13,18 +13,18 @@ class ColTests extends TypedDatasetSuite {
     x4.col('a)
     t4.col('_1)
 
-    x4.col[Int]('a)
-    t4.col[Int]('_1)
+    x4.col[Int, X4[Int, String, Long, Boolean]]('a)
+    t4.col[Int, (Int, String, Long, Boolean)]('_1)
 
-    illTyped("x4.col[String]('a)", "No column .* of type String in frameless.X4.*")
+    illTyped("x4.col[String, X4[Int, String, Long, Boolean]]('a)", "No column .* of type String in frameless.X4.*")
 
     x4.col('b)
     t4.col('_2)
 
-    x4.col[String]('b)
-    t4.col[String]('_2)
+    x4.col[String, X4[Int, String, Long, Boolean]]('b)
+    t4.col[String, (Int, String, Long, Boolean)]('_2)
 
-    illTyped("x4.col[Int]('b)", "No column .* of type Int in frameless.X4.*")
+    illTyped("x4.col[Int, X4[Int, String, Long, Boolean]]('b)", "No column .* of type Int in frameless.X4.*")
 
     ()
   }

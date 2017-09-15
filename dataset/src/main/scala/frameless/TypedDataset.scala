@@ -393,31 +393,36 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   /** Takes a function from A => R and converts it to a UDF for TypedColumn[A] => TypedColumn[R].
     */
   def makeUDF[A: TypedEncoder, R: TypedEncoder](f: A => R):
-  TypedColumn[T, A] => TypedColumn[T, R] = functions.udf(f)
+    TypedColumn[T, A] => TypedColumn[T, R] =
+      functions.udf(f)
 
   /** Takes a function from (A1, A2) => R and converts it to a UDF for
     * (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R].
     */
   def makeUDF[A1: TypedEncoder, A2: TypedEncoder, R: TypedEncoder](f: (A1, A2) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] = functions.udf(f)
+    (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] =
+      functions.udf(f)
 
   /** Takes a function from (A1, A2, A3) => R and converts it to a UDF for
     * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R].
     */
   def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] = functions.udf(f)
+    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] =
+      functions.udf(f)
 
   /** Takes a function from (A1, A2, A3, A4) => R and converts it to a UDF for
     * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R].
     */
   def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = functions.udf(f)
+    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] =
+      functions.udf(f)
 
   /** Takes a function from (A1, A2, A3, A4, A5) => R and converts it to a UDF for
     * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R].
     */
   def makeUDF[A1: TypedEncoder, A2: TypedEncoder, A3: TypedEncoder, A4: TypedEncoder, A5: TypedEncoder, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = functions.udf(f)
+    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] =
+      functions.udf(f)
 
   /** Type-safe projection from type T to Tuple1[A]
     * {{{
