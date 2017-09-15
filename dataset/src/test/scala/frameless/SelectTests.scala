@@ -15,7 +15,7 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
+      val A = dataset.col('a)
 
       val dataset2 = dataset.select(A).collect().run().toVector
       val data2 = data.map { case X4(a, _, _, _) => a }
@@ -39,8 +39,8 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
-      val B = dataset.col[B]('b)
+      val A = dataset.col('a)
+      val B = dataset.col('b)
 
       val dataset2 = dataset.select(A, B).collect().run().toVector
       val data2 = data.map { case X4(a, b, _, _) => (a, b) }
@@ -64,9 +64,9 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
-      val B = dataset.col[B]('b)
-      val C = dataset.col[C]('c)
+      val A = dataset.col('a)
+      val B = dataset.col('b)
+      val C = dataset.col('c)
 
       val dataset2 = dataset.select(A, B, C).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, _) => (a, b, c) }
@@ -90,10 +90,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d) }
@@ -117,10 +117,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a) }
@@ -144,10 +144,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c) }
@@ -171,10 +171,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b) }
@@ -198,10 +198,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a) }
@@ -225,10 +225,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1, a3).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a, c) }
@@ -252,10 +252,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col('a)
+      val a2 = dataset.col('b)
+      val a3 = dataset.col('c)
+      val a4 = dataset.col('d)
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1, a3, a4).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a, c, d) }
