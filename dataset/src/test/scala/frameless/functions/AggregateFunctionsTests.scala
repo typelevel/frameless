@@ -379,10 +379,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     val tds = TypedDataset.create(xs)
     // Typed implementation of bivar stats function
-    val tdBivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b), tds('c)))
-      .map(
-        kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
-      ).collect().run()
+    val tdBivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b), tds('c))).deserialized.map(kv =>
+      (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
+    ).collect().run()
 
     val cDF = session.createDataset(xs.map(x => (x.a, x.b, x.c)))
     // Comparison implementation of bivar stats functions
@@ -417,10 +416,9 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     val tds = TypedDataset.create(xs)
     //typed implementation of univariate stats function
-    val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b)))
-      .map(
-        kv => (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
-      ).collect().run()
+    val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b))).deserialized.map(kv =>
+      (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
+    ).collect().run()
 
     val cDF = session.createDataset(xs.map(x => (x.a, x.b)))
     // Comparison implementation of bivar stats functions
