@@ -9,10 +9,13 @@ import scala.annotation.implicitNotFound
 trait CatalystDivisible[In, Out]
 
 object CatalystDivisible {
-  implicit object divisibleBigDecimal extends CatalystDivisible[BigDecimal, BigDecimal]
-  implicit object divisibleDouble     extends CatalystDivisible[Double, Double]
-  implicit object divisibleInt        extends CatalystDivisible[Int, Double]
-  implicit object divisibleLong       extends CatalystDivisible[Long, Double]
-  implicit object divisibleByte       extends CatalystDivisible[Byte, Double]
-  implicit object divisibleShort      extends CatalystDivisible[Short, Double]
+  private[this] val theInstance = new CatalystDivisible[Any, Any] {}
+  private[this] def of[In, Out]: CatalystDivisible[In, Out] = theInstance.asInstanceOf[CatalystDivisible[In, Out]]
+
+  implicit val framelessDivisibleBigDecimal: CatalystDivisible[BigDecimal, BigDecimal] = of[BigDecimal, BigDecimal]
+  implicit val framelessDivisibleDouble    : CatalystDivisible[Double, Double]         = of[Double, Double]
+  implicit val framelessDivisibleInt       : CatalystDivisible[Int, Double]            = of[Int, Double]
+  implicit val framelessDivisibleLong      : CatalystDivisible[Long, Double]           = of[Long, Double]
+  implicit val framelessDivisibleByte      : CatalystDivisible[Byte, Double]           = of[Byte, Double]
+  implicit val framelessDivisibleShort     : CatalystDivisible[Short, Double]          = of[Short, Double]
 }

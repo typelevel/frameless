@@ -15,9 +15,12 @@ import scala.annotation.implicitNotFound
 trait CatalystAverageable[In, Out]
 
 object CatalystAverageable {
-  implicit val averageableBigDecimal: CatalystAverageable[BigDecimal, BigDecimal] = new CatalystAverageable[BigDecimal, BigDecimal] {}
-  implicit val averageableDouble: CatalystAverageable[Double, Double] = new CatalystAverageable[Double, Double] {}
-  implicit val averageableLong: CatalystAverageable[Long, Double] = new CatalystAverageable[Long, Double] {}
-  implicit val averageableInt: CatalystAverageable[Int, Double] = new CatalystAverageable[Int, Double] {}
-  implicit val averageableShort: CatalystAverageable[Short, Double] = new CatalystAverageable[Short, Double] {}
+  private[this] val theInstance = new CatalystAverageable[Any, Any] {}
+  private[this] def of[In, Out]: CatalystAverageable[In, Out] = theInstance.asInstanceOf[CatalystAverageable[In, Out]]
+
+  implicit val framelessAverageableBigDecimal: CatalystAverageable[BigDecimal, BigDecimal] = of[BigDecimal, BigDecimal]
+  implicit val framelessAverageableDouble:     CatalystAverageable[Double, Double]         = of[Double, Double]
+  implicit val framelessAverageableLong:       CatalystAverageable[Long, Double]           = of[Long, Double]
+  implicit val framelessAverageableInt:        CatalystAverageable[Int, Double]            = of[Int, Double]
+  implicit val framelessAverageableShort:      CatalystAverageable[Short, Double]          = of[Short, Double]
 }

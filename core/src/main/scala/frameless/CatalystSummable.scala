@@ -23,9 +23,9 @@ object CatalystSummable {
     new CatalystSummable[In, Out] { val zero: In = _zero }
   }
 
-  implicit val summableLong: CatalystSummable[Long, Long] = CatalystSummable(zero = 0L)
-  implicit val summableBigDecimal: CatalystSummable[BigDecimal, BigDecimal] = CatalystSummable(zero = BigDecimal(0))
-  implicit val summableDouble: CatalystSummable[Double, Double] = CatalystSummable(zero = 0.0)
-  implicit val summableInt: CatalystSummable[Int, Long] = CatalystSummable(zero = 0)
-  implicit val summableShort: CatalystSummable[Short, Long] = CatalystSummable(zero = 0)
+  implicit val framelessSummableLong      : CatalystSummable[Long, Long]             = CatalystSummable(zero = 0L)
+  implicit val framelessSummableBigDecimal: CatalystSummable[BigDecimal, BigDecimal] = CatalystSummable(zero = BigDecimal(0))
+  implicit val framelessSummableDouble    : CatalystSummable[Double, Double]         = CatalystSummable(zero = 0.0)
+  implicit val framelessSummableInt       : CatalystSummable[Int, Long]              = CatalystSummable(zero = 0)
+  implicit val framelessSummableShort     : CatalystSummable[Short, Long]            = CatalystSummable(zero = 0)
 }

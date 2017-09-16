@@ -7,15 +7,18 @@ import scala.annotation.implicitNotFound
 trait CatalystOrdered[A]
 
 object CatalystOrdered {
-  implicit object IntOrdered extends CatalystOrdered[Int]
-  implicit object BooleanOrdered extends CatalystOrdered[Boolean]
-  implicit object ByteOrdered extends CatalystOrdered[Byte]
-  implicit object ShortOrdered extends CatalystOrdered[Short]
-  implicit object LongOrdered extends CatalystOrdered[Long]
-  implicit object FloatOrdered extends CatalystOrdered[Float]
-  implicit object DoubleOrdered extends CatalystOrdered[Double]
-  implicit object BigDecimalOrdered extends CatalystOrdered[BigDecimal]
-  implicit object SQLDateOrdered extends CatalystOrdered[SQLDate]
-  implicit object SQLTimestampOrdered extends CatalystOrdered[SQLTimestamp]
-  implicit object StringOrdered extends CatalystOrdered[String]
+  private[this] val theInstance = new CatalystOrdered[Any] {}
+  private[this] def of[A]: CatalystOrdered[A] = theInstance.asInstanceOf[CatalystOrdered[A]]
+
+  implicit val framelessIntOrdered         : CatalystOrdered[Int]          = of[Int]
+  implicit val framelessBooleanOrdered     : CatalystOrdered[Boolean]      = of[Boolean]
+  implicit val framelessByteOrdered        : CatalystOrdered[Byte]         = of[Byte]
+  implicit val framelessShortOrdered       : CatalystOrdered[Short]        = of[Short]
+  implicit val framelessLongOrdered        : CatalystOrdered[Long]         = of[Long]
+  implicit val framelessFloatOrdered       : CatalystOrdered[Float]        = of[Float]
+  implicit val framelessDoubleOrdered      : CatalystOrdered[Double]       = of[Double]
+  implicit val framelessBigDecimalOrdered  : CatalystOrdered[BigDecimal]   = of[BigDecimal]
+  implicit val framelessSQLDateOrdered     : CatalystOrdered[SQLDate]      = of[SQLDate]
+  implicit val framelessSQLTimestampOrdered: CatalystOrdered[SQLTimestamp] = of[SQLTimestamp]
+  implicit val framelessStringOrdered      : CatalystOrdered[String]       = of[String]
 }

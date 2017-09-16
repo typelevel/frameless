@@ -9,9 +9,12 @@ import scala.annotation.implicitNotFound
 trait CatalystVariance[A]
 
 object CatalystVariance {
-  implicit val intVariance: CatalystVariance[Int] = new CatalystVariance[Int] {}
-  implicit val longVariance: CatalystVariance[Long] = new CatalystVariance[Long] {}
-  implicit val shortVariance: CatalystVariance[Short] = new CatalystVariance[Short] {}
-  implicit val bigDecimalVariance: CatalystVariance[BigDecimal] = new CatalystVariance[BigDecimal] {}
-  implicit val doubleVariance: CatalystVariance[Double] = new CatalystVariance[Double] {}
+  private[this] val theInstance = new CatalystVariance[Any] {}
+  private[this] def of[A]: CatalystVariance[A] = theInstance.asInstanceOf[CatalystVariance[A]]
+
+  implicit val framelessIntVariance       : CatalystVariance[Int]        = of[Int]
+  implicit val framelessLongVariance      : CatalystVariance[Long]       = of[Long]
+  implicit val framelessShortVariance     : CatalystVariance[Short]      = of[Short]
+  implicit val framelessBigDecimalVariance: CatalystVariance[BigDecimal] = of[BigDecimal]
+  implicit val framelessDoubleVariance    : CatalystVariance[Double]     = of[Double]
 }
