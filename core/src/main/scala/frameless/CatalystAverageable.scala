@@ -1,5 +1,7 @@
 package frameless
 
+import scala.annotation.implicitNotFound
+
 /**
   * When averaging Spark doesn't change these types:
   * - BigDecimal -> BigDecimal
@@ -9,6 +11,7 @@ package frameless
   * - Short      -> Double
   * - Long       -> Double
   */
+@implicitNotFound("Cannot compute average of type ${In}.")
 trait CatalystAverageable[In, Out]
 
 object CatalystAverageable {

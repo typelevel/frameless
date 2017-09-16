@@ -1,5 +1,9 @@
 package frameless
 
+import scala.annotation.implicitNotFound
+
+/** Types that can be added, subtracted and multiplied by Catalyst. */
+@implicitNotFound("Cannot do numeric operations on columns of type ${A}.")
 trait CatalystNumeric[A]
 
 object CatalystNumeric {

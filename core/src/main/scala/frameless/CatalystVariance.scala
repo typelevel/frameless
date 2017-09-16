@@ -1,9 +1,12 @@
 package frameless
 
+import scala.annotation.implicitNotFound
+
 /**
   * Spark's variance and stddev functions always return Double
   */
-trait CatalystVariance[T]
+@implicitNotFound("Cannot compute variance on type ${A}.")
+trait CatalystVariance[A]
 
 object CatalystVariance {
   implicit val intVariance: CatalystVariance[Int] = new CatalystVariance[Int] {}

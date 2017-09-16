@@ -1,6 +1,9 @@
 package frameless
 
+import scala.annotation.implicitNotFound
+
 /** Types that can be ordered/compared by Catalyst. */
+@implicitNotFound("Cannot compare columns of type ${A}.")
 trait CatalystOrdered[A]
 
 object CatalystOrdered {
