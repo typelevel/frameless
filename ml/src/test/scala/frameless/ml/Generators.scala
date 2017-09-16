@@ -16,8 +16,8 @@ object Generators {
   implicit val arbMatrix: Arbitrary[Matrix] = Arbitrary {
     Gen.sized { size =>
       for {
-        nbRows <- Gen.oneOf(0, size)
-        nbCols <- Gen.oneOf(0, size)
+        nbRows <- Gen.choose(0, size)
+        nbCols <- Gen.choose(1, size)
         matrix <- {
           Gen.listOfN(nbRows * nbCols, arbDouble.arbitrary)
             .map(values => Matrices.dense(nbRows, nbCols, values.toArray))
