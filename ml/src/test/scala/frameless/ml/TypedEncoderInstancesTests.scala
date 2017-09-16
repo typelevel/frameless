@@ -27,14 +27,8 @@ class TypedEncoderInstancesTests extends FramelessMlSuite {
     case class Input(features: Vector, label: Double)
 
     val prop = forAll { trainingData: Matrix =>
-      (trainingData.numRows >= 2 && trainingData.numCols >= 1) ==> {
-        // Spark 2.1.x decision tree implementation has a bug with a dataset with constant label,
-        // so we simulate two different labels
-        // See https://issues.apache.org/jira/browse/SPARK-18036
-        val inputs = trainingData.rowIter.toVector.zipWithIndex.map {
-          case (vector, i) => Input(vector, (i % 2).toDouble)
-        }
-
+      (trainingData.numRows >= 1) ==> {
+        val inputs = trainingData.rowIter.toVector.map(vector => Input(vector, 0D))
         val inputsDS = TypedDataset.create(inputs)
 
         val model = new DecisionTreeRegressor()
@@ -50,11 +44,12 @@ class TypedEncoderInstancesTests extends FramelessMlSuite {
           .head
           .getAs[Double](0)
 
-        (prediction == 0D) || (prediction == 1D)
+        prediction == 0D
       }
+
     }
 
-    check(prop, MinSize(2))
+    check(prop, MinSize(1))
   }
 
 }

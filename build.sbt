@@ -1,4 +1,4 @@
-val sparkVersion = "2.1.1"
+val sparkVersion = "2.2.0"
 val catsv = "0.9.0"
 val scalatest = "3.0.3"
 val shapeless = "2.3.2"
