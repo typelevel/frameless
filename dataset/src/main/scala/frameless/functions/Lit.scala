@@ -49,7 +49,7 @@ case class FramelessLit[A](obj: A, encoder: TypedEncoder[A]) extends Expression 
   def children: Seq[Expression] = Nil
 
   override def genCode(ctx: CodegenContext): ExprCode = {
-    encoder.extractorFor(new Literal(obj, encoder.sourceDataType)).genCode(ctx)
+    encoder.toCatalyst(new Literal(obj, encoder.sourceDataType)).genCode(ctx)
   }
 
   protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???

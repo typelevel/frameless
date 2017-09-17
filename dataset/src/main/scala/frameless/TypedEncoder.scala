@@ -19,11 +19,11 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 
   /** From Catalyst representation to T
     */
-  def constructorFor(path: Expression): Expression
+  def fromCatalyst(path: Expression): Expression
 
   /** T to Catalyst representation
     */
-  def extractorFor(path: Expression): Expression
+  def toCatalyst(path: Expression): Expression
 }
 
 // Waiting on scala 2.12
@@ -45,8 +45,8 @@ object TypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[Unit]
     def targetDataType: DataType = NullType
 
-    def constructorFor(path: Expression): Expression = Literal.create((), sourceDataType)
-    def extractorFor(path: Expression): Expression = Literal.create(null, targetDataType)
+    def fromCatalyst(path: Expression): Expression = Literal.create((), sourceDataType)
+    def toCatalyst(path: Expression): Expression = Literal.create(null, targetDataType)
   }
 
   implicit val stringEncoder: TypedEncoder[String] = new TypedEncoder[String] {
@@ -55,10 +55,10 @@ object TypedEncoder {
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[String]
     def targetDataType: DataType = StringType
 
-    def extractorFor(path: Expression): Expression =
+    def toCatalyst(path: Expression): Expression =
       StaticInvoke(classOf[UTF8String], targetDataType, "fromString", path :: Nil)
 
-    def constructorFor(path: Expression): Expression =
+    def fromCatalyst(path: Expression): Expression =
       Invoke(path, "toString", sourceDataType)
   }
 
@@ -68,8 +68,8 @@ object TypedEncoder {
     def sourceDataType: DataType = BooleanType
     def targetDataType: DataType = BooleanType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val intEncoder: TypedEncoder[Int] = new TypedEncoder[Int] {
@@ -78,8 +78,8 @@ object TypedEncoder {
     def sourceDataType: DataType = IntegerType
     def targetDataType: DataType = IntegerType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val longEncoder: TypedEncoder[Long] = new TypedEncoder[Long] {
@@ -88,8 +88,8 @@ object TypedEncoder {
     def sourceDataType: DataType = LongType
     def targetDataType: DataType = LongType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val shortEncoder: TypedEncoder[Short] = new TypedEncoder[Short] {
@@ -98,8 +98,8 @@ object TypedEncoder {
     def sourceDataType: DataType = ShortType
     def targetDataType: DataType = ShortType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val charEncoder: TypedEncoder[Char] = new TypedEncoder[Char] {
@@ -121,8 +121,8 @@ object TypedEncoder {
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[java.lang.Character]
     def targetDataType: DataType = StringType
 
-    def extractorFor(path: Expression): Expression = underlying.extractorFor(path)
-    def constructorFor(path: Expression): Expression = underlying.constructorFor(path)
+    def toCatalyst(path: Expression): Expression = underlying.toCatalyst(path)
+    def fromCatalyst(path: Expression): Expression = underlying.fromCatalyst(path)
   }
 
   implicit val byteEncoder: TypedEncoder[Byte] = new TypedEncoder[Byte] {
@@ -131,8 +131,8 @@ object TypedEncoder {
     def sourceDataType: DataType = ByteType
     def targetDataType: DataType = ByteType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val floatEncoder: TypedEncoder[Float] = new TypedEncoder[Float] {
@@ -141,8 +141,8 @@ object TypedEncoder {
     def sourceDataType: DataType = FloatType
     def targetDataType: DataType = FloatType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val doubleEncoder: TypedEncoder[Double] = new TypedEncoder[Double] {
@@ -151,8 +151,8 @@ object TypedEncoder {
     def sourceDataType: DataType = DoubleType
     def targetDataType: DataType = DoubleType
 
-    def extractorFor(path: Expression): Expression = path
-    def constructorFor(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression = path
+    def fromCatalyst(path: Expression): Expression = path
   }
 
   implicit val bigDecimalEncoder: TypedEncoder[BigDecimal] = new TypedEncoder[BigDecimal] {
@@ -161,10 +161,10 @@ object TypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[BigDecimal]
     def targetDataType: DataType = DecimalType.SYSTEM_DEFAULT
 
-    def extractorFor(path: Expression): Expression =
+    def toCatalyst(path: Expression): Expression =
       StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil)
 
-    def constructorFor(path: Expression): Expression =
+    def fromCatalyst(path: Expression): Expression =
       Invoke(path, "toBigDecimal", sourceDataType)
   }
 
@@ -174,15 +174,15 @@ object TypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLDate]
     def targetDataType: DataType = DateType
 
-    def extractorFor(path: Expression): Expression =
+    def toCatalyst(path: Expression): Expression =
       Invoke(path, "days", IntegerType)
 
-    def constructorFor(path: Expression): Expression =
+    def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLDate.getClass,
         dataType = sourceDataType,
         functionName = "apply",
-        arguments = intEncoder.constructorFor(path) :: Nil,
+        arguments = intEncoder.fromCatalyst(path) :: Nil,
         propagateNull = true
       )
   }
@@ -193,15 +193,15 @@ object TypedEncoder {
     def sourceDataType: DataType = ScalaReflection.dataTypeFor[SQLTimestamp]
     def targetDataType: DataType = TimestampType
 
-    def extractorFor(path: Expression): Expression =
+    def toCatalyst(path: Expression): Expression =
       Invoke(path, "us", LongType)
 
-    def constructorFor(path: Expression): Expression =
+    def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLTimestamp.getClass,
         dataType = sourceDataType,
         functionName = "apply",
-        arguments = longEncoder.constructorFor(path) :: Nil,
+        arguments = longEncoder.fromCatalyst(path) :: Nil,
         propagateNull = true
       )
   }
@@ -215,7 +215,7 @@ object TypedEncoder {
     def sourceDataType: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
     def targetDataType: DataType = underlying.targetDataType
 
-    def extractorFor(path: Expression): Expression = {
+    def toCatalyst(path: Expression): Expression = {
       // for primitive types we must manually unbox the value of the object
       underlying.sourceDataType match {
         case IntegerType =>
@@ -254,12 +254,12 @@ object TypedEncoder {
             "booleanValue",
             BooleanType)
 
-        case other => underlying.extractorFor(UnwrapOption(underlying.sourceDataType, path))
+        case other => underlying.toCatalyst(UnwrapOption(underlying.sourceDataType, path))
       }
     }
 
-    def constructorFor(path: Expression): Expression =
-      WrapOption(underlying.constructorFor(path), underlying.sourceDataType)
+    def fromCatalyst(path: Expression): Expression =
+      WrapOption(underlying.fromCatalyst(path), underlying.sourceDataType)
   }
 
   implicit def vectorEncoder[A](
@@ -272,10 +272,10 @@ object TypedEncoder {
 
     def targetDataType: DataType = DataTypes.createArrayType(underlying.targetDataType)
 
-    def constructorFor(path: Expression): Expression = {
+    def fromCatalyst(path: Expression): Expression = {
       val arrayData = Invoke(
         MapObjects(
-          underlying.constructorFor,
+          underlying.fromCatalyst,
           path,
           underlying.targetDataType
         ),
@@ -291,7 +291,7 @@ object TypedEncoder {
       )
     }
 
-    def extractorFor(path: Expression): Expression = {
+    def toCatalyst(path: Expression): Expression = {
       // if source `path` is already native for Spark, no need to `map`
       if (ScalaReflection.isNativeType(underlying.sourceDataType)) {
         NewInstance(
@@ -300,7 +300,7 @@ object TypedEncoder {
           dataType = ArrayType(underlying.targetDataType, underlying.nullable)
         )
       } else {
-        MapObjects(underlying.extractorFor, path, underlying.sourceDataType)
+        MapObjects(underlying.toCatalyst, path, underlying.sourceDataType)
       }
     }
   }
@@ -313,14 +313,14 @@ object TypedEncoder {
         def sourceDataType: DataType = FramelessInternals.objectTypeFor[A](classTag)
         def targetDataType: DataType = trb.targetDataType
 
-        def constructorFor(path: Expression): Expression = {
-          val bexpr = trb.constructorFor(path)
+        def fromCatalyst(path: Expression): Expression = {
+          val bexpr = trb.fromCatalyst(path)
           Invoke(Literal.fromObject(inj), "invert", sourceDataType, Seq(bexpr))
         }
 
-        def extractorFor(path: Expression): Expression = {
+        def toCatalyst(path: Expression): Expression = {
           val invoke = Invoke(Literal.fromObject(inj), "apply", trb.sourceDataType, Seq(path))
-          trb.extractorFor(invoke)
+          trb.toCatalyst(invoke)
         }
       }
 
@@ -342,9 +342,9 @@ object TypedEncoder {
       def sourceDataType: DataType = ObjectType(udt.userClass)
       def targetDataType: DataType = udt
 
-      def extractorFor(path: Expression): Expression = Invoke(udtInstance, "serialize", udt, Seq(path))
+      def toCatalyst(path: Expression): Expression = Invoke(udtInstance, "serialize", udt, Seq(path))
 
-      def constructorFor(path: Expression): Expression =
+      def fromCatalyst(path: Expression): Expression =
         Invoke(udtInstance, "deserialize", ObjectType(udt.userClass), Seq(path))
     }
   }

@@ -154,7 +154,7 @@ case class FramelessUdf[T, R](
         (convert, argTerm)
     }.unzip
 
-    val resultEval = rencoder.extractorFor(internalExpr).genCode(ctx)
+    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
     ctx.addMutableState(internalTpe, internalTerm, "")
     ctx.addMutableState("boolean", internalNullTerm, "")
@@ -183,7 +183,7 @@ object FramelessUdf {
   ): FramelessUdf[T, R] = FramelessUdf(
     function = function,
     encoders = cols.map(_.uencoder).toList,
-    children = cols.map(x => x.uencoder.constructorFor(x.expr)).toList,
+    children = cols.map(x => x.uencoder.fromCatalyst(x.expr)).toList,
     rencoder = rencoder
   )
 }

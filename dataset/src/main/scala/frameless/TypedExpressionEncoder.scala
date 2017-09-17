@@ -26,7 +26,7 @@ object TypedExpressionEncoder {
 
     val in = BoundReference(0, encoder.sourceDataType, encoder.nullable)
 
-    val (out, toRowExpressions) = encoder.extractorFor(in) match {
+    val (out, toRowExpressions) = encoder.toCatalyst(in) match {
       case x: CreateNamedStruct =>
         val out = BoundReference(0, encoder.targetDataType, encoder.nullable)
 
@@ -41,7 +41,7 @@ object TypedExpressionEncoder {
       schema = schema,
       flat = false,
       serializer = toRowExpressions,
-      deserializer = encoder.constructorFor(out),
+      deserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
   }

@@ -63,14 +63,14 @@ class RecordEncoder[F, G <: HList](
     StructType(structFields)
   }
 
-  def extractorFor(path: Expression): Expression = {
+  def toCatalyst(path: Expression): Expression = {
     val nameExprs = fields.value.value.map { field =>
       Literal(field.name)
     }
 
     val valueExprs = fields.value.value.map { field =>
       val fieldPath = Invoke(path, field.name, field.encoder.sourceDataType, Nil)
-      field.encoder.extractorFor(fieldPath)
+      field.encoder.toCatalyst(fieldPath)
     }
 
     // the way exprs are encoded in CreateNamedStruct
@@ -81,7 +81,7 @@ class RecordEncoder[F, G <: HList](
     CreateNamedStruct(exprs)
   }
 
-  def constructorFor(path: Expression): Expression = {
+  def fromCatalyst(path: Expression): Expression = {
     val exprs = fields.value.value.map { field =>
       val fieldPath = path match {
         case BoundReference(ordinal, dataType, nullable) =>
@@ -89,7 +89,7 @@ class RecordEncoder[F, G <: HList](
         case other =>
           GetStructField(path, field.ordinal, Some(field.name))
       }
-      field.encoder.constructorFor(fieldPath)
+      field.encoder.fromCatalyst(fieldPath)
     }
 
     NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
