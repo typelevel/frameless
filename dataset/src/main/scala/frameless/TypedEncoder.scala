@@ -39,16 +39,6 @@ abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Seria
 object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
-  implicit val unitEncoder: TypedEncoder[Unit] = new TypedEncoder[Unit] {
-    def nullable: Boolean = true
-
-    def sourceDataType: DataType = ScalaReflection.dataTypeFor[Unit]
-    def targetDataType: DataType = NullType
-
-    def fromCatalyst(path: Expression): Expression = Literal.create((), sourceDataType)
-    def toCatalyst(path: Expression): Expression = Literal.create(null, targetDataType)
-  }
-
   implicit val stringEncoder: TypedEncoder[String] = new TypedEncoder[String] {
     def nullable: Boolean = true
 

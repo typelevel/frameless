@@ -21,11 +21,15 @@ trait RecordEncoderFields[T <: HList] extends Serializable {
 }
 
 object RecordEncoderFields {
-  implicit val deriveNil: RecordEncoderFields[HNil] = new RecordEncoderFields[HNil] {
-    def value: List[RecordEncoderField] = Nil
+  implicit def deriveRecordLast[K <: Symbol, H](
+    implicit
+    key: Witness.Aux[K],
+    head: TypedEncoder[H]
+  ): RecordEncoderFields[FieldType[K, H] :: HNil] = new RecordEncoderFields[FieldType[K, H] :: HNil] {
+    def value: List[RecordEncoderField] = RecordEncoderField(0, key.value.name, head) :: Nil
   }
 
-  implicit def deriveRecord[K <: Symbol, H, T <: HList](
+  implicit def deriveRecordCons[K <: Symbol, H, T <: HList](
     implicit
     key: Witness.Aux[K],
     head: TypedEncoder[H],
