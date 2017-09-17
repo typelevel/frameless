@@ -183,7 +183,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     deserialized.filter(func)
 
   @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
-  def reduceOption(func: (T, T) => T): Job[Option[T]] =
+  def reduceOption[F[_]: SparkDelay](func: (T, T) => T): F[Option[T]] =
     deserialized.reduceOption(func)
   // $COVERAGE-ON$
 
@@ -243,10 +243,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
       * `func` must be commutative and associative or the result may be non-deterministic.
       *
-      * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
+      * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and an effect-suspending `F`.
       */
-    def reduceOption(func: (T, T) => T): Job[Option[T]] =
-      Job {
+    def reduceOption[F[_]](func: (T, T) => T)(implicit F: SparkDelay[F]): F[Option[T]] =
+      F.delay {
         try {
           Option(self.dataset.reduce(func))
         } catch {

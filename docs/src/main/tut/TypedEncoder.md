@@ -29,6 +29,7 @@ Frameless introduces a new type class called `TypeEncoder` to solve these issues
 
 ```tut:silent
 import frameless.TypedDataset
+import frameless.syntax._
 ```
 
 ```tut:book:fail

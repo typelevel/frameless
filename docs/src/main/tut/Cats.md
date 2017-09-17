@@ -1,27 +1,123 @@
-# Using Cats with RDDs
+# Using Cats with Frameless
 
 ```tut:invisible
 import org.apache.spark.{SparkConf, SparkContext => SC}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
-val conf: SparkConf = new SparkConf().setMaster("local[4]").setAppName("cats.bec test")
-implicit var sc: SC = new SC(conf)
 
+val conf: SparkConf = new SparkConf().setMaster("local[4]").setAppName("cats.bec test")
+val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+implicit val sc: SC = spark.sparkContext
+implicit val sqlContext = spark.sqlContext
+
+spark.sparkContext.setLogLevel("WARN")
 System.clearProperty("spark.master.port")
 System.clearProperty("spark.driver.port")
 System.clearProperty("spark.hostPort")
 System.setProperty("spark.cleaner.ttl", "300")
+
+import spark.implicits._
+
+import cats.implicits._
+import cats.effect.{IO, Sync}
+import cats.data.ReaderT
+
+implicit val sync: Sync[ReaderT[IO, SparkSession, ?]] = new Sync[ReaderT[IO, SparkSession, ?]] {
+  def suspend[A](thunk: => ReaderT[IO, SparkSession, A]) = thunk
+  def pure[A](x: A): ReaderT[IO, SparkSession, A] = ReaderT.pure(x)
+  def handleErrorWith[A](fa: ReaderT[IO, SparkSession, A])(f: Throwable => ReaderT[IO, SparkSession, A]): ReaderT[IO, SparkSession, A] =
+    ReaderT(r => fa.run(r).handleErrorWith(e => f(e).run(r)))
+  def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.lift(IO.raiseError(e))
+  def flatMap[A, B](fa: ReaderT[IO, SparkSession, A])(f: A => ReaderT[IO, SparkSession, B]): ReaderT[IO, SparkSession, B] = fa.flatMap(f)
+  def tailRecM[A, B](a: A)(f: A => ReaderT[IO, SparkSession, Either[A, B]]): ReaderT[IO, SparkSession, B] =
+    ReaderT.catsDataMonadForKleisli[IO, SparkSession].tailRecM(a)(f)
+}
 ```
+
+There are two main parts to the `cats` integration offered by frameless:
+- effect suspension in `TypedDataset` using `cats-effect` and `cats-mtl`
+- `RDD` enhancements using algebraic typeclasses in `cats-kernel`
+
+All the examples below assume you have previously imported `cats.implicits` and `frameless.cats.implicits`.
+
+*Note that you should not import `frameless.syntax._` together with `frameless.cats.implicits._`.*
+
+```tut:book
+import cats.implicits._
+import frameless.cats.implicits._
+```
+
+## Effect Suspension in typed datasets
+
+As noted in the section about `Job`, all operations on `TypedDataset` are lazy. The results of 
+operations that would normally block on plain Spark APIs are wrapped in a type constructor `F[_]`, 
+for which there exists an instance of `SparkDelay[F]`. This typeclass represents the operation of 
+delaying a computation and capturing an implicit `SparkSession`. 
+
+In the `cats` module, we utilize the typeclasses from `cats-effect` for abstracting over these 
+effect types - namely, we provide an implicit `SparkDelay` instance for all `F[_]` for which exists
+an instance of `cats.effect.Sync[F]`.
+
+This allows one to run operations on `TypedDataset` in an existing monad stack. For example, given
+this pre-existing monad stack:
+```tut:book
+import frameless.TypedDataset
+import cats.data.ReaderT
+import cats.effect.IO
+import cats.effect.implicits._
+
+type Action[T] = ReaderT[IO, SparkSession, T]
+```
+
+We will be able to request that values from `TypedDataset` will be suspended in this stack:
+```tut:book
+val typedDs = TypedDataset.create(Seq((1, "string"), (2, "another")))
+val result: Action[(Seq[(Int, String)], Long)] = for {
+  sample <- typedDs.take(1)
+  count <- typedDs.count()
+} yield (sample, count)
+```
+
+As with `Job`, note that nothing has been run yet. The effect has been properly suspended. To
+run our program, we must first supply the `SparkSession` to the `ReaderT` layer and then
+run the `IO` effect:
+```tut:book
+result.run(spark).unsafeRunSync()
+```
+
+### Convenience methods for modifying Spark thread-local variables
+
+The `frameless.cats.implicits._` import also provides some syntax enrichments for any monad
+stack that has the same capabilities as `Action` above. Namely, the ability to provide an
+instance of `SparkSession` and the ability to suspend effects.
+
+For these to work, we will need to import the implicit machinery from the `cats-mtl` library:
+```tut:book
+import cats.mtl.implicits._
+```
+
+And now, we can set the description for the computation being run:
+```tut:book
+val resultWithDescription: Action[(Seq[(Int, String)], Long)] = for {
+  r <- result.withDescription("fancy cats")
+  session <- ReaderT.ask[IO, SparkSession]
+  _ <- ReaderT.lift {
+         IO {
+           println(s"Description: ${session.sparkContext.getLocalProperty("spark.job.description")}")
+         }
+       }
+} yield r
+
+resultWithDescription.run(spark).unsafeRunSync()
+```
+
+## Using algebraic typeclasses from Cats with RDDs
 
 Data aggregation is one of the most important operations when working with Spark (and data in general).
 For example, we often have to compute the `min`, `max`, `avg`, etc. from a set of columns grouped by
 different predicates. This section shows how **cats** simplifies these tasks in Spark by
 leveraging a large collection of Type Classes for ordering and aggregating data.
 
-All the examples below assume you have previously imported `cats.implicits`.
-
-```tut:book
-import cats.implicits._
-```
 
 Cats offers ways to sort and aggregate tuples of arbitrary arity.
 
@@ -93,5 +189,5 @@ Map(1 -> 2, 2 -> 3) |+| Map(1 -> 4, 2 -> -1)
 ```
 
 ```tut:invisible
-sc.stop()
+spark.stop()
 ```

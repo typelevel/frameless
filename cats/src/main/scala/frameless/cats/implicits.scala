@@ -7,7 +7,7 @@ import _root_.cats._
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
-object implicits {
+object implicits extends FramelessSyntax with SparkDelayInstances {
   implicit class rddOps[A: ClassTag](lhs: RDD[A]) {
     def csum(implicit m: Monoid[A]): A = lhs.reduce(_ |+| _)
     def cmin(implicit o: Order[A]): A = lhs.reduce(_ min _)

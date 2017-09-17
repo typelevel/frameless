@@ -37,4 +37,8 @@ object Job {
   def apply[A](a: => A)(implicit spark: SparkSession): Job[A] = new Job[A] {
     def run(): A = a
   }
+
+  implicit val framelessSparkDelayForJob: SparkDelay[Job] = new SparkDelay[Job] {
+    def delay[A](a: => A)(implicit spark: SparkSession): Job[A] = Job(a)
+  }
 }
