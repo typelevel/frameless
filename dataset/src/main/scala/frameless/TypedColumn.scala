@@ -47,7 +47,7 @@ sealed class TypedColumn[T, U](
   private def withExpr(newExpr: Expression): Column = new Column(newExpr)
 
   private def equalsTo(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
-    if (uencoder.nullable && uencoder.targetDataType.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    if (uencoder.nullable && uencoder.catalystRepr.typeName != "struct") EqualNullSafe(self.expr, other.expr)
     else EqualTo(self.expr, other.expr)
   }.typed
 
@@ -254,7 +254,7 @@ sealed class TypedColumn[T, U](
     * }}}
     */
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): TypedColumn[T, A] =
-    self.untyped.cast(TypedEncoder[A].targetDataType).typed
+    self.untyped.cast(TypedEncoder[A].catalystRepr).typed
 }
 
 /** Expression used in `groupBy`-like constructions.

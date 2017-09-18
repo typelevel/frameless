@@ -52,13 +52,13 @@ class RecordEncoder[F, G <: HList](
 ) extends TypedEncoder[F] {
   def nullable: Boolean = false
 
-  def sourceDataType: DataType = FramelessInternals.objectTypeFor[F]
+  def jvmRepr: DataType = FramelessInternals.objectTypeFor[F]
 
-  def targetDataType: DataType = {
+  def catalystRepr: DataType = {
     val structFields = fields.value.value.map { field =>
       StructField(
         name = field.name,
-        dataType = field.encoder.targetDataType,
+        dataType = field.encoder.catalystRepr,
         nullable = field.encoder.nullable,
         metadata = Metadata.empty
       )
@@ -73,7 +73,7 @@ class RecordEncoder[F, G <: HList](
     }
 
     val valueExprs = fields.value.value.map { field =>
-      val fieldPath = Invoke(path, field.name, field.encoder.sourceDataType, Nil)
+      val fieldPath = Invoke(path, field.name, field.encoder.jvmRepr, Nil)
       field.encoder.toCatalyst(fieldPath)
     }
 
@@ -89,13 +89,13 @@ class RecordEncoder[F, G <: HList](
     val exprs = fields.value.value.map { field =>
       val fieldPath = path match {
         case BoundReference(ordinal, dataType, nullable) =>
-          GetColumnByOrdinal(field.ordinal, field.encoder.sourceDataType)
+          GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
         case other =>
           GetStructField(path, field.ordinal, Some(field.name))
       }
       field.encoder.fromCatalyst(fieldPath)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
+    NewInstance(classTag.runtimeClass, exprs, jvmRepr, propagateNull = true)
   }
 }

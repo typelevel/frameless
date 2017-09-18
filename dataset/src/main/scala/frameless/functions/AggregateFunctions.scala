@@ -79,7 +79,7 @@ trait AggregateFunctions {
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
   ): TypedAggregate[T, Out] = {
-    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
+    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
     val sumExpr = expr(untyped.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
@@ -95,7 +95,7 @@ trait AggregateFunctions {
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out]
   ): TypedAggregate[T, Out] = {
-    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].targetDataType)
+    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
     val sumExpr = expr(untyped.sumDistinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
