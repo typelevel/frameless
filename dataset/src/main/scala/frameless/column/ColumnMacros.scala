@@ -1,11 +1,12 @@
 package frameless.column
 
 import frameless.{TypedColumn, TypedEncoder, TypedExpressionEncoder}
+import shapeless.CaseClassMacros
 
 import scala.collection.immutable.Queue
 import scala.reflect.macros.whitebox
 
-class ColumnMacros(val c: whitebox.Context) {
+class ColumnMacros(val c: whitebox.Context) extends CaseClassMacros {
   import c.universe._
 
   // could be used to reintroduce apply('foo)
@@ -52,7 +53,8 @@ class ColumnMacros(val c: whitebox.Context) {
     def unapply(tree: Tree): Option[Queue[String]] = {
       tree match {
         case Ident(`name`) => Some(Queue.empty)
-        case Select(Self(strs), nested) => Some(strs enqueue nested.toString)
+        case s @ Select(Self(strs), nested) if s.symbol.isTerm && isCaseAccessorLike(s.symbol.asTerm) =>
+          Some(strs enqueue nested.toString)
         // $COVERAGE-OFF$ - Not sure if this case can ever come up and Encoder will still work
         case Apply(Self(strs), List()) => Some(strs)
         // $COVERAGE-ON$
