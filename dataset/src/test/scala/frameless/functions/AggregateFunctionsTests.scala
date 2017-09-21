@@ -282,7 +282,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check {
       forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
         val tds = TypedDataset.create(xs)
-        val tdsRes: Seq[(Int, Long)] = tds.groupBy(tds('_1)).agg(countDistinct(tds('_2))).collect().run()
+        val tdsRes: Seq[(Int, Long)] = tds.groupBy(tds(_._1)).agg(countDistinct(tds(_._2))).collect().run()
         tdsRes.toMap ?= xs.groupBy(_._1).mapValues(_.map(_._2).distinct.size.toLong).toSeq.toMap
       }
     }
@@ -300,7 +300,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       forAll(getLowCardinalityKVPairs) { xs: Vector[(Int, Int)] =>
         val tds = TypedDataset.create(xs)
         val tdsRes: Seq[(Int, Long, Long)] =
-          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2))).collect().run()
+          tds.groupBy(tds(_._1)).agg(countDistinct(tds(_._2)), approxCountDistinct(tds(_._2))).collect().run()
         tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2) }
       }
     }
@@ -310,7 +310,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         val tds = TypedDataset.create(xs)
         val allowedError = 0.1 // 10%
         val tdsRes: Seq[(Int, Long, Long)] =
-          tds.groupBy(tds('_1)).agg(countDistinct(tds('_2)), approxCountDistinct(tds('_2), allowedError)).collect().run()
+          tds.groupBy(tds(_._1)).agg(countDistinct(tds(_._2)), approxCountDistinct(tds(_._2), allowedError)).collect().run()
         tdsRes.forall { case (_, v1, v2) => approxEqual(v1, v2, allowedError) }
       }
     }
@@ -319,7 +319,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("collectList") {
     def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
       val tds = TypedDataset.create(xs)
-      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectList(tds('b))).collect().run()
+      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds(_.a)).agg(collectList(tds(_.b))).collect().run()
 
       tdsRes.toMap.mapValues(_.sorted) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toVector.sorted)
     }
@@ -333,7 +333,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("collectSet") {
     def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
       val tds = TypedDataset.create(xs)
-      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectSet(tds('b))).collect().run()
+      val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds(_.a)).agg(collectSet(tds(_.b))).collect().run()
 
       tdsRes.toMap.mapValues(_.toSet) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toSet)
     }
@@ -347,7 +347,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("lit") {
     def prop[A: TypedEncoder](xs: List[X1[A]], l: A): Prop = {
       val tds = TypedDataset.create(xs)
-      tds.select(tds('a), lit(l)).collect().run() ?= xs.map(x => (x.a, l))
+      tds.select(tds(_.a), lit(l)).collect().run() ?= xs.map(x => (x.a, l))
     }
 
     check(forAll(prop[Long] _))
@@ -379,7 +379,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     val tds = TypedDataset.create(xs)
     // Typed implementation of bivar stats function
-    val tdBivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b), tds('c))).deserialized.map(kv =>
+    val tdBivar = tds.groupBy(tds(_.a)).agg(framelessFun(tds(_.b), tds(_.c))).deserialized.map(kv =>
       (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
     ).collect().run()
 
@@ -416,7 +416,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
     val tds = TypedDataset.create(xs)
     //typed implementation of univariate stats function
-    val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b))).deserialized.map(kv =>
+    val tdUnivar = tds.groupBy(tds(_.a)).agg(framelessFun(tds(_.b))).deserialized.map(kv =>
       (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
     ).collect().run()
 

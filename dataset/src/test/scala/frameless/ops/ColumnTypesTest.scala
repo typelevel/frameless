@@ -10,7 +10,7 @@ class ColumnTypesTest extends TypedDatasetSuite {
   test("test summoning") {
     def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](data: Vector[X4[A, B, C, D]]): Prop = {
       val d: TypedDataset[X4[A, B, C, D]] = TypedDataset.create(data)
-      val hlist = d('a) :: d('b) :: d('c) :: d('d) :: HNil
+      val hlist = d(_.a) :: d(_.b) :: d(_.c) :: d(_.d) :: HNil
 
       type TC[N] = TypedColumn[X4[A,B,C,D], N]
 

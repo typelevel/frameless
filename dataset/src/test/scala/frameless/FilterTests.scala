@@ -67,7 +67,7 @@ class FilterTests extends TypedDatasetSuite {
   test("filter with values (not columns): addition") {
     check(forAll { (data: Vector[X1[Int]], const: Int) =>
       val ds = TypedDataset.create(data)
-      val res = ds.filter(ds('a) > const).collect().run().toVector
+      val res = ds.filter(ds(_.a) > const).collect().run().toVector
       res ?= data.filter(_.a > const)
     })
   }

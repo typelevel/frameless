@@ -11,7 +11,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     def prop[A: TypedEncoder](xs: List[X1[Vector[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
-      val framelessResults = tds.select(size(tds('a))).collect().run().toVector
+      val framelessResults = tds.select(size(tds(_.a))).collect().run().toVector
       val scalaResults = xs.map(x => x.a.size).toVector
 
       framelessResults ?= scalaResults
@@ -26,7 +26,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering](xs: List[X1[Vector[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
-      val framelessResults = tds.select(sortAscending(tds('a))).collect().run().toVector
+      val framelessResults = tds.select(sortAscending(tds(_.a))).collect().run().toVector
       val scalaResults = xs.map(x => x.a.sorted).toVector
 
       framelessResults ?= scalaResults
@@ -42,7 +42,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering](xs: List[X1[Vector[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
-      val framelessResults = tds.select(sortDescending(tds('a))).collect().run().toVector
+      val framelessResults = tds.select(sortDescending(tds(_.a))).collect().run().toVector
       val scalaResults = xs.map(x => x.a.sorted.reverse).toVector
 
       framelessResults ?= scalaResults
@@ -58,7 +58,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     def prop[A: TypedEncoder](xs: List[X1[Vector[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
-      val framelessResults = tds.select(explode(tds('a))).collect().run().toSet
+      val framelessResults = tds.select(explode(tds(_.a))).collect().run().toSet
       val scalaResults = xs.flatMap(_.a).toSet
 
       framelessResults ?= scalaResults

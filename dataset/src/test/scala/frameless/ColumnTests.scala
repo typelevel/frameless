@@ -41,6 +41,6 @@ class ColumnTests extends TypedDatasetSuite {
 
   test("toString") {
     val t = TypedDataset.create((1,2)::Nil)
-    t('_1).toString ?= t.dataset.col("_1").toString()
+    t(_._1).toString ?= t.dataset.col("_1").toString()
   }
 }
