@@ -33,7 +33,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
-    TypedEncoder[A].targetDataType match {
+    TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
         // if column is struct, we use all its fields
         val df = tuple1
@@ -408,7 +408,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
     // now we need to unpack `Tuple1[A]` to `A`
 
-    TypedEncoder[A].targetDataType match {
+    TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
         // if column is struct, we use all it's fields
         val df = tuple1
