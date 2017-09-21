@@ -166,38 +166,38 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.unpersist(blocking))
 
   // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4.0")
   def map[U: TypedEncoder](func: T => U): TypedDataset[U] =
     deserialized.map(func)
 
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4.0")
   def mapPartitions[U: TypedEncoder](func: Iterator[T] => Iterator[U]): TypedDataset[U] =
     deserialized.mapPartitions(func)
 
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4.0")
   def flatMap[U: TypedEncoder](func: T => TraversableOnce[U]): TypedDataset[U] =
     deserialized.flatMap(func)
 
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4.0")
   def filter(func: T => Boolean): TypedDataset[T] =
     deserialized.filter(func)
 
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4")
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.4.0")
   def reduceOption[F[_]: SparkDelay](func: (T, T) => T): F[Option[T]] =
     deserialized.reduceOption(func)
   // $COVERAGE-ON$
 
-  /** Methods on `TypedDataset[T]` that go thought a full serialization and
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
     * deserialization of `T`, and execute outside of the Catalyst runtime.
     *
-    * @example The correct way to do a projection on a a single columns is to
+    * @example The correct way to do a projection on a single column is to
     *          use the `select` method as follows:
     *
     *          {{{
     *           ds: TypedDataset[(String, String, String)] -> ds.select(ds('_2)).run()
     *          }}}
     *
-    *          Spark provides an alternative way to obtain the same resulting `DataSet`,
+    *          Spark provides an alternative way to obtain the same resulting `Dataset`,
     *          using the `map` method:
     *
     *          {{{
@@ -208,7 +208,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     *          and should be avoided as possible. Indeed, under the hood this `map` will
     *          deserialize the entire `Tuple3` to an full JVM object, call the apply
     *          method of the `_._2` closure on it, and serialize the resulting String back
-    *          to it's Catalyst representation.
+    *          to its Catalyst representation.
     */
   object deserialized {
     /** Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
