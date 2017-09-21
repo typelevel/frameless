@@ -2,13 +2,13 @@ package frameless
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{ToTraversable, Tupler}
+import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -22,7 +22,94 @@ import shapeless.ops.hlist.{ToTraversable, Tupler}
 class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
-  private implicit val sparkContext = dataset.sqlContext.sparkContext
+  private implicit val spark: SparkSession = dataset.sparkSession
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A](ca: TypedAggregate[T, A]): TypedDataset[A] = {
+    implicit val ea = ca.uencoder
+    val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
+
+    // now we need to unpack `Tuple1[A]` to `A`
+    TypedEncoder[A].catalystRepr match {
+      case StructType(_) =>
+        // if column is struct, we use all its fields
+        val df = tuple1
+          .dataset
+          .selectExpr("_1.*")
+          .as[A](TypedExpressionEncoder[A])
+
+        TypedDataset.create(df)
+      case other =>
+        // for primitive types `Tuple1[A]` has the same schema as `A`
+        TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
+    }
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B]
+  ): TypedDataset[(A, B)] = {
+    implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
+    aggMany(ca, cb)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C]
+  ): TypedDataset[(A, B, C)] = {
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
+    aggMany(ca, cb, cc)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  def agg[A, B, C, D](
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C],
+    cd: TypedAggregate[T, D]
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
+    aggMany(ca, cb, cc, cd)
+  }
+
+  /** Aggregates on the entire Dataset without groups.
+    *
+    * apache/spark
+    */
+  object aggMany extends ProductArgs {
+    def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
+      implicit
+      tc: AggregateTypes.Aux[T, U, Out0],
+      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      tupler: Tupler.Aux[Out0, Out],
+      encoder: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+
+      val cols = toTraversable(columns).map(c => new Column(c.expr))
+
+      val selected = dataset.toDF()
+        .agg(cols.head.alias("_1"), cols.tail: _*)
+        .as[Out](TypedExpressionEncoder[Out])
+        .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
+
+      TypedDataset.create[Out](selected)
+    }
+  }
 
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U]()(implicit as: As[T, U]): TypedDataset[U] = {
@@ -49,10 +136,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns the number of elements in the [[TypedDataset]].
     *
-    * Differs from `Dataset#count` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def count(): Job[Long] =
-    Job(dataset.count)
+  def count[F[_]]()(implicit F: SparkDelay[F]): F[Long] =
+    F.delay(dataset.count)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -99,20 +186,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
-    * Running this [[Job]] requires moving all the data into the application's driver process, and
+    * Running this operation requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#collect` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#collect` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def collect(): Job[Seq[T]] =
-    Job(dataset.collect())
+  def collect[F[_]]()(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.collect())
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[Job]].
+    * Differs from `Dataset#first` by wrapping it's result into an `Option` and an effect-suspending `F[_]`.
     */
-  def firstOption(): Job[Option[T]] =
-    Job {
+  def firstOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] =
+    F.delay {
       try {
         Option(dataset.first())
       } catch {
@@ -125,12 +212,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Running take requires moving data into the application's driver process, and doing so with
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#take` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#take` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def take(num: Int): Job[Seq[T]] =
-    Job(dataset.take(num))
+  def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.take(num))
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:
@@ -146,12 +233,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
     *   be truncated and all cells will be aligned right
     *
-    * Differs from `Dataset#show` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#show` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def show(numRows: Int = 20, truncate: Boolean = true): Job[Unit] =
-    Job(dataset.show(numRows, truncate))
+  def show[F[_]](numRows: Int = 20, truncate: Boolean = true)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.show(numRows, truncate))
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
@@ -169,31 +256,17 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreach` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreach` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreach(func: T => Unit): Job[Unit] =
-    Job(dataset.foreach(func))
+  def foreach[F[_]](func: T => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreach(func))
 
   /** Runs `func` on each partition of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreachPartition` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
-    Job(dataset.foreachPartition(func))
-
-  /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
-    * `func` must be commutative and associative or the result may be non-deterministic.
-    *
-    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
-    */
-  def reduceOption(func: (T, T) => T): Job[Option[T]] =
-    Job {
-      try {
-        Option(dataset.reduce(func))
-      } catch {
-        case e: UnsupportedOperationException => None
-      }
-    }
+  def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreachPartition(func))
 
   def groupBy[K1](
     c1: TypedColumn[T, K1]
@@ -213,6 +286,33 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
+  /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
+  private def resolveSelfJoin(join: Join): Join = {
+    val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
+    val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
+
+    if (!hasConflict) {
+      val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+      if (!selfJoinFix) throw new IllegalStateException("Frameless requires spark.sql.selfJoinAutoResolveAmbiguity to be true")
+
+      val cond = plan.condition.map(_.transform {
+        case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
+          if a.sameRef(b) =>
+          val leftDs = FramelessInternals.ofRows(spark, plan.left)
+          val rightDs = FramelessInternals.ofRows(spark, plan.right)
+
+          catalyst.expressions.EqualTo(
+            FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
+            FramelessInternals.resolveExpr(rightDs, Seq(b.name))
+          )
+      })
+
+      plan.copy(condition = cond)
+    } else {
+      join
+    }
+  }
+
   def join[A, B](
     right: TypedDataset[A],
     leftCol: TypedColumn[T, B],
@@ -224,7 +324,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
     val condition = EqualTo(leftCol.expr, rightCol.expr)
 
-    val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, Inner, Some(condition)))
+    val join = resolveSelfJoin(Join(leftPlan, rightPlan, Inner, Some(condition)))
+    val joined = FramelessInternals.executePlan(dataset, join)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
 
@@ -247,7 +348,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val rightPlan = FramelessInternals.logicalPlan(right.dataset)
     val condition = EqualTo(leftCol.expr, rightCol.expr)
 
-    val joined = FramelessInternals.executePlan(dataset, Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
+    val join = resolveSelfJoin(Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
+    val joined = FramelessInternals.executePlan(dataset, join)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
 
@@ -295,14 +397,16 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder](
+  def select[A](
     ca: TypedColumn[T, A]
   ): TypedDataset[A] = {
+    implicit val ea = ca.uencoder
+
     val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
 
-    TypedEncoder[A].targetDataType match {
+    TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
         // if column is struct, we use all it's fields
         val df = tuple1
@@ -322,67 +426,88 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder](
+  def select[A, B](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B]
-  ): TypedDataset[(A, B)] = selectMany(ca, cb)
+  ): TypedDataset[(A, B)] = {
+    implicit val (ea,eb) = (ca.uencoder, cb.uencoder)
+
+    selectMany(ca, cb)
+  }
 
   /** Type-safe projection from type T to Tuple3[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
+  def select[A, B, C](
     ca: TypedColumn[T, A],
     cb: TypedColumn[T, B],
     cc: TypedColumn[T, C]
-  ): TypedDataset[(A, B, C)] = selectMany(ca, cb, cc)
+  ): TypedDataset[(A, B, C)] = {
+    implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
+
+    selectMany(ca, cb, cc)
+  }
 
   /** Type-safe projection from type T to Tuple4[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
+  def select[A, B, C, D](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D]
-  ): TypedDataset[(A, B, C, D)] = selectMany(ca, cb, cc, cd)
+  ): TypedDataset[(A, B, C, D)] = {
+    implicit val (ea, eb, ec, ed) = (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
+    selectMany(ca, cb, cc, cd)
+  }
 
   /** Type-safe projection from type T to Tuple5[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder](
+  def select[A, B, C, D, E](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E]
-  ): TypedDataset[(A, B, C, D, E)] = selectMany(ca, cb, cc, cd, ce)
+  ): TypedDataset[(A, B, C, D, E)] = {
+    implicit val (ea, eb, ec, ed, ee) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder)
+
+    selectMany(ca, cb, cc, cd, ce)
+  }
 
   /** Type-safe projection from type T to Tuple6[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
-  def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder](
+  def select[A, B, C, D, E, F](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
      cd: TypedColumn[T, D],
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F]
-  ): TypedDataset[(A, B, C, D, E, F)] = selectMany(ca, cb, cc, cd, ce, cf)
+  ): TypedDataset[(A, B, C, D, E, F)] = {
+    implicit val (ea, eb, ec, ed, ee, ef) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder)
+
+    selectMany(ca, cb, cc, cd, ce, cf)
+  }
 
   /** Type-safe projection from type T to Tuple7[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder](
+ def select[A, B, C, D, E, F, G](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -390,14 +515,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ce: TypedColumn[T, E],
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G]
-  ): TypedDataset[(A, B, C, D, E, F, G)] = selectMany(ca, cb, cc, cd, ce, cf, cg)
+  ): TypedDataset[(A, B, C, D, E, F, G)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg)
+ }
 
   /** Type-safe projection from type T to Tuple8[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -406,14 +536,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cf: TypedColumn[T, F],
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H]
-  ): TypedDataset[(A, B, C, D, E, F, G, H)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+  ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch)
+ }
 
   /** Type-safe projection from type T to Tuple9[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -423,14 +558,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      cg: TypedColumn[T, G],
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder)
+
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci)
+ }
 
   /** Type-safe projection from type T to Tuple10[A,B,...]
     * {{{
     *   d.select( d('a), d('a)+d('b), ... )
     * }}}
     */
- def select[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder, E: TypedEncoder, F: TypedEncoder, G: TypedEncoder, H: TypedEncoder, I: TypedEncoder, J: TypedEncoder](
+ def select[A, B, C, D, E, F, G, H, I, J](
      ca: TypedColumn[T, A],
      cb: TypedColumn[T, B],
      cc: TypedColumn[T, C],
@@ -441,7 +581,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
      ch: TypedColumn[T, H],
      ci: TypedColumn[T, I],
      cj: TypedColumn[T, J]
-  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
+   implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej) =
+     (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder)
+   selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
+ }
 
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)(
@@ -457,6 +601,28 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[Out](selected)
     }
+  }
+
+  /** Prepends a new column to the Dataset.
+    *
+    * {{{
+    *   case class X(i: Int, j: Int)
+    *   val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    *   val fNew: TypedDataset[(Int,Int,Boolean)] = f.withColumn(f('j) === 10)
+    * }}}
+    */
+  def withColumn[A: TypedEncoder, H <: HList, FH <: HList, Out](ca: TypedColumn[T, A])(
+    implicit
+    genOfA: Generic.Aux[T, H],
+    init: Prepend.Aux[H, A :: HNil, FH],
+    tupularFormForFH: Tupler.Aux[FH, Out],
+    encoder: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    // Giving a random name to the new column (the proper name will be given by the Tuple-based encoder)
+    val selected = dataset.toDF().withColumn("I1X3T9CU1OP0128JYIO76TYZZA3AXHQ18RMI", ca.untyped)
+      .as[Out](TypedExpressionEncoder[Out])
+
+    TypedDataset.create[Out](selected)
   }
 }
 

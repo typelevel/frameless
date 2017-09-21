@@ -11,6 +11,7 @@ object CatalystOrdered {
   implicit object LongOrdered extends CatalystOrdered[Long]
   implicit object FloatOrdered extends CatalystOrdered[Float]
   implicit object DoubleOrdered extends CatalystOrdered[Double]
+  implicit object BigDecimalOrdered extends CatalystOrdered[BigDecimal]
   implicit object SQLDateOrdered extends CatalystOrdered[SQLDate]
   implicit object SQLTimestampOrdered extends CatalystOrdered[SQLTimestamp]
   implicit object StringOrdered extends CatalystOrdered[String]

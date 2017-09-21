@@ -13,9 +13,15 @@ class ColumnTests extends TypedDatasetSuite {
       val A = dataset.col('a)
       val B = dataset.col('b)
 
-      val dataset2 = dataset.selectMany(A < B, A <= B, A > B, A >= B).collect().run().toVector
+      val dataset2 = dataset.selectMany(
+        A < B, A < b,   // One test uses columns, other uses literals
+        A <= B, A <= b,
+        A > B, A > b,
+        A >= B, A >= b
+      ).collect().run().toVector
 
-      dataset2 ?= Vector((a < b, a <= b, a > b, a >= b))
+      dataset2 ?= Vector((a < b, a < b, a <= b, a <= b, a > b, a > b, a >= b, a >= b))
+
     }
 
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
@@ -31,5 +37,10 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
+  }
+
+  test("toString") {
+    val t = TypedDataset.create((1,2)::Nil)
+    t('_1).toString ?= t.dataset.col("_1").toString()
   }
 }

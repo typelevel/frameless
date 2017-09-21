@@ -58,4 +58,22 @@ class JoinTests extends TypedDatasetSuite {
 
     check(forAll(prop[Int, Long, String] _))
   }
+
+  test("self join") {
+    def prop[
+      A : TypedEncoder : Ordering,
+      B : TypedEncoder : Ordering
+    ](data: List[X2[A, B]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      val count = ds.dataset.join(ds.dataset, ds.dataset.col("a") === ds.dataset.col("a")).count()
+
+      val countDs = ds.join(ds, ds.col('a), ds.col('a))
+        .count().run()
+
+      count ?= countDs
+    }
+
+    check(prop[Int, Int] _)
+  }
 }

@@ -12,7 +12,7 @@ System.setProperty("spark.cleaner.ttl", "300")
 
 Spark uses Reflection to derive it's `Encoder`s, which is why they can fail at run time. For example, because Spark does not supports `java.util.Date`, the following leads to an error:
 
-```tut
+```tut:silent
 import org.apache.spark.sql.Dataset
 import spark.implicits._
 
@@ -27,17 +27,18 @@ As shown by the stack trace, this runtime error goes thought [ScalaReflection](h
 
 Frameless introduces a new type class called `TypeEncoder` to solve these issues. `TypeEncoder`s are passed around as implicit parameters to every frameless method to ensure that the data being manipulated is `Encoder`. It uses a standard implicit resolution coupled with shapeless type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the code `java.util.Date` example won't compile with frameless:
 
-```tut
+```tut:silent
 import frameless.TypedDataset
+import frameless.syntax._
 ```
 
-```tut:fail
+```tut:book:fail
 val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
 ```
 
-Type class derivation takes case or recursively constructing (and proving the existence) `TypeEncoder`s for case classes. The following works as expected:
+Type class derivation takes care of recursively constructing (and proving the existence of) `TypeEncoder`s for case classes. The following works as expected:
 
-```tut
+```tut:book
 case class Bar(d: Double, s: String)
 case class Foo(i: Int, b: Bar)
 val ds: TypedDataset[Foo] = TypedDataset.create(Seq(Foo(1, Bar(1.1, "s"))))
@@ -46,9 +47,12 @@ ds.collect()
 
 But any non-encodable in the case class hierarchy will be detected at compile time:
 
-```tut:fail
-case class BarDate(d: Double, s: String, d: java.util.Date)
+```tut:silent
+case class BarDate(d: Double, s: String, t: java.util.Date)
 case class FooDate(i: Int, b: BarDate)
+```
+
+```tut:book:fail
 val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, "s", new java.util.Date))))
 ```
 

@@ -2,7 +2,7 @@
 
 set -eux
 
-sbt tut
+sbt copyReadme tut
 
 gitbook="node_modules/gitbook-cli/bin/gitbook.js"
 
@@ -12,5 +12,7 @@ if ! test -e $gitbook; then
 fi
 
 $gitbook build docs/target/tut docs/book
+
+mv docs/book/* .
 
 exit 0

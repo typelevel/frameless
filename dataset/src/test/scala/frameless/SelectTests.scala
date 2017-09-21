@@ -4,7 +4,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 import frameless.implicits.widen._
-
 import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
@@ -27,6 +26,7 @@ class SelectTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int, Int, Int] _))
     check(forAll(prop[X2[Int, Int], Int, Int, Int] _))
     check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[UdtEncodedClass, Int, Int, Int] _))
   }
 
   test("select('a, 'b) FROM abcd") {
@@ -276,9 +276,7 @@ class SelectTests extends TypedDatasetSuite {
       cb: ClassTag[B]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val AB = dataset.colMany('a, 'b)
-
-      val dataset2 = dataset.select(AB).collect().run().toVector
+      val dataset2 = dataset.select(dataset(_.a.b)).collect().run().toVector
       val data2 = data.map { case X2(X2(_, b), _) => b }
 
       dataset2 ?= data2
@@ -378,7 +376,7 @@ class SelectTests extends TypedDatasetSuite {
     val t: TypedDataset[(Int, Int)] = e.select(e.col('i) * 2, e.col('i))
     assert(t.select(t.col('_1)).collect().run().toList === List(2))
     // Issue #54
-    val fooT = t.select(t.col('_1)).map(x => Tuple1.apply(x)).as[Foo]
+    val fooT = t.select(t.col('_1)).deserialized.map(x => Tuple1.apply(x)).as[Foo]
     assert(fooT.select(fooT(_.i)).collect().run().toList === List(2))
   }
 
@@ -391,5 +389,10 @@ class SelectTests extends TypedDatasetSuite {
   test("unary - on strings should not type check") {
     val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
     illTyped("""e.select( -e(_._2) )""")
+  }
+
+  test("select with aggregation operations is not supported") {
+    val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
+    illTyped("""e.select(frameless.functions.aggregate.sum(e(_._1)))""")
   }
 }

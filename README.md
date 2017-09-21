@@ -2,15 +2,15 @@
 
 [![Travis Badge](https://travis-ci.org/typelevel/frameless.svg?branch=master)](https://travis-ci.org/typelevel/frameless)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
-[![Maven Badge](https://img.shields.io/maven-central/v/io.github.adelbertc/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.adelbertc/frameless-dataset_2.11)
-[![Gitter Badge](https://badges.gitter.im/adelbertc/frameless.svg)](https://gitter.im/adelbertc/frameless?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.11)
+[![Gitter Badge](https://badges.gitter.im/typelevel/frameless.svg)](https://gitter.im/typelevel/frameless)
 
 Frameless is a proof-of-concept library for working with [Spark](http://spark.apache.org/) using more expressive types.
 It consists of the following modules:
 
 * `dataset` for more strongly typed `Dataset`s  (supports Spark 2.0.x)
-* `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 0.7.x)
-
+* `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 0.9.x)
+* `ml` for a more strongly typed use of Spark ML based on `dataset`
 
 The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
@@ -18,16 +18,18 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 
 ## Documentation
 
-* [TypedDataset: Feature Overview](http://olivierblanvillain.github.io/frameless/GettingStarted.html)
-* [Comparing TypedDatasets with Spark's Datasets](http://olivierblanvillain.github.io/frameless/TypedDatasetVsSparkDataset.html)
-* [Typed Encoders in Frameless](http://olivierblanvillain.github.io/frameless/TypedEncoder.html)
-* [Injection: Creating Custom Encoders](http://olivierblanvillain.github.io/frameless/Injection.html)
-* [Using Cats with RDDs](http://olivierblanvillain.github.io/frameless/Cats.html)
-* [Proof of Concept: TypedDataFrame](http://olivierblanvillain.github.io/frameless/TypedDataFrame.html)
+* [TypedDataset: Feature Overview](http://typelevel.org/frameless/FeatureOverview.html)
+* [Comparing TypedDatasets with Spark's Datasets](http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html)
+* [Typed Encoders in Frameless](http://typelevel.org/frameless/TypedEncoder.html)
+* [Injection: Creating Custom Encoders](http://typelevel.org/frameless/Injection.html)
+* [Job\[A\]](http://typelevel.org/frameless/Job.html)
+* [Using Cats with RDDs](http://typelevel.org/frameless/Cats.html)
+* [TypedDataset support for Spark ML](http://typelevel.org/frameless/TypedML.html)
+* [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Why?
 
-Benefits of using `TypedDataset` compared to vanilla `Dataset`:
+Benefits of using `TypedDataset` compared to the standard Spark `Dataset` API:
 
 * Typesafe columns referencing and expressions
 * Customizable, typesafe encoders
@@ -45,11 +47,11 @@ To use Frameless in your project add the following in your `build.sbt` file as n
 ```scala
 resolvers += Resolver.sonatypeRepo("releases")
 
-val framelessVersion = "0.2.0"
+val framelessVersion = "0.3.0"
 
 libraryDependencies ++= List(
-  "io.github.adelbertc" %% "frameless-cats"      % framelessVersion,
-  "io.github.adelbertc" %% "frameless-dataset"   % framelessVersion
+  "org.typelevel" %% "frameless-cats"      % framelessVersion,
+  "org.typelevel" %% "frameless-dataset"   % framelessVersion
 )
 ```
 
@@ -66,13 +68,14 @@ g8 imarios/frameless.g8
 sbt new imarios/frameless.g8
 ```
 Typing `sbt console` inside your project will bring up a shell with Frameless
-and all its dependencies loaded (including Spark). 
+and all its dependencies loaded (including Spark).
 
 ## Development
 We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
 (people who can merge pull requests) are:
 
 * [adelbertc](https://github.com/adelbertc)
+* [imarios](https://github.com/imarios)
 * [jeremyrsmith](https://github.com/jeremyrsmith)
 * [kanterov](https://github.com/kanterov)
 * [non](https://github.com/non)

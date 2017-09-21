@@ -1,11 +1,13 @@
-val sparkVersion = "2.0.2"
-val catsv = "0.9.0"
-val scalatest = "3.0.1"
+val sparkVersion = "2.2.0"
+val catsCoreVersion = "1.0.0-MF"
+val catsEffectVersion = "0.4"
+val catsMtlVersion = "0.0.2"
+val scalatest = "3.0.3"
 val shapeless = "2.3.2"
-val scalacheck = "1.13.4"
+val scalacheck = "1.13.5"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(core, cats, dataset, docs)
+  .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
 
@@ -20,9 +22,17 @@ lazy val cats = project
   .settings(framelessSettings: _*)
   .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
+  .settings(
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    scalacOptions += "-Ypartial-unification"
+  )
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats"       % catsv,
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided"))
+    "org.typelevel"    %% "cats-core"     % catsCoreVersion,
+    "org.typelevel"    %% "cats-effect"   % catsEffectVersion,
+    "org.typelevel"    %% "cats-mtl-core" % catsMtlVersion,
+    "org.apache.spark" %% "spark-core"    % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"     % sparkVersion % "provided"))
+  .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
@@ -36,6 +46,22 @@ lazy val dataset = project
   ))
   .dependsOn(core % "test->test;compile->compile")
 
+lazy val ml = project
+  .settings(name := "frameless-ml")
+  .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
+  .settings(framelessTypedDatasetREPL: _*)
+  .settings(publishSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion % "provided"
+  ))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    dataset % "test->test;compile->compile"
+  )
+
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
@@ -43,13 +69,18 @@ lazy val docs = project
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion
+    "org.apache.spark" %% "spark-sql"  % sparkVersion,
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
-  .dependsOn(dataset, cats)
+  .settings(
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    scalacOptions += "-Ypartial-unification"
+  )
+  .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
-  organization := "io.github.adelbertc",
-  scalaVersion := "2.11.8",
+  organization := "org.typelevel",
+  scalaVersion := "2.11.11",
   scalacOptions ++= commonScalacOptions,
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
@@ -57,7 +88,8 @@ lazy val framelessSettings = Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  fork in Test := false,
+  javaOptions in Test ++= Seq("-Xmx1G"),
+  fork in Test := true,
   parallelExecution in Test := false
 )
 
@@ -89,7 +121,7 @@ lazy val warnUnusedImport = Seq(
     }
   },
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
-  scalacOptions in (Test, console) <<= (scalacOptions in (Compile, console))
+  scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 )
 
 lazy val framelessTypedDatasetREPL = Seq(
@@ -131,16 +163,41 @@ lazy val publishSettings = Seq(
   publishArtifact in Test := false,
   pomIncludeRepository := Function.const(false),
   pomExtra in Global := {
-    <url>https://github.com/adelbertc/frameless</url>
+    <url>https://github.com/typelevel/frameless</url>
     <scm>
-      <url>git@github.com:adelbertc/frameless.git</url>
-      <connection>scm:git:git@github.com:adelbertc/frameless.git</connection>
+      <url>git@github.com:typelevel/frameless.git</url>
+      <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
     </scm>
     <developers>
+      <developer>
+        <id>OlivierBlanvillain</id>
+        <name>Olivier Blanvillain</name>
+        <url>https://github.com/OlivierBlanvillain/</url>
+      </developer>
       <developer>
         <id>adelbertc</id>
         <name>Adelbert Chang</name>
         <url>https://github.com/adelbertc/</url>
+      </developer>
+      <developer>
+        <id>imarios</id>
+        <name>Marios Iliofotou</name>
+        <url>https://github.com/imarios/</url>
+      </developer>
+      <developer>
+        <id>kanterov</id>
+        <name>Gleb Kanterov</name>
+        <url>https://github.com/kanterov/</url>
+      </developer>
+      <developer>
+        <id>non</id>
+        <name>Erik Osheim</name>
+        <url>https://github.com/non/</url>
+      </developer>
+      <developer>
+        <id>jeremyrsmith</id>
+        <name>Jeremy Smith</name>
+        <url>https://github.com/jeremyrsmith/</url>
       </developer>
     </developers>
   }
@@ -159,3 +216,11 @@ lazy val credentialSettings = Seq(
     password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
+
+copyReadme := copyReadmeImpl.value
+lazy val copyReadme = taskKey[Unit]("copy for website generation")
+lazy val copyReadmeImpl = Def.task {
+  val from = baseDirectory.value / "README.md"
+  val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
+  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true)
+}

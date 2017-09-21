@@ -114,6 +114,7 @@ with a fully optimized query plan.
 
 ```tut:book
 import frameless.TypedDataset
+import frameless.syntax._
 val fds = TypedDataset.create(ds)
 
 fds.filter( fds(_.i) === 10 ).select( fds(_.i) ).show().run()
@@ -131,8 +132,40 @@ And the compiler is our friend.
 fds.filter( fds(_.i) === 10 ).select( fds(_.x) )
 ```
 
+## Differences in Encoders
+
+Encoders in Spark's `Datasets` are partially type-safe. If you try to create a `Dataset` using  a type that is not 
+ a Scala `Product` then you get a compilation error:
+
+```tut:book
+class Bar(i: Int)
+```
+
+`Bar` is neither a case class nor a `Product`, so the following correctly gives a compilation error in Spark:
+
+```tut:fail
+spark.createDataset(Seq(new Bar(1)))
+```
+
+However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
+For example, using the following case class leads to a runtime failure:
+
+```tut:book
+case class MyDate(jday: java.util.Date)
+```
+
+```tut:book:fail
+val myDateDs = spark.createDataset(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+```
+
+In comparison, a TypedDataset will notify about the encoding problem at compile time: 
+
+```tut:book:fail
+TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+```
+
+
 ```tut:invisible
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
-
 spark.stop()
 ```

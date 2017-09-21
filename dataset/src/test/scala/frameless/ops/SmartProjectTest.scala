@@ -12,7 +12,8 @@ case class InvalidFooProjectionType(i: Int, x: Boolean)
 case class InvalidFooProjectionName(i: Int, xerr: String)
 
 class SmartProjectTest extends TypedDatasetSuite {
-  val dataset = TypedDataset.create(Foo(1, 2, "hi") :: Foo(2, 3, "there") :: Nil)
+  // Lazy needed to prevent initialization anterior to the `beforeAll` hook
+  lazy val dataset = TypedDataset.create(Foo(1, 2, "hi") :: Foo(2, 3, "there") :: Nil)
 
   test("project Foo to Bar") {
     assert(dataset.project[Bar].count().run() === 2)

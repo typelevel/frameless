@@ -48,10 +48,18 @@ class CollectTests extends TypedDatasetSuite {
 
     // TODO this doesn't work, and never worked...
     // check(forAll(prop[X1[Option[X1[Option[Int]]]]] _))
+
+    check(forAll(prop[UdtEncodedClass] _))
+    check(forAll(prop[Option[UdtEncodedClass]] _))
+    check(forAll(prop[X1[UdtEncodedClass]] _))
+    check(forAll(prop[X2[Int, UdtEncodedClass]] _))
+    check(forAll(prop[(Long, UdtEncodedClass)] _))
   }
 }
 
 object CollectTests {
+  import frameless.syntax._
+
   def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SQLContext): Prop =
     TypedDataset.create(data).collect().run().toVector ?= data
 }
