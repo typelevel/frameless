@@ -8,21 +8,6 @@ import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 
 class AggregateFunctionsTests extends TypedDatasetSuite {
-
-  def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
-    val da = numeric.toDouble(a)
-    val db = numeric.toDouble(b)
-    val epsilon = 1E-6
-    // Spark has a weird behaviour concerning expressions that should return Inf
-    // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
-    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
-    else if (
-      (da - db).abs < epsilon ||
-      (da - db).abs < da.abs / 100)
-        proved
-    else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
-  }
-
   def sparkSchema[A: TypedEncoder, U](f: TypedColumn[X1[A], A] => TypedAggregate[X1[A], U]): Prop = {
     val df = TypedDataset.create[X1[A]](Nil)
     val col = f(df.col('a))

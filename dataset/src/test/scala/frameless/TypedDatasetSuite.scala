@@ -5,6 +5,8 @@ import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.scalatest.prop.Checkers
+import org.scalacheck.Prop
+import org.scalacheck.Prop._
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
@@ -40,5 +42,20 @@ class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll wi
   // Limit size of generated collections and number of checks because Travis
   implicit override val generatorDrivenConfig =
     PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
+
   implicit val sparkDelay: SparkDelay[Job] = Job.framelessSparkDelayForJob
+
+  def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
+    val da = numeric.toDouble(a)
+    val db = numeric.toDouble(b)
+    val epsilon = 1E-6
+    // Spark has a weird behaviour concerning expressions that should return Inf
+    // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
+    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
+    else if (
+      (da - db).abs < epsilon ||
+      (da - db).abs < da.abs / 100)
+        proved
+    else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
+  }
 }
