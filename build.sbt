@@ -17,6 +17,7 @@ lazy val core = project
   .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
 
+
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
