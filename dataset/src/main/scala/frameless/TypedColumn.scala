@@ -248,6 +248,141 @@ sealed class TypedColumn[T, U](
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseAND(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseAND(u).typed
+
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseAND(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseAND(u.untyped).typed
+
+  /**
+    * Bitwise AND this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Int] & -1)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def &(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseAND(u)
+
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) & (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def &(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseAND(u)
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseOR(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseOR(u).typed
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseOR(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseOR(u.untyped).typed
+
+  /**
+    * Bitwise OR this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Long] | 1L)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def |(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseOR(u)
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) | (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def |(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseOR(u)
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseXOR(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseXOR(u).typed
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseXOR(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseXOR(u.untyped).typed
+
+  /**
+    * Bitwise XOR this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Long] ^ 1L)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def ^(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseXOR(u)
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) ^ (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def ^(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseXOR(u)
+
   /** Casts the column to a different type.
     * {{{
     *   df.select(df('a).cast[Int])
