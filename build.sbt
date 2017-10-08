@@ -143,7 +143,7 @@ lazy val framelessTypedDatasetREPL = Seq(
       |spark.sparkContext.setLogLevel("WARN")
       |
       |import frameless.TypedDataset
-      |implicit val sqlContenxt = spark.sqlContext
+      |implicit val sqlContext = spark.sqlContext
     """.stripMargin,
   cleanupCommands in console :=
     """

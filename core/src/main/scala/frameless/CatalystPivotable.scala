@@ -6,10 +6,11 @@ import scala.annotation.implicitNotFound
 trait CatalystPivotable[A]
 
 object CatalystPivotable {
-  def apply[A](implicit p: CatalystPivotable[A]): CatalystPivotable[A] = p
+  private[this] val theInstance = new CatalystPivotable[Any] {}
+  private[this] def of[A]: CatalystPivotable[A] = theInstance.asInstanceOf[CatalystPivotable[A]]
 
-  implicit object IntPivotable extends CatalystPivotable[Int]
-  implicit object LongPivotable extends CatalystPivotable[Long]
-  implicit object BooleanPivotable extends CatalystPivotable[Boolean]
-  implicit object StringPivotable extends CatalystPivotable[String]
+  implicit val framelessIntPivotable    : CatalystPivotable[Int]     = of[Int]
+  implicit val framelessLongPivotable   : CatalystPivotable[Long]    = of[Long]
+  implicit val framelessBooleanPivotable: CatalystPivotable[Boolean] = of[Boolean]
+  implicit val framelessStringPivotable : CatalystPivotable[String]  = of[String]
 }

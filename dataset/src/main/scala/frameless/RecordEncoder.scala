@@ -21,11 +21,15 @@ trait RecordEncoderFields[T <: HList] extends Serializable {
 }
 
 object RecordEncoderFields {
-  implicit val deriveNil: RecordEncoderFields[HNil] = new RecordEncoderFields[HNil] {
-    def value: List[RecordEncoderField] = Nil
+  implicit def deriveRecordLast[K <: Symbol, H](
+    implicit
+    key: Witness.Aux[K],
+    head: TypedEncoder[H]
+  ): RecordEncoderFields[FieldType[K, H] :: HNil] = new RecordEncoderFields[FieldType[K, H] :: HNil] {
+    def value: List[RecordEncoderField] = RecordEncoderField(0, key.value.name, head) :: Nil
   }
 
-  implicit def deriveRecord[K <: Symbol, H, T <: HList](
+  implicit def deriveRecordCons[K <: Symbol, H, T <: HList](
     implicit
     key: Witness.Aux[K],
     head: TypedEncoder[H],
@@ -48,13 +52,13 @@ class RecordEncoder[F, G <: HList](
 ) extends TypedEncoder[F] {
   def nullable: Boolean = false
 
-  def sourceDataType: DataType = FramelessInternals.objectTypeFor[F]
+  def jvmRepr: DataType = FramelessInternals.objectTypeFor[F]
 
-  def targetDataType: DataType = {
+  def catalystRepr: DataType = {
     val structFields = fields.value.value.map { field =>
       StructField(
         name = field.name,
-        dataType = field.encoder.targetDataType,
+        dataType = field.encoder.catalystRepr,
         nullable = field.encoder.nullable,
         metadata = Metadata.empty
       )
@@ -63,14 +67,14 @@ class RecordEncoder[F, G <: HList](
     StructType(structFields)
   }
 
-  def extractorFor(path: Expression): Expression = {
+  def toCatalyst(path: Expression): Expression = {
     val nameExprs = fields.value.value.map { field =>
       Literal(field.name)
     }
 
     val valueExprs = fields.value.value.map { field =>
-      val fieldPath = Invoke(path, field.name, field.encoder.sourceDataType, Nil)
-      field.encoder.extractorFor(fieldPath)
+      val fieldPath = Invoke(path, field.name, field.encoder.jvmRepr, Nil)
+      field.encoder.toCatalyst(fieldPath)
     }
 
     // the way exprs are encoded in CreateNamedStruct
@@ -81,17 +85,17 @@ class RecordEncoder[F, G <: HList](
     CreateNamedStruct(exprs)
   }
 
-  def constructorFor(path: Expression): Expression = {
+  def fromCatalyst(path: Expression): Expression = {
     val exprs = fields.value.value.map { field =>
       val fieldPath = path match {
         case BoundReference(ordinal, dataType, nullable) =>
-          GetColumnByOrdinal(field.ordinal, field.encoder.sourceDataType)
+          GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
         case other =>
           GetStructField(path, field.ordinal, Some(field.name))
       }
-      field.encoder.constructorFor(fieldPath)
+      field.encoder.fromCatalyst(fieldPath)
     }
 
-    NewInstance(classTag.runtimeClass, exprs, sourceDataType, propagateNull = true)
+    NewInstance(classTag.runtimeClass, exprs, jvmRepr, propagateNull = true)
   }
 }

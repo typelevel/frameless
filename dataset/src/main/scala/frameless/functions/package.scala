@@ -9,8 +9,8 @@ package object functions extends Udf with UnaryFunctions {
   def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = {
     val encoder = TypedEncoder[A]
 
-    if (ScalaReflection.isNativeType(encoder.sourceDataType) && encoder.targetDataType == encoder.sourceDataType) {
-      val expr = Literal(value, encoder.targetDataType)
+    if (ScalaReflection.isNativeType(encoder.jvmRepr) && encoder.catalystRepr == encoder.jvmRepr) {
+      val expr = Literal(value, encoder.catalystRepr)
       new TypedColumn(expr)
     } else {
       val expr = FramelessLit(value, encoder)
