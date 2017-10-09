@@ -6,6 +6,7 @@ import org.scalacheck.Prop._
 import scala.collection.SeqLike
 
 import scala.math.Ordering
+import scala.reflect.ClassTag
 
 class UnaryFunctionsTest extends TypedDatasetSuite {
   test("size tests") {
@@ -27,7 +28,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
   }
 
   test("size on array test") {
-    def prop[A: TypedEncoder](xs: List[X1[Array[A]]]): Prop = {
+    def prop[A: TypedEncoder: ClassTag](xs: List[X1[Array[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.select(size(tds('a))).collect().run().toVector
@@ -82,7 +83,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
   }
 
   test("sort on array test: ascending order") {
-    def prop[A: TypedEncoder : Ordering](xs: List[X1[Array[A]]]): Prop = {
+    def prop[A: TypedEncoder : Ordering : ClassTag](xs: List[X1[Array[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.select(sortAscending(tds('a))).collect().run().toVector
@@ -103,7 +104,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
   }
 
   test("sort on array test: descending order") {
-    def prop[A: TypedEncoder : Ordering](xs: List[X1[Array[A]]]): Prop = {
+    def prop[A: TypedEncoder : Ordering : ClassTag](xs: List[X1[Array[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.select(sortDescending(tds('a))).collect().run().toVector
@@ -144,7 +145,7 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
   }
 
   test("explode on arrays") {
-    def prop[A: TypedEncoder](xs: List[X1[Array[A]]]): Prop = {
+    def prop[A: TypedEncoder: ClassTag](xs: List[X1[Array[A]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.select(explode(tds('a))).collect().run().toSet
