@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Job[A] · GitBook</title>
+        <title>Using Spark ML with TypedDataset · GitBook</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="description" content="">
         <meta name="generator" content="GitBook 3.2.2">
@@ -57,10 +57,10 @@
     <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
 
     
-    <link rel="next" href="Cats.html" />
+    <link rel="next" href="TypedDataFrame.html" />
     
     
-    <link rel="prev" href="Injection.html" />
+    <link rel="prev" href="Cats.html" />
     
 
     </head>
@@ -154,7 +154,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="1.6" data-path="Job.html">
+        <li class="chapter " data-level="1.6" data-path="Job.html">
             
                 <a href="Job.html">
             
@@ -180,7 +180,7 @@
             
         </li>
     
-        <li class="chapter " data-level="1.8" data-path="TypedML.html">
+        <li class="chapter active" data-level="1.8" data-path="TypedML.html">
             
                 <a href="TypedML.html">
             
@@ -236,7 +236,7 @@
     <!-- Title -->
     <h1>
         <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Job[A]</a>
+        <a href="." >Using Spark ML with TypedDataset</a>
     </h1>
 </div>
 
@@ -251,69 +251,39 @@
     
                                 <section class="normal markdown-section">
                                 
-                                <h1 id="joba">Job[A]</h1>
-<p>All operations on <code>TypedDataset</code> are lazy. An operation either returns a new
-transformed <code>TypedDataset</code> or an <code>F[A]</code>, where <code>F[_]</code> is a type constructor
-with an instance of the <code>SparkDelay</code> typeclass and <code>A</code> is the result of running a
-non-lazy computation in Spark. </p>
-<p>A default such type constructor called <code>Job</code> is provided by Frameless. </p>
-<p><code>Job</code> serves several functions:</p>
-<ul>
-<li>Makes all operations on a <code>TypedDataset</code> lazy, which makes them more predictable compared to having
-few operations being lazy and other being strict</li>
-<li>Allows the programmer to make expensive blocking operations explicit</li>
-<li>Allows for Spark jobs to be lazily sequenced using monadic composition via for-comprehension</li>
-<li>Provides an obvious place where you can annotate/name your Spark jobs to make it easier
-to track different parts of your application in the Spark UI</li>
-</ul>
-<p>The toy example showcases the use of for-comprehension to explicitly sequences Spark Jobs.
-First we calculate the size of the <code>TypedDataset</code> and then we collect to the driver
-exactly 20% of its elements:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.syntax._
-<span class="hljs-comment">// import frameless.syntax._</span>
+                                <h1 id="typeddataset-support-for-spark-ml">TypedDataset support for Spark ML</h1>
+<p>The goal of the <code>frameless-ml</code> module is to be able to use Spark ML with <code>TypedDataset</code> and
+to eventually provide a more strongly typed ML API for Spark. Currently, this module is at its very beginning and only 
+provides <code>TypedEncoder</code> instances for Spark ML&apos;s linear algebra data types.</p>
+<h2 id="using-vector-and-matrix-with-typeddataset">Using Vector and Matrix with TypedDataset</h2>
+<p><code>frameless-ml</code> provides <code>TypedEncoder</code> instances for <code>org.apache.spark.ml.linalg.Vector</code> 
+and <code>org.apache.spark.ml.linalg.Matrix</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.ml._
+<span class="hljs-comment">// import frameless.ml._</span>
 
-<span class="hljs-keyword">val</span> ds = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-number">1</span> to <span class="hljs-number">20</span>)
-<span class="hljs-comment">// ds: frameless.TypedDataset[Int] = [_1: int]</span>
+<span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+<span class="hljs-comment">// import frameless.TypedDataset</span>
 
-<span class="hljs-keyword">val</span> countAndTakeJob =
-  <span class="hljs-keyword">for</span> {
-    count &lt;- ds.count()
-    sample &lt;- ds.take((count/<span class="hljs-number">5</span>).toInt)
-  } <span class="hljs-keyword">yield</span> sample
-<span class="hljs-comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@709dd56b</span>
+<span class="hljs-keyword">import</span> org.apache.spark.ml.linalg._
+<span class="hljs-comment">// import org.apache.spark.ml.linalg._</span>
 
-countAndTakeJob.run()
-<span class="hljs-comment">// res1: Seq[Int] = WrappedArray(1, 2, 3, 4)</span>
+<span class="hljs-keyword">val</span> vector = <span class="hljs-type">Vectors</span>.dense(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)
+<span class="hljs-comment">// vector: org.apache.spark.ml.linalg.Vector = [1.0,2.0,3.0]</span>
+
+<span class="hljs-keyword">val</span> vectorDs = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-string">&quot;label&quot;</span> -&gt; vector))
+<span class="hljs-comment">// vectorDs: frameless.TypedDataset[(String, org.apache.spark.ml.linalg.Vector)] = [_1: string, _2: vector]</span>
+
+<span class="hljs-keyword">val</span> matrix = <span class="hljs-type">Matrices</span>.dense(<span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-type">Array</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>))
+<span class="hljs-comment">// matrix: org.apache.spark.ml.linalg.Matrix =</span>
+<span class="hljs-comment">// 1.0</span>
+<span class="hljs-comment">// 2.0</span>
+
+<span class="hljs-keyword">val</span> matrixDs = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-string">&quot;label&quot;</span> -&gt; matrix))
+<span class="hljs-comment">// matrixDs: frameless.TypedDataset[(String, org.apache.spark.ml.linalg.Matrix)] = [_1: string, _2: matrix]</span>
 </code></pre>
-<p>The <code>countAndTakeJob</code> can either be executed using <code>run()</code> (as we show above) or it can
-be passed along to other parts of the program to be further composed into more complex sequences
-of Spark jobs.</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.<span class="hljs-type">Job</span>
-<span class="hljs-comment">// import frameless.Job</span>
-
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">computeMinOfSample</span></span>(sample: <span class="hljs-type">Job</span>[<span class="hljs-type">Seq</span>[<span class="hljs-type">Int</span>]]): <span class="hljs-type">Job</span>[<span class="hljs-type">Int</span>] = sample.map(_.min)
-<span class="hljs-comment">// computeMinOfSample: (sample: frameless.Job[Seq[Int]])frameless.Job[Int]</span>
-
-<span class="hljs-keyword">val</span> finalJob = computeMinOfSample(countAndTakeJob)
-<span class="hljs-comment">// finalJob: frameless.Job[Int] = frameless.Job$$anon$2@6ef768bf</span>
-</code></pre>
-<p>Now we can execute this new job by specifying a <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit" target="_blank">group-id</a> and a description.
-This allows the programmer to see this information on the Spark UI and help track, say,
-performance issues.</p>
-<pre><code class="lang-scala">finalJob.
-  withGroupId(<span class="hljs-string">&quot;samplingJob&quot;</span>).
-  withDescription(<span class="hljs-string">&quot;Samples 20% of elements and computes the min&quot;</span>).
-  run()
-<span class="hljs-comment">// res2: Int = 1</span>
-</code></pre>
-<h2 id="more-on-sparkdelay">More on <code>SparkDelay</code></h2>
-<p>As mentioned above, <code>SparkDelay[F[_]]</code> is a typeclass required for suspending
-effects by Spark computations. This typeclass represents the ability to suspend
-an <code>=&gt; A</code> thunk into an <code>F[A]</code> value, while implicitly capturing a <code>SparkSession</code>.</p>
-<p>As it is a typeclass, it is open for implementation by the user in order to use
-other data types for suspension of effects. The <code>cats</code> module, for example, uses
-this typeclass to support suspending Spark computations in any effect type that
-has a <code>cats.effect.Sync</code> instance.</p>
+<p>Under the hood, Vector and Matrix are encoded using <code>org.apache.spark.ml.linalg.VectorUDT</code> 
+and <code>org.apache.spark.ml.linalg.MatrixUDT</code>. This is possible thanks to the implicit derivation 
+from <code>org.apache.spark.sql.types.UserDefinedType[A]</code> to <code>TypedEncoder[A]</code> defined in <code>TypedEncoder</code> companion object.</p>
 
                                 
                                 </section>
@@ -341,12 +311,12 @@ has a <code>cats.effect.Sync</code> instance.</p>
 
             
                 
-                <a href="Injection.html" class="navigation navigation-prev " aria-label="Previous page: Injection: Creating Custom Encoders">
+                <a href="Cats.html" class="navigation navigation-prev " aria-label="Previous page: Using Cats with RDDs">
                     <i class="fa fa-angle-left"></i>
                 </a>
                 
                 
-                <a href="Cats.html" class="navigation navigation-next " aria-label="Next page: Using Cats with RDDs">
+                <a href="TypedDataFrame.html" class="navigation navigation-next " aria-label="Next page: Proof of Concept: TypedDataFrame">
                     <i class="fa fa-angle-right"></i>
                 </a>
                 
@@ -357,7 +327,7 @@ has a <code>cats.effect.Sync</code> instance.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Job[A]","level":"1.6","depth":1,"next":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"previous":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Job.md","mtime":"2017-10-18T16:21:41.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"next":{"title":"Proof of Concept: TypedDataFrame","level":"1.9","depth":1,"path":"TypedDataFrame.md","ref":"TypedDataFrame.md","articles":[]},"previous":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedML.md","mtime":"2017-10-18T16:21:50.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
