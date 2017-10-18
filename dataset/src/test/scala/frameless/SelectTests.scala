@@ -4,7 +4,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 import frameless.implicits.widen._
-
 import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
@@ -27,6 +26,7 @@ class SelectTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int, Int, Int] _))
     check(forAll(prop[X2[Int, Int], Int, Int, Int] _))
     check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[UdtEncodedClass, Int, Int, Int] _))
   }
 
   test("select('a, 'b) FROM abcd") {
@@ -378,7 +378,7 @@ class SelectTests extends TypedDatasetSuite {
     val t: TypedDataset[(Int, Int)] = e.select(e.col('i) * 2, e.col('i))
     assert(t.select(t.col('_1)).collect().run().toList === List(2))
     // Issue #54
-    val fooT = t.select(t.col('_1)).map(x => Tuple1.apply(x)).as[Foo]
+    val fooT = t.select(t.col('_1)).deserialized.map(x => Tuple1.apply(x)).as[Foo]
     assert(fooT.select(fooT('i)).collect().run().toList === List(2))
   }
 

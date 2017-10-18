@@ -107,8 +107,8 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[Option[I[Int]]] _))
     check(forAll(prop[Option[I[X1[Int]]]] _))
 
-    assert(TypedEncoder[I[Int]].targetDataType == TypedEncoder[Int].targetDataType)
-    assert(TypedEncoder[I[I[Int]]].targetDataType == TypedEncoder[Int].targetDataType)
+    assert(TypedEncoder[I[Int]].catalystRepr == TypedEncoder[Int].catalystRepr)
+    assert(TypedEncoder[I[I[Int]]].catalystRepr == TypedEncoder[Int].catalystRepr)
 
     assert(TypedEncoder[I[Option[Int]]].nullable)
   }
@@ -125,7 +125,7 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[X2[Person, Person]] _))
     check(forAll(prop[Person] _))
 
-    assert(TypedEncoder[Person].targetDataType == TypedEncoder[(Int, String)].targetDataType)
+    assert(TypedEncoder[Person].catalystRepr == TypedEncoder[(Int, String)].catalystRepr)
   }
 
   test("Resolve ambiguity by importing usingDerivation") {

@@ -180,7 +180,20 @@
             
         </li>
     
-        <li class="chapter " data-level="1.8" data-path="TypedDataFrame.html">
+        <li class="chapter " data-level="1.8" data-path="TypedML.html">
+            
+                <a href="TypedML.html">
+            
+                    
+                    Using Spark ML with TypedDataset
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="TypedDataFrame.html">
             
                 <a href="TypedDataFrame.html">
             
@@ -240,8 +253,11 @@
                                 
                                 <h1 id="joba">Job[A]</h1>
 <p>All operations on <code>TypedDataset</code> are lazy. An operation either returns a new
-transformed <code>TypedDataset</code> or a <code>Job[A]</code>, where <code>A</code> is the result of running a
-non-lazy computation in Spark. <code>Job</code> serves several functions:</p>
+transformed <code>TypedDataset</code> or an <code>F[A]</code>, where <code>F[_]</code> is a type constructor
+with an instance of the <code>SparkDelay</code> typeclass and <code>A</code> is the result of running a
+non-lazy computation in Spark. </p>
+<p>A default such type constructor called <code>Job</code> is provided by Frameless. </p>
+<p><code>Job</code> serves several functions:</p>
 <ul>
 <li>Makes all operations on a <code>TypedDataset</code> lazy, which makes them more predictable compared to having
 few operations being lazy and other being strict</li>
@@ -253,7 +269,10 @@ to track different parts of your application in the Spark UI</li>
 <p>The toy example showcases the use of for-comprehension to explicitly sequences Spark Jobs.
 First we calculate the size of the <code>TypedDataset</code> and then we collect to the driver
 exactly 20% of its elements:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">val</span> ds = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-number">1</span> to <span class="hljs-number">20</span>)
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.syntax._
+<span class="hljs-comment">// import frameless.syntax._</span>
+
+<span class="hljs-keyword">val</span> ds = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-number">1</span> to <span class="hljs-number">20</span>)
 <span class="hljs-comment">// ds: frameless.TypedDataset[Int] = [_1: int]</span>
 
 <span class="hljs-keyword">val</span> countAndTakeJob =
@@ -261,7 +280,7 @@ exactly 20% of its elements:</p>
     count &lt;- ds.count()
     sample &lt;- ds.take((count/<span class="hljs-number">5</span>).toInt)
   } <span class="hljs-keyword">yield</span> sample
-<span class="hljs-comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@1052ec89</span>
+<span class="hljs-comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@709dd56b</span>
 
 countAndTakeJob.run()
 <span class="hljs-comment">// res1: Seq[Int] = WrappedArray(1, 2, 3, 4)</span>
@@ -276,7 +295,7 @@ of Spark jobs.</p>
 <span class="hljs-comment">// computeMinOfSample: (sample: frameless.Job[Seq[Int]])frameless.Job[Int]</span>
 
 <span class="hljs-keyword">val</span> finalJob = computeMinOfSample(countAndTakeJob)
-<span class="hljs-comment">// finalJob: frameless.Job[Int] = frameless.Job$$anon$2@2e359e76</span>
+<span class="hljs-comment">// finalJob: frameless.Job[Int] = frameless.Job$$anon$2@6ef768bf</span>
 </code></pre>
 <p>Now we can execute this new job by specifying a <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit" target="_blank">group-id</a> and a description.
 This allows the programmer to see this information on the Spark UI and help track, say,
@@ -287,6 +306,14 @@ performance issues.</p>
   run()
 <span class="hljs-comment">// res2: Int = 1</span>
 </code></pre>
+<h2 id="more-on-sparkdelay">More on <code>SparkDelay</code></h2>
+<p>As mentioned above, <code>SparkDelay[F[_]]</code> is a typeclass required for suspending
+effects by Spark computations. This typeclass represents the ability to suspend
+an <code>=&gt; A</code> thunk into an <code>F[A]</code> value, while implicitly capturing a <code>SparkSession</code>.</p>
+<p>As it is a typeclass, it is open for implementation by the user in order to use
+other data types for suspension of effects. The <code>cats</code> module, for example, uses
+this typeclass to support suspending Spark computations in any effect type that
+has a <code>cats.effect.Sync</code> instance.</p>
 
                                 
                                 </section>
@@ -330,7 +357,7 @@ performance issues.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Job[A]","level":"1.6","depth":1,"next":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"previous":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Job.md","mtime":"2017-05-23T08:57:31.174Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-23T08:59:39.758Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Job[A]","level":"1.6","depth":1,"next":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"previous":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Job.md","mtime":"2017-10-18T16:21:41.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

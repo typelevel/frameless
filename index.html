@@ -178,7 +178,20 @@
             
         </li>
     
-        <li class="chapter " data-level="1.8" data-path="TypedDataFrame.html">
+        <li class="chapter " data-level="1.8" data-path="TypedML.html">
+            
+                <a href="TypedML.html">
+            
+                    
+                    Using Spark ML with TypedDataset
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="TypedDataFrame.html">
             
                 <a href="TypedDataFrame.html">
             
@@ -246,6 +259,7 @@ It consists of the following modules:</p>
 <ul>
 <li><code>dataset</code> for more strongly typed <code>Dataset</code>s  (supports Spark 2.0.x)</li>
 <li><code>cats</code> for using Spark with <a href="https://github.com/typelevel/cats" target="_blank">cats</a> (supports Cats 0.9.x)</li>
+<li><code>ml</code> for a more strongly typed use of Spark ML based on <code>dataset</code></li>
 </ul>
 <p>The Frameless project and contributors support the
 <a href="http://typelevel.org/" target="_blank">Typelevel</a> <a href="http://typelevel.org/conduct.html" target="_blank">Code of Conduct</a> and want all its
@@ -258,6 +272,7 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 <li><a href="http://typelevel.org/frameless/Injection.html" target="_blank">Injection: Creating Custom Encoders</a></li>
 <li><a href="http://typelevel.org/frameless/Job.html" target="_blank">Job[A]</a></li>
 <li><a href="http://typelevel.org/frameless/Cats.html" target="_blank">Using Cats with RDDs</a></li>
+<li><a href="http://typelevel.org/frameless/TypedML.html" target="_blank">TypedDataset support for Spark ML</a></li>
 <li><a href="http://typelevel.org/frameless/TypedDataFrame.html" target="_blank">Proof of Concept: TypedDataFrame</a></li>
 </ul>
 <h2 id="why">Why?</h2>
@@ -348,7 +363,7 @@ as well as in the LICENSE file. This is the same license used as Spark.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-05-23T08:56:58.442Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-05-23T08:59:39.758Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-10-18T16:21:41.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

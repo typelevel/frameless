@@ -12,7 +12,7 @@ object TypedExpressionEncoder {
     * DataFrames of primitive types become records with a single field called "_1".
     */
   def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
-   encoder.targetDataType match {
+   encoder.catalystRepr match {
       case x: StructType =>
         if (encoder.nullable) StructType(x.fields.map(_.copy(nullable = true)))
         else x
@@ -24,15 +24,15 @@ object TypedExpressionEncoder {
     val encoder = TypedEncoder[T]
     val schema = targetStructType(encoder)
 
-    val in = BoundReference(0, encoder.sourceDataType, encoder.nullable)
+    val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
-    val (out, toRowExpressions) = encoder.extractorFor(in) match {
+    val (out, toRowExpressions) = encoder.toCatalyst(in) match {
       case x: CreateNamedStruct =>
-        val out = BoundReference(0, encoder.targetDataType, encoder.nullable)
+        val out = BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
         (out, x.flatten)
       case other =>
-        val out = GetColumnByOrdinal(0, encoder.targetDataType)
+        val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
         (out, CreateNamedStruct(Literal("_1") :: other :: Nil).flatten)
     }
@@ -41,7 +41,7 @@ object TypedExpressionEncoder {
       schema = schema,
       flat = false,
       serializer = toRowExpressions,
-      deserializer = encoder.constructorFor(out),
+      deserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
   }

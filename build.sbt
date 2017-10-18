@@ -1,11 +1,13 @@
-val sparkVersion = "2.0.2"
-val catsv = "0.9.0"
-val scalatest = "3.0.1"
+val sparkVersion = "2.2.0"
+val catsCoreVersion = "1.0.0-MF"
+val catsEffectVersion = "0.4"
+val catsMtlVersion = "0.0.2"
+val scalatest = "3.0.3"
 val shapeless = "2.3.2"
-val scalacheck = "1.13.4"
+val scalacheck = "1.13.5"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(core, cats, dataset, docs)
+  .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
 
@@ -20,9 +22,17 @@ lazy val cats = project
   .settings(framelessSettings: _*)
   .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
+  .settings(
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    scalacOptions += "-Ypartial-unification"
+  )
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats"       % catsv,
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided"))
+    "org.typelevel"    %% "cats-core"     % catsCoreVersion,
+    "org.typelevel"    %% "cats-effect"   % catsEffectVersion,
+    "org.typelevel"    %% "cats-mtl-core" % catsMtlVersion,
+    "org.apache.spark" %% "spark-core"    % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"     % sparkVersion % "provided"))
+  .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
@@ -36,6 +46,22 @@ lazy val dataset = project
   ))
   .dependsOn(core % "test->test;compile->compile")
 
+lazy val ml = project
+  .settings(name := "frameless-ml")
+  .settings(framelessSettings: _*)
+  .settings(warnUnusedImport: _*)
+  .settings(framelessTypedDatasetREPL: _*)
+  .settings(publishSettings: _*)
+  .settings(libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion % "provided"
+  ))
+  .dependsOn(
+    core % "test->test;compile->compile",
+    dataset % "test->test;compile->compile"
+  )
+
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
@@ -43,9 +69,14 @@ lazy val docs = project
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion
+    "org.apache.spark" %% "spark-sql"  % sparkVersion,
+    "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
-  .dependsOn(dataset, cats)
+  .settings(
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    scalacOptions += "-Ypartial-unification"
+  )
+  .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
@@ -57,7 +88,8 @@ lazy val framelessSettings = Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  fork in Test := false,
+  javaOptions in Test ++= Seq("-Xmx1G"),
+  fork in Test := true,
   parallelExecution in Test := false
 )
 
@@ -102,6 +134,7 @@ lazy val framelessTypedDatasetREPL = Seq(
       |import org.apache.spark.{SparkConf, SparkContext}
       |import org.apache.spark.sql.SparkSession
       |import frameless.functions.aggregate._
+      |import frameless.syntax._
       |
       |val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
       |val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
@@ -111,7 +144,7 @@ lazy val framelessTypedDatasetREPL = Seq(
       |spark.sparkContext.setLogLevel("WARN")
       |
       |import frameless.TypedDataset
-      |implicit val sqlContenxt = spark.sqlContext
+      |implicit val sqlContext = spark.sqlContext
     """.stripMargin,
   cleanupCommands in console :=
     """
@@ -120,6 +153,7 @@ lazy val framelessTypedDatasetREPL = Seq(
 )
 
 lazy val publishSettings = Seq(
+  useGpg := true,
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"

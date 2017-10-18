@@ -1,7 +1,6 @@
 package frameless
 
 import frameless.ops._
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
@@ -9,7 +8,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{ToTraversable, Tupler}
+import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -23,7 +22,7 @@ import shapeless.ops.hlist.{ToTraversable, Tupler}
 class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
-  private implicit val sparkContext = dataset.sqlContext.sparkContext
+  private implicit val spark: SparkSession = dataset.sparkSession
 
   /** Aggregates on the entire Dataset without groups.
     *
@@ -34,7 +33,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val tuple1: TypedDataset[Tuple1[A]] = aggMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
-    TypedEncoder[A].targetDataType match {
+    TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
         // if column is struct, we use all its fields
         val df = tuple1
@@ -137,10 +136,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns the number of elements in the [[TypedDataset]].
     *
-    * Differs from `Dataset#count` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def count(): Job[Long] =
-    Job(dataset.count)
+  def count[F[_]]()(implicit F: SparkDelay[F]): F[Long] =
+    F.delay(dataset.count)
 
   /** Returns `TypedColumn` of type `A` given it's name.
     *
@@ -189,20 +188,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
-    * Running this [[Job]] requires moving all the data into the application's driver process, and
+    * Running this operation requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#collect` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#collect` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def collect(): Job[Seq[T]] =
-    Job(dataset.collect())
+  def collect[F[_]]()(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.collect())
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * Differs from `Dataset#first` by wrapping it's result into an `Option` and a [[Job]].
+    * Differs from `Dataset#first` by wrapping it's result into an `Option` and an effect-suspending `F[_]`.
     */
-  def firstOption(): Job[Option[T]] =
-    Job {
+  def firstOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] =
+    F.delay {
       try {
         Option(dataset.first())
       } catch {
@@ -215,12 +214,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Running take requires moving data into the application's driver process, and doing so with
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#take` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#take` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def take(num: Int): Job[Seq[T]] =
-    Job(dataset.take(num))
+  def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
+    F.delay(dataset.take(num))
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:
@@ -236,12 +235,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
     *   be truncated and all cells will be aligned right
     *
-    * Differs from `Dataset#show` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#show` by wrapping it's result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
-  def show(numRows: Int = 20, truncate: Boolean = true): Job[Unit] =
-    Job(dataset.show(numRows, truncate))
+  def show[F[_]](numRows: Int = 20, truncate: Boolean = true)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.show(numRows, truncate))
 
   /** Returns a new [[frameless.TypedDataset]] that only contains elements where `column` is `true`.
     *
@@ -259,31 +258,17 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreach` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreach` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreach(func: T => Unit): Job[Unit] =
-    Job(dataset.foreach(func))
+  def foreach[F[_]](func: T => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreach(func))
 
   /** Runs `func` on each partition of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreachPartition` by wrapping it's result into a [[Job]].
+    * Differs from `Dataset#foreachPartition` by wrapping it's result into an effect-suspending `F[_]`.
     */
-  def foreachPartition(func: Iterator[T] => Unit): Job[Unit] =
-    Job(dataset.foreachPartition(func))
-
-  /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
-    * `func` must be commutative and associative or the result may be non-deterministic.
-    *
-    * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and a [[Job]].
-    */
-  def reduceOption(func: (T, T) => T): Job[Option[T]] =
-    Job {
-      try {
-        Option(dataset.reduce(func))
-      } catch {
-        case e: UnsupportedOperationException => None
-      }
-    }
+  def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
+    F.delay(dataset.foreachPartition(func))
 
   def groupBy[K1](
     c1: TypedColumn[T, K1]
@@ -305,29 +290,26 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
   private def resolveSelfJoin(join: Join): Join = {
-    val selfJoinFix = self.dataset.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+    val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
+    val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
 
-    if (selfJoinFix) {
-      val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
-      val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
+    if (!hasConflict) {
+      val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
+      if (!selfJoinFix) throw new IllegalStateException("Frameless requires spark.sql.selfJoinAutoResolveAmbiguity to be true")
 
-      if (!hasConflict) {
-        val cond = plan.condition.map(_.transform {
-          case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
-            if a.sameRef(b) =>
-            val leftDs = FramelessInternals.ofRows(dataset.sparkSession, plan.left)
-            val rightDs = FramelessInternals.ofRows(dataset.sparkSession, plan.right)
+      val cond = plan.condition.map(_.transform {
+        case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
+          if a.sameRef(b) =>
+          val leftDs = FramelessInternals.ofRows(spark, plan.left)
+          val rightDs = FramelessInternals.ofRows(spark, plan.right)
 
-            catalyst.expressions.EqualTo(
-              FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
-              FramelessInternals.resolveExpr(rightDs, Seq(b.name))
-            )
-        })
+          catalyst.expressions.EqualTo(
+            FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
+            FramelessInternals.resolveExpr(rightDs, Seq(b.name))
+          )
+      })
 
-        plan.copy(condition = cond)
-      } else {
-        join
-      }
+      plan.copy(condition = cond)
     } else {
       join
     }
@@ -426,7 +408,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
     // now we need to unpack `Tuple1[A]` to `A`
 
-    TypedEncoder[A].targetDataType match {
+    TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
         // if column is struct, we use all it's fields
         val df = tuple1
@@ -621,6 +603,28 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[Out](selected)
     }
+  }
+
+  /** Prepends a new column to the Dataset.
+    *
+    * {{{
+    *   case class X(i: Int, j: Int)
+    *   val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    *   val fNew: TypedDataset[(Int,Int,Boolean)] = f.withColumn(f('j) === 10)
+    * }}}
+    */
+  def withColumn[A: TypedEncoder, H <: HList, FH <: HList, Out](ca: TypedColumn[T, A])(
+    implicit
+    genOfA: Generic.Aux[T, H],
+    init: Prepend.Aux[H, A :: HNil, FH],
+    tupularFormForFH: Tupler.Aux[FH, Out],
+    encoder: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    // Giving a random name to the new column (the proper name will be given by the Tuple-based encoder)
+    val selected = dataset.toDF().withColumn("I1X3T9CU1OP0128JYIO76TYZZA3AXHQ18RMI", ca.untyped)
+      .as[Out](TypedExpressionEncoder[Out])
+
+    TypedDataset.create[Out](selected)
   }
 }
 

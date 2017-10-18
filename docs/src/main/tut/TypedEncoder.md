@@ -29,13 +29,14 @@ Frameless introduces a new type class called `TypeEncoder` to solve these issues
 
 ```tut:silent
 import frameless.TypedDataset
+import frameless.syntax._
 ```
 
 ```tut:book:fail
 val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
 ```
 
-Type class derivation takes case or recursively constructing (and proving the existence) `TypeEncoder`s for case classes. The following works as expected:
+Type class derivation takes care of recursively constructing (and proving the existence of) `TypeEncoder`s for case classes. The following works as expected:
 
 ```tut:book
 case class Bar(d: Double, s: String)

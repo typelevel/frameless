@@ -427,4 +427,33 @@ class GroupByTests extends TypedDatasetSuite {
     check(forAll(prop[Option[Short], Short] _))
     check(forAll(prop[X1[Option[Short]], Short] _))
   }
+
+  test("groupBy('a, 'b).flatMapGroups((('a,'b) toVector((('a,'b), 'c))") {
+    def prop[
+    A: TypedEncoder : Ordering,
+    B: TypedEncoder : Ordering,
+    C: TypedEncoder : Ordering
+    ](data: Vector[X3[A, B, C]]): Prop = {
+      val dataset = TypedDataset.create(data)
+      val cA = dataset.col[A]('a)
+      val cB = dataset.col[B]('b)
+
+      val datasetGrouped = dataset
+        .groupBy(cA, cB)
+        .flatMapGroups((a, xs) => xs.map(x => (a, x)))
+        .collect().run()
+        .sorted
+
+      val dataGrouped = data
+        .groupBy(t => (t.a,t.b)).toSeq
+        .flatMap { case (a, xs) => xs.map(x => (a, x)) }
+        .sorted
+
+      datasetGrouped ?= dataGrouped
+    }
+
+    check(forAll(prop[Short, Option[Short], Long] _))
+    check(forAll(prop[Option[Short], Short, Int] _))
+    check(forAll(prop[X1[Option[Short]], Short, Byte] _))
+  }
 }

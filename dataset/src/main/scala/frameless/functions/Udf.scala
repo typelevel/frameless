@@ -125,15 +125,15 @@ case class FramelessUdf[T, R](
     codegen(input)
   }
 
-  def dataType: DataType = rencoder.targetDataType
+  def dataType: DataType = rencoder.catalystRepr
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
 
     val internalTerm = ctx.freshName("internal")
     val internalNullTerm = ctx.freshName("internalNull")
-    val internalTpe = ctx.boxedType(rencoder.sourceDataType)
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.sourceDataType)
+    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
+    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
 
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
@@ -147,14 +147,14 @@ case class FramelessUdf[T, R](
     val (argsCode, funcArguments) = encoders.zip(children).map {
       case (encoder, child) =>
         val eval = child.genCode(ctx)
-        val codeTpe = ctx.boxedType(encoder.sourceDataType)
+        val codeTpe = ctx.boxedType(encoder.jvmRepr)
         val argTerm = ctx.freshName("arg")
         val convert = s"${eval.code}\n$codeTpe $argTerm = ${eval.isNull} ? (($codeTpe)null) : (($codeTpe)(${eval.value}));"
 
         (convert, argTerm)
     }.unzip
 
-    val resultEval = rencoder.extractorFor(internalExpr).genCode(ctx)
+    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
     ctx.addMutableState(internalTpe, internalTerm, "")
     ctx.addMutableState("boolean", internalNullTerm, "")
@@ -183,7 +183,7 @@ object FramelessUdf {
   ): FramelessUdf[T, R] = FramelessUdf(
     function = function,
     encoders = cols.map(_.uencoder).toList,
-    children = cols.map(x => x.uencoder.constructorFor(x.expr)).toList,
+    children = cols.map(x => x.uencoder.fromCatalyst(x.expr)).toList,
     rencoder = rencoder
   )
 }

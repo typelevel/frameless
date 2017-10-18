@@ -1,0 +1,366 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <title>Using Spark ML with TypedDataset · GitBook</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="GitBook 3.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="TypedDataFrame.html" />
+    
+    
+    <link rel="prev" href="Cats.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="FeatureOverview.html">
+            
+                <a href="FeatureOverview.html">
+            
+                    
+                    TypedDataset: Feature Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="TypedDatasetVsSparkDataset.html">
+            
+                <a href="TypedDatasetVsSparkDataset.html">
+            
+                    
+                    Comparing TypedDatasets with Spark's Datasets
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="TypedEncoder.html">
+            
+                <a href="TypedEncoder.html">
+            
+                    
+                    Typed Encoders in Frameless
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.5" data-path="Injection.html">
+            
+                <a href="Injection.html">
+            
+                    
+                    Injection: Creating Custom Encoders
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.6" data-path="Job.html">
+            
+                <a href="Job.html">
+            
+                    
+                    Job[A]
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.7" data-path="Cats.html">
+            
+                <a href="Cats.html">
+            
+                    
+                    Using Cats with RDDs
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="1.8" data-path="TypedML.html">
+            
+                <a href="TypedML.html">
+            
+                    
+                    Using Spark ML with TypedDataset
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.9" data-path="TypedDataFrame.html">
+            
+                <a href="TypedDataFrame.html">
+            
+                    
+                    Proof of Concept: TypedDataFrame
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
+            Published with GitBook
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href="." >Using Spark ML with TypedDataset</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="typeddataset-support-for-spark-ml">TypedDataset support for Spark ML</h1>
+<p>The goal of the <code>frameless-ml</code> module is to be able to use Spark ML with <code>TypedDataset</code> and
+to eventually provide a more strongly typed ML API for Spark. Currently, this module is at its very beginning and only 
+provides <code>TypedEncoder</code> instances for Spark ML&apos;s linear algebra data types.</p>
+<h2 id="using-vector-and-matrix-with-typeddataset">Using Vector and Matrix with TypedDataset</h2>
+<p><code>frameless-ml</code> provides <code>TypedEncoder</code> instances for <code>org.apache.spark.ml.linalg.Vector</code> 
+and <code>org.apache.spark.ml.linalg.Matrix</code>:</p>
+<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.ml._
+<span class="hljs-comment">// import frameless.ml._</span>
+
+<span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
+<span class="hljs-comment">// import frameless.TypedDataset</span>
+
+<span class="hljs-keyword">import</span> org.apache.spark.ml.linalg._
+<span class="hljs-comment">// import org.apache.spark.ml.linalg._</span>
+
+<span class="hljs-keyword">val</span> vector = <span class="hljs-type">Vectors</span>.dense(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)
+<span class="hljs-comment">// vector: org.apache.spark.ml.linalg.Vector = [1.0,2.0,3.0]</span>
+
+<span class="hljs-keyword">val</span> vectorDs = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-string">&quot;label&quot;</span> -&gt; vector))
+<span class="hljs-comment">// vectorDs: frameless.TypedDataset[(String, org.apache.spark.ml.linalg.Vector)] = [_1: string, _2: vector]</span>
+
+<span class="hljs-keyword">val</span> matrix = <span class="hljs-type">Matrices</span>.dense(<span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-type">Array</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>))
+<span class="hljs-comment">// matrix: org.apache.spark.ml.linalg.Matrix =</span>
+<span class="hljs-comment">// 1.0</span>
+<span class="hljs-comment">// 2.0</span>
+
+<span class="hljs-keyword">val</span> matrixDs = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-string">&quot;label&quot;</span> -&gt; matrix))
+<span class="hljs-comment">// matrixDs: frameless.TypedDataset[(String, org.apache.spark.ml.linalg.Matrix)] = [_1: string, _2: matrix]</span>
+</code></pre>
+<p>Under the hood, Vector and Matrix are encoded using <code>org.apache.spark.ml.linalg.VectorUDT</code> 
+and <code>org.apache.spark.ml.linalg.MatrixUDT</code>. This is possible thanks to the implicit derivation 
+from <code>org.apache.spark.sql.types.UserDefinedType[A]</code> to <code>TypedEncoder[A]</code> defined in <code>TypedEncoder</code> companion object.</p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="Cats.html" class="navigation navigation-prev " aria-label="Previous page: Using Cats with RDDs">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="TypedDataFrame.html" class="navigation navigation-next " aria-label="Next page: Proof of Concept: TypedDataFrame">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"next":{"title":"Proof of Concept: TypedDataFrame","level":"1.9","depth":1,"path":"TypedDataFrame.md","ref":"TypedDataFrame.md","articles":[]},"previous":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedML.md","mtime":"2017-10-18T16:21:50.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <script src="gitbook/gitbook.js"></script>
+    <script src="gitbook/theme.js"></script>
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
+        
+    
+        
+        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
