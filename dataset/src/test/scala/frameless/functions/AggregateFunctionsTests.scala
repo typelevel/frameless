@@ -1,26 +1,13 @@
 package frameless
 package functions
 
+import frameless.{TypedAggregate, TypedColumn}
 import frameless.functions.aggregate._
+import org.apache.spark.sql.{Column, Encoder}
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 
 class AggregateFunctionsTests extends TypedDatasetSuite {
-
-  def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
-    val da = numeric.toDouble(a)
-    val db = numeric.toDouble(b)
-    val epsilon = 1E-6
-    // Spark has a weird behaviour concerning expressions that should return Inf
-    // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
-    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
-    else if (
-      (da - db).abs < epsilon ||
-      (da - db).abs < da.abs / 100)
-        proved
-    else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
-  }
-
   def sparkSchema[A: TypedEncoder, U](f: TypedColumn[X1[A], A] => TypedAggregate[X1[A], U]): Prop = {
     val df = TypedDataset.create[X1[A]](Nil)
     val col = f(df.col('a))
@@ -356,5 +343,220 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
     check(forAll(prop[Vector[Long]] _))
     check(forAll(prop[BigDecimal] _))
+  }
+
+
+  def bivariatePropTemplate[A: TypedEncoder, B: TypedEncoder]
+  (
+    xs: List[X3[Int, A, B]]
+  )
+  (
+    framelessFun: (TypedColumn[X3[Int, A, B], A], TypedColumn[X3[Int, A, B], B]) => TypedAggregate[X3[Int, A, B], Option[Double]],
+    sparkFun: (Column, Column) => Column
+  )
+  (
+    implicit
+    encEv: Encoder[(Int, A, B)],
+    encEv2: Encoder[(Int,Option[Double])],
+    evCanBeDoubleA: CatalystCast[A, Double],
+    evCanBeDoubleB: CatalystCast[B, Double]
+  ): Prop = {
+
+    val tds = TypedDataset.create(xs)
+    // Typed implementation of bivar stats function
+    val tdBivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b), tds('c))).deserialized.map(kv =>
+      (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
+    ).collect().run()
+
+    val cDF = session.createDataset(xs.map(x => (x.a, x.b, x.c)))
+    // Comparison implementation of bivar stats functions
+    val compBivar = cDF
+      .groupBy(cDF("_1"))
+      .agg(sparkFun(cDF("_2"), cDF("_3")))
+      .map(
+        row => {
+          val grp = row.getInt(0)
+          (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
+        }
+      )
+
+    // Should be the same
+    tdBivar.toMap ?= compBivar.collect().toMap
+  }
+
+  def univariatePropTemplate[A: TypedEncoder]
+  (
+    xs: List[X2[Int, A]]
+  )
+  (
+    framelessFun: (TypedColumn[X2[Int, A], A]) => TypedAggregate[X2[Int, A], Option[Double]],
+    sparkFun: (Column) => Column
+  )
+  (
+    implicit
+    encEv: Encoder[(Int, A)],
+    encEv2: Encoder[(Int,Option[Double])],
+    evCanBeDoubleA: CatalystCast[A, Double]
+  ): Prop = {
+
+    val tds = TypedDataset.create(xs)
+    //typed implementation of univariate stats function
+    val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b))).deserialized.map(kv =>
+      (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
+    ).collect().run()
+
+    val cDF = session.createDataset(xs.map(x => (x.a, x.b)))
+    // Comparison implementation of bivar stats functions
+    val compUnivar = cDF
+      .groupBy(cDF("_1"))
+      .agg(sparkFun(cDF("_2")))
+      .map(
+        row => {
+          val grp = row.getInt(0)
+          (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
+        }
+      )
+
+    // Should be the same
+    tdUnivar.toMap ?= compUnivar.collect().toMap
+  }
+
+  test("corr") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
+    ): Prop = bivariatePropTemplate(xs)(corr[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.corr)
+
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
+  }
+
+  test("covar_pop") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
+    ): Prop = bivariatePropTemplate(xs)(
+      covarPop[A, B, X3[Int, A, B]],
+      org.apache.spark.sql.functions.covar_pop
+    )
+
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
+  }
+
+  test("covar_samp") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder, B: TypedEncoder](xs: List[X3[Int, A, B]])(
+      implicit
+      encEv: Encoder[(Int, A, B)],
+      evCanBeDoubleA: CatalystCast[A, Double],
+      evCanBeDoubleB: CatalystCast[B, Double]
+    ): Prop = bivariatePropTemplate(xs)(
+      covarSamp[A, B, X3[Int, A, B]],
+      org.apache.spark.sql.functions.covar_samp
+    )
+
+    check(forAll(prop[Double, Double] _))
+    check(forAll(prop[Double, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[BigDecimal, Byte] _))
+  }
+
+  test("kurtosis") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(
+      kurtosis[A, X2[Int, A]],
+      org.apache.spark.sql.functions.kurtosis
+    )
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
+
+  test("skewness") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(
+      skewness[A, X2[Int, A]],
+      org.apache.spark.sql.functions.skewness
+    )
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
+
+  test("stddev_pop") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(
+      stddevPop[A, X2[Int, A]],
+      org.apache.spark.sql.functions.stddev_pop
+    )
+
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+  }
+
+  test("stddev_samp") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder](xs: List[X2[Int, A]])(
+      implicit
+      encEv: Encoder[(Int, A)],
+      evCanBeDoubleA: CatalystCast[A, Double]
+    ): Prop = univariatePropTemplate(xs)(
+      stddevSamp[A, X2[Int, A]],
+      org.apache.spark.sql.functions.stddev_samp
+    )
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
   }
 }

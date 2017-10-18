@@ -1,4 +1,4 @@
-import org.scalacheck.{Gen, Arbitrary}
+import org.scalacheck.{Arbitrary, Gen}
 
 package object frameless {
   /** Fixed decimal point to avoid precision problems specific to Spark */
@@ -29,5 +29,12 @@ package object frameless {
   // see issue with scalacheck non serializable Vector: https://github.com/rickynils/scalacheck/issues/315
   implicit def arbVector[A](implicit A: Arbitrary[A]): Arbitrary[Vector[A]] =
     Arbitrary(Gen.listOf(A.arbitrary).map(_.toVector))
+
+  implicit val arbUdtEncodedClass: Arbitrary[UdtEncodedClass] = Arbitrary {
+    for {
+      int <- Arbitrary.arbitrary[Int]
+      doubles <- Gen.listOf(arbDouble.arbitrary)
+    } yield new UdtEncodedClass(int, doubles.toArray)
+  }
 
 }

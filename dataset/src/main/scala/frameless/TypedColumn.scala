@@ -13,6 +13,7 @@ import scala.annotation.implicitNotFound
 sealed trait UntypedExpression[T] {
   def expr: Expression
   def uencoder: TypedEncoder[_]
+  override def toString: String = expr.toString()
 }
 
 /** Expression used in `select`-like constructions.
@@ -43,6 +44,13 @@ sealed class TypedColumn[T, U](
     */
   def untyped: Column = new Column(expr)
 
+  private def withExpr(newExpr: Expression): Column = new Column(newExpr)
+
+  private def equalsTo(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
+    if (uencoder.nullable && uencoder.catalystRepr.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    else EqualTo(self.expr, other.expr)
+  }.typed
+
   /** Equality test.
     * {{{
     *   df.filter( df.col('a) === 1 )
@@ -50,7 +58,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: U): TypedColumn[T, Boolean] = (untyped === lit(other).untyped).typed
+  def ===(other: U): TypedColumn[T, Boolean] = equalsTo(lit(other))
 
   /** Equality test.
     * {{{
@@ -59,7 +67,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (untyped === other.untyped).typed
+  def ===(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = equalsTo(other)
 
   /** Inequality test.
     * {{{
@@ -68,7 +76,9 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def =!=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = (self.untyped =!= other.untyped).typed
+  def =!=(other: TypedColumn[T, U]): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(other).expr)
+  }.typed
 
   /** Inequality test.
     * {{{
@@ -77,7 +87,24 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def =!=(other: U): TypedColumn[T, Boolean] = (self.untyped =!= lit(other).untyped).typed
+  def =!=(other: U): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(lit(other)).expr)
+  }.typed
+
+  /** True if the current expression is an Option and it's None.
+    *
+    * apache/spark
+    */
+  def isNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] =
+    equalsTo(lit[U,T](None.asInstanceOf[U]))
+
+  /** True if the current expression is an Option and it's not None.
+    *
+    * apache/spark
+    */
+  def isNotNone(implicit isOption: U <:< Option[_]): TypedColumn[T, Boolean] = withExpr {
+    Not(equalsTo(lit(None.asInstanceOf[U])).expr)
+  }.typed
 
   /** Sum of this expression and another expression.
     * {{{
@@ -194,7 +221,8 @@ sealed class TypedColumn[T, U](
     * @param u another column of the same type
     * apache/spark
     */
-  def divide(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u.untyped).typed
+  def divide[Out: TypedEncoder](other: TypedColumn[T, U])(implicit n: CatalystDivisible[U, Out]): TypedColumn[T, Out] =
+    self.untyped.divide(other.untyped).typed
 
   /**
     * Division this expression by another expression.
@@ -206,7 +234,7 @@ sealed class TypedColumn[T, U](
     * @param u another column of the same type
     * apache/spark
     */
-  def /(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = divide(u)
+  def /[Out](other: TypedColumn[T, U])(implicit n: CatalystDivisible[U, Out], e: TypedEncoder[Out]): TypedColumn[T, Out] = divide(other)
 
   /**
     * Division this expression by another expression.
@@ -220,13 +248,148 @@ sealed class TypedColumn[T, U](
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseAND(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseAND(u).typed
+
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseAND(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseAND(u.untyped).typed
+
+  /**
+    * Bitwise AND this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Int] & -1)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def &(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseAND(u)
+
+  /**
+    * Bitwise AND this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) & (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def &(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseAND(u)
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseOR(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseOR(u).typed
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseOR(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseOR(u.untyped).typed
+
+  /**
+    * Bitwise OR this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Long] | 1L)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def |(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseOR(u)
+
+  /**
+    * Bitwise OR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) | (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def |(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseOR(u)
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseXOR(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = self.untyped.bitwiseXOR(u).typed
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def bitwiseXOR(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] =
+    self.untyped.bitwiseXOR(u.untyped).typed
+
+  /**
+    * Bitwise XOR this expression and another expression (of same type).
+    * {{{
+    *   df.select(df.col('colA).cast[Long] ^ 1L)
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def ^(u: U)(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseXOR(u)
+
+  /**
+    * Bitwise XOR this expression and another expression.
+    * {{{
+    *   df.select(df.col('colA) ^ (df.col('colB)))
+    * }}}
+    *
+    * @param u a constant of the same type
+    * apache/spark
+    */
+  def ^(u: TypedColumn[T, U])(implicit n: CatalystBitwise[U]): TypedColumn[T, U] = bitwiseXOR(u)
+
   /** Casts the column to a different type.
     * {{{
     *   df.select(df('a).cast[Int])
     * }}}
     */
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): TypedColumn[T, A] =
-    self.untyped.cast(TypedEncoder[A].targetDataType).typed
+    self.untyped.cast(TypedEncoder[A].catalystRepr).typed
 }
 
 /** Expression used in `groupBy`-like constructions.

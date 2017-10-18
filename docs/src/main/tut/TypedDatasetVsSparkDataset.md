@@ -114,6 +114,7 @@ with a fully optimized query plan.
 
 ```tut:book
 import frameless.TypedDataset
+import frameless.syntax._
 val fds = TypedDataset.create(ds)
 
 fds.filter( fds('i) === 10 ).select( fds('i) ).show().run()

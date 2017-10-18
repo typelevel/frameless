@@ -3,27 +3,30 @@ package frameless
 trait CatalystCast[A, B]
 
 object CatalystCast {
-  implicit def castToString[T]: CatalystCast[T, String] = new CatalystCast[T, String] {}
+  private[this] val theInstance = new CatalystCast[Any, Any] {}
+  private[this] def of[A, B]: CatalystCast[A, B] = theInstance.asInstanceOf[CatalystCast[A, B]]
 
-  implicit def numericToLong[A: CatalystNumeric]: CatalystCast[A, Long] = new CatalystCast[A, Long] {}
-  implicit def numericToInt[A: CatalystNumeric]: CatalystCast[A, Int] = new CatalystCast[A, Int] {}
-  implicit def numericToShort[A: CatalystNumeric]: CatalystCast[A, Short] = new CatalystCast[A, Short] {}
-  implicit def numericToByte[A: CatalystNumeric]: CatalystCast[A, Byte] = new CatalystCast[A, Byte] {}
-  implicit def numericToDecimal[A: CatalystNumeric]: CatalystCast[A, BigDecimal] = new CatalystCast[A, BigDecimal] {}
-  implicit def numericToDouble[A: CatalystNumeric]: CatalystCast[A, Double] = new CatalystCast[A, Double] {}
+  implicit def framelessCastToString[T]: CatalystCast[T, String] = of[T, String]
 
-  implicit def booleanToNumeric[A: CatalystNumeric]: CatalystCast[Boolean, A] = new CatalystCast[Boolean, A] {}
+  implicit def framelessNumericToLong   [A: CatalystNumeric]: CatalystCast[A, Long]       = of[A, Long]
+  implicit def framelessNumericToInt    [A: CatalystNumeric]: CatalystCast[A, Int]        = of[A, Int]
+  implicit def framelessNumericToShort  [A: CatalystNumeric]: CatalystCast[A, Short]      = of[A, Short]
+  implicit def framelessNumericToByte   [A: CatalystNumeric]: CatalystCast[A, Byte]       = of[A, Byte]
+  implicit def framelessNumericToDecimal[A: CatalystNumeric]: CatalystCast[A, BigDecimal] = of[A, BigDecimal]
+  implicit def framelessNumericToDouble [A: CatalystNumeric]: CatalystCast[A, Double]     = of[A, Double]
+
+  implicit def framelessBooleanToNumeric[A: CatalystNumeric]: CatalystCast[Boolean, A] = of[Boolean, A]
 
   // doesn't make any sense to include:
   // - sqlDateToBoolean: always None
   // - sqlTimestampToBoolean: compares us to 0
-  implicit object stringToBoolean extends CatalystCast[String, Option[Boolean]]
-  implicit object longToBoolean extends CatalystCast[Long, Boolean]
-  implicit object intToBoolean extends CatalystCast[Int, Boolean]
-  implicit object shortToBoolean extends CatalystCast[Short, Boolean]
-  implicit object byteToBoolean extends CatalystCast[Byte, Boolean]
-  implicit object bigDecimalToBoolean extends CatalystCast[BigDecimal, Boolean]
-  implicit object doubleToBoolean extends CatalystCast[Double, Boolean]
+  implicit val framelessStringToBoolean    : CatalystCast[String, Option[Boolean]] = of[String, Option[Boolean]]
+  implicit val framelessLongToBoolean      : CatalystCast[Long, Boolean]           = of[Long, Boolean]
+  implicit val framelessIntToBoolean       : CatalystCast[Int, Boolean]            = of[Int, Boolean]
+  implicit val framelessShortToBoolean     : CatalystCast[Short, Boolean]          = of[Short, Boolean]
+  implicit val framelessByteToBoolean      : CatalystCast[Byte, Boolean]           = of[Byte, Boolean]
+  implicit val framelessBigDecimalToBoolean: CatalystCast[BigDecimal, Boolean]     = of[BigDecimal, Boolean]
+  implicit val framelessDoubleToBoolean    : CatalystCast[Double, Boolean]         = of[Double, Boolean]
 
   // TODO
 

@@ -17,6 +17,8 @@ project/plugins/project/
 .worksheet/
 bin/
 .settings/
+.ensime
+.ensime_cache/
 
 # IntelliJ specific
 .idea

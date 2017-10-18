@@ -1,9 +1,13 @@
 # Job\[A\]
 
 All operations on `TypedDataset` are lazy. An operation either returns a new
-transformed `TypedDataset` or a `Job[A]`, where `A` is the result of running a
-non-lazy computation in Spark. `Job` serves several functions:
+transformed `TypedDataset` or an `F[A]`, where `F[_]` is a type constructor
+with an instance of the `SparkDelay` typeclass and `A` is the result of running a
+non-lazy computation in Spark. 
 
+A default such type constructor called `Job` is provided by Frameless. 
+
+`Job` serves several functions:
 - Makes all operations on a `TypedDataset` lazy, which makes them more predictable compared to having
 few operations being lazy and other being strict
 - Allows the programmer to make expensive blocking operations explicit
@@ -30,6 +34,8 @@ import spark.implicits._
 ```
 
 ```tut:book
+import frameless.syntax._
+
 val ds = TypedDataset.create(1 to 20)
 
 val countAndTakeJob =
@@ -69,3 +75,14 @@ spark.stop()
 ```
 
 [group-id]: https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit
+
+## More on `SparkDelay`
+
+As mentioned above, `SparkDelay[F[_]]` is a typeclass required for suspending
+effects by Spark computations. This typeclass represents the ability to suspend
+an `=> A` thunk into an `F[A]` value, while implicitly capturing a `SparkSession`.
+
+As it is a typeclass, it is open for implementation by the user in order to use
+other data types for suspension of effects. The `cats` module, for example, uses
+this typeclass to support suspending Spark computations in any effect type that
+has a `cats.effect.Sync` instance.

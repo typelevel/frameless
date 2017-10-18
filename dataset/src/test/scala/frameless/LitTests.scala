@@ -6,12 +6,11 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
 class LitTests extends TypedDatasetSuite {
-
   def prop[A: TypedEncoder](value: A): Prop = {
-    val df = TypedDataset.create(1 :: Nil)
+    val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
     // filter forces whole codegen
-    val elems = df.filter(_ => true).select(lit(value))
+    val elems = df.deserialized.filter((_:Int) => true).select(lit(value))
       .collect()
       .run()
       .toVector

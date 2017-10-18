@@ -4,4 +4,5 @@
 - [Injection: Creating Custom Encoders](Injection.md)
 - [Job\[A\]](Job.md)
 - [Using Cats with RDDs](Cats.md)
+- [Using Spark ML with TypedDataset](TypedML.md)
 - [Proof of Concept: TypedDataFrame](TypedDataFrame.md)
