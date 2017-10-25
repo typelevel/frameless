@@ -27,11 +27,11 @@ lazy val cats = project
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats-core"     % catsCoreVersion,
-    "org.typelevel"    %% "cats-effect"   % catsEffectVersion,
-    "org.typelevel"    %% "cats-mtl-core" % catsMtlVersion,
-    "org.apache.spark" %% "spark-core"    % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"     % sparkVersion % "provided"))
+    "org.typelevel" %% "cats-core" % catsCoreVersion,
+    "org.typelevel" %% "cats-effect" % catsEffectVersion,
+    "org.typelevel" %% "cats-mtl-core" % catsMtlVersion,
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql" % sparkVersion % "provided"))
   .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project
@@ -42,7 +42,7 @@ lazy val dataset = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-sql" % sparkVersion % "provided"
   ))
   .dependsOn(core % "test->test;compile->compile")
 
@@ -54,8 +54,8 @@ lazy val ml = project
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-mllib"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-sql" % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided"
   ))
   .dependsOn(
     core % "test->test;compile->compile",
@@ -65,12 +65,12 @@ lazy val ml = project
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(tutSettings: _*)
+  .enablePlugins(TutPlugin)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion,
-    "org.apache.spark" %% "spark-mllib"  % sparkVersion
+    "org.apache.spark" %% "spark-sql" % sparkVersion,
+    "org.apache.spark" %% "spark-mllib" % sparkVersion
   ))
   .settings(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
@@ -120,8 +120,10 @@ lazy val warnUnusedImport = Seq(
         Seq("-Ywarn-unused-import")
     }
   },
-  scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
-  scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
+  scalacOptions in(Compile, console) ~= {
+    _.filterNot("-Ywarn-unused-import" == _)
+  },
+  scalacOptions in(Test, console) := (scalacOptions in(Compile, console)).value
 )
 
 lazy val framelessTypedDatasetREPL = Seq(
@@ -160,54 +162,54 @@ lazy val publishSettings = Seq(
     if (isSnapshot.value)
       Some("snapshots" at nexus + "content/repositories/snapshots")
     else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+      Some("releases" at nexus + "service/local/staging/deploy/maven2")
   },
   publishArtifact in Test := false,
   pomIncludeRepository := Function.const(false),
   pomExtra in Global := {
     <url>https://github.com/typelevel/frameless</url>
-    <scm>
-      <url>git@github.com:typelevel/frameless.git</url>
-      <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>OlivierBlanvillain</id>
-        <name>Olivier Blanvillain</name>
-        <url>https://github.com/OlivierBlanvillain/</url>
-      </developer>
-      <developer>
-        <id>adelbertc</id>
-        <name>Adelbert Chang</name>
-        <url>https://github.com/adelbertc/</url>
-      </developer>
-      <developer>
-        <id>imarios</id>
-        <name>Marios Iliofotou</name>
-        <url>https://github.com/imarios/</url>
-      </developer>
-      <developer>
-        <id>kanterov</id>
-        <name>Gleb Kanterov</name>
-        <url>https://github.com/kanterov/</url>
-      </developer>
-      <developer>
-        <id>non</id>
-        <name>Erik Osheim</name>
-        <url>https://github.com/non/</url>
-      </developer>
-      <developer>
-        <id>jeremyrsmith</id>
-        <name>Jeremy Smith</name>
-        <url>https://github.com/jeremyrsmith/</url>
-      </developer>
-    </developers>
+      <scm>
+        <url>git@github.com:typelevel/frameless.git</url>
+        <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>OlivierBlanvillain</id>
+          <name>Olivier Blanvillain</name>
+          <url>https://github.com/OlivierBlanvillain/</url>
+        </developer>
+        <developer>
+          <id>adelbertc</id>
+          <name>Adelbert Chang</name>
+          <url>https://github.com/adelbertc/</url>
+        </developer>
+        <developer>
+          <id>imarios</id>
+          <name>Marios Iliofotou</name>
+          <url>https://github.com/imarios/</url>
+        </developer>
+        <developer>
+          <id>kanterov</id>
+          <name>Gleb Kanterov</name>
+          <url>https://github.com/kanterov/</url>
+        </developer>
+        <developer>
+          <id>non</id>
+          <name>Erik Osheim</name>
+          <url>https://github.com/non/</url>
+        </developer>
+        <developer>
+          <id>jeremyrsmith</id>
+          <name>Jeremy Smith</name>
+          <url>https://github.com/jeremyrsmith/</url>
+        </developer>
+      </developers>
   }
 )
 
 lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
+  publish := (()),
+  publishLocal := (()),
   publishArtifact := false
 )
 
@@ -223,6 +225,6 @@ copyReadme := copyReadmeImpl.value
 lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
   val from = baseDirectory.value / "README.md"
-  val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
-  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true)
+  val to = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
+  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
 }
