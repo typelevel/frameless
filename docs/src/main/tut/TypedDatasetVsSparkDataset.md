@@ -77,7 +77,7 @@ a non existing column `x`:
 ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
-There are two things to improve here. First, we would want to avoid the `at[Long]` casting that we are required
+There are two things to improve here. First, we would want to avoid the `as[Long]` casting that we are required
 to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible
 type. Second, we want a solution where reference to a
 non existing column name fails at compilation time.
