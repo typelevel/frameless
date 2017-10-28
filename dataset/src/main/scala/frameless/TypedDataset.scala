@@ -678,18 +678,18 @@ object TypedDataset {
   def create[A](data: Seq[A])(
     implicit
     encoder: TypedEncoder[A],
-    sqlContext: SQLContext
+    spark: SparkSession
   ): TypedDataset[A] = {
-    val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
+    val dataset = spark.createDataset(data)(TypedExpressionEncoder[A])
     TypedDataset.create[A](dataset)
   }
 
   def create[A](data: RDD[A])(
     implicit
     encoder: TypedEncoder[A],
-    sqlContext: SQLContext
+    spark: SparkSession
   ): TypedDataset[A] = {
-    val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
+    val dataset = spark.createDataset(data)(TypedExpressionEncoder[A])
     TypedDataset.create[A](dataset)
   }
 

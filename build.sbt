@@ -137,14 +137,13 @@ lazy val framelessTypedDatasetREPL = Seq(
       |import frameless.syntax._
       |
       |val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
-      |val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+      |implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
       |
       |import spark.implicits._
       |
       |spark.sparkContext.setLogLevel("WARN")
       |
       |import frameless.TypedDataset
-      |implicit val sqlContext = spark.sqlContext
     """.stripMargin,
   cleanupCommands in console :=
     """
