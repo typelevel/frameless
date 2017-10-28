@@ -2,6 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+import scala.reflect.ClassTag
 
 class NumericTests extends TypedDatasetSuite {
   test("plus") {
@@ -39,16 +40,14 @@ class NumericTests extends TypedDatasetSuite {
   }
 
   test("multiply") {
-    def prop[A: TypedEncoder: CatalystNumeric: Numeric](a: A, b: A): Prop = {
+    def prop[A: TypedEncoder : CatalystNumeric : Numeric : ClassTag](a: A, b: A): Prop = {
       val df = TypedDataset.create(X2(a, b) :: Nil)
-      val sum = implicitly[Numeric[A]].times(a, b)
+      val result = implicitly[Numeric[A]].times(a, b)
       val got = df.select(df.col('a) * df.col('b)).collect().run()
 
-      got ?= (sum :: Nil)
+      got ?= (result :: Nil)
     }
 
-    // FIXME doesn't work ¯\_(ツ)_/¯
-    // check(prop[BigDecimal] _)
     check(prop[Byte] _)
     check(prop[Double] _)
     check(prop[Int] _)
@@ -84,6 +83,17 @@ class NumericTests extends TypedDatasetSuite {
         val got = df.select(df.col('a) / df.col('b)).collect().run()
         approximatelyEqual(got.head, div)
       }
+    }
+
+    check(prop _)
+  }
+
+  test("multiply BigDecimal") {
+    def prop(a: BigDecimal, b: BigDecimal): Prop = {
+      val df = TypedDataset.create(X2(a, b) :: Nil)
+      val result = BigDecimal(a.doubleValue * b.doubleValue)
+      val got = df.select(df.col('a) * df.col('b)).collect().run()
+      approximatelyEqual(got.head, result)
     }
 
     check(prop _)

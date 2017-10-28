@@ -5,9 +5,11 @@ import frameless.functions._
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{Column, FramelessInternals}
+import org.apache.spark.sql.types.DecimalType
 import shapeless.ops.record.Selector
 import shapeless._
 
+import scala.reflect.ClassTag
 import scala.annotation.implicitNotFound
 
 sealed trait UntypedExpression[T] {
@@ -188,8 +190,16 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def multiply(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] =
-    self.untyped.multiply(u.untyped).typed
+  def multiply(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U], ct: ClassTag[U]): TypedColumn[T, U] = {
+    if (ct.runtimeClass == BigDecimal(0).getClass) {
+      // That's apparently the only way to get sound multiplication.
+      // See https://issues.apache.org/jira/browse/SPARK-22036
+      val dt = DecimalType(20, 14)
+      self.untyped.cast(dt).multiply(u.untyped.cast(dt)).typed
+    } else {
+      self.untyped.multiply(u.untyped).typed
+    }
+  }
 
   /** Multiplication of this expression and another expression.
     * {{{
@@ -199,7 +209,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def *(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U]): TypedColumn[T, U] = multiply(u)
+  def *(u: TypedColumn[T, U])(implicit n: CatalystNumeric[U], tt: ClassTag[U]): TypedColumn[T, U] = multiply(u)
 
   /** Multiplication of this expression a constant.
     * {{{
