@@ -1,22 +1,22 @@
 package frameless
 package cats
 
-import _root_.cats.implicits._
 import _root_.cats._
-import _root_.cats.kernel._
+import _root_.cats.kernel.CommutativeSemigroup
+import _root_.cats.implicits._
 
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
 object implicits extends FramelessSyntax with SparkDelayInstances {
   implicit class rddOps[A: ClassTag](lhs: RDD[A]) {
-    def csum(implicit m: CommutativeMonoid[A]): A = lhs.reduce(_ |+| _)
+    def csum(implicit m: CommutativeSemigroup[A]): A = lhs.reduce(_ |+| _)
     def cmin(implicit o: Order[A]): A = lhs.reduce(_ min _)
     def cmax(implicit o: Order[A]): A = lhs.reduce(_ max _)
   }
 
   implicit class pairRddOps[K: ClassTag, V: ClassTag](lhs: RDD[(K, V)]) {
-    def csumByKey(implicit m: CommutativeMonoid[V]): RDD[(K, V)] = lhs.reduceByKey(_ |+| _)
+    def csumByKey(implicit m: CommutativeSemigroup[V]): RDD[(K, V)] = lhs.reduceByKey(_ |+| _)
     def cminByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ min _)
     def cmaxByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ max _)
   }
