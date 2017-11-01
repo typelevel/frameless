@@ -1,6 +1,6 @@
 val sparkVersion = "2.2.0"
-val catsCoreVersion = "1.0.0-MF"
-val catsEffectVersion = "0.4"
+val catsCoreVersion = "1.0.0-RC1"
+val catsEffectVersion = "0.5"
 val catsMtlVersion = "0.0.2"
 val scalatest = "3.0.3"
 val shapeless = "2.3.2"
@@ -27,12 +27,17 @@ lazy val cats = project
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
+<<<<<<< HEAD
     "org.typelevel"    %% "cats-core"     % catsCoreVersion,
     "org.typelevel"    %% "cats-effect"   % catsEffectVersion,
     "org.typelevel"    %% "cats-mtl-core" % catsMtlVersion,
     "org.apache.spark" %% "spark-core"    % sparkVersion % "provided",
     "org.apache.spark" %% "spark-sql"     % sparkVersion % "provided"))
   .dependsOn(dataset % "test->test;compile->compile")
+=======
+    "org.typelevel"    %% "cats-core"  % catsv,
+    "org.apache.spark" %% "spark-core" % sparkVersion % "provided"))
+>>>>>>> Use a CommutativeMonoid in the reduce operations
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
