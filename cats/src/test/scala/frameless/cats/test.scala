@@ -95,4 +95,13 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     val rdd = seq.toRdd
     rdd.csum shouldBe seq.reduce(_|+|_)
   }
+
+  property("pair rdd numeric commutative semigroup example") {
+    import frameless.cats.implicits._
+    val seq = Seq( ("a",2), ("b",3), ("d",6), ("b",2), ("d",1) )
+    val rdd = seq.toRdd
+    rdd.cminByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",2), ("d",1) )
+    rdd.cmaxByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",3), ("d",6) )
+    rdd.csumByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",5), ("d",7) )
+  }
 }
