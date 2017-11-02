@@ -27,11 +27,12 @@ lazy val cats = project
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats-core"     % catsCoreVersion,
-    "org.typelevel"    %% "cats-effect"   % catsEffectVersion,
-    "org.typelevel"    %% "cats-mtl-core" % catsMtlVersion,
-    "org.apache.spark" %% "spark-core"    % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"     % sparkVersion % "provided"))
+    "org.typelevel"    %% "cats-core"      % catsCoreVersion,
+    "org.typelevel"    %% "cats-effect"    % catsEffectVersion,
+    "org.typelevel"    %% "cats-mtl-core"  % catsMtlVersion,
+    "org.typelevel"    %% "alleycats-core" % catsCoreVersion,
+    "org.apache.spark" %% "spark-core"     % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"      % sparkVersion % "provided"))
   .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project

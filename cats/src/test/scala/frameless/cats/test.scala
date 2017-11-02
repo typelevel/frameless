@@ -100,8 +100,8 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     import frameless.cats.implicits._
     val seq = Seq( ("a",2), ("b",3), ("d",6), ("b",2), ("d",1) )
     val rdd = seq.toRdd
-    rdd.cminByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",2), ("d",1) )
-    rdd.cmaxByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",3), ("d",6) )
-    rdd.csumByKey.collect.toSeq shouldBe Seq( ("a",2), ("b",5), ("d",7) )
+    rdd.cminByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",2), ("d",1) )
+    rdd.cmaxByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",3), ("d",6) )
+    rdd.csumByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",5), ("d",7) )
   }
 }
