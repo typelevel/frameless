@@ -10,10 +10,10 @@ import shapeless.test.illTyped
 class TypedIndexToStringTests extends FramelessMlSuite with MustMatchers {
 
   test(".transform() correctly transform an input dataset") {
-    implicit val arbDouble = Arbitrary(Gen.choose(1, 99).map(_.toDouble))
+    implicit val arbDouble = Arbitrary(Gen.choose(0, 99).map(_.toDouble))
 
     def prop[A: TypedEncoder: Arbitrary] = forAll { x2: X2[Double, A] =>
-      val transformer = TypedIndexToString.create[X1[Double]](Array.fill(99)("foo"))
+      val transformer = TypedIndexToString.create[X1[Double]](Array.fill(100)("foo"))
       val ds = TypedDataset.create(Seq(x2))
       val ds2 = transformer.transform(ds)
 
