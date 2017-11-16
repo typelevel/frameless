@@ -2,13 +2,14 @@ package frameless
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
-import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
+import org.apache.spark.sql.catalyst.expressions.{ Alias, Attribute, AttributeReference, CreateStruct, EqualTo }
+import org.apache.spark.sql.catalyst.plans.logical.{ Join, Project }
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
+import org.apache.spark.sql.catalyst.plans.{ Inner, LeftOuter }
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
+import shapeless.ops.hlist.{ Prepend, ToTraversable, Tupler }
+import shapeless.ops.record.Remove
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -598,6 +599,26 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       encoder: TypedEncoder[Out]
     ): TypedDataset[Out] = {
       val selected = dataset.toDF()
+        .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
+        .as[Out](TypedExpressionEncoder[Out])
+
+      TypedDataset.create[Out](selected)
+    }
+  }
+
+  object dropMany extends ProductArgs {
+    def applyProduct[U <: HList, TRep <: HList, Removed <: HList, Out0 <: HList, Out](columns: U)(
+      implicit
+      genOfA: Generic.Aux[T, TRep],
+      dropped: Remove.Aux[T, U, Removed],
+//      ct: ColumnTypes.Aux[T, U, Out0],
+
+      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      tupler: Tupler.Aux[Removed, Out],
+      encoder: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+      val selected = dataset.toDF()
+          .drop(toTraversable.
         .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
         .as[Out](TypedExpressionEncoder[Out])
 
