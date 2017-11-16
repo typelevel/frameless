@@ -8,8 +8,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
-import shapeless.ops.record.{Remover, Values}
+import shapeless.labelled.FieldType
+import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
+import shapeless.ops.record.{Keys, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -656,10 +657,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * {{{
     *   case class X(i: Int, j: Int)
     *   val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
-    *   val fNew: TypedDataset[(Int,Int,Boolean)] = f.withColumn(f('j) === 10)
+    *   val fNew: TypedDataset[(Int,Int,Boolean)] = f.withColumnTupled(f('j) === 10)
     * }}}
     */
-  def withColumn[A: TypedEncoder, H <: HList, FH <: HList, Out](ca: TypedColumn[T, A])(
+  def withColumnTupled[A: TypedEncoder, H <: HList, FH <: HList, Out](ca: TypedColumn[T, A])(
     implicit
     genOfA: Generic.Aux[T, H],
     init: Prepend.Aux[H, A :: HNil, FH],
@@ -671,6 +672,83 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       .as[Out](TypedExpressionEncoder[Out])
 
     TypedDataset.create[Out](selected)
+  }
+
+  /**
+    *  Adds a column to a Dataset so long as the specified output type, `U`, has
+    *  an extra column from `T` that has type `A`.
+    *
+    *  @example
+    *           {{{
+    *             case class X(i: Int, j: Int)
+    *             case class Y(i: Int, j: Int, k: Boolean)
+    *             val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    *             val fNew: TypedDataset[Y] = f.withColumn[Y](f('j) === 10)
+    *           }}}
+    * @param ca The typed column to add
+    * @param uEncder TypeEncoder for output type U
+    * @param aEncoder TypeEncoder for added column type `A`
+    * @param tgen the LabelledGeneric derived for T
+    * @param ugen the LabelledGeneric derived for U
+    * @param noRemovedOldFields proof no fields have been removed
+    * @param newFields diff from T to U
+    * @param newKeys keys from newFields
+    * @param newKey the one and only new key
+    * @param newField the one and only new field enforcing the type of A exists
+    * @param uKeys the keys of U
+    * @param uKeysTraverse allows for traversing the keys of U
+    * @tparam U the output type
+    * @tparam A The added column type
+    * @tparam TRep shapeless' record representation of T
+    * @tparam URep shapeless' record representation of U
+    * @tparam UKeys the keys of U as an HList
+    * @tparam NewFields the added fields to T to get U
+    * @tparam NewKeys the keys of NewFields as an HList
+    * @tparam NewKey the first, and only, key in NewKey
+    *
+    * @see [[frameless.TypedDataset.withColumnApply#apply]]
+    */
+  def withColumn[U] = new withColumnApply[U]
+
+  class withColumnApply[U] {
+    def apply[
+    A,
+    TRep <: HList,
+    URep <: HList,
+    UKeys <: HList,
+    NewFields <: HList,
+    NewKeys <: HList,
+    NewKey <: Symbol
+    ](
+      ca : TypedColumn[T, A]
+    )(implicit
+      uEncder: TypedEncoder[U],
+      aEncoder: TypedEncoder[A],
+      tgen: LabelledGeneric.Aux[T, TRep],
+      ugen: LabelledGeneric.Aux[U, URep],
+      noRemovedOldFields: Diff.Aux[TRep, URep, HNil],
+      newFields: Diff.Aux[URep, TRep, NewFields],
+      newKeys: Keys.Aux[NewFields, NewKeys],
+      newKey: IsHCons.Aux[NewKeys, NewKey, HNil],
+      newField: IsHCons.Aux[NewFields, FieldType[NewKey, A], HNil],
+      uKeys: Keys.Aux[URep, UKeys],
+      uKeysTraverse: ToTraversable.Aux[UKeys, Seq, Symbol]
+    ) = {
+      val newColumnName =
+        newKey.head(newKeys()).name
+
+      val dfWithNewColumn = dataset
+        .toDF()
+        .withColumn(newColumnName, ca.untyped)
+
+      val newColumns = uKeys.apply.to[Seq].map(_.name).map(dfWithNewColumn.col)
+
+      val selected = dfWithNewColumn
+        .select(newColumns: _*)
+        .as[U](TypedExpressionEncoder[U])
+
+      TypedDataset.create[U](selected)
+    }
   }
 }
 
