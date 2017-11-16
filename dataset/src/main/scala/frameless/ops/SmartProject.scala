@@ -19,7 +19,7 @@ object SmartProject {
     * @param tgen the LabelledGeneric derived for T
     * @param ugen the LabelledGeneric derived for U
     * @param keys the keys of U
-    * @param select selects all the keys of U from T
+    * @param select selects all the values from T using the keys of U
     * @param values selects all the values of LabeledGeneric[U]
     * @param typeEqualityProof proof that U and the projection of T have the same type
     * @param keysTraverse allows for traversing the keys of U
