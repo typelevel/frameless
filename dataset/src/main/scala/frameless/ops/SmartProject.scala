@@ -16,13 +16,13 @@ object SmartProject {
     * (a) both T and U are Products for which a LabelledGeneric can be derived (e.g., case classes),
     * (b) all members of U have a corresponding member in T that has both the same name and type.
     *
-    * @param tgen the LabelledGeneric derived for T
-    * @param ugen the LabelledGeneric derived for U
-    * @param keys the keys of U
-    * @param select selects all the values from T using the keys of U
-    * @param values selects all the values of LabeledGeneric[U]
-    * @param typeEqualityProof proof that U and the projection of T have the same type
-    * @param keysTraverse allows for traversing the keys of U
+    * @param i0 the LabelledGeneric derived for T
+    * @param i1 the LabelledGeneric derived for U
+    * @param i2 the keys of U
+    * @param i3 selects all the values from T using the keys of U
+    * @param i4 selects all the values of LabeledGeneric[U]
+    * @param i5 proof that U and the projection of T have the same type
+    * @param i6 allows for traversing the keys of U
     * @tparam T the original type T
     * @tparam U the projected type U
     * @tparam TRec shapeless' Record representation of T
@@ -32,25 +32,17 @@ object SmartProject {
     * @tparam UKeys the keys of U as an HList
     * @return a projection if it exists
     */
-  implicit def deriveProduct[
-  T: TypedEncoder,
-  U: TypedEncoder,
-  TRec <: HList,
-  TProj <: HList,
-  URec <: HList,
-  UVals <: HList,
-  UKeys <: HList](
-    implicit
-    tgen: LabelledGeneric.Aux[T, TRec],
-    ugen: LabelledGeneric.Aux[U, URec],
-    keys: Keys.Aux[URec, UKeys],
-    select: SelectAll.Aux[TRec, UKeys, TProj],
-    values: Values.Aux[URec, UVals],
-    typeEqualityProof: UVals =:= TProj,
-    keysTraverse: ToTraversable.Aux[UKeys, Seq, Symbol]
-  ): SmartProject[T,U] = SmartProject[T, U]( from => {
-        val names = keys.apply.to[Seq].map(_.name).map(from.dataset.col)
-        TypedDataset.create(from.dataset.toDF().select(names: _*).as[U](TypedExpressionEncoder[U]))
-      }
-    )
+  implicit def deriveProduct[T: TypedEncoder, U: TypedEncoder, TRec <: HList, TProj <: HList, URec <: HList, UVals <: HList, UKeys <: HList]
+    (implicit
+      i0: LabelledGeneric.Aux[T, TRec],
+      i1: LabelledGeneric.Aux[U, URec],
+      i2: Keys.Aux[URec, UKeys],
+      i3: SelectAll.Aux[TRec, UKeys, TProj],
+      i4: Values.Aux[URec, UVals],
+      i5: UVals =:= TProj,
+      i6: ToTraversable.Aux[UKeys, Seq, Symbol]
+    ): SmartProject[T,U] = SmartProject[T, U]({ from =>
+      val names = implicitly[Keys.Aux[URec, UKeys]].apply.to[Seq].map(_.name).map(from.dataset.col)
+      TypedDataset.create(from.dataset.toDF().select(names: _*).as[U](TypedExpressionEncoder[U]))
+    })
 }
