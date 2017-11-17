@@ -2,14 +2,14 @@ package frameless
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{ Alias, Attribute, AttributeReference, CreateStruct, EqualTo }
-import org.apache.spark.sql.catalyst.plans.logical.{ Join, Project }
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.catalyst.plans.{ Inner, LeftOuter }
+import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
-import shapeless.ops.hlist.{ Prepend, ToTraversable, Tupler }
-import shapeless.ops.record.Remove
+import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
+import shapeless.ops.record.{Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -606,24 +606,27 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     }
   }
 
-  object dropMany extends ProductArgs {
-    def applyProduct[U <: HList, TRep <: HList, Removed <: HList, Out0 <: HList, Out](columns: U)(
-      implicit
-      genOfA: Generic.Aux[T, TRep],
-      dropped: Remove.Aux[T, U, Removed],
-//      ct: ColumnTypes.Aux[T, U, Out0],
+  def drop[
+  Out,
+  TRep <: HList,
+  Removed <: HList,
+  ValuesFromRemoved <: HList,
+  V
+  ](
+    column: Witness.Lt[Symbol]
+  )(implicit
+    genOfT: LabelledGeneric.Aux[T, TRep],
+    removed: Remover.Aux[TRep, column.T, (V, Removed)],
+    values: Values.Aux[Removed, ValuesFromRemoved],
+    tupler: Tupler.Aux[ValuesFromRemoved, Out],
+    encoder: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val dropped = dataset
+      .toDF()
+      .drop(column.value.name)
+      .as[Out](TypedExpressionEncoder[Out])
 
-      toTraversable: ToTraversable.Aux[U, List, UntypedExpression[T]],
-      tupler: Tupler.Aux[Removed, Out],
-      encoder: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
-      val selected = dataset.toDF()
-          .drop(toTraversable.
-        .select(toTraversable(columns).map(c => new Column(c.expr)):_*)
-        .as[Out](TypedExpressionEncoder[Out])
-
-      TypedDataset.create[Out](selected)
-    }
+    TypedDataset.create[Out](dropped)
   }
 
   /** Prepends a new column to the Dataset.
