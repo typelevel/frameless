@@ -606,6 +606,28 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     }
   }
 
+  /**
+    * Returns a new Dataset as a tuple with the specified
+    * column dropped.
+    * Does not allow for dropping from a single column TypedDataset
+    *
+    * {{{
+    *   val d: TypedDataset[Foo(a: String, b: Int...)] = ???
+    *   val result = TypedDataset[(Int, ...)] = d.drop('a)
+    * }}}
+    * @param column column to drop specified as a Symbol
+    * @param genOfT LabelledGeneric derived for T
+    * @param remover Remover derived for TRep and column
+    * @param values values of T with column removed
+    * @param tupler tupler of values
+    * @param encoder evidence of encoder of the tupled values
+    * @tparam Out Tupled return type
+    * @tparam TRep shapeless' record representation of T
+    * @tparam Removed record of T with column removed
+    * @tparam ValuesFromRemoved values of T with column removed as an HList
+    * @tparam V value type of column in T
+    * @return
+    */
   def drop[
   Out,
   TRep <: HList,
@@ -616,7 +638,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     column: Witness.Lt[Symbol]
   )(implicit
     genOfT: LabelledGeneric.Aux[T, TRep],
-    removed: Remover.Aux[TRep, column.T, (V, Removed)],
+    remover: Remover.Aux[TRep, column.T, (V, Removed)],
     values: Values.Aux[Removed, ValuesFromRemoved],
     tupler: Tupler.Aux[ValuesFromRemoved, Out],
     encoder: TypedEncoder[Out]
