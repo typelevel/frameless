@@ -9,6 +9,7 @@ import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
 import shapeless.ops.hlist.{Prepend, ToTraversable, Tupler}
+import shapeless.ops.record.{Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -603,6 +604,51 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[Out](selected)
     }
+  }
+
+  /**
+    * Returns a new Dataset as a tuple with the specified
+    * column dropped.
+    * Does not allow for dropping from a single column TypedDataset
+    *
+    * {{{
+    *   val d: TypedDataset[Foo(a: String, b: Int...)] = ???
+    *   val result = TypedDataset[(Int, ...)] = d.drop('a)
+    * }}}
+    * @param column column to drop specified as a Symbol
+    * @param genOfT LabelledGeneric derived for T
+    * @param remover Remover derived for TRep and column
+    * @param values values of T with column removed
+    * @param tupler tupler of values
+    * @param encoder evidence of encoder of the tupled values
+    * @tparam Out Tupled return type
+    * @tparam TRep shapeless' record representation of T
+    * @tparam Removed record of T with column removed
+    * @tparam ValuesFromRemoved values of T with column removed as an HList
+    * @tparam V value type of column in T
+    * @return
+    */
+  def drop[
+  Out,
+  TRep <: HList,
+  Removed <: HList,
+  ValuesFromRemoved <: HList,
+  V
+  ](
+    column: Witness.Lt[Symbol]
+  )(implicit
+    genOfT: LabelledGeneric.Aux[T, TRep],
+    remover: Remover.Aux[TRep, column.T, (V, Removed)],
+    values: Values.Aux[Removed, ValuesFromRemoved],
+    tupler: Tupler.Aux[ValuesFromRemoved, Out],
+    encoder: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val dropped = dataset
+      .toDF()
+      .drop(column.value.name)
+      .as[Out](TypedExpressionEncoder[Out])
+
+    TypedDataset.create[Out](dropped)
   }
 
   /** Prepends a new column to the Dataset.
