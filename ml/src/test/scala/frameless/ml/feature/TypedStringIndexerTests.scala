@@ -13,8 +13,8 @@ class TypedStringIndexerTests extends FramelessMlSuite with MustMatchers {
     def prop[A: TypedEncoder : Arbitrary] = forAll { x2: X2[String, A] =>
       val indexer = TypedStringIndexer.create[X1[String]]()
       val ds = TypedDataset.create(Seq(x2))
-      val model = indexer.fit(ds)
-      val resultDs = model.transform(ds).as[X3[String, A, Double]]
+      val model = indexer.fit(ds).run()
+      val resultDs = model.transform(ds).run().as[X3[String, A, Double]]
 
       resultDs.collect.run() == Seq(X3(x2.a, x2.b, 0D))
     }
@@ -27,7 +27,7 @@ class TypedStringIndexerTests extends FramelessMlSuite with MustMatchers {
     val indexer = TypedStringIndexer.create[X1[String]]()
       .setHandleInvalid(TypedStringIndexer.HandleInvalid.Keep)
     val ds = TypedDataset.create(Seq(X1("foo")))
-    val model = indexer.fit(ds)
+    val model = indexer.fit(ds).run()
 
     model.transformer.getHandleInvalid mustEqual "keep"
   }

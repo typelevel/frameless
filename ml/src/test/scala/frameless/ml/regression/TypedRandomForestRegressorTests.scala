@@ -17,8 +17,8 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
     val prop = forAll { x2: X2[Double, Vector] =>
       val rf = TypedRandomForestRegressor.create[X2[Double, Vector]]()
       val ds = TypedDataset.create(Seq(x2))
-      val model = rf.fit(ds)
-      val pDs = model.transform(ds).as[X3[Double, Vector, Double]]
+      val model = rf.fit(ds).run()
+      val pDs = model.transform(ds).run().as[X3[Double, Vector, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq(x2.a -> x2.b)
     }
@@ -26,8 +26,8 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
     val prop2 = forAll { x2: X2[Vector, Double] =>
       val rf = TypedRandomForestRegressor.create[X2[Vector, Double]]()
       val ds = TypedDataset.create(Seq(x2))
-      val model = rf.fit(ds)
-      val pDs = model.transform(ds).as[X3[Vector, Double, Double]]
+      val model = rf.fit(ds).run()
+      val pDs = model.transform(ds).run().as[X3[Vector, Double, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq(x2.a -> x2.b)
     }
@@ -35,8 +35,8 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
     def prop3[A: TypedEncoder: Arbitrary] = forAll { x3: X3[Vector, Double, A] =>
       val rf = TypedRandomForestRegressor.create[X2[Vector, Double]]()
       val ds = TypedDataset.create(Seq(x3))
-      val model = rf.fit(ds)
-      val pDs = model.transform(ds).as[X4[Vector, Double, A, Double]]
+      val model = rf.fit(ds).run()
+      val pDs = model.transform(ds).run().as[X4[Vector, Double, A, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b), pDs.col('c)).collect.run() == Seq((x3.a, x3.b, x3.c))
     }
@@ -55,7 +55,7 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
       .setMaxDepth(10)
 
     val ds = TypedDataset.create(Seq(X2(0D, Vectors.dense(0D))))
-    val model = rf.fit(ds)
+    val model = rf.fit(ds).run()
 
     model.transformer.getNumTrees mustEqual 10
     model.transformer.getMaxBins mustEqual 100

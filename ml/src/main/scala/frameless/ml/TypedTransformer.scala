@@ -12,19 +12,24 @@ sealed trait TypedTransformer
   * An AppendTransformer `transform` method takes as input a TypedDataset containing `Inputs` and
   * return a TypedDataset with `Outputs` columns appended to the input TypedDataset.
   */
-abstract class AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer] private[ml] extends TypedTransformer {
+trait AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer] extends TypedTransformer {
   val transformer: InnerTransformer
 
-  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out](ds: TypedDataset[T])(
-    implicit smartProject: SmartProject[T, Inputs],
-    tGen: Generic.Aux[T, TVals],
-    outputsGen: Generic.Aux[Outputs, OutputsVals],
-    prepend: Prepend.Aux[TVals, OutputsVals, OutVals],
-    tupler: Tupler.Aux[OutVals, Out],
-    outEncoder: TypedEncoder[Out]
-  ): TypedDataset[Out] = {
-    val transformed = transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
-    TypedDataset.create[Out](transformed)
+  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out, F[_]](ds: TypedDataset[T])(
+    implicit
+    i0: SmartProject[T, Inputs],
+    i1: Generic.Aux[T, TVals],
+    i2: Generic.Aux[Outputs, OutputsVals],
+    i3: Prepend.Aux[TVals, OutputsVals, OutVals],
+    i4: Tupler.Aux[OutVals, Out],
+    i5: TypedEncoder[Out],
+    F: SparkDelay[F]
+  ): F[TypedDataset[Out]] = {
+    implicit val sparkSession = ds.dataset.sparkSession
+    F.delay {
+      val transformed = transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
+      TypedDataset.create[Out](transformed)
+    }
   }
 
 }
