@@ -16,13 +16,13 @@ class RegressionIntegrationTests extends FramelessMlSuite with MustMatchers {
     val trainingDataDs = TypedDataset.create(Seq.fill(10)(Data(0D, 10, 0D)))
 
     case class Features(field1: Double, field2: Int)
-    val vectorAssembler = TypedVectorAssembler.create[Features]()
+    val vectorAssembler = TypedVectorAssembler[Features]
 
     case class DataWithFeatures(field1: Double, field2: Int, field3: Double, features: Vector)
     val dataWithFeatures = vectorAssembler.transform(trainingDataDs).run().as[DataWithFeatures]
 
     case class RFInputs(field3: Double, features: Vector)
-    val rf = TypedRandomForestRegressor.create[RFInputs]()
+    val rf = TypedRandomForestRegressor[RFInputs]
 
     val model = rf.fit(dataWithFeatures).run()
 

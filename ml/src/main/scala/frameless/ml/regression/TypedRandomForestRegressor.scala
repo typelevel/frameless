@@ -59,7 +59,7 @@ object TypedRandomForestRegressor {
     }
   }
 
-  def create[Inputs]()(implicit inputsChecker: TreesInputsChecker[Inputs])
+  def apply[Inputs](implicit inputsChecker: TreesInputsChecker[Inputs])
   : TypedRandomForestRegressor[Inputs] = {
     new TypedRandomForestRegressor(new RandomForestRegressor(), inputsChecker.labelCol, inputsChecker.featuresCol)
   }

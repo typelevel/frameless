@@ -22,7 +22,7 @@ final class TypedVectorAssembler[Inputs] private[ml](vectorAssembler: VectorAsse
 object TypedVectorAssembler {
   case class Output(vector: Vector)
 
-  def create[Inputs]()(implicit inputsChecker: TypedVectorAssemblerInputsChecker[Inputs]): TypedVectorAssembler[Inputs] = {
+  def apply[Inputs](implicit inputsChecker: TypedVectorAssemblerInputsChecker[Inputs]): TypedVectorAssembler[Inputs] = {
     new TypedVectorAssembler(new VectorAssembler(), inputsChecker.inputCols.toArray)
   }
 }

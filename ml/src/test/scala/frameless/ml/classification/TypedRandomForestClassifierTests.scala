@@ -11,13 +11,13 @@ import org.scalatest.MustMatchers
 
 class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatchers {
   implicit val arbDouble: Arbitrary[Double] =
-    Arbitrary(Gen.choose(1, 99).map(_.toDouble)) // num classes must be between 0 and 100
+    Arbitrary(Gen.choose(1, 99).map(_.toDouble)) // num classes must be between 0 and 100 for the test
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0)) // vector must not be empty for RandomForestClassifier
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x2: X2[Double, Vector] =>
-      val rf = TypedRandomForestClassifier.create[X2[Double, Vector]]()
+      val rf = TypedRandomForestClassifier[X2[Double, Vector]]
       val ds = TypedDataset.create(Seq(x2))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X5[Double, Vector, Vector, Vector, Double]]
@@ -26,7 +26,7 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatcher
     }
 
     val prop2 = forAll { x2: X2[Vector, Double] =>
-      val rf = TypedRandomForestClassifier.create[X2[Vector, Double]]()
+      val rf = TypedRandomForestClassifier[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x2))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X5[Vector, Double, Vector, Vector, Double]]
@@ -35,7 +35,7 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatcher
     }
 
     def prop3[A: TypedEncoder: Arbitrary] = forAll { x3: X3[Vector, Double, A] =>
-      val rf = TypedRandomForestClassifier.create[X2[Vector, Double]]()
+      val rf = TypedRandomForestClassifier[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x3))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X6[Vector, Double, A, Vector, Vector, Double]]
@@ -50,7 +50,7 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatcher
   }
 
   test("param setting is retained") {
-    val rf = TypedRandomForestClassifier.create[X2[Double, Vector]]()
+    val rf = TypedRandomForestClassifier[X2[Double, Vector]]
       .setNumTrees(10)
       .setMaxBins(100)
       .setFeatureSubsetStrategy(FeatureSubsetStrategy.All)

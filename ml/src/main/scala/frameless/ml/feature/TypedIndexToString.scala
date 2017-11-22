@@ -18,7 +18,7 @@ final class TypedIndexToString[Inputs] private[ml](indexToString: IndexToString,
 object TypedIndexToString {
   case class Outputs(originalOutput: String)
 
-  def create[Inputs](labels: Array[String])
+  def apply[Inputs](labels: Array[String])
                     (implicit inputsChecker: UnaryInputsChecker[Inputs, Double]): TypedIndexToString[Inputs] = {
     new TypedIndexToString[Inputs](new IndexToString().setLabels(labels), inputsChecker.inputCol)
   }

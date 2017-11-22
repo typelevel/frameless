@@ -11,7 +11,7 @@ class TypedVectorAssemblerTests extends FramelessMlSuite {
 
   test(".transform() returns a correct TypedTransformer") {
     def prop[A: TypedEncoder: Arbitrary] = forAll { x5: X5[Int, Long, Double, Boolean, A] =>
-      val assembler = TypedVectorAssembler.create[X4[Int, Long, Double, Boolean]]()
+      val assembler = TypedVectorAssembler[X4[Int, Long, Double, Boolean]]
       val ds = TypedDataset.create(Seq(x5))
       val ds2 = assembler.transform(ds).run().as[X6[Int, Long, Double, Boolean, A, Vector]]
 

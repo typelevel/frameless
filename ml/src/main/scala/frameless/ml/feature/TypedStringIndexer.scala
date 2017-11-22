@@ -37,8 +37,7 @@ object TypedStringIndexer {
     }
   }
 
-  def create[Inputs]()
-                    (implicit inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {
+  def apply[Inputs](implicit inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {
     new TypedStringIndexer[Inputs](new StringIndexer(), inputsChecker.inputCol)
   }
 }

@@ -15,7 +15,7 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x2: X2[Double, Vector] =>
-      val rf = TypedRandomForestRegressor.create[X2[Double, Vector]]()
+      val rf = TypedRandomForestRegressor[X2[Double, Vector]]
       val ds = TypedDataset.create(Seq(x2))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X3[Double, Vector, Double]]
@@ -24,7 +24,7 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
     }
 
     val prop2 = forAll { x2: X2[Vector, Double] =>
-      val rf = TypedRandomForestRegressor.create[X2[Vector, Double]]()
+      val rf = TypedRandomForestRegressor[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x2))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X3[Vector, Double, Double]]
@@ -33,7 +33,7 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
     }
 
     def prop3[A: TypedEncoder: Arbitrary] = forAll { x3: X3[Vector, Double, A] =>
-      val rf = TypedRandomForestRegressor.create[X2[Vector, Double]]()
+      val rf = TypedRandomForestRegressor[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x3))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).run().as[X4[Vector, Double, A, Double]]
@@ -48,7 +48,7 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers
   }
 
   test("param setting is retained") {
-    val rf = TypedRandomForestRegressor.create[X2[Double, Vector]]()
+    val rf = TypedRandomForestRegressor[X2[Double, Vector]]
       .setNumTrees(10)
       .setMaxBins(100)
       .setFeatureSubsetStrategy(FeatureSubsetStrategy.All)
