@@ -3,11 +3,8 @@ package ml
 package feature
 
 import frameless.ml.feature.TypedStringIndexer.HandleInvalid
-import frameless.ml.internals.SelectorByValue
+import frameless.ml.internals.UnaryInputsChecker
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
-import shapeless.ops.hlist.Length
-import shapeless.{HList, LabelledGeneric, Nat, Witness}
-import scala.annotation.implicitNotFound
 
 final class TypedStringIndexer[Inputs] private[ml](stringIndexer: StringIndexer, inputCol: String)
   extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
@@ -41,30 +38,7 @@ object TypedStringIndexer {
   }
 
   def create[Inputs]()
-                    (implicit inputsChecker: TypedStringIndexerInputsChecker[Inputs]): TypedStringIndexer[Inputs] = {
+                    (implicit inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {
     new TypedStringIndexer[Inputs](new StringIndexer(), inputsChecker.inputCol)
-  }
-}
-
-@implicitNotFound(
-  msg = "Cannot prove that ${Inputs} is a valid input type for TypedStringIndexer. " +
-    "Input type must only contain a field of type String (string to index)"
-)
-private[ml] trait TypedStringIndexerInputsChecker[Inputs] {
-  val inputCol: String
-}
-
-private[ml] object TypedStringIndexerInputsChecker {
-  implicit def checkInputs[
-  Inputs,
-  InputsRec <: HList,
-  InputK <: Symbol](
-    implicit
-    inputsGen: LabelledGeneric.Aux[Inputs, InputsRec],
-    sizeCheck: Length.Aux[InputsRec, Nat._1],
-    labelSelect: SelectorByValue.Aux[InputsRec, String, InputK],
-    inputW: Witness.Aux[InputK]
-  ): TypedStringIndexerInputsChecker[Inputs] = new TypedStringIndexerInputsChecker[Inputs] {
-    val inputCol: String = inputW.value.name
   }
 }

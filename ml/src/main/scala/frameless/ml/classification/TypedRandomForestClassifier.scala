@@ -3,12 +3,9 @@ package ml
 package classification
 
 import frameless.ml.classification.TypedRandomForestClassifier.FeatureSubsetStrategy
-import frameless.ml.internals.SelectorByValue
+import frameless.ml.internals.TreesInputsChecker
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.linalg.Vector
-import shapeless.ops.hlist.Length
-import shapeless.{HList, LabelledGeneric, Nat, Witness}
-import scala.annotation.implicitNotFound
 
 final class TypedRandomForestClassifier[Inputs] private[ml](
   rf: RandomForestClassifier,
@@ -65,39 +62,8 @@ object TypedRandomForestClassifier {
     }
   }
 
-  def create[Inputs]()
-                    (implicit inputsChecker: TypedRandomForestClassifierInputsChecker[Inputs])
-  : TypedRandomForestClassifier[Inputs] = {
+  def create[Inputs]()(implicit inputsChecker: TreesInputsChecker[Inputs]): TypedRandomForestClassifier[Inputs] = {
     new TypedRandomForestClassifier(new RandomForestClassifier(), inputsChecker.labelCol, inputsChecker.featuresCol)
   }
 }
 
-@implicitNotFound(
-  msg = "Cannot prove that ${Inputs} is a valid input type for TypedRandomForestClassifier. " +
-    "Input type must only contain a field of type Double (label) and a field of type Vector (features)."
-)
-private[ml] trait TypedRandomForestClassifierInputsChecker[Inputs] {
-  val labelCol: String
-  val featuresCol: String
-}
-
-private[ml] object TypedRandomForestClassifierInputsChecker {
-  implicit def checkInputs[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol](
-    implicit
-    inputsGen: LabelledGeneric.Aux[Inputs, InputsRec],
-    sizeCheck: Length.Aux[InputsRec, Nat._2],
-    labelSelect: SelectorByValue.Aux[InputsRec, Double, LabelK],
-    labelW: Witness.Aux[LabelK],
-    featuresSelect: SelectorByValue.Aux[InputsRec, Vector, FeaturesK],
-    featuresW: Witness.Aux[FeaturesK]
-  ): TypedRandomForestClassifierInputsChecker[Inputs] = {
-    new TypedRandomForestClassifierInputsChecker[Inputs] {
-      val labelCol: String = labelW.value.name
-      val featuresCol: String = featuresW.value.name
-    }
-  }
-}

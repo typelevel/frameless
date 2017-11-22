@@ -28,8 +28,7 @@ object TypedVectorAssembler {
 }
 
 @implicitNotFound(
-  msg = "Cannot prove that ${Inputs} is a valid input type for TypedVectorAssembler. " +
-    "Input type must only contain numeric or boolean types."
+  msg = "Cannot prove that ${Inputs} is a valid input type. Input type must only contain fields of numeric or boolean types."
 )
 private[ml] trait TypedVectorAssemblerInputsChecker[Inputs] {
   val inputCols: Seq[String]
