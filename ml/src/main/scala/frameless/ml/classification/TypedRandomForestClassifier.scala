@@ -2,8 +2,8 @@ package frameless
 package ml
 package classification
 
-import frameless.ml.classification.TypedRandomForestClassifier.FeatureSubsetStrategy
 import frameless.ml.internals.TreesInputsChecker
+import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.linalg.Vector
 
@@ -37,30 +37,6 @@ final class TypedRandomForestClassifier[Inputs] private[ml](
 
 object TypedRandomForestClassifier {
   case class Outputs(rawPrediction: Vector, probability: Vector, prediction: Double)
-
-  sealed trait FeatureSubsetStrategy {
-    val sparkValue: String
-  }
-  object FeatureSubsetStrategy {
-    case object Auto extends FeatureSubsetStrategy {
-      val sparkValue = "auto"
-    }
-    case object All extends FeatureSubsetStrategy {
-      val sparkValue = "all"
-    }
-    case object OneThird extends FeatureSubsetStrategy {
-      val sparkValue = "onethird"
-    }
-    case object Sqrt extends FeatureSubsetStrategy {
-      val sparkValue = "sqrt"
-    }
-    case object Log2 extends FeatureSubsetStrategy {
-      val sparkValue = "log2"
-    }
-    case class StrictlyPositiveDouble(value: Double) extends FeatureSubsetStrategy {
-      val sparkValue = value.toString
-    }
-  }
 
   def apply[Inputs](implicit inputsChecker: TreesInputsChecker[Inputs]): TypedRandomForestClassifier[Inputs] = {
     new TypedRandomForestClassifier(new RandomForestClassifier(), inputsChecker.labelCol, inputsChecker.featuresCol)

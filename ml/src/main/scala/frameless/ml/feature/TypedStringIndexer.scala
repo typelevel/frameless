@@ -22,19 +22,11 @@ final class TypedStringIndexer[Inputs] private[ml](stringIndexer: StringIndexer,
 object TypedStringIndexer {
   case class Outputs(indexedOutput: Double)
 
-  sealed trait HandleInvalid {
-    val sparkValue: String
-  }
+  sealed abstract class HandleInvalid(val sparkValue: String)
   object HandleInvalid {
-    case object Error extends HandleInvalid {
-      val sparkValue = "error"
-    }
-    case object Skip extends HandleInvalid {
-      val sparkValue = "skip"
-    }
-    case object Keep extends HandleInvalid {
-      val sparkValue = "keep"
-    }
+    case object Error extends HandleInvalid("error")
+    case object Skip extends HandleInvalid("skip")
+    case object Keep extends HandleInvalid("keep")
   }
 
   def apply[Inputs](implicit inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {

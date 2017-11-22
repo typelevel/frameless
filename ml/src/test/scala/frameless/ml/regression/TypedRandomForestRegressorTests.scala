@@ -2,9 +2,9 @@ package frameless
 package ml
 package regression
 
+import frameless.ml.params.trees.FeatureSubsetStrategy
 import shapeless.test.illTyped
 import org.apache.spark.ml.linalg._
-import frameless.ml.regression.TypedRandomForestRegressor.FeatureSubsetStrategy
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 import org.scalatest.MustMatchers

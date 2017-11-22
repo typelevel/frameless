@@ -3,7 +3,7 @@ package ml
 package regression
 
 import frameless.ml.internals.TreesInputsChecker
-import frameless.ml.regression.TypedRandomForestRegressor.FeatureSubsetStrategy
+import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
 
 final class TypedRandomForestRegressor[Inputs] private[ml](
@@ -34,30 +34,6 @@ final class TypedRandomForestRegressor[Inputs] private[ml](
 
 object TypedRandomForestRegressor {
   case class Outputs(prediction: Double)
-
-  sealed trait FeatureSubsetStrategy {
-    val sparkValue: String
-  }
-  object FeatureSubsetStrategy {
-    case object Auto extends FeatureSubsetStrategy {
-      val sparkValue = "auto"
-    }
-    case object All extends FeatureSubsetStrategy {
-      val sparkValue = "all"
-    }
-    case object OneThird extends FeatureSubsetStrategy {
-      val sparkValue = "onethird"
-    }
-    case object Sqrt extends FeatureSubsetStrategy {
-      val sparkValue = "sqrt"
-    }
-    case object Log2 extends FeatureSubsetStrategy {
-      val sparkValue = "log2"
-    }
-    case class StrictlyPositiveDouble(value: Double) extends FeatureSubsetStrategy {
-      val sparkValue = value.toString
-    }
-  }
 
   def apply[Inputs](implicit inputsChecker: TreesInputsChecker[Inputs])
   : TypedRandomForestRegressor[Inputs] = {
