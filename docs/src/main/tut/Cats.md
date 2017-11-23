@@ -6,9 +6,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
 
 val conf: SparkConf = new SparkConf().setMaster("local[4]").setAppName("cats.bec test")
-val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
-implicit val sc: SC = spark.sparkContext
-implicit val sqlContext = spark.sqlContext
+implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+val sc: SC = spark.sparkContext
 
 spark.sparkContext.setLogLevel("WARN")
 System.clearProperty("spark.master.port")
