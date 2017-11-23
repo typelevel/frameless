@@ -14,6 +14,7 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatcher
     Arbitrary(Gen.choose(1, 99).map(_.toDouble)) // num classes must be between 0 and 100 for the test
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0)) // vector must not be empty for RandomForestClassifier
+  import Generators.arbTreesFeaturesSubsetStrategy
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x2: X2[Double, Vector] =>
@@ -50,19 +51,31 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatcher
   }
 
   test("param setting is retained") {
-    val rf = TypedRandomForestClassifier[X2[Double, Vector]]
-      .setNumTrees(10)
-      .setMaxBins(100)
-      .setFeatureSubsetStrategy(FeatureSubsetStrategy.All)
-      .setMaxDepth(10)
+    val prop = forAll { featureSubsetStrategy: FeatureSubsetStrategy =>
+      val rf = TypedRandomForestClassifier[X2[Double, Vector]]
+        .setNumTrees(10)
+        .setMaxBins(100)
+        .setFeatureSubsetStrategy(featureSubsetStrategy)
+        .setMaxDepth(10)
+        .setMaxMemoryInMB(100)
+        .setMinInfoGain(0.1D)
+        .setMinInstancesPerNode(2)
+        .setSubsamplingRate(0.9D)
 
-    val ds = TypedDataset.create(Seq(X2(0D, Vectors.dense(0D))))
-    val model = rf.fit(ds).run()
+      val ds = TypedDataset.create(Seq(X2(0D, Vectors.dense(0D))))
+      val model = rf.fit(ds).run()
 
-    model.transformer.getNumTrees mustEqual 10
-    model.transformer.getMaxBins mustEqual 100
-    model.transformer.getFeatureSubsetStrategy mustEqual "all"
-    model.transformer.getMaxDepth mustEqual 10
+      model.transformer.getNumTrees == 10 &&
+        model.transformer.getMaxBins == 100 &&
+        model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
+        model.transformer.getMaxDepth == 10 &&
+        model.transformer.getMaxMemoryInMB == 100 &&
+        model.transformer.getMinInfoGain == 0.1D &&
+        model.transformer.getMinInstancesPerNode == 2 &&
+        model.transformer.getSubsamplingRate == 0.9D
+    }
+
+    check(prop)
   }
 
   test("create() compiles only with correct inputs") {

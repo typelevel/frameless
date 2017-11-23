@@ -1,6 +1,7 @@
 package frameless
 package ml
 
+import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
 import org.scalacheck.{Arbitrary, Gen}
 
@@ -24,6 +25,20 @@ object Generators {
         }
       } yield matrix
     }
+  }
+
+  implicit val arbTreesFeaturesSubsetStrategy: Arbitrary[FeatureSubsetStrategy] = Arbitrary {
+    val genRatio = Gen.choose(0D, 1D).suchThat(_ > 0D).map(FeatureSubsetStrategy.Ratio)
+    val genNumberOfFeatures = Gen.choose(1, Int.MaxValue).map(FeatureSubsetStrategy.NumberOfFeatures)
+
+    Gen.oneOf(Gen.const(FeatureSubsetStrategy.All),
+      Gen.const(FeatureSubsetStrategy.All),
+      Gen.const(FeatureSubsetStrategy.Log2),
+      Gen.const(FeatureSubsetStrategy.OneThird),
+      Gen.const(FeatureSubsetStrategy.Sqrt),
+      genRatio,
+      genNumberOfFeatures
+    )
   }
 
 }

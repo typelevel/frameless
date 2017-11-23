@@ -2,7 +2,8 @@ package frameless
 package ml
 package feature
 
-import org.scalacheck.Arbitrary
+import frameless.ml.feature.TypedStringIndexer.HandleInvalid
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
 import org.scalatest.MustMatchers
 import shapeless.test.illTyped
@@ -24,12 +25,20 @@ class TypedStringIndexerTests extends FramelessMlSuite with MustMatchers {
   }
 
   test("param setting is retained") {
-    val indexer = TypedStringIndexer[X1[String]]
-      .setHandleInvalid(TypedStringIndexer.HandleInvalid.Keep)
-    val ds = TypedDataset.create(Seq(X1("foo")))
-    val model = indexer.fit(ds).run()
+    implicit val arbHandleInvalid: Arbitrary[HandleInvalid] = Arbitrary {
+      Gen.oneOf(HandleInvalid.Keep, HandleInvalid.Error, HandleInvalid.Skip)
+    }
 
-    model.transformer.getHandleInvalid mustEqual "keep"
+    val prop = forAll { handleInvalid: HandleInvalid =>
+      val indexer = TypedStringIndexer[X1[String]]
+        .setHandleInvalid(handleInvalid)
+      val ds = TypedDataset.create(Seq(X1("foo")))
+      val model = indexer.fit(ds).run()
+
+      model.transformer.getHandleInvalid == handleInvalid.sparkValue
+    }
+
+    check(prop)
   }
 
   test("create() compiles only with correct inputs") {

@@ -10,5 +10,6 @@ object FeatureSubsetStrategy {
   case object OneThird extends FeatureSubsetStrategy("onethird")
   case object Sqrt extends FeatureSubsetStrategy("sqrt")
   case object Log2 extends FeatureSubsetStrategy("log2")
-  case class StrictlyPositiveDouble(value: Double) extends FeatureSubsetStrategy(value.toString)
+  case class Ratio(value: Double) extends FeatureSubsetStrategy(value.toString)
+  case class NumberOfFeatures(value: Int) extends FeatureSubsetStrategy(value.toString)
 }
