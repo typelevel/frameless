@@ -157,6 +157,19 @@ object TypedEncoder {
       Invoke(path, "toBigDecimal", jvmRepr)
   }
 
+  implicit val javaBigDecimalEncoder: TypedEncoder[java.math.BigDecimal] = new TypedEncoder[java.math.BigDecimal] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.math.BigDecimal]
+    def catalystRepr: DataType = DecimalType.SYSTEM_DEFAULT
+
+    def toCatalyst(path: Expression): Expression =
+      StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil)
+
+    def fromCatalyst(path: Expression): Expression =
+      Invoke(path, "toJavaBigDecimal", jvmRepr)
+  }
+
   implicit val sqlDate: TypedEncoder[SQLDate] = new TypedEncoder[SQLDate] {
     def nullable: Boolean = false
 
