@@ -9,8 +9,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 
 val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
-val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
-implicit val sqlContext = spark.sqlContext
+implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
 spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._

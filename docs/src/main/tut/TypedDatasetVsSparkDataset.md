@@ -5,7 +5,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 val conf = new SparkConf().setMaster("local[*]").setAppName("test").set("spark.ui.enabled", "false").set("spark.app.id", "tut-dataset")
-val spark = SparkSession.builder().config(conf).getOrCreate()
+implicit val spark = SparkSession.builder().config(conf).getOrCreate()
 
 System.clearProperty("spark.master.port")
 System.clearProperty("spark.driver.port")
