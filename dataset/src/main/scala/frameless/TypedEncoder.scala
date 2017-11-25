@@ -94,7 +94,6 @@ object TypedEncoder {
 
   implicit val charEncoder: TypedEncoder[Char] = new TypedEncoder[Char] {
     // tricky because while Char is primitive type, Spark doesn't support it
-
     implicit val charAsString: Injection[java.lang.Character, String] = new Injection[java.lang.Character, String] {
       def apply(a: java.lang.Character): String = String.valueOf(a)
       def invert(b: String): java.lang.Character = {
@@ -196,176 +195,172 @@ object TypedEncoder {
       )
   }
 
-  implicit def arrayEncoder[T: ClassTag](
-    implicit
-    encodeT: TypedEncoder[T]
-  ): TypedEncoder[Array[T]] = new TypedEncoder[Array[T]] {
-    def nullable: Boolean = false
-
-    def jvmRepr: DataType = encodeT.jvmRepr match {
-      case ByteType => BinaryType
-      case _        => FramelessInternals.objectTypeFor[Array[T]]
-    }
-
-    def catalystRepr: DataType = encodeT.jvmRepr match {
-      case ByteType => BinaryType
-      case _        => ArrayType(encodeT.catalystRepr, encodeT.nullable)
-    }
-
-    def toCatalyst(path: Expression): Expression =
-      encodeT.jvmRepr match {
-        case IntegerType | LongType | DoubleType | FloatType | ShortType | BooleanType  =>
-          StaticInvoke(classOf[UnsafeArrayData], catalystRepr, "fromPrimitiveArray", path :: Nil)
-
-        case ByteType => path
-
-        case otherwise => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
-      }
-
-    def fromCatalyst(path: Expression): Expression =
-      encodeT.jvmRepr match {
-        case IntegerType => Invoke(path, "toIntArray", jvmRepr)
-        case LongType => Invoke(path, "toLongArray", jvmRepr)
-        case DoubleType => Invoke(path, "toDoubleArray", jvmRepr)
-        case FloatType => Invoke(path, "toFloatArray", jvmRepr)
-        case ShortType => Invoke(path, "toShortArray", jvmRepr)
-        case BooleanType => Invoke(path, "toBooleanArray", jvmRepr)
-
-        case ByteType => path
-
-        case otherwise =>
-          Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
-      }
-  }
-
-  implicit def collectionEncoder[C[X] <: Seq[X], T](
-    implicit
-    encodeT: TypedEncoder[T],
-    CT: ClassTag[C[T]]): TypedEncoder[C[T]] =
-    new TypedEncoder[C[T]] {
+  implicit def arrayEncoder[T: ClassTag](implicit encodeT: TypedEncoder[T]): TypedEncoder[Array[T]] =
+    new TypedEncoder[Array[T]] {
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
+      def jvmRepr: DataType = encodeT.jvmRepr match {
+        case ByteType => BinaryType
+        case _        => FramelessInternals.objectTypeFor[Array[T]]
+      }
 
-      def catalystRepr: DataType = ArrayType(encodeT.catalystRepr, encodeT.nullable)
+      def catalystRepr: DataType = encodeT.jvmRepr match {
+        case ByteType => BinaryType
+        case _        => ArrayType(encodeT.catalystRepr, encodeT.nullable)
+      }
 
       def toCatalyst(path: Expression): Expression =
-        if (ScalaReflection.isNativeType(encodeT.jvmRepr))
-          NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
-        else MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+        encodeT.jvmRepr match {
+          case IntegerType | LongType | DoubleType | FloatType | ShortType | BooleanType  =>
+            StaticInvoke(classOf[UnsafeArrayData], catalystRepr, "fromPrimitiveArray", path :: Nil)
+
+          case ByteType => path
+
+          case otherwise => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+        }
 
       def fromCatalyst(path: Expression): Expression =
-        MapObjects(
-          encodeT.fromCatalyst,
-          path,
-          encodeT.catalystRepr,
-          encodeT.nullable,
-          Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
-        )
+        encodeT.jvmRepr match {
+          case IntegerType => Invoke(path, "toIntArray", jvmRepr)
+          case LongType => Invoke(path, "toLongArray", jvmRepr)
+          case DoubleType => Invoke(path, "toDoubleArray", jvmRepr)
+          case FloatType => Invoke(path, "toFloatArray", jvmRepr)
+          case ShortType => Invoke(path, "toShortArray", jvmRepr)
+          case BooleanType => Invoke(path, "toBooleanArray", jvmRepr)
+
+          case ByteType => path
+
+          case otherwise =>
+            Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
+        }
     }
 
-  implicit def mapEncoder[A: NotCatalystNullable, B](
-    implicit
-    encodeA: TypedEncoder[A],
-    encodeB: TypedEncoder[B]
-  ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
-    def nullable: Boolean = false
+  implicit def collectionEncoder[C[X] <: Seq[X], T]
+    (implicit
+      encodeT: TypedEncoder[T],
+      CT: ClassTag[C[T]]
+    ): TypedEncoder[C[T]] =
+      new TypedEncoder[C[T]] {
+        def nullable: Boolean = false
 
-    def jvmRepr: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
+        def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
 
-    def catalystRepr: DataType = MapType(encodeA.catalystRepr, encodeB.catalystRepr, encodeB.nullable)
+        def catalystRepr: DataType = ArrayType(encodeT.catalystRepr, encodeT.nullable)
 
-    def fromCatalyst(path: Expression): Expression = {
-      val keyArrayType = ArrayType(encodeA.catalystRepr, containsNull = false)
-      val keyData = Invoke(
-        MapObjects(
-          encodeA.fromCatalyst,
-          Invoke(path, "keyArray", keyArrayType),
-          encodeA.catalystRepr
-        ),
-        "array",
-        FramelessInternals.objectTypeFor[Array[Any]]
-      )
+        def toCatalyst(path: Expression): Expression =
+          if (ScalaReflection.isNativeType(encodeT.jvmRepr))
+            NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
+          else MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
 
-      val valueArrayType = ArrayType(encodeB.catalystRepr, encodeB.nullable)
-      val valueData = Invoke(
-        MapObjects(
-          encodeB.fromCatalyst,
-          Invoke(path, "valueArray", valueArrayType),
-          encodeB.catalystRepr
-        ),
-        "array",
-        FramelessInternals.objectTypeFor[Array[Any]]
-      )
-
-      StaticInvoke(
-        ArrayBasedMapData.getClass,
-        jvmRepr,
-        "toScalaMap",
-        keyData :: valueData :: Nil)
-    }
-
-    def toCatalyst(path: Expression): Expression = ExternalMapToCatalyst(
-      path,
-      encodeA.jvmRepr,
-      encodeA.toCatalyst,
-      encodeB.jvmRepr,
-      encodeB.toCatalyst,
-      encodeB.nullable)
-
-  }
-
-  implicit def optionEncoder[A](
-    implicit
-    underlying: TypedEncoder[A]
-  ): TypedEncoder[Option[A]] = new TypedEncoder[Option[A]] {
-    def nullable: Boolean = true
-
-    def jvmRepr: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
-    def catalystRepr: DataType = underlying.catalystRepr
-
-    def toCatalyst(path: Expression): Expression = {
-      // for primitive types we must manually unbox the value of the object
-      underlying.jvmRepr match {
-        case IntegerType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Integer], path),
-            "intValue",
-            IntegerType)
-        case LongType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Long], path),
-            "longValue",
-            LongType)
-        case DoubleType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Double], path),
-            "doubleValue",
-            DoubleType)
-        case FloatType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Float], path),
-            "floatValue",
-            FloatType)
-        case ShortType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Short], path),
-            "shortValue",
-            ShortType)
-        case ByteType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Byte], path),
-            "byteValue",
-            ByteType)
-        case BooleanType =>
-          Invoke(
-            UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Boolean], path),
-            "booleanValue",
-            BooleanType)
-
-        case other => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
+        def fromCatalyst(path: Expression): Expression =
+          MapObjects(
+            encodeT.fromCatalyst,
+            path,
+            encodeT.catalystRepr,
+            encodeT.nullable,
+            Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
+          )
       }
+
+  implicit def mapEncoder[A: NotCatalystNullable, B]
+    (implicit
+      encodeA: TypedEncoder[A],
+      encodeB: TypedEncoder[B]
+    ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
+      def nullable: Boolean = false
+
+      def jvmRepr: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
+
+      def catalystRepr: DataType = MapType(encodeA.catalystRepr, encodeB.catalystRepr, encodeB.nullable)
+
+      def fromCatalyst(path: Expression): Expression = {
+        val keyArrayType = ArrayType(encodeA.catalystRepr, containsNull = false)
+        val keyData = Invoke(
+          MapObjects(
+            encodeA.fromCatalyst,
+            Invoke(path, "keyArray", keyArrayType),
+            encodeA.catalystRepr
+          ),
+          "array",
+          FramelessInternals.objectTypeFor[Array[Any]]
+        )
+
+        val valueArrayType = ArrayType(encodeB.catalystRepr, encodeB.nullable)
+        val valueData = Invoke(
+          MapObjects(
+            encodeB.fromCatalyst,
+            Invoke(path, "valueArray", valueArrayType),
+            encodeB.catalystRepr
+          ),
+          "array",
+          FramelessInternals.objectTypeFor[Array[Any]]
+        )
+
+        StaticInvoke(
+          ArrayBasedMapData.getClass,
+          jvmRepr,
+          "toScalaMap",
+          keyData :: valueData :: Nil)
+      }
+
+      def toCatalyst(path: Expression): Expression = ExternalMapToCatalyst(
+        path,
+        encodeA.jvmRepr,
+        encodeA.toCatalyst,
+        encodeB.jvmRepr,
+        encodeB.toCatalyst,
+        encodeB.nullable)
     }
+
+  implicit def optionEncoder[A](implicit underlying: TypedEncoder[A]): TypedEncoder[Option[A]] =
+    new TypedEncoder[Option[A]] {
+      def nullable: Boolean = true
+
+      def jvmRepr: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
+      def catalystRepr: DataType = underlying.catalystRepr
+
+      def toCatalyst(path: Expression): Expression = {
+        // for primitive types we must manually unbox the value of the object
+        underlying.jvmRepr match {
+          case IntegerType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Integer], path),
+              "intValue",
+              IntegerType)
+          case LongType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Long], path),
+              "longValue",
+              LongType)
+          case DoubleType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Double], path),
+              "doubleValue",
+              DoubleType)
+          case FloatType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Float], path),
+              "floatValue",
+              FloatType)
+          case ShortType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Short], path),
+              "shortValue",
+              ShortType)
+          case ByteType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Byte], path),
+              "byteValue",
+              ByteType)
+          case BooleanType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Boolean], path),
+              "booleanValue",
+              BooleanType)
+
+          case other => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
+        }
+      }
 
     def fromCatalyst(path: Expression): Expression =
       WrapOption(underlying.fromCatalyst(path), underlying.jvmRepr)
@@ -391,12 +386,12 @@ object TypedEncoder {
       }
 
   /** Encodes things as records if there is not Injection defined */
-  implicit def usingDerivation[F, G <: HList](
-    implicit
-    lgen: LabelledGeneric.Aux[F, G],
-    recordEncoder: Lazy[RecordEncoderFields[G]],
-    classTag: ClassTag[F]
-  ): TypedEncoder[F] = new RecordEncoder[F, G]
+  implicit def usingDerivation[F, G <: HList]
+    (implicit
+      i0: LabelledGeneric.Aux[F, G],
+      i1: Lazy[RecordEncoderFields[G]],
+      i2: ClassTag[F]
+    ): TypedEncoder[F] = new RecordEncoder[F, G]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {

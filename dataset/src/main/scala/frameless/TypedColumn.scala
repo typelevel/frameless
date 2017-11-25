@@ -412,7 +412,7 @@ sealed class TypedAggregate[T, U](val expr: Expression)(
   val uencoder: TypedEncoder[U]
 ) extends UntypedExpression[T] {
 
-  def this(column: Column)(implicit uenc: TypedEncoder[U]) {
+  def this(column: Column)(implicit e: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
   }
 }
@@ -428,29 +428,25 @@ object TypedColumn {
   trait ExistsMany[T, K <: HList, V]
 
   object ExistsMany {
-    implicit def deriveCons[T, KH, KT <: HList, V0, V1](
-      implicit
-      head: Exists[T, KH, V0],
-      tail: ExistsMany[V0, KT, V1]
-    ): ExistsMany[T, KH :: KT, V1] = new ExistsMany[T, KH :: KT, V1] {}
+    implicit def deriveCons[T, KH, KT <: HList, V0, V1]
+      (implicit
+        head: Exists[T, KH, V0],
+        tail: ExistsMany[V0, KT, V1]
+      ): ExistsMany[T, KH :: KT, V1] =
+        new ExistsMany[T, KH :: KT, V1] {}
 
-    implicit def deriveHNil[T, K, V](
-      implicit
-      head: Exists[T, K, V]
-    ): ExistsMany[T, K :: HNil, V] = new ExistsMany[T, K :: HNil, V] {}
+    implicit def deriveHNil[T, K, V](implicit head: Exists[T, K, V]): ExistsMany[T, K :: HNil, V] =
+      new ExistsMany[T, K :: HNil, V] {}
   }
 
   object Exists {
-    def apply[T, V](column: Witness)(
-      implicit
-      exists: Exists[T, column.T, V]
-    ): Exists[T, column.T, V] = exists
+    def apply[T, V](column: Witness)(implicit e: Exists[T, column.T, V]): Exists[T, column.T, V] = e
 
-    implicit def deriveRecord[T, H <: HList, K, V](
-      implicit
-      lgen: LabelledGeneric.Aux[T, H],
-      selector: Selector.Aux[H, K, V]
-    ): Exists[T, K, V] = new Exists[T, K, V] {}
+    implicit def deriveRecord[T, H <: HList, K, V]
+      (implicit
+        i0: LabelledGeneric.Aux[T, H],
+        i1: Selector.Aux[H, K, V]
+      ): Exists[T, K, V] = new Exists[T, K, V] {}
   }
 
   implicit class OrderedTypedColumnSyntax[T, U: CatalystOrdered](col: TypedColumn[T, U]) {

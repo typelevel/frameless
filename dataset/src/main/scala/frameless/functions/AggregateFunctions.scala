@@ -145,10 +145,7 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def stddevPop[A, T](column: TypedColumn[T, A])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[T, Option[Double]] = {
+  def stddevPop[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
     new TypedAggregate[T, Option[Double]](
@@ -164,10 +161,7 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def stddevSamp[A, T](column: TypedColumn[T, A])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[T, Option[Double]] = {
+  def stddevSamp[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double] ): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
 
     new TypedAggregate[T, Option[Double]](
@@ -226,18 +220,17 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double],
-    evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column1.uencoder
-    implicit val c2 = column2.uencoder
-
-    new TypedAggregate[T, Option[Double]](
-      untyped.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
-    )
-  }
+  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
+    (implicit
+      i0: CatalystCast[A, Double],
+      i1: CatalystCast[B, Double]
+    ): TypedAggregate[T, Option[Double]] = {
+      implicit val c1 = column1.uencoder
+      implicit val c2 = column2.uencoder
+      new TypedAggregate[T, Option[Double]](
+        untyped.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
+      )
+    }
 
   /**
     * Aggregate function: returns the covariance of two collumns.
@@ -247,18 +240,17 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double],
-    evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column1.uencoder
-    implicit val c2 = column2.uencoder
-
-    new TypedAggregate[T, Option[Double]](
-      untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
-    )
-  }
+  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
+    (implicit
+      i0: CatalystCast[A, Double],
+      i1: CatalystCast[B, Double]
+    ): TypedAggregate[T, Option[Double]] = {
+      implicit val c1 = column1.uencoder
+      implicit val c2 = column2.uencoder
+      new TypedAggregate[T, Option[Double]](
+        untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
+      )
+    }
 
   /**
     * Aggregate function: returns the covariance of two columns.
@@ -268,18 +260,17 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double],
-    evCanBeDoubleB: CatalystCast[B, Double]
-  ): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column1.uencoder
-    implicit val c2 = column2.uencoder
-
-    new TypedAggregate[T, Option[Double]](
-      untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
-    )
-  }
+  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
+    (implicit
+      i0: CatalystCast[A, Double],
+      i1: CatalystCast[B, Double]
+    ): TypedAggregate[T, Option[Double]] = {
+      implicit val c1 = column1.uencoder
+      implicit val c2 = column2.uencoder
+      new TypedAggregate[T, Option[Double]](
+        untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
+      )
+    }
 
 
   /**
@@ -290,12 +281,8 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def kurtosis[A, T](column: TypedColumn[T, A])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[T, Option[Double]] = {
+  def kurtosis[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
-
     new TypedAggregate[T, Option[Double]](
       untyped.kurtosis(column.cast[Double].untyped)
     )
@@ -309,12 +296,8 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def skewness[A, T](column: TypedColumn[T, A])(
-    implicit
-    evCanBeDoubleA: CatalystCast[A, Double]
-  ): TypedAggregate[T, Option[Double]] = {
+  def skewness[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
-
     new TypedAggregate[T, Option[Double]](
       untyped.skewness(column.cast[Double].untyped)
     )
