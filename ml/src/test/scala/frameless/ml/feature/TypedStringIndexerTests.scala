@@ -15,7 +15,7 @@ class TypedStringIndexerTests extends FramelessMlSuite with MustMatchers {
       val indexer = TypedStringIndexer[X1[String]]
       val ds = TypedDataset.create(Seq(x2))
       val model = indexer.fit(ds).run()
-      val resultDs = model.transform(ds).run().as[X3[String, A, Double]]
+      val resultDs = model.transform(ds).as[X3[String, A, Double]]
 
       resultDs.collect.run() == Seq(X3(x2.a, x2.b, 0D))
     }

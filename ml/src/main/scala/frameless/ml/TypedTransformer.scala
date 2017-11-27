@@ -22,14 +22,10 @@ trait AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer] extend
     i2: Generic.Aux[Outputs, OutputsVals],
     i3: Prepend.Aux[TVals, OutputsVals, OutVals],
     i4: Tupler.Aux[OutVals, Out],
-    i5: TypedEncoder[Out],
-    F: SparkDelay[F]
-  ): F[TypedDataset[Out]] = {
-    implicit val sparkSession = ds.dataset.sparkSession
-    F.delay {
-      val transformed = transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
-      TypedDataset.create[Out](transformed)
-    }
+    i5: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val transformed = transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](transformed)
   }
 
 }
