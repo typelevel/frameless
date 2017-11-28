@@ -5,8 +5,7 @@ import frameless.ops.SmartProject
 import org.apache.spark.ml.{Estimator, Model}
 
 /**
-  * A TypedEstimator `fit` method takes as input a TypedDataset containing `Inputs` and
-  * return an AppendTransformer with `Inputs` as inputs and `Outputs` as outputs
+  * A TypedEstimator fits models to data.
   */
 trait TypedEstimator[Inputs, Outputs, M <: Model[M]] {
   val estimator: Estimator[M]

@@ -7,6 +7,12 @@ import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.classification.{RandomForestClassificationModel, RandomForestClassifier}
 import org.apache.spark.ml.linalg.Vector
 
+/**
+  * <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a> learning algorithm for
+  * classification.
+  * It supports both binary and multiclass labels, as well as both continuous and categorical
+  * features.
+  */
 final class TypedRandomForestClassifier[Inputs] private[ml](
   rf: RandomForestClassifier,
   labelCol: String,

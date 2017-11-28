@@ -6,6 +6,9 @@ import org.apache.spark.ml.Transformer
 import shapeless.{Generic, HList}
 import shapeless.ops.hlist.{Prepend, Tupler}
 
+/**
+  * A TypedTransformer transforms one TypedDataset into another.
+  */
 sealed trait TypedTransformer
 
 /**

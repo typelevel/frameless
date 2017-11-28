@@ -5,6 +5,13 @@ package feature
 import frameless.ml.internals.UnaryInputsChecker
 import org.apache.spark.ml.feature.IndexToString
 
+/**
+  * A `TypedTransformer` that maps a column of indices back to a new column of corresponding
+  * string values.
+  * The index-string mapping must be supplied when creating the `TypedIndexToString`.
+  *
+  * @see `TypedStringIndexer` for converting strings into indices
+  */
 final class TypedIndexToString[Inputs] private[ml](indexToString: IndexToString, inputCol: String)
   extends AppendTransformer[Inputs, TypedIndexToString.Outputs, IndexToString] {
 

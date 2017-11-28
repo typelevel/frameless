@@ -10,6 +10,9 @@ import shapeless.ops.record.{Keys, Values}
 import shapeless._
 import scala.annotation.implicitNotFound
 
+/**
+  * A feature transformer that merges multiple columns into a vector column.
+  */
 final class TypedVectorAssembler[Inputs] private[ml](vectorAssembler: VectorAssembler, inputCols: Array[String])
   extends AppendTransformer[Inputs, TypedVectorAssembler.Output, VectorAssembler] {
 

@@ -6,6 +6,13 @@ import frameless.ml.feature.TypedStringIndexer.HandleInvalid
 import frameless.ml.internals.UnaryInputsChecker
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
 
+/**
+  * A label indexer that maps a string column of labels to an ML column of label indices.
+  * The indices are in [0, numLabels), ordered by label frequencies.
+  * So the most frequent label gets index 0.
+  *
+  * @see `TypedIndexToString` for the inverse transformation
+  */
 final class TypedStringIndexer[Inputs] private[ml](stringIndexer: StringIndexer, inputCol: String)
   extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
 
