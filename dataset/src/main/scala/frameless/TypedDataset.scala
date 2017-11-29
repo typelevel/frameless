@@ -589,6 +589,108 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj)
   }
 
+  /** Type-safe projection from type T to Tuple11[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A, B, C, D, E, F, G, H, I, J, K]
+  (
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I],
+    cj: TypedColumn[T, J],
+    ck: TypedColumn[T, K]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J, K)] = {
+    implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder, ck.uencoder)
+    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck)
+  }
+
+  /** Type-safe projection from type T to Tuple12[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A, B, C, D, E, F, G, H, I, J, K, L]
+  (
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I],
+    cj: TypedColumn[T, J],
+    ck: TypedColumn[T, K],
+    cl: TypedColumn[T, L]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J, K, L)] = {
+    implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder, ck.uencoder, cl.uencoder)
+    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl)
+  }
+
+  /** Type-safe projection from type T to Tuple13[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A, B, C, D, E, F, G, H, I, J, K, L, M]
+  (
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I],
+    cj: TypedColumn[T, J],
+    ck: TypedColumn[T, K],
+    cl: TypedColumn[T, L],
+    cm: TypedColumn[T, M]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J, K, L, M)] = {
+    implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder, ck.uencoder, cl.uencoder, cm.uencoder)
+    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm)
+  }
+
+  /** Type-safe projection from type T to Tuple14[A,B,...]
+    * {{{
+    *   d.select( d('a), d('a)+d('b), ... )
+    * }}}
+    */
+  def select[A, B, C, D, E, F, G, H, I, J, K, L, M, N]
+  (
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I],
+    cj: TypedColumn[T, J],
+    ck: TypedColumn[T, K],
+    cl: TypedColumn[T, L],
+    cm: TypedColumn[T, M],
+    cn: TypedColumn[T, N]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J, K, L, M, N)] = {
+    implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej, ek, el, em, en) =
+      (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder, cf.uencoder, cg.uencoder, ch.uencoder, ci.uencoder, cj.uencoder, ck.uencoder, cl.uencoder, cm.uencoder, cn.uencoder)
+    selectMany(ca, cb, cc, cd, ce, cf, cg, ch, ci, cj, ck, cl, cm, cn)
+  }
+
   object selectMany extends ProductArgs {
     def applyProduct[U <: HList, Out0 <: HList, Out](columns: U)
       (implicit
