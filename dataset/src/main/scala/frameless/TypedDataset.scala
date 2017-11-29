@@ -626,7 +626,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @tparam V value type of column in T
     * @return
     */
-  def drop[Out, TRep <: HList, Removed <: HList, ValuesFromRemoved <: HList, V]
+  def dropTupled[Out, TRep <: HList, Removed <: HList, ValuesFromRemoved <: HList, V]
     (column: Witness.Lt[Symbol])
     (implicit
       i0: LabelledGeneric.Aux[T, TRep],
@@ -642,6 +642,23 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[Out](dropped)
     }
+
+  /**
+    * Drops columns as necessary to return `U`
+    *
+    * @example
+    * {{{
+    *   case class X(i: Int, j: Int, k: Boolean)
+    *   case class Y(i: Int, k: Boolean)
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.drop[Y]
+    * }}}
+    *
+    * @tparam U the output type
+    *
+    * @see [[frameless.TypedDataset#project]]
+    */
+  def drop[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = project[U]
 
   /** Prepends a new column to the Dataset.
     *
@@ -719,11 +736,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @tparam NewKeys the keys of NewFields as an HList
     * @tparam NewKey the first, and only, key in NewKey
     *
-    * @see [[frameless.TypedDataset.withColumnApply#apply]]
+    * @see [[frameless.TypedDataset.WithColumnApply#apply]]
     */
-  def withColumn[U] = new withColumnApply[U]
+  def withColumn[U] = new WithColumnApply[U]
 
-  class withColumnApply[U] {
+  class WithColumnApply[U] {
     def apply[A, TRep <: HList, URep <: HList, UKeys <: HList, NewFields <: HList, NewKeys <: HList, NewKey <: Symbol]
     (ca: TypedColumn[T, A])
     (implicit
