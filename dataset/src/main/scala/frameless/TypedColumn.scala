@@ -279,29 +279,35 @@ sealed class TypedColumn[T, U](
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
   //TODO: SCALADOC!!
-  def desc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Descending)
-  }.typed
+  def desc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending)
+    })
 
-  def desc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Descending, NullsFirst, Set.empty)
-  }.typed
+  def desc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsFirst, Set.empty)
+    })
 
-  def desc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Descending, NullsLast, Set.empty)
-  }.typed
+  def desc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsLast, Set.empty)
+    })
 
-  def asc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Ascending)
-  }.typed
+  def asc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending)
+    })
 
-  def asc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Ascending, NullsFirst, Set.empty)
-  }.typed
+  def asc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsFirst, Set.empty)
+    })
 
-  def asc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
-    SortOrder(expr, Ascending, NullsLast, Set.empty)
-  }.typed
+  def asc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsLast, Set.empty)
+    })
 
   /**
     * Bitwise AND this expression and another expression.
@@ -508,6 +514,18 @@ sealed class TypedAggregate[T, U](val expr: Expression)(
   def this(column: Column)(implicit e: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
   }
+}
+
+sealed class TypedSortedColumn[T, U](val expr: Expression)(
+  implicit
+  val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T] {
+
+  def this(column: Column)(implicit e: TypedEncoder[U]) {
+    this(FramelessInternals.expr(column))
+  }
+
+  def untyped: Column = new Column(expr)
 }
 
 object TypedColumn {

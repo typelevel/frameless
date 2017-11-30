@@ -605,6 +605,42 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       }
   }
 
+  /** Sort each partition in the dataset by the given column expressions
+    * {{{
+    *   d.sortWithinPartitions(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object sortWithinPartitions extends ProductArgs {
+    def applyProduct[U <: HList](columns: U)
+      (implicit
+        i0: ToTraversable.Aux[U, List, TypedSortedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .sortWithinPartitions(columns.toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
+  }
+
+  /** Sort the dataset by the given column expressions
+    * {{{
+    *   d.sort(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object sort extends ProductArgs {
+    def applyProduct[U <: HList](columns: U)
+      (implicit
+        i0: ToTraversable.Aux[U, List, TypedSortedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .sort(columns.toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
+  }
+
   /** Returns a new Dataset as a tuple with the specified
     * column dropped.
     * Does not allow for dropping from a single column TypedDataset
