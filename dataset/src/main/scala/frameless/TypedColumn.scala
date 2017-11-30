@@ -278,6 +278,31 @@ sealed class TypedColumn[T, U](
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
+  //TODO: SCALADOC!!
+  def desc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Descending)
+  }.typed
+
+  def desc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Descending, NullsFirst, Set.empty)
+  }.typed
+
+  def desc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Descending, NullsLast, Set.empty)
+  }.typed
+
+  def asc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Ascending)
+  }.typed
+
+  def asc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Ascending, NullsFirst, Set.empty)
+  }.typed
+
+  def asc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedColumn[T, U] = withExpr {
+    SortOrder(expr, Ascending, NullsLast, Set.empty)
+  }.typed
+
   /**
     * Bitwise AND this expression and another expression.
     * {{{
