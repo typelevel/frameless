@@ -1,6 +1,6 @@
 # Typed Spark ML
 
-`frameless-ml` module provides a strongly typed Spark ML API leveraging `TypedDataset`s. It introduces `TypedTransformer`s
+The `frameless-ml` module provides a strongly typed Spark ML API leveraging `TypedDataset`s. It introduces `TypedTransformer`s
 and `TypedEstimator`s, the type-safe equivalents of Spark ML's `Transformer` and `Estimator`. 
 
 A `TypedEstimator` fits models to data, i.e trains a ML model based on an input `TypedDataset`. 
@@ -229,14 +229,14 @@ prediction == Seq("foo")
 
 * `TypedRandomForestClassifier`
 * `TypedRandomForestRegressor`
-* ... your contribution here ... :)
+* ... [your contribution here](https://github.com/typelevel/frameless/issues/215) ... :)
 
 ## List of currently implemented `TypedTransformer`s
 
 * `TypedIndexToString`
 * `TypedStringIndexer`
 * `TypedVectorAssembler`
-* ... your contribution here ... :)
+* ... [your contribution here](https://github.com/typelevel/frameless/issues/215) ... :)
  
 ## Using Vector and Matrix with `TypedDataset`
 
