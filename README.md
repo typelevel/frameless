@@ -10,7 +10,7 @@ It consists of the following modules:
 
 * `dataset` for more strongly typed `Dataset`s  (supports Spark 2.2.x)
 * `cats` for using Spark with [cats](https://github.com/typelevel/cats) (supports Cats 1.0.0-MF)
-* `ml` for a more strongly typed use of Spark ML based on `dataset`
+* `ml` for a more strongly typed Spark ML API based on `dataset`
 
 The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
@@ -24,7 +24,7 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 * [Injection: Creating Custom Encoders](http://typelevel.org/frameless/Injection.html)
 * [Job\[A\]](http://typelevel.org/frameless/Job.html)
 * [Using Cats with RDDs](http://typelevel.org/frameless/Cats.html)
-* [TypedDataset support for Spark ML](http://typelevel.org/frameless/TypedML.html)
+* [Typed Spark ML](http://typelevel.org/frameless/TypedML.html)
 * [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Why?

@@ -10,7 +10,7 @@ import scala.annotation.implicitNotFound
   * Can be used for all tree-based ML algorithm (decision tree, random forest, gradient-boosted trees)
   */
 @implicitNotFound(
-  msg = "Cannot prove that ${Inputs} is a valid input type." +
+  msg = "Cannot prove that ${Inputs} is a valid input type. " +
     "Input type must only contain a field of type Double (label) and a field of type " +
     "org.apache.spark.ml.linalg.Vector (features)."
 )
