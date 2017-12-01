@@ -9,7 +9,7 @@ import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
+import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
 import shapeless.ops.record.{Keys, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
@@ -611,12 +611,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * }}}
     */
   object sortWithinPartitions extends ProductArgs {
-    def applyProduct[U <: HList](columns: U)
+    def applyProduct[U <: HList, O <: HList](columns: U)
       (implicit
-        i0: ToTraversable.Aux[U, List, TypedSortedColumn[T, _]]
+        i0: Mapper.Aux[TypedSortedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, TypedSortedColumn[T, _]]
       ): TypedDataset[T] = {
       val sorted = dataset.toDF()
-        .sortWithinPartitions(columns.toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .sortWithinPartitions(i0(columns).toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
         .as[T](TypedExpressionEncoder[T])
 
       TypedDataset.create[T](sorted)
@@ -629,12 +630,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * }}}
     */
   object sort extends ProductArgs {
-    def applyProduct[U <: HList](columns: U)
+    def applyProduct[U <: HList, O <: HList](columns: U)
       (implicit
-        i0: ToTraversable.Aux[U, List, TypedSortedColumn[T, _]]
+        i0: Mapper.Aux[TypedSortedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, TypedSortedColumn[T, _]]
       ): TypedDataset[T] = {
       val sorted = dataset.toDF()
-        .sort(columns.toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .sort(i0(columns).toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
         .as[T](TypedExpressionEncoder[T])
 
       TypedDataset.create[T](sorted)

@@ -528,6 +528,16 @@ sealed class TypedSortedColumn[T, U](val expr: Expression)(
   def untyped: Column = new Column(expr)
 }
 
+object TypedSortedColumn {
+  implicit def defaultAscending[T, U : CatalystRowOrdered](typedColumn: TypedColumn[T, U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](new Column(SortOrder(typedColumn.expr, Ascending)))(typedColumn.uencoder)
+
+  object defaultAscendingPoly extends Poly1 {
+    implicit def caseTypedColumn[T, U : CatalystRowOrdered] = at[TypedColumn[T, U]](c => defaultAscending(c))
+    implicit def caseTypeSortedColumn[T, U] = at[TypedSortedColumn[T, U]](identity)
+  }
+}
+
 object TypedColumn {
   /**
     * Evidence that type `T` has column `K` with type `V`.

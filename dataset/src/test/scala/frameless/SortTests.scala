@@ -57,7 +57,9 @@ class SortTests extends TypedDatasetSuite {
 //    check(forAll(prop[Array[Int]] _))
 //  }
 
-  pending("asdf") {
+  test("asdf") {
+    pending
+
     val seq = Seq(
       Foo("a", Some(2), Array("a", "b"), Map("world" -> 2), Wack(1)),
       Foo("b", Some(1), Array("b", "a"), Map("world" -> 2), Wack(2))
@@ -65,6 +67,7 @@ class SortTests extends TypedDatasetSuite {
 
     val ds = TypedDataset.create(seq)
 
+    ds.sort(ds('a), ds('b).desc)
     assert(ds.sort(ds('a).asc).collect().run() === seq.sortBy(_.a))
     assert(ds.sort(ds('a).desc).collect().run() === seq.sortBy(_.a)(Ordering[String].reverse))
 
