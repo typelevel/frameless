@@ -170,7 +170,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       i0: TypedColumn.Exists[T, column.T, A],
       i1: TypedEncoder[A]
     ): TypedColumn[T, A] = {
-      val colExpr = dataset.col(column.value.name).as[A](TypedExpressionEncoder[A])
+      val colExpr = new Column(column.value.name).as[A](TypedExpressionEncoder[A])
       new TypedColumn[T, A](colExpr)
     }
 
