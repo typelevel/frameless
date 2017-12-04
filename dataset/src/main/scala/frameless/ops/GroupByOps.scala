@@ -41,40 +41,59 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
       }
   }
 
-  def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
-    implicit e: TypedEncoder[KT]
-  ): TypedDataset[U] = {
-    val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
-    flatMapGroups(func)
-  }
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
+  def mapGroups[U: TypedEncoder](
+    f: (KT, Iterator[T]) => U
+  )(implicit e: TypedEncoder[KT] ): TypedDataset[U] =
+    deserialized.mapGroups(f)
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](
     f: (KT, Iterator[T]) => TraversableOnce[U]
-  )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
-    implicit val tendcoder = self.encoder
+  )(implicit e: TypedEncoder[KT]): TypedDataset[U] =
+    deserialized.flatMapGroups(f)
+  // $COVERAGE-ON$
 
-    val cols = groupedBy.toList[UntypedExpression[T]]
-    val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
-    val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
-    val withKey = Project(withKeyColumns, logicalPlan)
-    val executed = FramelessInternals.executePlan(self.dataset, withKey)
-    val keyAttributes = executed.analyzed.output.takeRight(cols.size)
-    val dataAttributes = executed.analyzed.output.dropRight(cols.size)
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
+      implicit e: TypedEncoder[KT]
+    ): TypedDataset[U] = {
+      val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
+      flatMapGroups(func)
+    }
 
-    val mapGroups = MapGroups(
-      f,
-      keyAttributes,
-      dataAttributes,
-      executed.analyzed
-    )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
+    def flatMapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => TraversableOnce[U]
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
+      implicit val tendcoder = self.encoder
 
-    val groupedAndFlatMapped = FramelessInternals.mkDataset(
-      self.dataset.sqlContext,
-      mapGroups,
-      TypedExpressionEncoder[U]
-    )
+      val cols = groupedBy.toList[UntypedExpression[T]]
+      val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
+      val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
+      val withKey = Project(withKeyColumns, logicalPlan)
+      val executed = FramelessInternals.executePlan(self.dataset, withKey)
+      val keyAttributes = executed.analyzed.output.takeRight(cols.size)
+      val dataAttributes = executed.analyzed.output.dropRight(cols.size)
 
-    TypedDataset.create(groupedAndFlatMapped)
+      val mapGroups = MapGroups(
+        f,
+        keyAttributes,
+        dataAttributes,
+        executed.analyzed
+      )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
+
+      val groupedAndFlatMapped = FramelessInternals.mkDataset(
+        self.dataset.sqlContext,
+        mapGroups,
+        TypedExpressionEncoder[U]
+      )
+
+      TypedDataset.create(groupedAndFlatMapped)
+    }
   }
 
   private def retainGroupColumns: Boolean = {
@@ -125,12 +144,29 @@ class GroupedBy1Ops[K1, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
-    underlying.mapGroups(GroupedByManyOps.tuple1(f))
+    deserialized.mapGroups(f)
   }
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    underlying.flatMapGroups(GroupedByManyOps.tuple1(f))
+    deserialized.flatMapGroups(f)
+  }
+  // $COVERAGE-ON$
+
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
+      underlying.deserialized.mapGroups(GroupedByManyOps.tuple1(f))
+    }
+
+    def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
+      underlying.deserialized.flatMapGroups(GroupedByManyOps.tuple1(f))
+    }
   }
 
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]): PivotNotValues[V, TypedColumn[V,K1] :: HNil, P] =
@@ -172,12 +208,29 @@ class GroupedBy2Ops[K1, K2, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
-    underlying.mapGroups(f)
+    deserialized.mapGroups(f)
   }
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    underlying.flatMapGroups(f)
+    deserialized.flatMapGroups(f)
+  }
+  // $COVERAGE-ON$
+
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
+      underlying.deserialized.mapGroups(f)
+    }
+
+    def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
+      underlying.deserialized.flatMapGroups(f)
+    }
   }
 
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
