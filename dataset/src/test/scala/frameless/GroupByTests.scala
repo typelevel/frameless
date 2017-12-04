@@ -161,7 +161,7 @@ class GroupByTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
 
       val datasetSumByA = dataset.groupBy(A)
-        .mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
+        .deserialized.mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
         .collect().run().toVector.sortBy(_._1)
       val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(_._1)
 
@@ -365,7 +365,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetSumByAB = dataset
         .groupBy(A, B)
-        .mapGroups { case ((a, b), xs) => (a, b, xs.map(_.c).sum) }
+        .deserialized.mapGroups { case ((a, b), xs) => (a, b, xs.map(_.c).sum) }
         .collect().run().toVector.sortBy(x => (x._1, x._2))
 
       val sumByAB = data.groupBy(x => (x.a, x.b))
@@ -388,7 +388,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetGrouped = dataset
         .groupBy(A)
-        .mapGroups((a, xs) => (a, xs.toVector))
+        .deserialized.mapGroups((a, xs) => (a, xs.toVector))
         .collect().run.toMap
 
       val dataGrouped = data.groupBy(_.a)
@@ -411,7 +411,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetGrouped = dataset
         .groupBy(A)
-        .flatMapGroups((a, xs) => xs.map(x => (a, x)))
+        .deserialized.flatMapGroups((a, xs) => xs.map(x => (a, x)))
         .collect().run
         .sorted
 
@@ -440,7 +440,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetGrouped = dataset
         .groupBy(cA, cB)
-        .flatMapGroups((a, xs) => xs.map(x => (a, x)))
+        .deserialized.flatMapGroups((a, xs) => xs.map(x => (a, x)))
         .collect().run()
         .sorted
 
