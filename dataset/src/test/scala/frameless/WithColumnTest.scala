@@ -52,6 +52,24 @@ class WithColumnTest extends TypedDatasetSuite {
     check(prop[SQLDate] _)
     check(prop[Option[X1[Boolean]]] _)
   }
+
+  test("update in place") {
+    def prop[A : TypedEncoder](startValue: A, replaceValue: A): Prop = {
+      val d = TypedDataset.create(X2(startValue, replaceValue) :: Nil)
+
+      val X2(a, b) = d.withColumn('a, d('b))
+        .collect()
+        .run()
+        .head
+
+      a ?= b
+    }
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[String] _)
+    check(prop[SQLDate] _)
+    check(prop[Option[X1[Boolean]]] _)
+  }
 }
 
 object WithColumnTest {

@@ -666,6 +666,25 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       TypedDataset.create[Out](selected)
   }
 
+  /**
+    * Returns a new TypedDataset with the specified column updated with a new value
+    *
+    * @param column column given as a symbol to replace
+    * @param replacement column to replace the value with
+    * @param i0 Eviendence that a column with the correct type and name exists
+    */
+  def withColumn[A](
+    column: Witness.Lt[Symbol],
+    replacement: TypedColumn[T, A]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A]
+  ): TypedDataset[T] = {
+    val updated = dataset.toDF().withColumn(column.value.name, replacement.untyped)
+      .as[T](TypedExpressionEncoder[T])
+
+    TypedDataset.create[T](updated)
+  }
+
   /** Adds a column to a Dataset so long as the specified output type, `U`, has
     * an extra column from `T` that has type `A`.
     *
