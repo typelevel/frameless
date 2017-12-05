@@ -21,7 +21,6 @@ class ColumnTests extends TypedDatasetSuite {
       ).collect().run().toVector
 
       dataset2 ?= Vector((a < b, a < b, a <= b, a <= b, a > b, a > b, a >= b, a >= b))
-
     }
 
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
@@ -42,6 +41,56 @@ class ColumnTests extends TypedDatasetSuite {
   test("toString") {
     val t = TypedDataset.create((1,2)::Nil)
     t('_1).toString ?= t.dataset.col("_1").toString()
+  }
+
+  test("boolean and / or") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (s: Seq[X3[Boolean, Boolean, Boolean]]) =>
+        val ds = TypedDataset.create(s)
+
+        val typedBoolean = ds.select(
+          ds('a) && ds('b) || ds('c),
+          ds('a).and(ds('b)).or(ds('c))
+        ).collect().run().toList
+
+        val untypedDs = ds.toDF()
+        val untypedBoolean = untypedDs.select(
+          untypedDs("a") && untypedDs("b") || untypedDs("c"),
+          untypedDs("a").and(untypedDs("b")).or(untypedDs("c"))
+        ).as[(Boolean, Boolean)].collect().toList
+
+        typedBoolean ?= untypedBoolean
+      }
+    }
+  }
+
+  test("contains") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: String) =>
+        val ds = TypedDataset.create(X2(a, b) :: Nil)
+
+        val typedContains = ds
+          .select(ds('a).contains(ds('b)), ds('b).contains(a))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedContains = untypedDs
+          .select(untypedDs("a").contains(untypedDs("b")), untypedDs("b").contains(a))
+          .as[(Boolean, Boolean)]
+          .collect()
+          .toList
+
+        typedContains ?= untypedContains
+      }
+    }
   }
 
   test("getOrElse") {
