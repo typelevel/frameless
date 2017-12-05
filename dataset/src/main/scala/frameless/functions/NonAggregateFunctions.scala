@@ -1,8 +1,9 @@
 package frameless
 package functions
 
-import frameless._
 import org.apache.spark.sql.{functions => untyped}
+
+import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
   /** Non-Aggregate function: returns the absolute value of a numeric column
@@ -35,15 +36,6 @@ trait NonAggregateFunctions {
   def arrayContains[C[_]: CatalystCollection, A, T](column: TypedColumn[T, C[A]], value: A): TypedColumn[T, Boolean] = {
     implicit val c = column.uencoder
     new TypedColumn[T, Boolean](untyped.array_contains(column.untyped, value))
-  }
-
-  /** Non-Aggregate function: takes the first letter of a string column and returns the ascii int value in a new column
-    *
-    * apache/spark
-    */
-  def ascii[T](column: TypedColumn[T, String]): TypedColumn[T, Int] = {
-    implicit val c = column.uencoder
-    new TypedColumn[T, Int](untyped.ascii(column.untyped))
   }
 
   /** Non-Aggregate function: returns the atan of a numeric column
@@ -93,16 +85,6 @@ trait NonAggregateFunctions {
   def atan2[A, T](l: TypedColumn[T, A], r: Double)(implicit evCanBeDoubleL: CatalystCast[A, Double]): TypedColumn[T, Double] =
     atan2(l, lit(r): TypedColumn[T, Double])
 
-  /** Non-Aggregate function: Computes the BASE64 encoding of a binary column and returns it as a string column.
-    * This is the reverse of unbase64.
-    *
-    * apache/spark
-    */
-  def base64[T](column: TypedColumn[T, Array[Byte]]): TypedColumn[T, String] = {
-    implicit val c = column.uencoder
-    new TypedColumn[T, String](untyped.base64(column.untyped))
-  }
-
   /** Non-Aggregate function: Returns the string representation of the binary value of the given long
     * column. For example, bin("12") returns "1100".
     *
@@ -120,5 +102,157 @@ trait NonAggregateFunctions {
   def bitwiseNOT[A: CatalystBitwise, T](column: TypedColumn[T, A]): TypedColumn[T, A] = {
     implicit val c = column.uencoder
     new TypedColumn[T, A](untyped.bitwiseNOT(column.untyped))
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  // String functions
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
+
+  /** Non-Aggregate function: takes the first letter of a string column and returns the ascii int value in a new column
+    *
+    * apache/spark
+    */
+  def ascii[T](column: TypedColumn[T, String]): TypedColumn[T, Int] = {
+    new TypedColumn[T, Int](untyped.ascii(column.untyped))
+  }
+
+  /** Non-Aggregate function: Computes the BASE64 encoding of a binary column and returns it as a string column.
+    * This is the reverse of unbase64.
+    *
+    * apache/spark
+    */
+  def base64[T](column: TypedColumn[T, Array[Byte]]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.base64(column.untyped))
+  }
+
+  /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
+    *
+    * apache/spark
+    */
+  def concat[T](columns: TypedColumn[T, String]*): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.concat(columns.map(_.untyped):_*))
+  }
+
+  /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
+    * using the given separator.
+    *
+    * apache/spark
+    */
+  def concatWs[T](sep: String, columns: TypedColumn[T, String]*): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.concat_ws(sep, columns.map(_.untyped):_*))
+  }
+
+  /** Non-Aggregate function: Locates the position of the first occurrence of substring column
+    * in given string
+    *
+    * @note The position is not zero based, but 1 based index. Returns 0 if substr
+    * could not be found in str.
+    *
+    * apache/spark
+    */
+  def instr[T](column: TypedColumn[T, String], substring: String): TypedColumn[T, Int] = {
+    new TypedColumn[T, Int](untyped.instr(column.untyped, substring))
+  }
+
+  /** Non-Aggregate function: Computes the length of a given string.
+    *
+    * apache/spark
+    */
+  //TODO: Also for binary
+  def length[T](column: TypedColumn[T, String]): TypedColumn[T, Int] = {
+    new TypedColumn[T, Int](untyped.length(column.untyped))
+  }
+
+  /** Non-Aggregate function: Computes the Levenshtein distance of the two given string columns.
+    *
+    * apache/spark
+    */
+  def levenshtein[T](l: TypedColumn[T, String], r: TypedColumn[T, String]): TypedColumn[T, Int] = {
+    new TypedColumn[T, Int](untyped.levenshtein(l.untyped, r.untyped))
+  }
+
+  /** Non-Aggregate function: Converts a string column to lower case.
+    *
+    * apache/spark
+    */
+  def lower[T](e: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.lower(e.untyped))
+  }
+
+  /** Non-Aggregate function: Left-pad the string column with pad to a length of len. If the string column is longer
+    * than len, the return value is shortened to len characters.
+    *
+    * apache/spark
+    */
+  def lpad[T](str: TypedColumn[T, String], len: Int, pad: String): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.lpad(str.untyped, len, pad))
+  }
+
+  /** Non-Aggregate function: Trim the spaces from left end for the specified string value.
+    *
+    * apache/spark
+    */
+  def ltrim[T](str: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.ltrim(str.untyped))
+  }
+
+  /** Non-Aggregate function: Replace all substrings of the specified string value that match regexp with rep.
+    *
+    * apache/spark
+    */
+  def regexpReplace[T](str: TypedColumn[T, String], pattern: Regex, replacement: String): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.regexp_replace(str.untyped, pattern.regex, replacement))
+  }
+
+  /** Non-Aggregate function: Reverses the string column and returns it as a new string column.
+    *
+    * apache/spark
+    */
+  def reverse[T](str: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.reverse(str.untyped))
+  }
+
+  /** Non-Aggregate function: Right-pad the string column with pad to a length of len.
+    * If the string column is longer than len, the return value is shortened to len characters.
+    *
+    * apache/spark
+    */
+  def rpad[T](str: TypedColumn[T, String], len: Int, pad: String): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.rpad(str.untyped, len, pad))
+  }
+
+  /** Non-Aggregate function: Trim the spaces from right end for the specified string value.
+    *
+    * apache/spark
+    */
+  def rtrim[T](e: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.rtrim(e.untyped))
+  }
+
+  /** Non-Aggregate function: Substring starts at `pos` and is of length `len`
+    *
+    * apache/spark
+    */
+  //TODO: Also for byte array
+  def substring[T](str: TypedColumn[T, String], pos: Int, len: Int): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.substring(str.untyped, pos, len))
+  }
+
+  /** Non-Aggregate function: Trim the spaces from both ends for the specified string column.
+    *
+    * apache/spark
+    */
+  def trim[T](str: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.trim(str.untyped))
+  }
+
+  /** Non-Aggregate function: Converts a string column to upper case.
+    *
+    * apache/spark
+    */
+  def upper[T](str: TypedColumn[T, String]): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.upper(str.untyped))
   }
 }
