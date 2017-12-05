@@ -14,7 +14,7 @@ using the `transform` method that will return a new `TypedDataset` with appended
 Both `TypedEstimator` and `TypedTransformer` check at compile-time the correctness of their inputs field names and types,
 contrary to Spark ML API which only deals with DataFrames (the data structure with the lowest level of type-safety in Spark).
 
-`frameless-ml` adds type-safety to Spark ML API but stays very close to it in terms of abstractions and code flow, so 
+`frameless-ml` adds type-safety to Spark ML API but stays very close to it in terms of abstractions and API calls, so 
 please check [Spark ML documentation](https://spark.apache.org/docs/2.2.0/ml-pipeline.html) for more details 
 on `Transformer`s and `Estimator`s.
 
@@ -32,12 +32,13 @@ import spark.implicits._
 
 ## Example 1: predict a continuous value using a `TypedRandomForestRegressor`
 
-In this example, we want to predict `field3` of type Double from `field1` and `field2` using 
-a `TypedRandomForestRegressor`.
+In this example, we want to predict the sale price of a house depending on its square footage and the fact that the house
+has a garden or not. We will use a `TypedRandomForestRegressor`.
 
 ### Training
 
-As with Spark ML API, we use a `TypedVectorAssembler` (the type-safe equivalent of `VectorAssembler`) to compute feature vectors:
+As with the Spark ML API, we use a `TypedVectorAssembler` (the type-safe equivalent of `VectorAssembler`)
+to compute feature vectors:
 
 ```tut:silent
 import frameless._
@@ -49,29 +50,71 @@ import org.apache.spark.ml.linalg.Vector
 ```
 
 ```tut:book
-case class Data(field1: Double, field2: Int, field3: Double)
+case class HouseData(squareFeet: Double, hasGarden: Boolean, price: Double)
 
-val trainingData = TypedDataset.create(
-  Seq.fill(10)(Data(0D, 10, 0D))
-)
+val trainingData = TypedDataset.create(Seq(
+  HouseData(20, false, 100000),
+  HouseData(50, false, 200000),
+  HouseData(50, true, 250000),
+  HouseData(100, true, 500000)
+))
 
-case class Features(field1: Double, field2: Int)
+case class Features(squareFeet: Double, hasGarden: Boolean)
 val assembler = TypedVectorAssembler[Features]
 
-case class DataWithFeatures(field1: Double, field2: Int, field3: Double, features: Vector)
-val trainingDataWithFeatures = assembler.transform(trainingData).as[DataWithFeatures]
+case class HouseDataWithFeatures(squareFeet: Double, hasGarden: Boolean, price: Double, features: Vector)
+val trainingDataWithFeatures = assembler.transform(trainingData).as[HouseDataWithFeatures]
 ```
 
-Then, we train the model:
+In the above code snippet, `.as[HouseDataWithFeatures]` is a `TypedDataset`'s type-safe cast
+(see [TypedDataset: Feature Overview](https://typelevel.org/frameless/FeatureOverview.html)):
+
+```tut:silent
+case class WrongHouseFeatures(
+  squareFeet: Double,
+  hasGarden: Int, // hasGarden has wrong type
+  price: Double,
+  features: Vector
+)
+```
+
+```tut:book:fail
+assembler.transform(trainingData).as[WrongHouseFeatures]
+```
+
+Moreover, `TypedVectorAssembler[Features]` will compile only if `Features` contains exclusively fields of type Numeric or Boolean:
+
+```tut:silent
+case class WrongFeatures(squareFeet: Double, hasGarden: Boolean, city: String)
+```
+
+```tut:book:fail
+TypedVectorAssembler[WrongFeatures]
+```
+
+The subsequent call `assembler.transform(trainingData)` compiles only if `trainingData` contains all fields (names and types)
+of `Features`:
 
 ```tut:book
-case class RFInputs(field3: Double, features: Vector)
+case class WrongHouseData(squareFeet: Double, price: Double) // hasGarden is missing
+val wrongTrainingData = TypedDataset.create(Seq(WrongHouseData(20, 100000)))
+```
+
+```tut:book:fail
+assembler.transform(wrongTrainingData)
+```
+
+Then, we train the model. To train a Random Forest, one needs to feed it with features (what we predict from) and
+with a label (what we predict). In our example, `price` is the label, `features` are the features:
+
+```tut:book
+case class RFInputs(price: Double, features: Vector)
 val rf = TypedRandomForestRegressor[RFInputs]
 
 val model = rf.fit(trainingDataWithFeatures).run()
 ```
 
-As an example of added type-safety, `TypedRandomForestRegressor[RFInputs]` will compile only if the given `RFInputs` case class 
+`TypedRandomForestRegressor[RFInputs]` compiles only if `RFInputs`
 contains only one field of type Double (the label) and one field of type Vector (the features):
 
 ```tut:silent
@@ -82,96 +125,95 @@ case class WrongRFInputs(labelOfWrongType: String, features: Vector)
 TypedRandomForestRegressor[WrongRFInputs]
 ```
 
-The subsequent `rf.fit(trainingDataWithFeatures)` call will compile only if `trainingDataWithFeatures` contains the same fields 
+The subsequent `rf.fit(trainingDataWithFeatures)` call compiles only if `trainingDataWithFeatures` contains the same fields
 (names and types) as RFInputs.
 
 ```tut:book
-val wrongTrainingDataWithFeatures = TypedDataset.create(Seq(Data(0D, 1, 0D))) // features are missing
+val wrongTrainingDataWithFeatures = TypedDataset.create(Seq(HouseData(20, false, 100000))) // features are missing
 ```
 
 ```tut:book:fail
 rf.fit(wrongTrainingDataWithFeatures) 
 ```
 
-For new-comers to frameless, please note that `typedDataset.as[...]` is a type-safe cast, 
-see [TypedDataset: Feature Overview](https://typelevel.org/frameless/FeatureOverview.html):
-
-```tut:silent
-case class WrongTrainingDataWithFeatures(
-  field1: Double, 
-  field2: String, // field 2 has wrong type 
-  field3: Double, 
-  features: Vector
-) 
-```
-
-```tut:book:fail
-assembler.transform(trainingData).as[WrongTrainingDataWithFeatures]
-```
-
 ### Prediction
 
-We now want to predict `field3` for `testData` using the previously trained model. Please note that, like Spark ML API,
-`testData` has a default value for `field3` (`0D` in our case) that will be ignored at prediction time. We reuse 
+We now want to predict `price` for `testData` using the previously trained model. Like the Spark ML API,
+`testData` has a default value for `price` (`0` in our case) that will be ignored at prediction time. We reuse
 our `assembler` to compute the feature vector of `testData`.
 
 ```tut:book
-val testData = TypedDataset.create(Seq(Data(0D, 10, 0D)))
-val testDataWithFeatures = assembler.transform(testData).as[DataWithFeatures]
+val testData = TypedDataset.create(Seq(HouseData(70, true, 0)))
+val testDataWithFeatures = assembler.transform(testData).as[HouseDataWithFeatures]
 
-case class PredictionResult(
-  field1: Double, 
-  field2: Int, 
-  field3: Double, 
-  features: Vector, 
-  predictedField3: Double
+case class HousePricePrediction(
+  squareFeet: Double,
+  hasGarden: Boolean,
+  price: Double,
+  features: Vector,
+  predictedPrice: Double
 )
-val results = model.transform(testDataWithFeatures).as[PredictionResult]
+val predictions = model.transform(testDataWithFeatures).as[HousePricePrediction]
 
-val predictions = results.select(results.col('predictedField3)).collect.run()
+predictions.select(predictions.col('predictedPrice)).collect.run()
+```
 
-predictions == Seq(0D)
+`model.transform(testDataWithFeatures)` will only compile if `testDataWithFeatures` contains a field `price` of type Double
+and a field `features` of type Vector:
+
+```tut:book:fail
+model.transform(testData)
 ```
 
 ## Example 2: predict a categorical value using a `TypedRandomForestClassifier`
 
-In this example, we want to predict `field3` of type String from `field1` and `field2` using a `TypedRandomForestClassifier`. 
+In this example, we want to predict in which city a house is located depending on its price and its square footage. We use a
+`TypedRandomForestClassifier`.
 
 ### Training
 
-As with Spark ML API, we use a `TypedVectorAssembler` to compute feature vectors and a `TypedStringIndexer` 
-to index `field3` values in order to be able to pass them to a `TypedRandomForestClassifier` 
-(which only accepts indexed Double values as label):
+As with the Spark ML API, we use a `TypedVectorAssembler` to compute feature vectors and a `TypedStringIndexer`
+to index `city` values in order to be able to pass them to a `TypedRandomForestClassifier`
+(which only accepts Double values as label):
 
 ```tut:silent
 import frameless.ml.classification._
 ```
 
 ```tut:book
-case class Data(field1: Double, field2: Int, field3: String)
+case class HouseData(squareFeet: Double, city: String, price: Double)
 
-val trainingDataDs = TypedDataset.create(
-  Seq.fill(10)(Data(0D, 10, "foo"))
-)
+val trainingData = TypedDataset.create(Seq(
+  HouseData(100, "lyon", 100000),
+  HouseData(200, "lyon", 200000),
+  HouseData(100, "san francisco", 500000),
+  HouseData(150, "san francisco", 900000)
+))
 
-case class Features(field1: Double, field2: Int)
+case class Features(price: Double, squareFeet: Double)
 val vectorAssembler = TypedVectorAssembler[Features]
 
-case class DataWithFeatures(field1: Double, field2: Int, field3: String, features: Vector)
-val dataWithFeatures = vectorAssembler.transform(trainingDataDs).as[DataWithFeatures]
+case class HouseDataWithFeatures(squareFeet: Double, city: String, price: Double, features: Vector)
+val dataWithFeatures = vectorAssembler.transform(trainingData).as[HouseDataWithFeatures]
 
-case class StringIndexerInput(field3: String)
+case class StringIndexerInput(city: String)
 val indexer = TypedStringIndexer[StringIndexerInput]
 val indexerModel = indexer.fit(dataWithFeatures).run()
 
-case class IndexedDataWithFeatures(field1: Double, field2: Int, field3: String, features: Vector, indexedField3: Double)
-val indexedData = indexerModel.transform(dataWithFeatures).as[IndexedDataWithFeatures]
+case class HouseDataWithFeaturesAndIndex(
+  squareFeet: Double,
+  city: String,
+  price: Double,
+  features: Vector,
+  cityIndexed: Double
+)
+val indexedData = indexerModel.transform(dataWithFeatures).as[HouseDataWithFeaturesAndIndex]
 ```
 
 Then, we train the model:
 
 ```tut:book
-case class RFInputs(indexedField3: Double, features: Vector)
+case class RFInputs(cityIndexed: Double, features: Vector)
 val rf = TypedRandomForestClassifier[RFInputs]
 
 val model = rf.fit(indexedData).run()
@@ -179,50 +221,47 @@ val model = rf.fit(indexedData).run()
 
 ### Prediction
 
-We now want to predict `field3` for `testData` using the previously trained model. Please note that, like Spark ML API,
-`testData` has a default value for `field3` (empty String in our case) that will be ignored at prediction time. We reuse 
-our `vectorAssembler` to compute the feature vector of `testData` and our `indexerModel` to index `field3`.
+We now want to predict `city` for `testData` using the previously trained model. Like the Spark ML API,
+`testData` has a default value for `city` (empty string in our case) that will be ignored at prediction time. We reuse
+our `vectorAssembler` to compute the feature vector of `testData` and our `indexerModel` to index `city`.
 
 ```tut:book
-val testData = TypedDataset.create(Seq(
-  Data(0D, 10, "")
-))
-val testDataWithFeatures = vectorAssembler.transform(testData).as[DataWithFeatures]
-val indexedTestData = indexerModel.transform(testDataWithFeatures).as[IndexedDataWithFeatures]
+val testData = TypedDataset.create(Seq(HouseData(120, "", 800000)))
 
-case class PredictionInputs(features: Vector, indexedField3: Double)
-val testInput = indexedTestData.project[PredictionInputs]
+val testDataWithFeatures = vectorAssembler.transform(testData).as[HouseDataWithFeatures]
+val indexedTestData = indexerModel.transform(testDataWithFeatures).as[HouseDataWithFeaturesAndIndex]
 
-case class PredictionResultIndexed(
+case class HouseCityPredictionInputs(features: Vector, cityIndexed: Double)
+val testInput = indexedTestData.project[HouseCityPredictionInputs]
+
+case class HouseCityPredictionIndexed(
   features: Vector,
-  indexedField3: Double,
+  cityIndexed: Double,
   rawPrediction: Vector,
   probability: Vector,
-  predictedField3Indexed: Double
+  predictedCityIndexed: Double
 )
-val predictionDs = model.transform(testInput).as[PredictionResultIndexed]
+val indexedPredictions = model.transform(testInput).as[HouseCityPredictionIndexed]
 ```
 
-Then, we use a `TypedIndexToString` to get back a String value from `predictedField3`. `TypedIndexToString` takes
+Then, we use a `TypedIndexToString` to get back a String value from `predictedCityIndexed`. `TypedIndexToString` takes
 as input the label array computed by our previous `indexerModel`:
 
 ```tut:book
-case class IndexToStringInput(predictedField3Indexed: Double)
+case class IndexToStringInput(predictedCityIndexed: Double)
 val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)
 
-case class PredictionResult(
+case class HouseCityPrediction(
   features: Vector,
-  indexedField3: Double,
+  cityIndexed: Double,
   rawPrediction: Vector,
   probability: Vector,
-  predictedField3Indexed: Double,
-  predictedField3: String
+  predictedCityIndexed: Double,
+  predictedCity: String
 )
-val stringPredictionDs = indexToString.transform(predictionDs).as[PredictionResult]
+val predictions = indexToString.transform(indexedPredictions).as[HouseCityPrediction]
 
-val prediction = stringPredictionDs.select(stringPredictionDs.col('predictedField3)).collect.run()
-
-prediction == Seq("foo")
+predictions.select(predictions.col('predictedCity)).collect.run()
 ```
 
 ## List of currently implemented `TypedEstimator`s
@@ -244,6 +283,7 @@ prediction == Seq("foo")
 and `org.apache.spark.ml.linalg.Matrix`:
 
 ```tut:silent
+import frameless._
 import frameless.ml._
 import org.apache.spark.ml.linalg._
 ```
