@@ -666,12 +666,15 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       TypedDataset.create[Out](selected)
   }
 
-  /**
-    * Returns a new TypedDataset with the specified column updated with a new value
-    *
+  /** Returns a new [[frameless.TypedDataset]] with the specified column updated with a new value
+    * {{{
+    *   case class X(i: Int, j: Int)
+    *   val f: TypedDataset[X] = TypedDataset.create(X(1,10) :: Nil)
+    *   val fNew: TypedDataset[X] = f.withColumn('j, f('i)) // results in X(1, 1) :: Nil
+    * }}}
     * @param column column given as a symbol to replace
     * @param replacement column to replace the value with
-    * @param i0 Eviendence that a column with the correct type and name exists
+    * @param i0 Evidence that a column with the correct type and name exists
     */
   def withColumn[A](
     column: Witness.Lt[Symbol],
