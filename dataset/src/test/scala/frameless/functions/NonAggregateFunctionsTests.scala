@@ -1,9 +1,10 @@
 package frameless
 package functions
 import frameless.functions.nonAggregate._
-import org.apache.spark.sql.Encoder
+import org.apache.spark.sql.{ Column, Encoder }
 import org.scalacheck.Gen
 import org.scalacheck.Prop._
+import org.apache.spark.sql.{ functions => untyped }
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
@@ -213,31 +214,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       (prop[Array])
     )
   }
-
-  test("ascii"){
-    val spark = session
-    import spark.implicits._
-
-    def prop(values:List[X1[String]])(implicit x1Enc:Encoder[X1[String]]) = {
-      val cDS = session.createDataset(values)
-      val resCompare = cDS
-        .select(org.apache.spark.sql.functions.ascii(cDS("a")))
-        .map(_.getAs[Int](0))
-        .collect().toList
-
-      val typedDS = TypedDataset.create(values)
-      val res = typedDS
-        .select(ascii(typedDS('a)))
-        .collect()
-        .run()
-        .toList
-
-      res ?= resCompare
-    }
-
-    check(forAll(prop _))
-  }
-
 
   test("atan") {
     val spark = session
@@ -486,4 +462,135 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Int] _))
   }
 
+  test("ascii") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(ascii, untyped.ascii))
+  }
+
+  test("concat") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(concat(_, lit("hello")), untyped.concat(_, untyped.lit("hello"))))
+  }
+
+  test("concat_ws") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(concatWs(",", _, lit("hello")), untyped.concat_ws(",", _, untyped.lit("hello"))))
+  }
+
+  test("instr") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(instr(_, "hello"), untyped.instr(_, "hello")))
+  }
+
+  test("length") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(length, untyped.length))
+  }
+
+  test("levenshtein") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(levenshtein(_, lit("hello")), untyped.levenshtein(_, untyped.lit("hello"))))
+  }
+
+  test("lower") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(lower, untyped.lower))
+  }
+
+  test("lpad") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(lpad(_, 5, "hello"), untyped.lpad(_, 5, "hello")))
+  }
+
+  test("ltrim") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(ltrim, untyped.ltrim))
+  }
+
+  test("regexp_replace") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(regexpReplace(_, "\\d+".r, "n"), untyped.regexp_replace(_, "\\d+", "n")))
+  }
+
+  test("reverse") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(reverse, untyped.reverse))
+  }
+
+  test("rpad") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(rpad(_, 5, "hello"), untyped.rpad(_, 5, "hello")))
+  }
+
+  test("rtrim") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(rtrim, untyped.rtrim))
+  }
+
+  test("substring") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(substring(_, 5, 3), untyped.substring(_, 5, 3)))
+  }
+
+  test("trim") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(trim, untyped.trim))
+  }
+
+  test("upper") {
+    val spark = session
+    import spark.implicits._
+
+    check(stringFuncProp(upper, untyped.upper))
+  }
+
+  def stringFuncProp[A : Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A], sparkFunc: Column => Column) = {
+    forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
+
+      val sparkResult: List[A] = ds.toDF()
+        .select(sparkFunc(untyped.col("a")))
+        .map(_.getAs[A](0))
+        .collect()
+        .toList
+
+      val typed: List[A] = ds
+        .select(strFunc(ds[String]('a)))
+        .collect()
+        .run()
+        .toList
+
+      typed ?= sparkResult
+    }
+  }
 }
