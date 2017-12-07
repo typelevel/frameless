@@ -108,6 +108,15 @@ sealed class TypedColumn[T, U](
     Not(equalsTo(lit(None.asInstanceOf[U])).expr)
   }.typed
 
+  /** Convert an Optional column by providing a default value
+    * {{{
+    *   df( df('opt).getOrElse(df('defaultValue)) )
+    * }}}
+    */
+  def getOrElse[Out](default: TypedColumn[T, Out])(implicit isOption: U =:= Option[Out]): TypedColumn[T, Out] = withExpr {
+    Coalesce(Seq(expr, default.expr))
+  }.typed(default.uencoder)
+
   /** Sum of this expression and another expression.
     * {{{
     *   // The following selects the sum of a person's height and weight.
