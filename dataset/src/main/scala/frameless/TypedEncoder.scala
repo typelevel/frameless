@@ -398,13 +398,11 @@ object TypedEncoder {
         }
       }
 
-  /** Encodes things as records if there is not Injection defined */
-  implicit def usingDerivation[F, G <: HList]
-    (implicit
-      i0: LabelledGeneric.Aux[F, G],
-      i1: Lazy[RecordEncoderFields[G]],
-      i2: ClassTag[F]
-    ): TypedEncoder[F] = new RecordEncoder[F, G]
+  implicit def recordEncoder[F <: HList : ClassTag](
+    implicit
+      i0: Lazy[RecordCatalystCodec[F]]
+  ): TypedEncoder[F] =
+    new NewRecordEncoder
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {
@@ -422,4 +420,13 @@ object TypedEncoder {
         Invoke(udtInstance, "deserialize", ObjectType(udt.userClass), Seq(path))
     }
   }
+
+  /** Encodes things as records if there is not Injection defined */
+  implicit def usingDerivation[F, G <: HList]
+    (implicit
+      i0: LabelledGeneric.Aux[F, G],
+      i1: Lazy[RecordCatalystCodec[G]],
+      i2: ClassTag[F]
+    ): TypedEncoder[F] =
+      new OldRecordEncoder[F, G]
 }
