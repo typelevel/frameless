@@ -43,4 +43,30 @@ class ColumnTests extends TypedDatasetSuite {
     val t = TypedDataset.create((1,2)::Nil)
     t('_1).toString ?= t.dataset.col("_1").toString()
   }
+
+  test("getOrElse") {
+    def prop[A: TypedEncoder](a: A, opt: Option[A]) = {
+      val dataset = TypedDataset.create(X2(a, opt) :: Nil)
+
+      val defaulted = dataset
+        .select(dataset('b).getOrElse(dataset('a)))
+        .collect()
+        .run
+        .toList
+        .head
+
+      defaulted ?= opt.getOrElse(a)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+  }
 }
