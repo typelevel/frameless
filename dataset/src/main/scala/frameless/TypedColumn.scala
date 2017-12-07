@@ -278,32 +278,55 @@ sealed class TypedColumn[T, U](
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
-  //TODO: SCALADOC!!
+  /** Returns a descending ordering used in sorting
+    *
+    * apache/spark
+    */
   def desc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Descending)
     })
 
+  /** Returns a descending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
   def desc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Descending, NullsFirst, Set.empty)
     })
 
+  /** Returns a descending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
   def desc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Descending, NullsLast, Set.empty)
     })
 
+  /** Returns an ascending ordering used in sorting
+    *
+    * apache/spark
+    */
   def asc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Ascending)
     })
 
+  /** Returns an ascending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
   def asc_nulls_first(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Ascending, NullsFirst, Set.empty)
     })
 
+  /** Returns an ascending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
   def asc_nulls_last(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Ascending, NullsLast, Set.empty)
