@@ -1,5 +1,7 @@
 package frameless
 
+import shapeless._
+
 import scala.annotation.implicitNotFound
 
 /** Types that can be used to sort a dataset by Catalyst. */
@@ -22,9 +24,8 @@ object CatalystRowOrdered {
 
   Map can't be used in order
   TODO: UDF
-  TODO: Struct / Records
-
    */
+
   implicit def orderedEvidence[A](implicit catalystOrdered: CatalystOrdered[A]): CatalystRowOrdered[A] = of[A]
 
   implicit def arrayEv[A](implicit catalystOrdered: CatalystRowOrdered[A]): CatalystRowOrdered[Array[A]] = of[Array[A]]
@@ -33,4 +34,14 @@ object CatalystRowOrdered {
 
   implicit def optionEv[A](implicit catalystOrdered: CatalystRowOrdered[A]): CatalystRowOrdered[Option[A]] = of[Option[A]]
 
+  implicit def recordEv[A, G <: HList](implicit i0: Generic.Aux[A, G], i1: HasRowOrdered[G]): CatalystRowOrdered[A] = of[A]
+
+  trait HasRowOrdered[T <: HList]
+  object HasRowOrdered {
+    implicit def deriveOrderHNil[H](implicit catalystRowOrdered: CatalystRowOrdered[H]): HasRowOrdered[H :: HNil] =
+      new HasRowOrdered[H :: HNil] {}
+
+    implicit def deriveOrderHCons[H, T <: HList](implicit head: CatalystRowOrdered[H], tail: HasRowOrdered[T]): HasRowOrdered[H :: T] =
+      new HasRowOrdered[H :: T] {}
+  }
 }
