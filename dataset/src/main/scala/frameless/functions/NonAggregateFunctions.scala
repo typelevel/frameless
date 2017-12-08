@@ -1,6 +1,7 @@
 package frameless
 package functions
 
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.{functions => untyped}
 
 import scala.util.matching.Regex
@@ -104,6 +105,29 @@ trait NonAggregateFunctions {
     new TypedColumn[T, A](untyped.bitwiseNOT(column.untyped))
   }
 
+  /** Non-Aggregate function: Evaluates a list of conditions and returns one of multiple
+    * possible result expressions. If none match, otherwise is returned
+    * {{{
+    *   when(ds('boolField), ds('a))
+    *     .when(ds('otherBoolField), lit(123))
+    *     .otherwise(ds('b))
+    * }}}
+    * apache/spark
+    */
+  def when[T, A](condition: TypedColumn[T, Boolean], value: TypedColumn[T, A]): When[T, A] =
+    new When[T, A](condition, value)
+
+  class When[T, A] private (untypedC: Column) {
+    private[functions] def this(condition: TypedColumn[T, Boolean], value: TypedColumn[T, A]) =
+      this(untyped.when(condition.untyped, value.untyped))
+
+    def when(condition: TypedColumn[T, Boolean], value: TypedColumn[T, A]): When[T, A] = new When[T, A](
+      untypedC.when(condition.untyped, value.untyped)
+    )
+
+    def otherwise(value: TypedColumn[T, A]): TypedColumn[T, A] =
+      new TypedColumn[T, A](untypedC.otherwise(value.untyped))(value.uencoder)
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions

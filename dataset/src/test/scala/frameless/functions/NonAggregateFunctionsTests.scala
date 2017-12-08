@@ -462,6 +462,43 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Int] _))
   }
 
+  test("when") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A : TypedEncoder : Encoder](condition1: Boolean, condition2: Boolean, value1: A, value2: A, otherwise: A) = {
+      val ds = TypedDataset.create(X5(condition1, condition2, value1, value2, otherwise) :: Nil)
+
+      val untypedWhen = ds.toDF()
+        .select(
+          untyped.when(untyped.col("a"), untyped.col("c"))
+            .when(untyped.col("b"), untyped.col("d"))
+            .otherwise(untyped.col("e"))
+        )
+        .as[A]
+        .collect()
+        .toList
+
+      val typedWhen = ds
+        .select(
+          when(ds('a), ds('c))
+            .when(ds('b), ds('d))
+            .otherwise(ds('e))
+        )
+        .collect()
+        .run()
+        .toList
+
+      typedWhen ?= untypedWhen
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Option[Int]] _))
+  }
+
   test("ascii") {
     val spark = session
     import spark.implicits._
