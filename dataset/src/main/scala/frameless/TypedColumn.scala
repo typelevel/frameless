@@ -451,11 +451,16 @@ object TypedColumn {
   object Exists {
     def apply[T, V](column: Witness)(implicit e: Exists[T, column.T, V]): Exists[T, column.T, V] = e
 
-    implicit def deriveRecord[T, H <: HList, K, V]
+    implicit def deriveProduct[T, H <: HList, K, V]
       (implicit
         i0: LabelledGeneric.Aux[T, H],
         i1: Selector.Aux[H, K, V]
       ): Exists[T, K, V] = new Exists[T, K, V] {}
+
+    implicit def deriveRecord[H <: HList, K, V](
+      implicit
+        i0: Selector.Aux[H, K, V]
+    ): Exists[H, K, V] = new Exists[H, K, V] {}
   }
 
   implicit class OrderedTypedColumnSyntax[T, U: CatalystOrdered](col: TypedColumn[T, U]) {

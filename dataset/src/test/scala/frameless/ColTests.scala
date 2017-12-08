@@ -1,5 +1,7 @@
 package frameless
 
+import shapeless.{ HNil }
+import shapeless.syntax.singleton._
 import shapeless.test.illTyped
 
 import org.scalacheck.Prop
@@ -9,22 +11,29 @@ class ColTests extends TypedDatasetSuite {
   test("col") {
     val x4 = TypedDataset.create[X4[Int, String, Long, Boolean]](Nil)
     val t4 = TypedDataset.create[(Int, String, Long, Boolean)](Nil)
+    val r4 = TypedDataset.create(Seq('a ->> 0 :: 'b ->> "b" :: 'c ->> 0L :: 'd ->> true :: HNil))
 
     x4.col('a)
     t4.col('_1)
+    r4.col('a)
 
     x4.col[Int]('a)
     t4.col[Int]('_1)
+    r4.col[Int]('a)
 
     illTyped("x4.col[String]('a)", "No column .* of type String in frameless.X4.*")
+    illTyped("r4.col[String]('a)", "No column .* of type String in shapeless.::.*")
 
     x4.col('b)
     t4.col('_2)
+    r4.col('b)
 
     x4.col[String]('b)
     t4.col[String]('_2)
+    r4.col[String]('b)
 
     illTyped("x4.col[Int]('b)", "No column .* of type Int in frameless.X4.*")
+    illTyped("r4.col[Int]('b)", "No column .* of type Int in shapeless.::.*")
 
     ()
   }
@@ -40,6 +49,16 @@ class ColTests extends TypedDatasetSuite {
 
     illTyped("x2x2.colMany('a, 'c)")
     illTyped("x2x2.colMany('a, 'a, 'a)")
+
+    val r4 = TypedDataset.create(Seq('a ->> X2("str", true) :: 'b ->> X2(0L, 2.0) :: HNil))
+
+    r4.colMany('a, 'a)
+    r4.colMany('a, 'b)
+    r4.colMany('b, 'a)
+    r4.colMany('b, 'b)
+
+    illTyped("r4.colMany('a, 'e)")
+    illTyped("r4.colMany('a, 'a, 'a)")
   }
 
   test("select colMany") {
