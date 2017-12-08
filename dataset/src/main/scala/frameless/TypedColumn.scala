@@ -117,6 +117,14 @@ sealed class TypedColumn[T, U](
     Coalesce(Seq(expr, default.expr))
   }.typed(default.uencoder)
 
+  /** Convert an Optional column by providing a default value
+    * {{{
+    *   df( df('opt).getOrElse(defaultConstant) )
+    * }}}
+    */
+  def getOrElse[Out: TypedEncoder](default: Out)(implicit isOption: U =:= Option[Out]): TypedColumn[T, Out] =
+    getOrElse(lit[Out, T](default))
+
   /** Sum of this expression and another expression.
     * {{{
     *   // The following selects the sum of a person's height and weight.
@@ -237,7 +245,7 @@ sealed class TypedColumn[T, U](
     *   people.select( people('height) / people('weight) )
     * }}}
     *
-    * @param u another column of the same type
+    * @param other another column of the same type
     * apache/spark
     */
   def divide[Out: TypedEncoder](other: TypedColumn[T, U])(implicit n: CatalystDivisible[U, Out]): TypedColumn[T, Out] =
@@ -250,10 +258,13 @@ sealed class TypedColumn[T, U](
     *   people.select( people('height) / people('weight) )
     * }}}
     *
-    * @param u another column of the same type
+    * @param other another column of the same type
     * apache/spark
     */
-  def /[Out](other: TypedColumn[T, U])(implicit n: CatalystDivisible[U, Out], e: TypedEncoder[Out]): TypedColumn[T, Out] = divide(other)
+  def /[Out](other: TypedColumn[T, U])
+     (implicit
+        n: CatalystDivisible[U, Out],
+        e: TypedEncoder[Out]): TypedColumn[T, Out] = divide(other)
 
   /**
     * Division this expression by another expression.

@@ -48,14 +48,14 @@ class ColumnTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](a: A, opt: Option[A]) = {
       val dataset = TypedDataset.create(X2(a, opt) :: Nil)
 
-      val defaulted = dataset
-        .select(dataset('b).getOrElse(dataset('a)))
+      val defaulted: (A, A) = dataset
+        .select(dataset('b).getOrElse(dataset('a)), dataset('b).getOrElse(a))
         .collect()
-        .run
+        .run()
         .toList
         .head
 
-      defaulted ?= opt.getOrElse(a)
+      defaulted.?=((opt.getOrElse(a), opt.getOrElse(a)))
     }
 
     check(forAll(prop[Int] _))
