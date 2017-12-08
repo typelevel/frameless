@@ -420,6 +420,54 @@ sealed class TypedColumn[T, U](
     */
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): TypedColumn[T, A] =
     self.untyped.cast(TypedEncoder[A].catalystRepr).typed
+
+  /** Contains test.
+    * {{{
+    *   df.filter ( df.col('a).contains("foo") )
+    * }}}
+    */
+  def contains(other: String)(implicit ev: U =:= String): TypedColumn[T, Boolean] =
+    self.untyped.contains(other).typed
+
+  /** Contains test.
+    * {{{
+    *   df.filter ( df.col('a).contains(df.col('b) )
+    * }}}
+    */
+  def contains(other: TypedColumn[T, U])(implicit ev: U =:= String): TypedColumn[T, Boolean] =
+    self.untyped.contains(other.untyped).typed
+
+  /** Boolean AND.
+    * {{{
+    *   df.filter ( (df.col('a) === 1).and(df.col('b) > 5) )
+    * }}}
+    */
+  def and(other: TypedColumn[T, Boolean]): TypedColumn[T, Boolean] =
+    self.untyped.and(other.untyped).typed
+
+  /** Boolean AND.
+    * {{{
+    *   df.filter ( df.col('a) === 1 && df.col('b) > 5)
+    * }}}
+    */
+  def && (other: TypedColumn[T, Boolean]): TypedColumn[T, Boolean] =
+    and(other)
+
+  /** Boolean OR.
+    * {{{
+    *   df.filter ( (df.col('a) === 1).or(df.col('b) > 5) )
+    * }}}
+    */
+  def or(other: TypedColumn[T, Boolean]): TypedColumn[T, Boolean] =
+    self.untyped.or(other.untyped).typed
+
+  /** Boolean OR.
+    * {{{
+    *   df.filter ( df.col('a) === 1 || df.col('b) > 5)
+    * }}}
+    */
+  def || (other: TypedColumn[T, Boolean]): TypedColumn[T, Boolean] =
+    or(other)
 }
 
 /** Expression used in `groupBy`-like constructions.
