@@ -1,40 +1,72 @@
 package frameless
 
 import org.apache.spark.sql.{ functions => sfunc }
+import org.scalacheck.Prop
+import org.scalacheck.Prop._
 import shapeless.test.illTyped
 
-object SortTests {
-  case class Wack(w: Int)
-  case class Foo(a: String, b: Option[Int], c: Array[String], d: Map[String, Int], wack: Wack)
-}
-
-//TODO:
 class SortTests extends TypedDatasetSuite {
-  import SortTests._
-
-  test("sorting") {
-    val seq = Seq(
-      Foo("a", Some(2), Array("a", "b"), Map("world" -> 2), Wack(1)),
-      Foo("b", Some(1), Array("b", "a"), Map("world" -> 2), Wack(2))
-    )
-
-    val ds = TypedDataset.create(seq)
-
-    assert(ds.sort(ds('a).asc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("a").asc).collect().map(_.a))
-    assert(ds.sort(ds('a).desc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("a").desc).collect().map(_.a))
-
-    assert(ds.sort(ds('b).asc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("b").asc).collect().map(_.a))
-    assert(ds.sort(ds('b).desc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("b").desc).collect().map(_.a))
-
-    assert(ds.sort(ds('b).ascNullsFirst).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("b").asc_nulls_first).collect().map(_.a))
-    assert(ds.sort(ds('a), ds('b).desc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("a"), sfunc.col("b").desc).collect().map(_.a))
+  test("prevent sorting by Map") {
+    val ds = TypedDataset.create(Seq(
+      X2(1, Map.empty[String, Int])
+    ))
 
     illTyped {
-      //Maps aren't allow
       """ds.sort(ds('d).desc)"""
     }
-
-    assert(ds.sort(ds('wack).desc).collect().run().map(_.a) === ds.dataset.sort(sfunc.col("wack").desc).collect().map(_.a))
   }
 
+  test("sorting") {
+    def prop[A: TypedEncoder : CatalystRowOrdered](values: List[A]): Prop = {
+      val input: List[X2[Int, A]] = values.zipWithIndex.map { case (a, i) => X2(i, a) }
+
+      val ds = TypedDataset.create(input)
+
+      (ds.sort(ds('b)).collect().run().toList ?= ds.dataset.sort(sfunc.col("b")).collect().toList) &&
+        (ds.sort(ds('b).asc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc).collect().toList) &&
+        (ds.sort(ds('b).desc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc).collect().toList)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+    check(prop[List[String]] _)
+    check(prop[List[X2[Int, X1[String]]]] _)
+  }
+
+  test("sorting optional") {
+    def prop[A: TypedEncoder : CatalystRowOrdered](values: List[Option[A]]): Prop = {
+      val input: List[X2[Int, Option[A]]] = values.zipWithIndex.map { case (a, i) => X2(i, a) }
+
+      val ds = TypedDataset.create(input)
+
+      (ds.sort(ds('b)).collect().run().toList ?= ds.dataset.sort(sfunc.col("b")).collect().toList) &&
+        (ds.sort(ds('b).asc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc).collect().toList) &&
+        (ds.sort(ds('b).ascNullsFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_first).collect().toList) &&
+        (ds.sort(ds('b).ascNullsLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_last).collect().toList) &&
+        (ds.sort(ds('b).desc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc).collect().toList) &&
+        (ds.sort(ds('b).descNullsFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_first).collect().toList) &&
+        (ds.sort(ds('b).descNullsLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_last).collect().toList)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+    check(prop[List[String]] _)
+    check(prop[List[X2[Int, X1[String]]]] _)
+  }
 }

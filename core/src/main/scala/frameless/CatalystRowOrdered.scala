@@ -8,10 +8,7 @@ import scala.annotation.implicitNotFound
 @implicitNotFound("Cannot order by columns of type ${A}.")
 trait CatalystRowOrdered[A]
 
-object CatalystRowOrdered {
-  private[this] val theInstance = new CatalystRowOrdered[Any] {}
-  private[this] def of[A]: CatalystRowOrdered[A] = theInstance.asInstanceOf[CatalystRowOrdered[A]]
-
+object CatalystRowOrdered extends CatalystRowOrdered0 {
   /*
   The following are sortable by spark:
   see [[org.apache.spark.sql.catalyst.expressions.RowOrdering.isOrderable]]
@@ -31,6 +28,11 @@ object CatalystRowOrdered {
   implicit def collectionEv[C[X] <: Seq[X], A](implicit catalystOrdered: CatalystRowOrdered[A]): CatalystRowOrdered[C[A]] = of[C[A]]
 
   implicit def optionEv[A](implicit catalystOrdered: CatalystRowOrdered[A]): CatalystRowOrdered[Option[A]] = of[Option[A]]
+}
+
+trait CatalystRowOrdered0 {
+  private val theInstance = new CatalystRowOrdered[Any] {}
+  protected def of[A]: CatalystRowOrdered[A] = theInstance.asInstanceOf[CatalystRowOrdered[A]]
 
   implicit def recordEv[A, G <: HList](implicit i0: Generic.Aux[A, G], i1: HasRowOrdered[G]): CatalystRowOrdered[A] = of[A]
 
