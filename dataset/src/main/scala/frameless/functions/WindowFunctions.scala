@@ -1,6 +1,6 @@
 package frameless.functions
 
-import frameless.{ OrderedWindow, TypedAggregate, TypedColumn, TypedWindow }
+import frameless.{ OrderedWindow, TypedColumn, TypedWindow }
 import org.apache.spark.sql.{ functions => untyped }
 
 trait WindowFunctions {
