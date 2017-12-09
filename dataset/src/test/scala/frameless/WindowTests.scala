@@ -12,61 +12,44 @@ class WindowTests extends TypedDatasetSuite {
   import WindowTests._
 
   test("basic") {
+    val spark = session
+    import spark.implicits._
+
     val inputSeq = Seq(
-      Foo(1, "hello"),
-      Foo(2, "hello"),
-      Foo(3, "hello"),
-      Foo(1, "bye"),
-      Foo(2, "bye")
+      Foo(1, "a"),
+      Foo(1, "b"),
+      Foo(1, "c"),
+      Foo(1, "d"),
+      Foo(2, "a"),
+      Foo(2, "b"),
+      Foo(2, "c"),
+      Foo(3, "c")
     )
 
     val ds = TypedDataset.create(inputSeq)
 
-    ds.show().run()
+    val untypedWindow = Window.partitionBy("a").orderBy("b")
 
-    val untypedWindow = Window.partitionBy("b").orderBy("a")
-
-    /*
-    root
-     |-- a: integer (nullable = false)
-     |-- b: string (nullable = true)
-     |-- rank: integer (nullable = true)
-
-    +---+-----+----+
-    |  a|    b|rank|
-    +---+-----+----+
-    |  1|hello|   1|
-    |  2|hello|   2|
-    |  3|hello|   3|
-    |  1|  bye|   1|
-    |  2|  bye|   2|
-    +---+-----+----+
-     */
-    ds.toDF()
+    val untyped = ds.toDF()
       .withColumn("rank", sfuncs.dense_rank().over(untypedWindow))
-      .show()
+      .as[FooRank]
+      .collect()
+      .toList
 
     val denseRankWindowed = dense_rank().over(
       TypedWindow
-        .orderBy(ds[Int]('a))//.asc)
-        .partitionBy(ds('b))
-//        .partitionBy(functions.aggregate.sum(ds('a)))
-//        .orderByMany(ds('a).desc, ds('b))
-//        .orderBy(TypedSortedColumn.defaultAscending(ds('a)))//.asc)
-        .orderBy(ds[Int]('a))//.asc)
+        //TODO: default won't work unless `ds.apply` is typed. Or could just call `.asc`
+        .orderBy(ds[String]('b))
+        .partitionBy(ds('a))
     )
 
-
-    ds.withColumnTupled(
+    val typed = ds.withColumn[FooRank](
       denseRankWindowed
-    ).show().run()
+    ).collect()
+      .run()
+      .toList
 
-    ds.withColumn[FooRank](
-      denseRankWindowed
-    ).show().run()
-
-
-
+    assert(untyped === typed)
 
   }
 

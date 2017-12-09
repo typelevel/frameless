@@ -15,14 +15,12 @@ object CatalystRowOrdered {
   /*
   The following are sortable by spark:
   see [[org.apache.spark.sql.catalyst.expressions.RowOrdering.isOrderable]]
+    AtomicType
+    StructType containing only orderable types
+    ArrayType containing only orderable types
+    UserDefinedType containing only orderable types
 
-    case NullType => true
-    case dt: AtomicType => true
-    case struct: StructType => struct.fields.forall(f => isOrderable(f.dataType))
-    case array: ArrayType => isOrderable(array.elementType)
-    case udt: UserDefinedType[_] => isOrderable(udt.sqlType)
-
-  Map can't be used in order
+  MapType can't be used in order!
   TODO: UDF
    */
 

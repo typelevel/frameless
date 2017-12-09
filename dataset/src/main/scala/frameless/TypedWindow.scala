@@ -1,10 +1,9 @@
 package frameless
 
-import frameless.ops.ColumnTypes
 import org.apache.spark.sql.Column
-import org.apache.spark.sql.catalyst.expressions.{ Expression, SortOrder, UnspecifiedFrame, WindowFrame }
+import org.apache.spark.sql.catalyst.expressions.{ UnspecifiedFrame, WindowFrame }
 import org.apache.spark.sql.expressions.{ Window, WindowSpec }
-import shapeless.ops.hlist.{ IsHCons, Mapper, ToTraversable }
+import shapeless.ops.hlist.{ Mapper, ToTraversable }
 import shapeless.{ HList, ProductArgs }
 
 trait OrderedWindow
@@ -68,7 +67,7 @@ class TypedWindow[T, A] private (
 
 object TypedWindow {
 
-  //TODO: Multiple columns. Hard because have to infer what `T` is
+  //TODO: Multiple columns.
   def partitionBy[T](column: TypedColumn[T, _]): TypedWindow[T, PartitionedWindow] = {
     new TypedWindow[T, PartitionedWindow](
       partitionSpec = Seq(column),
