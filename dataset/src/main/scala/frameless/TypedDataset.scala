@@ -174,6 +174,23 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       new TypedColumn[T, A](colExpr)
     }
 
+  /** Returns `TypedColumn` of type `A` given it's name.
+    *
+    * {{{
+    * tf.col('id)
+    * }}}
+    *
+    * It is statically checked that column with such name exists and has type `A`.
+    */
+  def colNamed[A](column: Witness.Lt[Symbol])
+    (implicit
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]
+    ): TypedColumn[T, FieldType[column.T, A]] = {
+    val colExpr = dataset.col(column.value.name).as[A](TypedExpressionEncoder[A])
+    new TypedColumn[T, FieldType[column.T, A]](colExpr)
+  }
+
   object colMany extends SingletonProductArgs {
     def applyProduct[U <: HList, Out](columns: U)
       (implicit
@@ -436,6 +453,49 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   ): TypedDataset[(A, B)] = {
     implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
     selectMany(ca, cb)
+  }
+
+  def selectNamed[A: TypedEncoder, B: TypedEncoder, KA <: Symbol, KB <: Symbol](
+    ca: TypedColumn[T, FieldType[KA, A]],
+    cb: TypedColumn[T, FieldType[KB, B]]
+  )(implicit
+    i0: Witness.Aux[KA],
+    i1: Witness.Aux[KB]
+  ): TypedDataset[FieldType[KA, A] :: FieldType[KB, B] :: HNil] = {
+    type Out = FieldType[KA, A] :: FieldType[KB, B] :: HNil
+
+    val selected = dataset.toDF()
+      .select(new Column(ca.expr), new Column(cb.expr))
+      .as[Out](TypedExpressionEncoder[Out])
+
+    TypedDataset.create[Out](selected)
+  }
+
+  def selectNamedGeneralized[A: TypedEncoder, B: TypedEncoder, KA <: Symbol, KB <: Symbol](
+    ca: TypedColumn[T, FieldType[KA, A]],
+    cb: TypedColumn[T, FieldType[KB, B]]
+  )(implicit
+    i2: Witness.Aux[KA],
+    i3: Witness.Aux[KB]
+  ): TypedDataset[FieldType[KA, A] :: FieldType[KB, B] :: HNil] = {
+    // Doesn't compile :-(
+    // selectManyRecord(ca, cb)
+    selectManyRecord.applyProduct(ca :: cb :: HNil)
+  }
+
+  object selectManyRecord extends ProductArgs {
+    def applyProduct[U <: HList, Out <: HList](columns: U)
+      (implicit
+        i0: ColumnFieldTypes.Aux[T, U, Out],
+        i1: ToTraversable.Aux[U, List, UntypedExpression[T]],
+        i3: TypedEncoder[Out]
+      ): TypedDataset[Out] = {
+      val selected = dataset.toDF()
+        .select(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
+        .as[Out](TypedExpressionEncoder[Out])
+
+      TypedDataset.create[Out](selected)
+    }
   }
 
   /** Type-safe projection from type T to Tuple3[A,B,...]
