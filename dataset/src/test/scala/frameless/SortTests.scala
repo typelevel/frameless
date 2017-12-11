@@ -1,7 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.sql.catalyst.util.ArrayBasedMapData
+import org.apache.spark.sql.catalyst.util.{ ArrayBasedMapData, DateTimeUtils }
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{ functions => sfunc }
 import org.scalacheck.Prop
@@ -55,6 +55,22 @@ class SortTests extends TypedDatasetSuite {
 
     //regular spark also blow up at runtime!
     ds.dataset.sort(sfunc.col("_1"))
+  }
+
+  test("otherType") {
+//    implicit val dateAsInt: Injection[java.sql.Date, Int] =
+//      Injection(DateTimeUtils.fromJavaDate, DateTimeUtils.toJavaDate)
+
+    implicit val dateAsInt: Injection[java.sql.Date, SQLDate] =
+      Injection(d => SQLDate(d.toLocalDate.toEpochDay.toInt), d => java.sql.Date.valueOf(java.time.LocalDate.ofEpochDay(d.days)))
+
+
+    val ds = TypedDataset.create(Seq(Tuple1(java.sql.Date.valueOf("2017-01-01"))))
+
+    ds.show().run()
+
+//    ds.sort(ds('_1)).show().run()
+
   }
 
 
