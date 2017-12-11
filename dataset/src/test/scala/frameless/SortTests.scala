@@ -37,8 +37,9 @@ class SortTests extends TypedDatasetSuite {
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
-    check(prop[List[String]] _)
-    check(prop[List[X2[Int, X1[String]]]] _)
+    check(forAll(prop[List[String]] _))
+    check(forAll(prop[List[X2[Int, X1[String]]]] _))
+    check(forAll(prop[UdtEncodedClass] _))
   }
 
   test("sorting optional") {
@@ -66,7 +67,7 @@ class SortTests extends TypedDatasetSuite {
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
-    check(prop[List[String]] _)
-    check(prop[List[X2[Int, X1[String]]]] _)
+    check(forAll(prop[List[String]] _))
+    check(forAll(prop[List[X2[Int, X1[String]]]] _))
   }
 }
