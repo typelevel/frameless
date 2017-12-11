@@ -291,7 +291,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def descNullsFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+  def descNonesFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Descending, NullsFirst, Set.empty)
     })
@@ -300,7 +300,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def descNullsLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+  def descNonesLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Descending, NullsLast, Set.empty)
     })
@@ -318,7 +318,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ascNullsFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+  def ascNonesFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Ascending, NullsFirst, Set.empty)
     })
@@ -327,7 +327,7 @@ sealed class TypedColumn[T, U](
     *
     * apache/spark
     */
-  def ascNullsLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+  def ascNonesLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
     new TypedSortedColumn[T, U](withExpr {
       SortOrder(expr, Ascending, NullsLast, Set.empty)
     })

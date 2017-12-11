@@ -36,7 +36,7 @@ class WindowTests extends TypedDatasetSuite {
       .collect()
       .toList
 
-    val denseRankWindowed = dense_rank().over(
+    val denseRankWindowed = denseRank(
       TypedWindow
         //TODO: default won't work unless `ds.apply` is typed. Or could just call `.asc`
         .orderBy(ds[String]('b))

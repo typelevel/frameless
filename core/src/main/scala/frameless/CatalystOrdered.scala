@@ -2,7 +2,12 @@ package frameless
 
 import scala.annotation.implicitNotFound
 
-/** Types that can be ordered/compared by Catalyst. */
+/** Types that can be ordered/compared by Catalyst.
+  *
+  * @note CatalystOrdered instances are also [[frameless.CatalystRowOrdered]] instances.
+  *       If a type is not row orderable by Spark, [[frameless.CatalystRowOrdered.orderedEvidence]]
+  *       must be modified or removed
+  */
 @implicitNotFound("Cannot compare columns of type ${A}.")
 trait CatalystOrdered[A]
 

@@ -49,11 +49,11 @@ class SortTests extends TypedDatasetSuite {
 
       (ds.sort(ds('b)).collect().run().toList ?= ds.dataset.sort(sfunc.col("b")).collect().toList) &&
         (ds.sort(ds('b).asc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc).collect().toList) &&
-        (ds.sort(ds('b).ascNullsFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_first).collect().toList) &&
-        (ds.sort(ds('b).ascNullsLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_last).collect().toList) &&
+        (ds.sort(ds('b).ascNonesFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_first).collect().toList) &&
+        (ds.sort(ds('b).ascNonesLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").asc_nulls_last).collect().toList) &&
         (ds.sort(ds('b).desc).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc).collect().toList) &&
-        (ds.sort(ds('b).descNullsFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_first).collect().toList) &&
-        (ds.sort(ds('b).descNullsLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_last).collect().toList)
+        (ds.sort(ds('b).descNonesFirst).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_first).collect().toList) &&
+        (ds.sort(ds('b).descNonesLast).collect().run().toList ?= ds.dataset.sort(sfunc.col("b").desc_nulls_last).collect().toList)
     }
 
     check(forAll(prop[Int] _))
