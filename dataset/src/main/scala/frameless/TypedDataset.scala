@@ -676,6 +676,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * access to the intermediate phases of query execution for developers.
     *
     * Differs from `Dataset#queryExecution` by wrapping it's result into an effect-suspending `F[_]`.
+    *
+    * apache/spark
     */
   def queryExecution[F[_]](implicit F: SparkDelay[F]) : F[QueryExecution] =
     F.delay(dataset.queryExecution)
