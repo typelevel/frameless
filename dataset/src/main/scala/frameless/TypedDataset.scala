@@ -7,6 +7,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql._
+import org.apache.spark.sql.execution.QueryExecution
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
@@ -187,6 +188,14 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
           new TypedColumn[T, Out](colExpr)
       }
   }
+
+  /**
+    * Returns an `Array` that contains all column names in this [[TypedDataset]].
+    *
+    * Differs from `Dataset#columns` by wrapping it's result into an effect-suspending `F[_]`.
+    */
+  def columns[F[_]](implicit F: SparkDelay[F]): F[Array[String]] =
+    F.delay(dataset.columns)
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
@@ -659,6 +668,41 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @see [[frameless.TypedDataset#project]]
     */
   def drop[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = project[U]
+  
+  /**
+    * Returns an [[org.apache.spark.sql.execution.QueryExecution]] from this [[TypedDataset]].
+    *
+    * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
+    * access to the intermediate phases of query execution for developers.
+    *
+    * Differs from `Dataset#queryExecution` by wrapping it's result into an effect-suspending `F[_]`.
+    */
+  def queryExecution[F[_]](implicit F: SparkDelay[F]) : F[QueryExecution] =
+    F.delay(dataset.queryExecution)
+
+  /**
+    * Returns the schema of this [[TypedDataset]].
+    *
+    * Differs from `Dataset#schema` by wrapping it's result into an effect-suspending `F[_]`.
+    */
+  def schema[F[_]](implicit F: SparkDelay[F]): F[StructType] =
+    F.delay(dataset.schema)
+
+  /**
+    * Returns an [[org.apache.spark.sql.SparkSession]] from this [[TypedDataset]].
+    *
+    * Differs from `Dataset#sparkSession` by wrapping it's result into an effect-suspending `F[_]`.
+    */
+  def sparkSession[F[_]](implicit F: SparkDelay[F]): F[SparkSession] =
+    F.delay(dataset.sparkSession)
+
+  /**
+    * Returns an [[org.apache.spark.sql.SQLContext]] from this [[TypedDataset]].
+    *
+    * Differs from `Dataset#sqlContext` by wrapping it's result into an effect-suspending `F[_]`.
+    */
+  def sqlContext[F[_]](implicit F: SparkDelay[F]): F[SQLContext] =
+    F.delay(dataset.sqlContext)
 
   /** Prepends a new column to the Dataset.
     *

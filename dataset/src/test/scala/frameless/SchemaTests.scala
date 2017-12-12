@@ -8,7 +8,12 @@ import org.scalatest.Matchers
 class SchemaTests extends TypedDatasetSuite with Matchers {
 
   def prop[A](dataset: TypedDataset[A]): Prop = {
-    TypedExpressionEncoder.targetStructType(dataset.encoder) ?= dataset.dataset.schema
+    val schema = dataset.dataset.schema
+
+    Prop.all(
+      dataset.schema[Job].run() ?= schema,
+      TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
+    )
   }
 
   test("schema of groupBy('a).agg(sum('b))") {
