@@ -2,8 +2,8 @@ package frameless
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
-import org.apache.spark.sql.{DataFrame, Dataset, SQLContext, SparkSession}
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -104,7 +104,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def columns: Array[String] =
     dataset.columns
-  
+
   /** Concise syntax for chaining custom transformations.
     *
     * apache/spark
