@@ -670,7 +670,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def drop[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = project[U]
   
   /**
-    * Returns an [[org.apache.spark.sql.execution.QueryExecution]] from this [[TypedDataset]].
+    * Returns a `QueryExecution` from this [[TypedDataset]].
     *
     * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
     * access to the intermediate phases of query execution for developers.
@@ -691,7 +691,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     F.delay(dataset.schema)
 
   /**
-    * Returns an [[org.apache.spark.sql.SparkSession]] from this [[TypedDataset]].
+    * Returns a `SparkSession` from this [[TypedDataset]].
     *
     * Differs from `Dataset#sparkSession` by wrapping it's result into an effect-suspending `F[_]`.
     */
@@ -699,7 +699,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     F.delay(dataset.sparkSession)
 
   /**
-    * Returns an [[org.apache.spark.sql.SQLContext]] from this [[TypedDataset]].
+    * Returns a `SQLContext` from this [[TypedDataset]].
     *
     * Differs from `Dataset#sqlContext` by wrapping it's result into an effect-suspending `F[_]`.
     */
