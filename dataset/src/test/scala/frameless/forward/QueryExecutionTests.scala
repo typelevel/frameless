@@ -8,7 +8,7 @@ class QueryExecutionTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](data: Vector[A]): Prop = {
       val dataset = TypedDataset.create[A](data)
 
-      dataset.queryExecution.run() =? dataset.dataset.queryExecution
+      dataset.queryExecution =? dataset.dataset.queryExecution
     }
 
     check(forAll(prop[Int] _))

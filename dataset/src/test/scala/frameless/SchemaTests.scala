@@ -11,7 +11,7 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
     val schema = dataset.dataset.schema
 
     Prop.all(
-      dataset.schema[Job].run() ?= schema,
+      dataset.schema ?= schema,
       TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
     )
   }

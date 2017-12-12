@@ -1,7 +1,8 @@
 package frameless
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.{DataFrame, Dataset, SQLContext, SparkSession}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
 
@@ -19,6 +20,18 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
 
   override def toString: String =
     dataset.toString
+
+  /**
+    * Returns a `SparkSession` from this [[TypedDataset]].
+    */
+  def sparkSession: SparkSession =
+    dataset.sparkSession
+
+  /**
+    * Returns a `SQLContext` from this [[TypedDataset]].
+    */
+  def sqlContext: SQLContext =
+    dataset.sqlContext
 
   /**
     * Returns the schema of this Dataset.
@@ -41,6 +54,17 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
    */
   def explain(extended: Boolean = false): Unit =
     dataset.explain(extended)
+
+  /**
+    * Returns a `QueryExecution` from this [[TypedDataset]].
+    *
+    * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
+    * access to the intermediate phases of query execution for developers.
+    *
+    * apache/spark
+    */
+  def queryExecution: QueryExecution =
+    dataset.queryExecution
 
   /** Converts this strongly typed collection of data to generic Dataframe.  In contrast to the
     * strongly typed objects that Dataset operations work on, a Dataframe returns generic Row
@@ -75,6 +99,12 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def coalesce(numPartitions: Int): TypedDataset[T] =
     TypedDataset.create(dataset.coalesce(numPartitions))
 
+  /**
+    * Returns an `Array` that contains all column names in this [[TypedDataset]].
+    */
+  def columns: Array[String] =
+    dataset.columns
+  
   /** Concise syntax for chaining custom transformations.
     *
     * apache/spark

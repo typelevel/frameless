@@ -19,7 +19,7 @@ class ColumnsTests extends TypedDatasetSuite {
 
       Prop.all(datasets.flatMap { dataset =>
         val columns = dataset.dataset.columns
-        dataset.columns.run().map(col =>
+        dataset.columns.map(col =>
           Prop.propBoolean(columns contains col)
         )
       }: _*)

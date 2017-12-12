@@ -8,7 +8,7 @@ class SQLContextTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](data: Vector[A]): Prop = {
       val dataset = TypedDataset.create[A](data)
 
-      dataset.sqlContext.run() =? dataset.dataset.sqlContext
+      dataset.sqlContext =? dataset.dataset.sqlContext
     }
 
     check(forAll(prop[Int] _))

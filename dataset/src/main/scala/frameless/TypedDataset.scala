@@ -189,14 +189,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       }
   }
 
-  /**
-    * Returns an `Array` that contains all column names in this [[TypedDataset]].
-    *
-    * Differs from `Dataset#columns` by wrapping it's result into an effect-suspending `F[_]`.
-    */
-  def columns[F[_]](implicit F: SparkDelay[F]): F[Array[String]] =
-    F.delay(dataset.columns)
-
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
     * Running this operation requires moving all the data into the application's driver process, and
@@ -668,43 +660,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @see [[frameless.TypedDataset#project]]
     */
   def drop[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = project[U]
-  
-  /**
-    * Returns a `QueryExecution` from this [[TypedDataset]].
-    *
-    * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
-    * access to the intermediate phases of query execution for developers.
-    *
-    * Differs from `Dataset#queryExecution` by wrapping it's result into an effect-suspending `F[_]`.
-    *
-    * apache/spark
-    */
-  def queryExecution[F[_]](implicit F: SparkDelay[F]) : F[QueryExecution] =
-    F.delay(dataset.queryExecution)
-
-  /**
-    * Returns the schema of this [[TypedDataset]].
-    *
-    * Differs from `Dataset#schema` by wrapping it's result into an effect-suspending `F[_]`.
-    */
-  def schema[F[_]](implicit F: SparkDelay[F]): F[StructType] =
-    F.delay(dataset.schema)
-
-  /**
-    * Returns a `SparkSession` from this [[TypedDataset]].
-    *
-    * Differs from `Dataset#sparkSession` by wrapping it's result into an effect-suspending `F[_]`.
-    */
-  def sparkSession[F[_]](implicit F: SparkDelay[F]): F[SparkSession] =
-    F.delay(dataset.sparkSession)
-
-  /**
-    * Returns a `SQLContext` from this [[TypedDataset]].
-    *
-    * Differs from `Dataset#sqlContext` by wrapping it's result into an effect-suspending `F[_]`.
-    */
-  def sqlContext[F[_]](implicit F: SparkDelay[F]): F[SQLContext] =
-    F.delay(dataset.sqlContext)
 
   /** Prepends a new column to the Dataset.
     *

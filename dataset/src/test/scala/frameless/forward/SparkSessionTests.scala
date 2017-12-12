@@ -8,7 +8,7 @@ class SparkSessionTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](data: Vector[A]): Prop = {
       val dataset = TypedDataset.create[A](data)
 
-      dataset.sparkSession.run() =? dataset.dataset.sparkSession
+      dataset.sparkSession =? dataset.dataset.sparkSession
     }
 
     check(forAll(prop[Int] _))
