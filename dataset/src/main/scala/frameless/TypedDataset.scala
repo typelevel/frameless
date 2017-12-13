@@ -119,6 +119,20 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
+  /**
+    * Returns a checkpointed version of this [[TypedDataset]]. Checkpointing can be used to truncate the
+    * logical plan of this Dataset, which is especially useful in iterative algorithms where the
+    * plan may grow exponentially. It will be saved to files inside the checkpoint
+    * directory set with `SparkContext#setCheckpointDir`.
+    *
+    * Differs from `Dataset#checkpoint` by wrapping it's result into an effect-suspending `F[_]`.
+    *
+    * apache/spark
+    */
+
+  def checkpoint[F[_]](eager: Boolean)(implicit F: SparkDelay[F]): F[TypedDataset[T]] =
+    F.delay(TypedDataset.create[T](dataset.checkpoint(eager)))
+
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type.
     * Unlike `as` the projection U may include a subset of the columns of T and the column names and types must agree.
     *

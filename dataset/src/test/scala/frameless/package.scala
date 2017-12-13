@@ -37,4 +37,5 @@ package object frameless {
     } yield new UdtEncodedClass(int, doubles.toArray)
   }
 
+  val TEST_OUTPUT_DIR = "target/test-output"
 }

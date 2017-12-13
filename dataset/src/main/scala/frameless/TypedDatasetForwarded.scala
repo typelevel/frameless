@@ -1,5 +1,7 @@
 package frameless
 
+import java.util
+
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types.StructType
@@ -138,6 +140,39 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def distinct: TypedDataset[T] =
     TypedDataset.create(dataset.distinct)
 
+  /**
+    * Returns a best-effort snapshot of the files that compose this [[TypedDataset]]. This method simply
+    * asks each constituent BaseRelation for its respective files and takes the union of all results.
+    * Depending on the source relations, this may not find all input files. Duplicates are removed.
+    *
+    * apache/spark
+    */
+
+  def inputFiles: Array[String] =
+    dataset.inputFiles
+
+  /**
+    * Returns true if the `collect` and `take` methods can be run locally
+    * (without any Spark executors).
+    *
+    * apache/spark
+    */
+  def isLocal: Boolean =
+    dataset.isLocal
+
+  /**
+    * Returns true if this [[TypedDataset]] contains one or more sources that continuously
+    * return data as it arrives. A [[TypedDataset]] that reads data from a streaming source
+    * must be executed as a `StreamingQuery` using the `start()` method in
+    * `DataStreamWriter`. Methods that return a single answer, e.g. `count()` or
+    * `collect()`, will throw an `AnalysisException` when there is a streaming
+    * source present.
+    *
+    * apache/spark
+    */
+  def isStreaming: Boolean =
+    dataset.isStreaming
+
   /** Returns a new [[TypedDataset]] that contains only the elements of this [[TypedDataset]] that are also
     * present in `other`.
     *
@@ -159,6 +194,40 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def union(other: TypedDataset[T]): TypedDataset[T] =
     TypedDataset.create(dataset.union(other.dataset))
+
+  /**
+    * Randomly splits this [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+
+  // $COVERAGE-OFF$ We can not test this method because it is non-deterministic.
+  def randomSplit(weights: Array[Double]): Array[TypedDataset[T]] =
+    dataset.randomSplit(weights).map(TypedDataset.create[T])
+  // $COVERAGE-ON$
+
+  /**
+    * Randomly splits this [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+
+  def randomSplit(weights: Array[Double], seed: Long): Array[TypedDataset[T]] =
+    dataset.randomSplit(weights, seed).map(TypedDataset.create[T])
+
+  /**
+    * Returns a Java list that contains randomly split [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+  def randomSplitAsList(weights: Array[Double], seed: Long): util.List[TypedDataset[T]] = {
+    val values = randomSplit(weights, seed)
+    java.util.Arrays.asList(values: _*)
+  }
+
 
   /** Returns a new Dataset containing rows in this Dataset but not in another Dataset.
     * This is equivalent to `EXCEPT` in SQL.
