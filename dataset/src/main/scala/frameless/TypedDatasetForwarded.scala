@@ -4,8 +4,9 @@ import java.util
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -90,6 +91,66 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def repartition(numPartitions: Int): TypedDataset[T] =
     TypedDataset.create(dataset.repartition(numPartitions))
+
+
+  /**
+    * Get the [[TypedDataset]]'s current storage level, or StorageLevel.NONE if not persisted.
+    *
+    * apache/spark
+    */
+  def storageLevel(): StorageLevel =
+    dataset.storageLevel
+
+  /**
+    * Returns the content of the [[TypedDataset]] as a Dataset of JSON strings.
+    *
+    * apache/spark
+    */
+  def toJSON: TypedDataset[String] =
+    TypedDataset.create(dataset.toJSON)
+
+  /**
+    * :: Experimental ::
+    * Defines an event time watermark for this [[TypedDataset]]. A watermark tracks a point in time
+    * before which we assume no more late data is going to arrive.
+    *
+    * Spark will use this watermark for several purposes:
+    *  - To know when a given time window aggregation can be finalized and thus can be emitted when
+    *    using output modes that do not allow updates.
+    *  - To minimize the amount of state that we need to keep for on-going aggregations,
+    *    `mapGroupsWithState` and `dropDuplicates` operators.
+    *
+    *  The current watermark is computed by looking at the `MAX(eventTime)` seen across
+    *  all of the partitions in the query minus a user specified `delayThreshold`.  Due to the cost
+    *  of coordinating this value across partitions, the actual watermark used is only guaranteed
+    *  to be at least `delayThreshold` behind the actual event time.  In some cases we may still
+    *  process records that arrive more than `delayThreshold` late.
+    *
+    * @param eventTime the name of the column that contains the event time of the row.
+    * @param delayThreshold the minimum delay to wait to data to arrive late, relative to the latest
+    *                       record that has been processed in the form of an interval
+    *                       (e.g. "1 minute" or "5 hours"). NOTE: This should not be negative.
+    *
+    * apache/spark
+    */
+  def withWatermark(eventTime: String, delayThreshold: String): TypedDataset[T] =
+    TypedDataset.create(dataset.withWatermark(eventTime, delayThreshold))
+
+  /**
+    * Interface for saving the content of the non-streaming [[TypedDataset]] out into external storage.
+    *
+    * apache/spark
+    */
+  def write: DataFrameWriter[T] =
+    dataset.write
+
+  /**
+    * Interface for saving the content of the streaming [[TypedDataset]] out into external storage.
+    *
+    * apache/spark
+    */
+  def writeStream: DataStreamWriter[T] =
+    dataset.writeStream
 
   /** Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
     * Similar to coalesce defined on an RDD, this operation results in a narrow dependency, e.g.
@@ -201,7 +262,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     *
     * apache/spark
     */
-
   // $COVERAGE-OFF$ We can not test this method because it is non-deterministic.
   def randomSplit(weights: Array[Double]): Array[TypedDataset[T]] =
     dataset.randomSplit(weights).map(TypedDataset.create[T])
@@ -213,7 +273,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     *
     * apache/spark
     */
-
   def randomSplit(weights: Array[Double], seed: Long): Array[TypedDataset[T]] =
     dataset.randomSplit(weights, seed).map(TypedDataset.create[T])
 

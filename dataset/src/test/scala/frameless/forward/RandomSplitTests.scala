@@ -10,7 +10,6 @@ import scala.collection.JavaConversions._
 class RandomSplitTests extends TypedDatasetSuite with Matchers {
 
   val nonEmptyPositiveArray: Gen[Array[Double]] = Gen.nonEmptyListOf(Gen.posNum[Double]).map(_.toArray)
-  def vectorGen[A: Arbitrary]: Gen[Vector[A]] = arbVector[A].arbitrary
 
   test("randomSplit(weight, seed)") {
     def prop[A: TypedEncoder : Arbitrary] = forAll(vectorGen[A], nonEmptyPositiveArray, arbitrary[Long]) {

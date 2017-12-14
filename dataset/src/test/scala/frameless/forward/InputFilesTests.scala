@@ -16,7 +16,7 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       TypedDataset.create(data).dataset.write.text(filePath)
       val dataset = TypedDataset.create(implicitly[SparkSession].sparkContext.textFile(filePath))
 
-      Prop.propBoolean(dataset.inputFiles sameElements dataset.dataset.inputFiles)
+      dataset.inputFiles sameElements dataset.dataset.inputFiles
     }
 
     def propCsv[A: TypedEncoder](data: Vector[A]): Prop = {
@@ -27,7 +27,7 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       val dataset = TypedDataset.createUnsafe(
         implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).csv(filePath))
 
-      Prop.propBoolean(dataset.inputFiles sameElements dataset.dataset.inputFiles)
+      dataset.inputFiles sameElements dataset.dataset.inputFiles
     }
 
     def propJson[A: TypedEncoder](data: Vector[A]): Prop = {
@@ -38,7 +38,7 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       val dataset = TypedDataset.createUnsafe(
         implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).json(filePath))
 
-      Prop.propBoolean(dataset.inputFiles sameElements dataset.dataset.inputFiles)
+      dataset.inputFiles sameElements dataset.dataset.inputFiles
     }
 
     check(forAll(propText[String] _))
