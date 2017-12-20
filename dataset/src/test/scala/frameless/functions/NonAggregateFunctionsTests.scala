@@ -1,10 +1,11 @@
 package frameless
 package functions
+import java.time.{LocalDateTime => JavaLocalDateTime}
+
 import frameless.functions.nonAggregate._
-import org.apache.spark.sql.{ Column, Encoder }
-import org.scalacheck.Gen
+import org.apache.spark.sql.{Column, Encoder, functions => untyped}
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{ functions => untyped }
+import org.scalacheck.{Gen, Prop}
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
@@ -611,23 +612,46 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(stringFuncProp(upper, untyped.upper))
   }
 
-  def stringFuncProp[A : Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A], sparkFunc: Column => Column) = {
+  test("year") {
+    val spark = session
+    import spark.implicits._
+
+    check(dateTimeStringFuncProp(year, untyped.year))
+  }
+
+  def stringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
+                                 sparkFunc: Column => Column): Prop = {
     forAll { values: List[X1[String]] =>
       val ds = TypedDataset.create(values)
 
-      val sparkResult: List[A] = ds.toDF()
-        .select(sparkFunc(untyped.col("a")))
-        .map(_.getAs[A](0))
-        .collect()
-        .toList
-
-      val typed: List[A] = ds
-        .select(strFunc(ds[String]('a)))
-        .collect()
-        .run()
-        .toList
-
-      typed ?= sparkResult
+      funcProp(ds)(strFunc, sparkFunc)
     }
   }
+
+  def dateTimeStringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
+                                         sparkFunc: Column => Column): Prop =
+    forAll { values: List[JavaLocalDateTime] =>
+      val ds = TypedDataset.create(values.map(v => X1[String](v.format(dateTimeFormatter))))
+
+      funcProp(ds)(strFunc, sparkFunc)
+    }
+
+  def funcProp[A: Encoder](ds: TypedDataset[X1[String]])
+                          (strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
+                           sparkFunc: Column => Column): Prop = {
+    val sparkResult = ds.toDF()
+      .select(sparkFunc(untyped.col("a")))
+      .map(_.getAs[A](0))
+      .collect()
+      .toList
+
+    val typed = ds
+      .select(strFunc(ds[String]('a)))
+      .collect()
+      .run()
+      .toList
+
+    typed ?= sparkResult
+  }
+
 }

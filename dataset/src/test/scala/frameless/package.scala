@@ -1,3 +1,6 @@
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime => JavaLocalDateTime}
+
 import org.scalacheck.{Arbitrary, Gen}
 
 package object frameless {
@@ -37,4 +40,15 @@ package object frameless {
     } yield new UdtEncodedClass(int, doubles.toArray)
   }
 
+  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+  implicit val localDateArb: Arbitrary[JavaLocalDateTime] = Arbitrary {
+    for {
+      year <- Gen.chooseNum(1900, 2027)
+      month <- Gen.chooseNum(1, 12)
+      dayOfMonth <- Gen.chooseNum(1, 28)
+      hour <- Gen.chooseNum(1, 23)
+      minute <- Gen.chooseNum(1, 59)
+    } yield JavaLocalDateTime.of(year, month, dayOfMonth, hour, minute)
+  }
 }
