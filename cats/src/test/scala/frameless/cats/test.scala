@@ -14,6 +14,7 @@ import org.apache.spark.{SparkConf, SparkContext => SC}
 import org.scalatest.compatible.Assertion
 import org.scalactic.anyvals.PosInt
 
+import scala.collection.immutable.SortedMap
 import scala.reflect.ClassTag
 
 trait SparkTests {
@@ -83,11 +84,11 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     toy.csum shouldBe theSeq.sum
   }
 
-  // property("rdd Map[Int,Int] monoid example") {
-  //   import frameless.cats.implicits._
-  //   val rdd: RDD[Map[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(Map(_))
-  //   rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
-  // }
+  property("rdd Map[Int,Int] monoid example") {
+    import frameless.cats.implicits._
+    val rdd: RDD[SortedMap[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(SortedMap(_))
+    rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
+  }
 
   property("rdd tuple commutative semigroup example") {
     import frameless.cats.implicits._
