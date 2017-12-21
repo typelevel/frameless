@@ -39,7 +39,7 @@ object implicits extends FramelessSyntax with SparkDelayInstances {
   }
 
   implicit class pairRddOps[K: ClassTag, V: ClassTag](lhs: RDD[(K, V)]) {
-    def csumByKey(implicit m: CommutativeMonoid[V]): RDD[(K, V)] = lhs.foldByKey(m.empty)(_ |+| _)
+    def csumByKey(implicit m: CommutativeSemigroup[V]): RDD[(K, V)] = lhs.reduceByKey(_ |+| _)
     def cminByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ min _)
     def cmaxByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ max _)
   }
