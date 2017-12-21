@@ -2,21 +2,44 @@ package frameless
 package cats
 
 import _root_.cats._
-import _root_.cats.kernel.CommutativeSemigroup
+import _root_.cats.kernel.{CommutativeMonoid, CommutativeSemigroup}
 import _root_.cats.implicits._
+import alleycats.Empty
 
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
 object implicits extends FramelessSyntax with SparkDelayInstances {
   implicit class rddOps[A: ClassTag](lhs: RDD[A]) {
-    def csum(implicit m: CommutativeSemigroup[A]): A = lhs.reduce(_ |+| _)
-    def cmin(implicit o: Order[A]): A = lhs.reduce(_ min _)
-    def cmax(implicit o: Order[A]): A = lhs.reduce(_ max _)
+    def csum(implicit m: CommutativeMonoid[A]): A =
+      lhs.fold(m.empty)(_ |+| _)
+    def csumOption(implicit m: CommutativeSemigroup[A]): Option[A] =
+      lhs.aggregate[Option[A]](None)(
+        (acc, a) => Some(acc.fold(a)(_ |+| a)),
+        (l, r) => l.fold(r)(x => r.map(_ |+| x) <+> Some(x))
+      )
+
+    def cmin(implicit o: Order[A], e: Empty[A]): A = {
+      if (lhs.isEmpty) e.empty
+      else lhs.reduce(_ min _)
+    }
+    def cminOption(implicit o: Order[A]): Option[A] =
+      csumOption(new CommutativeSemigroup[A] {
+        def combine(l: A, r: A) = l min r
+      })
+
+    def cmax(implicit o: Order[A], e: Empty[A]): A = {
+      if (lhs.isEmpty) e.empty
+      else lhs.reduce(_ max _)
+    }
+    def cmaxOption(implicit o: Order[A]): Option[A] =
+      csumOption(new CommutativeSemigroup[A] {
+        def combine(l: A, r: A) = l max r
+      })
   }
 
   implicit class pairRddOps[K: ClassTag, V: ClassTag](lhs: RDD[(K, V)]) {
-    def csumByKey(implicit m: CommutativeSemigroup[V]): RDD[(K, V)] = lhs.reduceByKey(_ |+| _)
+    def csumByKey(implicit m: CommutativeMonoid[V]): RDD[(K, V)] = lhs.foldByKey(m.empty)(_ |+| _)
     def cminByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ min _)
     def cmaxByKey(implicit o: Order[V]): RDD[(K, V)] = lhs.reduceByKey(_ max _)
   }

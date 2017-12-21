@@ -131,6 +131,21 @@ println(data.cmax)
 println(data.cmin)
 ```
 
+In case the RDD is empty, the `csum`, `cmax` and `cmin` will use the default values for the type of
+elements inside the RDD. There are counterpart operations to those that have an `Option` return type
+to deal with the case of an empty RDD:
+
+```tut:book
+val data: RDD[(Int, Int, Int)] = sc.emptyRDD
+
+println(data.csum)
+println(data.csumOption)
+println(data.cmax)
+println(data.cmaxOption)
+println(data.cmin)
+println(data.cminOption)
+``` 
+
 The following example aggregates all the elements with a common key.
 
 ```tut:book
