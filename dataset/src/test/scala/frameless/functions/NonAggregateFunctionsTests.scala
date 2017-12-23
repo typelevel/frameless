@@ -1,9 +1,8 @@
 package frameless
 package functions
-import java.time.{LocalDateTime => JavaLocalDateTime}
 
 import frameless.functions.nonAggregate._
-import org.apache.spark.sql.{Column, Encoder, functions => untyped}
+import org.apache.spark.sql.{Column, Encoder, Row, functions => untyped}
 import org.scalacheck.Prop._
 import org.scalacheck.{Gen, Prop}
 
@@ -616,7 +615,35 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    check(dateTimeStringFuncProp(year, untyped.year))
+    val nullHandler: Row => Option[Int] = _.get(0) match {
+        case i: Int => Some(i)
+        case _ => None
+      }
+
+    def optionFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
+                                   sparkFunc: Column => Column,
+                                   nullHandler: Row => Option[A])
+                                  (implicit E: Encoder[Option[A]]): List[String] => Prop =
+      (values: List[String]) => {
+        val ds = TypedDataset.create(values.map(X1.apply))
+
+        val sparkResult = ds.toDF()
+          .select(sparkFunc(untyped.col("a")))
+          .map(nullHandler)
+          .collect()
+          .toList
+
+        val typed = ds
+          .select(strFunc(ds[String]('a)))
+          .collect()
+          .run()
+          .toList
+
+        typed ?= sparkResult
+      }
+
+    check(forAll(dateTimeStringGen)(optionFuncProp(year, untyped.year, nullHandler)))
+    check(forAll(optionFuncProp(year, untyped.year, nullHandler)))
   }
 
   def stringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
@@ -630,8 +657,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   def dateTimeStringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
                                          sparkFunc: Column => Column): Prop =
-    forAll { values: List[JavaLocalDateTime] =>
-      val ds = TypedDataset.create(values.map(v => X1[String](v.format(dateTimeFormatter))))
+    forAll(dateTimeStringGen) { values: List[String] =>
+      val ds = TypedDataset.create(values.map(X1.apply))
 
       funcProp(ds)(strFunc, sparkFunc)
     }

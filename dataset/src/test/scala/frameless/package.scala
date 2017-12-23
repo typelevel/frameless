@@ -51,4 +51,11 @@ package object frameless {
       minute <- Gen.chooseNum(1, 59)
     } yield JavaLocalDateTime.of(year, month, dayOfMonth, hour, minute)
   }
+
+  /** LocalDateTime String Generator to test time related Spark functions */
+  val dateTimeStringGen: Gen[List[String]] =
+    for {
+      listOfDates <- Gen.listOf(localDateArb.arbitrary)
+      localDate <- listOfDates
+    } yield localDate.format(dateTimeFormatter)
 }

@@ -282,9 +282,11 @@ trait NonAggregateFunctions {
   /**
     * Non-Aggregate function: Extracts the year as an integer from a given date/timestamp/string.
     *
+    * Differs from `Column#year` by wrapping it's result into an `Option`.
+    *
     * apache/spark
     */
-  def year[T](col: TypedColumn[T, String]): TypedColumn[T, Int] = {
-    new TypedColumn[T, Int](untyped.year(col.untyped))
+  def year[T](col: TypedColumn[T, String]): TypedColumn[T, Option[Int]] = {
+    new TypedColumn[T, Option[Int]](untyped.year(col.untyped))
   }
 }
