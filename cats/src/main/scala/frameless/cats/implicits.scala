@@ -16,7 +16,7 @@ object implicits extends FramelessSyntax with SparkDelayInstances {
     def csumOption(implicit m: CommutativeSemigroup[A]): Option[A] =
       lhs.aggregate[Option[A]](None)(
         (acc, a) => Some(acc.fold(a)(_ |+| a)),
-        (l, r) => l.fold(r)(x => r.map(_ |+| x) <+> Some(x))
+        (l, r) => l.fold(r)(x => r.map(_ |+| x) orElse Some(x))
       )
 
     def cmin(implicit o: Order[A], e: Empty[A]): A = {
