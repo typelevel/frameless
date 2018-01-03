@@ -523,7 +523,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A : TypedEncoder](xs: List[X1[A]])(implicit x2en: Encoder[X2[A, Long]]) = {
       val ds = TypedDataset.create(xs)
 
-      val result = ds.withColumn[X2[A, Long]](monotonicallyIncreasingId[X1[A]]())
+      val result = ds.withColumn[X2[A, Long]](monotonicallyIncreasingId())
         .collect()
         .run()
         .toVector
