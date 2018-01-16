@@ -155,6 +155,17 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
+  test("litAggr") {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](xs: List[A], b: B, c: C): Prop = {
+      val dataset = TypedDataset.create(xs)
+      val (r1, rb, rc, rcount) = dataset.agg(count().lit(1), litAggr(b), litAggr(c), count()).collect().run().head
+      (rcount ?= xs.size.toLong) && (r1 ?= 1) && (rb ?= b) && (rc ?= c)
+    }
+
+    check(forAll(prop[Boolean, Int, String] _))
+    check(forAll(prop[Option[Boolean], Vector[Option[Vector[Char]]], Long] _))
+  }
+
   test("count") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs)
@@ -195,6 +206,18 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short] _))
     check(forAll(prop[Byte] _))
     check(forAll(prop[String] _))
+  }
+
+  test("max with follow up multiplication") {
+    def prop(xs: List[Long]): Prop = {
+      val dataset = TypedDataset.create(xs.map(X1(_)))
+      val A = dataset.col[Long]('a)
+      val datasetMax = dataset.agg(max(A) * 2).collect().run().headOption
+
+      datasetMax ?= (if(xs.isEmpty) None else Some(xs.max * 2))
+    }
+
+    check(forAll(prop _))
   }
 
   test("min") {
