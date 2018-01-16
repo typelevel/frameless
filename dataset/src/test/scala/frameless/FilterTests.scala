@@ -33,6 +33,27 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Int] _))
     check(forAll(prop[String] _))
     check(forAll(prop[Char] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[SQLTimestamp] _))
+    //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
+  }
+
+  test("filter('a =!= 'b)") {
+    def prop[A: TypedEncoder](data: Vector[X2[A, A]]): Prop = {
+      val dataset = TypedDataset.create(data)
+      val A = dataset.col('a)
+      val B = dataset.col('b)
+
+      val dataset2 = dataset.filter(A =!= B).collect().run().toVector
+      val data2 = data.filter(x => x.a != x.b)
+
+      dataset2 ?= data2
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[Char] _))
+    check(forAll(prop[Boolean] _))
     check(forAll(prop[SQLTimestamp] _))
     //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
   }

@@ -7,6 +7,9 @@ package object functions extends Udf with UnaryFunctions {
   object aggregate extends AggregateFunctions
   object nonAggregate extends NonAggregateFunctions
 
+  def litAggr[A: TypedEncoder, T](value: A): TypedAggregate[T, A] =
+    new TypedAggregate[T,A](lit(value).expr)
+
   def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = {
     val encoder = TypedEncoder[A]
 
