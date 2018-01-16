@@ -1,19 +1,23 @@
 package frameless
 package cats
 
+import _root_.cats.Foldable
 import _root_.cats.implicits._
+
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
-import org.scalatest.Matchers
-import org.scalacheck.Arbitrary
-import Arbitrary._
 import org.apache.spark.rdd.RDD
-import org.scalatest._
-import prop._
 import org.apache.spark.{SparkConf, SparkContext => SC}
+
 import org.scalatest.compatible.Assertion
 import org.scalactic.anyvals.PosInt
+import org.scalatest.Matchers
+import org.scalacheck.Arbitrary
+import org.scalatest._
+import Arbitrary._
+import prop._
 
+import scala.collection.immutable.SortedMap
 import scala.reflect.ClassTag
 
 trait SparkTests {
@@ -74,25 +78,52 @@ class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
     }
   }
 
-  property("rdd simple numeric monoid example") {
+  property("rdd simple numeric commutative semigroup") {
     import frameless.cats.implicits._
-    val theSeq = 1 to 20
-    val toy = theSeq.toRdd
-    toy.cmin shouldBe 1
-    toy.cmax shouldBe 20
-    toy.csum shouldBe theSeq.sum
+
+    forAll { seq: List[Int] =>
+      val expectedSum = if (seq.isEmpty) None else Some(seq.sum)
+      val expectedMin = if (seq.isEmpty) None else Some(seq.min)
+      val expectedMax = if (seq.isEmpty) None else Some(seq.max)
+
+      val rdd = seq.toRdd
+
+      rdd.cmin shouldBe expectedMin.getOrElse(0)
+      rdd.cminOption shouldBe expectedMin
+
+      rdd.cmax shouldBe expectedMax.getOrElse(0)
+      rdd.cmaxOption shouldBe expectedMax
+
+      rdd.csum shouldBe expectedSum.getOrElse(0)
+      rdd.csumOption shouldBe expectedSum
+    }
   }
 
-  property("rdd Map[Int,Int] monoid example") {
+  property("rdd of SortedMap[Int,Int] commutative monoid") {
     import frameless.cats.implicits._
-    val rdd: RDD[Map[Int, Int]] = 1.to(20).zip(1.to(20)).toRdd.map(Map(_))
-    rdd.csum shouldBe 1.to(20).zip(1.to(20)).toMap
+    forAll { seq: List[SortedMap[Int, Int]] =>
+      val rdd = seq.toRdd
+      rdd.csum shouldBe Foldable[List].fold(seq)
+    }
   }
 
-  property("rdd tuple monoid example") {
+  property("rdd tuple commutative semigroup example") {
     import frameless.cats.implicits._
-    val seq = Seq( (1,2), (2,3), (5,6) )
+    forAll { seq: List[(Int, Int)] =>
+      val expectedSum = if (seq.isEmpty) None else Some(Foldable[List].fold(seq))
+      val rdd = seq.toRdd
+
+      rdd.csum shouldBe expectedSum.getOrElse(0 -> 0)
+      rdd.csumOption shouldBe expectedSum
+    }
+  }
+
+  property("pair rdd numeric commutative semigroup example") {
+    import frameless.cats.implicits._
+    val seq = Seq( ("a",2), ("b",3), ("d",6), ("b",2), ("d",1) )
     val rdd = seq.toRdd
-    rdd.csum shouldBe seq.reduce(_|+|_)
+    rdd.cminByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",2), ("d",1) )
+    rdd.cmaxByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",3), ("d",6) )
+    rdd.csumByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",5), ("d",7) )
   }
 }
