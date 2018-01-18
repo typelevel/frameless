@@ -620,65 +620,49 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         case _ => None
       }
 
-    def optionFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
-                                   sparkFunc: Column => Column,
-                                   nullHandler: Row => Option[A])
-                                  (implicit E: Encoder[Option[A]]): List[String] => Prop =
-      (values: List[String]) => {
-        val ds = TypedDataset.create(values.map(X1.apply))
+    def optionFuncProp[A: Encoder](
+      strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
+      sparkFunc: Column => Column, nullHandler: Row => Option[A])
+      (implicit E: Encoder[Option[A]]): List[String] => Prop =
+        (values: List[String]) => {
+          val ds = TypedDataset.create(values.map(X1.apply))
 
-        val sparkResult = ds.toDF()
-          .select(sparkFunc(untyped.col("a")))
-          .map(nullHandler)
-          .collect()
-          .toList
+          val sparkResult = ds.toDF()
+            .select(sparkFunc(untyped.col("a")))
+            .map(nullHandler)
+            .collect()
+            .toList
 
-        val typed = ds
-          .select(strFunc(ds[String]('a)))
-          .collect()
-          .run()
-          .toList
+          val typed = ds
+            .select(strFunc(ds[String]('a)))
+            .collect()
+            .run()
+            .toList
 
-        typed ?= sparkResult
-      }
+          typed ?= sparkResult
+        }
 
     check(forAll(dateTimeStringGen)(optionFuncProp(year, untyped.year, nullHandler)))
     check(forAll(optionFuncProp(year, untyped.year, nullHandler)))
   }
 
-  def stringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
-                                 sparkFunc: Column => Column): Prop = {
+  def stringFuncProp[A : Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A], sparkFunc: Column => Column) = {
     forAll { values: List[X1[String]] =>
       val ds = TypedDataset.create(values)
 
-      funcProp(ds)(strFunc, sparkFunc)
+      val sparkResult: List[A] = ds.toDF()
+        .select(sparkFunc(untyped.col("a")))
+        .map(_.getAs[A](0))
+        .collect()
+        .toList
+
+      val typed: List[A] = ds
+        .select(strFunc(ds[String]('a)))
+        .collect()
+        .run()
+        .toList
+
+      typed ?= sparkResult
     }
   }
-
-  def dateTimeStringFuncProp[A: Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
-                                         sparkFunc: Column => Column): Prop =
-    forAll(dateTimeStringGen) { values: List[String] =>
-      val ds = TypedDataset.create(values.map(X1.apply))
-
-      funcProp(ds)(strFunc, sparkFunc)
-    }
-
-  def funcProp[A: Encoder](ds: TypedDataset[X1[String]])
-                          (strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A],
-                           sparkFunc: Column => Column): Prop = {
-    val sparkResult = ds.toDF()
-      .select(sparkFunc(untyped.col("a")))
-      .map(_.getAs[A](0))
-      .collect()
-      .toList
-
-    val typed = ds
-      .select(strFunc(ds[String]('a)))
-      .collect()
-      .run()
-      .toList
-
-    typed ?= sparkResult
-  }
-
 }
