@@ -14,16 +14,15 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     def prop[A: TypedEncoder: Encoder, B: TypedEncoder: Encoder]
       (values: List[X1[A]])
-      (
-        implicit catalystAbsolute: CatalystAbsolute[A, B],
-        encX1:Encoder[X1[A]]
-      )= {
+      (implicit
+        catalystAbsolute: CatalystAbsolute[A, B],
+        encX1: Encoder[X1[A]]
+      ) = {
         val cDS = session.createDataset(values)
         val resCompare = cDS
           .select(org.apache.spark.sql.functions.abs(cDS("a")))
           .map(_.getAs[B](0))
           .collect().toList
-
 
         val typedDS = TypedDataset.create(values)
         val col = typedDS('a)
@@ -47,16 +46,15 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     def prop[A: TypedEncoder : Encoder]
       (values: List[X1[A]])
-      (
-        implicit catalystAbsolute: CatalystAbsolute[A, A],
-        encX1:Encoder[X1[A]]
-      )= {
+      (implicit
+        catalystAbsolute: CatalystAbsolute[A, A],
+        encX1: Encoder[X1[A]]
+      ) = {
         val cDS = session.createDataset(values)
         val resCompare = cDS
           .select(org.apache.spark.sql.functions.abs(cDS("a")))
           .map(_.getAs[A](0))
           .collect().toList
-
 
         val typedDS = TypedDataset.create(values)
         val res = typedDS
@@ -74,23 +72,19 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       check(forAll(prop[Double] _))
     }
 
-
-
   test("acos") {
     val spark = session
     import spark.implicits._
 
     def prop[A: CatalystNumeric : TypedEncoder : Encoder]
-    (values: List[X1[A]])
-    (implicit encX1:Encoder[X1[A]])
-    = {
+      (values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.acos(cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
-
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -104,7 +98,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
     check(forAll(prop[Short] _))
@@ -113,7 +106,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
-
    /*
     * Currently not all Collection types play nice with the Encoders.
     * This test needs to be readressed and Set readded to the Collection Typeclass once these issues are resolved.
@@ -121,29 +113,26 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     * [[https://issues.apache.org/jira/browse/SPARK-18891]]
     * [[https://issues.apache.org/jira/browse/SPARK-21204]]
     */
-  test("arrayContains"){
-
-
+  test("arrayContains") {
     val spark = session
     import spark.implicits._
 
     val listLength = 10
     val idxs = Stream.continually(Range(0, listLength)).flatten.toIterator
 
-    abstract class Nth[A, C[A]:CatalystCollection] {
-
-      def nth(c:C[A], idx:Int):A
+    abstract class Nth[A, C[A]: CatalystCollection] {
+      def nth(c: C[A], idx: Int): A
     }
 
-    implicit def deriveListNth[A] : Nth[A, List] = new Nth[A, List] {
+    implicit def deriveListNth[A]: Nth[A, List] = new Nth[A, List] {
       override def nth(c: List[A], idx: Int): A = c(idx)
     }
 
-    implicit def deriveSeqNth[A] : Nth[A, Seq] = new Nth[A, Seq] {
+    implicit def deriveSeqNth[A]: Nth[A, Seq] = new Nth[A, Seq] {
       override def nth(c: Seq[A], idx: Int): A = c(idx)
     }
 
-    implicit def deriveVectorNth[A] : Nth[A, Vector] = new Nth[A, Vector] {
+    implicit def deriveVectorNth[A]: Nth[A, Vector] = new Nth[A, Vector] {
       override def nth(c: Vector[A], idx: Int): A = c(idx)
     }
 
@@ -151,13 +140,12 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       override def nth(c: Array[A], idx: Int): A = c(idx)
     }
 
-
-    def prop[C[_] : CatalystCollection]
+    def prop[C[_]: CatalystCollection]
       (
         values: C[Int],
-        shouldBeIn:Boolean)
-      (
-        implicit nth:Nth[Int, C],
+        shouldBeIn: Boolean
+      )(implicit
+        nth: Nth[Int, C],
         encEv: Encoder[C[Int]],
         tEncEv: TypedEncoder[C[Int]]
       ) = {
@@ -170,7 +158,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(_.getAs[Boolean](0))
         .collect().toList
 
-
       val typedDS = TypedDataset.create(List(X1(values)))
       val res = typedDS
         .select(arrayContains(typedDS('a), contained))
@@ -181,11 +168,10 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-
     check(
       forAll(
-        Gen.listOfN(listLength, Gen.choose(0,100)),
-        Gen.oneOf(true,false)
+        Gen.listOfN(listLength, Gen.choose(0, 100)),
+        Gen.oneOf(true, false)
       )
       (prop[List])
     )
@@ -200,16 +186,16 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     check(
       forAll(
-        Gen.listOfN(listLength, Gen.choose(0,100)).map(_.toVector),
-        Gen.oneOf(true,false)
+        Gen.listOfN(listLength, Gen.choose(0, 100)).map(_.toVector),
+        Gen.oneOf(true, false)
       )
       (prop[Vector])
     )
 
     check(
       forAll(
-        Gen.listOfN(listLength, Gen.choose(0,100)).map(_.toArray),
-        Gen.oneOf(true,false)
+        Gen.listOfN(listLength, Gen.choose(0, 100)).map(_.toArray),
+        Gen.oneOf(true, false)
       )
       (prop[Array])
     )
@@ -219,14 +205,14 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1: Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.atan(cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -240,7 +226,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
     check(forAll(prop[Short] _))
@@ -253,14 +238,14 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1: Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.asin(cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -273,7 +258,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       res ?= resCompare
     }
-
 
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
@@ -294,8 +278,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .select(org.apache.spark.sql.functions.atan2(cDS("a"), cDS("b")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -322,14 +306,14 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit: Double)(implicit encX1: Encoder[X1[A]]) = {
       val cDS = session.createDataset(value)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.atan2(lit, cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(value)
       val res = typedDS
@@ -343,7 +327,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
     check(forAll(prop[Short] _))
@@ -356,14 +339,14 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit: Double)(implicit encX1: Encoder[X1[A]]) = {
       val cDS = session.createDataset(value)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.atan2(cDS("a"), lit))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(value)
       val res = typedDS
@@ -390,12 +373,13 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop(values:List[X1[Array[Byte]]])(implicit encX1:Encoder[X1[Array[Byte]]]) = {
+    def prop(values:List[X1[Array[Byte]]])(implicit encX1: Encoder[X1[Array[Byte]]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.base64(cDS("a")))
         .map(_.getAs[String](0))
-        .collect().toList
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -419,7 +403,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.bin(cDS("a")))
         .map(_.getAs[String](0))
-        .collect().toList
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -439,12 +424,13 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystBitwise : TypedEncoder : Encoder](values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystBitwise : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1: Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(org.apache.spark.sql.functions.bitwiseNOT(cDS("a")))
         .map(_.getAs[A](0))
-        .collect().toList
+        .collect()
+        .toList
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
@@ -622,8 +608,11 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     def optionFuncProp[A: Encoder](
       strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
-      sparkFunc: Column => Column, nullHandler: Row => Option[A])
-      (implicit E: Encoder[Option[A]]): List[String] => Prop =
+      sparkFunc: Column => Column,
+      nullHandler: Row => Option[A]
+    )(implicit
+      E: Encoder[Option[A]]
+    ): List[String] => Prop =
         (values: List[String]) => {
           val ds = TypedDataset.create(values.map(X1.apply))
 
