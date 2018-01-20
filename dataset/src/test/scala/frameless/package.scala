@@ -30,6 +30,8 @@ package object frameless {
   implicit def arbVector[A](implicit A: Arbitrary[A]): Arbitrary[Vector[A]] =
     Arbitrary(Gen.listOf(A.arbitrary).map(_.toVector))
 
+  def vectorGen[A: Arbitrary]: Gen[Vector[A]] = arbVector[A].arbitrary
+
   implicit val arbUdtEncodedClass: Arbitrary[UdtEncodedClass] = Arbitrary {
     for {
       int <- Arbitrary.arbitrary[Int]
@@ -37,4 +39,5 @@ package object frameless {
     } yield new UdtEncodedClass(int, doubles.toArray)
   }
 
+  val TEST_OUTPUT_DIR = "target/test-output"
 }
