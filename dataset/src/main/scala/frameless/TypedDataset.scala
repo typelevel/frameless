@@ -773,34 +773,36 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     }
   }
 
+  /** Orders the TypedDataset using any number of columns.
+    */
   object orderByMany extends ProductArgs {
     def applyProduct[U <: HList](columns: U)
        (implicit
         i0: SortableColumnTypes[T, U],
-        i2: ToTraversable.Aux[U, List, UntypedExpression[T]]): TypedDataset[T] = {
+        i1: ToTraversable.Aux[U, List, UntypedExpression[T]]): TypedDataset[T] = {
       val selected = dataset.toDF()
         .orderBy(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
       TypedDataset.createUnsafe[T](selected)
     }
   }
 
-  /** Orders the TypedDataset using the column selected in descending order.
+  /** Orders the TypedDataset using the column selected.
     */
-  def orderByDesc[A](column: Witness.Lt[Symbol])
-     (implicit
-        i0: TypedColumn.Exists[T, column.T, A],
-        i1: CatalystOrdered[A]): TypedDataset[T] = {
-      new TypedDataset[T](dataset.orderBy(dataset.col(column.value.name).desc))
-  }
+  def orderBy[A: CatalystOrdered]
+  (ca: SortedTypedColumn[T, A]): TypedDataset[T] = orderByMany(ca)
 
-  /** Orders the TypedDataset using the column selected in ascending order.
+  /** Orders the TypedDataset using the columns selected.
     */
-  def orderByAsc[A](column: Witness.Lt[Symbol])
-     (implicit
-        i0: TypedColumn.Exists[T, column.T, A],
-        i1: CatalystOrdered[A]): TypedDataset[T] = {
-    new TypedDataset[T](dataset.orderBy(dataset.col(column.value.name)))
-  }
+  def orderBy[A: CatalystOrdered, B: CatalystOrdered]
+  (ca: SortedTypedColumn[T, A],
+   cb: SortedTypedColumn[T, B]): TypedDataset[T] = orderByMany(ca, cb)
+
+  /** Orders the TypedDataset using the columns selected.
+    */
+  def orderBy[A: CatalystOrdered, B: CatalystOrdered, C: CatalystOrdered]
+  (ca: SortedTypedColumn[T, A],
+   cb: SortedTypedColumn[T, B],
+   cc: SortedTypedColumn[T, C]): TypedDataset[T] = orderByMany(ca, cb, cc)
 }
 
 object TypedDataset {

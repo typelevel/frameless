@@ -11,7 +11,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
       val ds = TypedDataset.create(data)
 
       ds.dataset.orderBy(ds.dataset.col("a").desc).collect().toVector.?=(
-        ds.orderByDesc('a).collect().run().toVector)
+        ds.orderBy(ds('a).desc).collect().run().toVector)
     }
 
     check(forAll(prop[Int] _))
@@ -23,7 +23,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
       val ds = TypedDataset.create(data)
 
       ds.dataset.orderBy(ds.dataset.col("a").asc).collect().toVector.?=(
-        ds.orderByAsc('a).collect().run().toVector)
+        ds.orderBy(ds('a).asc).collect().run().toVector)
     }
 
     check(forAll(prop[Int] _))
@@ -35,8 +35,10 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A,B]]): Prop = {
       val ds = TypedDataset.create(data)
 
-      ds.dataset.orderBy(ds.dataset.col("a").asc, ds.dataset.col("b").desc).collect().toVector.?=(
-        ds.orderByMany(ds('a).asc, ds('b).desc).collect().run().toVector)
+      val vanillaSpark = ds.dataset.orderBy(ds.dataset.col("a").asc, ds.dataset.col("b").desc).collect().toVector
+      vanillaSpark.?=(ds.orderByMany(ds('a).asc, ds('b).desc).collect().run().toVector).&&(
+        vanillaSpark ?= ds.orderBy(ds('a).asc, ds('b).desc).collect().run().toVector
+      )
     }
 
     check(forAll(prop[SQLDate, Long] _))
@@ -49,16 +51,14 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     (data: Vector[X3[A, B, A]]): Prop = {
       val ds = TypedDataset.create(data)
 
-      ds.dataset.orderBy(
+      val vanillaSpark =  ds.dataset.orderBy(
         ds.dataset.col("a").desc,
         ds.dataset.col("b").desc,
         ds.dataset.col("c").asc
-      ).collect().toVector.?=(
-        ds.orderByMany(
-          ds('a).desc,
-          ds('b).desc,
-          ds('c).asc
-        ).collect().run().toVector)
+      ).collect().toVector
+
+      vanillaSpark.?=(ds.orderByMany(ds('a).desc, ds('b).desc, ds('c).asc).collect().run().toVector).&&(
+        vanillaSpark ?= ds.orderBy(ds('a).desc, ds('b).desc, ds('c).asc).collect().run().toVector)
     }
 
     check(forAll(prop[Int, Long] _))
@@ -68,7 +68,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
   test("fail when selected column is not sortable") {
     val d = TypedDataset.create(X2(1, List(1)) :: X2(2, List(2)) :: Nil)
-    d.orderByDesc('a)
+    d.orderBy(d('a).desc)
     illTyped("""d.orderByDesc('b)""")
     d.orderByMany(d('a).desc)
     illTyped("""d.orderByMany(d('b).desc)""")
