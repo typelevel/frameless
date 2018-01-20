@@ -772,6 +772,35 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       TypedDataset.create[U](selected)
     }
   }
+
+  object orderByMany extends ProductArgs {
+    def applyProduct[U <: HList](columns: U)
+       (implicit
+        i0: SortableColumnTypes[T, U],
+        i2: ToTraversable.Aux[U, List, UntypedExpression[T]]): TypedDataset[T] = {
+      val selected = dataset.toDF()
+        .orderBy(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
+      TypedDataset.createUnsafe[T](selected)
+    }
+  }
+
+  /** Orders the TypedDataset using the column selected in descending order.
+    */
+  def orderByDesc[A](column: Witness.Lt[Symbol])
+     (implicit
+        i0: TypedColumn.Exists[T, column.T, A],
+        i1: CatalystOrdered[A]): TypedDataset[T] = {
+      new TypedDataset[T](dataset.orderBy(dataset.col(column.value.name).desc))
+  }
+
+  /** Orders the TypedDataset using the column selected in ascending order.
+    */
+  def orderByAsc[A](column: Witness.Lt[Symbol])
+     (implicit
+        i0: TypedColumn.Exists[T, column.T, A],
+        i1: CatalystOrdered[A]): TypedDataset[T] = {
+    new TypedDataset[T](dataset.orderBy(dataset.col(column.value.name)))
+  }
 }
 
 object TypedDataset {

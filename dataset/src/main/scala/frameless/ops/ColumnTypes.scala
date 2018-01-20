@@ -3,6 +3,8 @@ package ops
 
 import shapeless._
 
+import scala.annotation.implicitNotFound
+
 /** A type class to extract the column types out of an HList of [[frameless.TypedColumn]].
   *
   * @note This type class is mostly a workaround to issue with slow implicit derivation for Comapped.
@@ -12,6 +14,7 @@ import shapeless._
   *   type Out = A :: B :: C :: HNil
   * }}}
   */
+@implicitNotFound("Unable to proof that all arguments in ${U} are TypedColumns")
 trait ColumnTypes[T, U <: HList] {
   type Out <: HList
 }
