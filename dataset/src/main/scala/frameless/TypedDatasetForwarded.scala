@@ -84,24 +84,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def rdd: RDD[T] =
     dataset.rdd
 
-  /** Returns the first row.
-    *
-    * apache/spark
-    */
-  def head: T = dataset.head()
-
-  /** Returns the first n rows.
-    *
-    * apache/spark
-    */
-  def head(n: Int): Array[T] = dataset.head(n)
-
-  /** Returns the first row.
-    *
-    * apache/spark
-    */
-  def first: T = dataset.head()
-
   /** Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
     *
     * apache/spark
