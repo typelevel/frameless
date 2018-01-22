@@ -81,7 +81,7 @@ abstract class AbstractTypedColumn[T, U]
 
   /** Creates a typed column of either TypedColumn or TypedAggregate.
     */
- def typed[U1: TypedEncoder](c: Column): ThisType[T, U1]
+  def typed[U1: TypedEncoder](c: Column): ThisType[T, U1]
 
   /** Creates a typed column of either TypedColumn or TypedAggregate.
     */
