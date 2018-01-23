@@ -42,7 +42,6 @@ package object frameless {
     } yield new UdtEncodedClass(int, doubles.toArray)
   }
 
-  val TEST_OUTPUT_DIR = "target/test-output"
   val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
   implicit val localDateArb: Arbitrary[JavaLocalDateTime] = Arbitrary {
@@ -61,4 +60,6 @@ package object frameless {
       listOfDates <- Gen.listOf(localDateArb.arbitrary)
       localDate <- listOfDates
     } yield localDate.format(dateTimeFormatter)
+
+  val TEST_OUTPUT_DIR = "target/test-output"
 }
