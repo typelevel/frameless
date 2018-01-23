@@ -724,7 +724,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param replacement column to replace the value with
     * @param i0 Evidence that a column with the correct type and name exists
     */
-  def withColumn[A](
+  def withColumnReplaced[A](
     column: Witness.Lt[Symbol],
     replacement: TypedColumn[T, A]
   )(implicit

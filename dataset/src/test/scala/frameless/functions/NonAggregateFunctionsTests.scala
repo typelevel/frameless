@@ -1,12 +1,20 @@
 package frameless
 package functions
+import java.io.File
+
 import frameless.functions.nonAggregate._
-import org.apache.spark.sql.{ Column, Encoder }
+import org.apache.commons.io.FileUtils
+import org.apache.spark.sql.{ Column, Encoder, SaveMode, functions => untyped }
 import org.scalacheck.Gen
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{ functions => untyped }
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
+  val testTempFiles = "target/testoutput"
+
+  override def afterAll(): Unit = {
+    FileUtils.deleteDirectory(new File(testTempFiles))
+    super.afterAll()
+  }
 
   test("abs big decimal") {
     val spark = session
@@ -460,6 +468,72 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Short] _))
     check(forAll(prop[Byte] _))
     check(forAll(prop[Int] _))
+  }
+
+  test("inputFileName") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A : TypedEncoder](
+      toFile1: List[X1[A]],
+      toFile2: List[X1[A]],
+      inMem: List[X1[A]]
+    )(implicit x2Gen: Encoder[X2[A, String]], x3Gen: Encoder[X3[A, String, String]]) = {
+
+      val file1Path = testTempFiles + "/file1"
+      val file2Path = testTempFiles + "/file2"
+
+      val toFile1WithName = toFile1.map(x => X2(x.a, "file1"))
+      val toFile2WithName = toFile2.map(x => X2(x.a, "file2"))
+      val inMemWithName = inMem.map(x => X2(x.a, ""))
+
+      toFile1WithName.toDS().write.mode(SaveMode.Overwrite).parquet(file1Path)
+      toFile2WithName.toDS().write.mode(SaveMode.Overwrite).parquet(file2Path)
+
+      val readBackIn1 = spark.read.parquet(file1Path).as[X2[A, String]]
+      val readBackIn2 = spark.read.parquet(file2Path).as[X2[A, String]]
+
+      val ds1 = TypedDataset.create(readBackIn1)
+      val ds2 = TypedDataset.create(readBackIn2)
+      val ds3 = TypedDataset.create(inMemWithName)
+
+      val unioned = ds1.union(ds2).union(ds3)
+
+      val withFileName = unioned.withColumn[X3[A, String, String]](inputFileName[X2[A, String]]())
+        .collect()
+        .run()
+        .toVector
+
+      val grouped = withFileName.groupBy(_.b).mapValues(_.map(_.c).toSet)
+
+      grouped.foldLeft(passed) { (p, g) =>
+        p && secure { g._1 match {
+          case "" => g._2.head == "" //Empty string if didn't come from file
+          case f => g._2.forall(_.contains(f))
+        }}}
+    }
+
+    check(forAll(prop[String] _))
+  }
+
+  test("monotonic id") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A : TypedEncoder](xs: List[X1[A]])(implicit x2en: Encoder[X2[A, Long]]) = {
+      val ds = TypedDataset.create(xs)
+
+      val result = ds.withColumn[X2[A, Long]](monotonicallyIncreasingId())
+        .collect()
+        .run()
+        .toVector
+
+      val ids = result.map(_.b)
+      (ids.toSet.size ?= ids.length) &&
+        (ids.sorted ?= ids)
+    }
+
+    check(forAll(prop[String] _))
   }
 
   test("when") {
