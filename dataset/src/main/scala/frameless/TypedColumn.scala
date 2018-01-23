@@ -305,6 +305,60 @@ abstract class AbstractTypedColumn[T, U]
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, Double] = typed(self.untyped.divide(u))
 
+  /** Returns a descending ordering used in sorting
+    *
+    * apache/spark
+    */
+  def desc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Descending)
+    })
+
+  /** Returns a descending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
+  def descNonesFirst(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsFirst, Set.empty)
+    })
+
+  /** Returns a descending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
+  def descNonesLast(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsLast, Set.empty)
+    })
+
+  /** Returns an ascending ordering used in sorting
+    *
+    * apache/spark
+    */
+  def asc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending)
+    })
+
+  /** Returns an ascending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
+  def ascNonesFirst(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsFirst, Set.empty)
+    })
+
+  /** Returns an ascending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
+  def ascNonesLast(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsLast, Set.empty)
+    })
+
   /**
     * Bitwise AND this expression and another expression.
     * {{{
@@ -600,6 +654,29 @@ abstract class AbstractTypedColumn[T, U]
   def >=(u: U)(implicit canOrder: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped >= lit(u)(self.uencoder).untyped)
 }
+
+
+sealed class SortedTypedColumn[T, U](val expr: Expression)(
+  implicit
+  val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T] {
+
+  def this(column: Column)(implicit e: TypedEncoder[U]) {
+    this(FramelessInternals.expr(column))
+  }
+
+  def untyped: Column = new Column(expr)
+}
+
+object SortedTypedColumn {
+  implicit def defaultAscending[T, U : CatalystOrdered](typedColumn: TypedColumn[T, U]): SortedTypedColumn[T, U] =
+      new SortedTypedColumn[T, U](new Column(SortOrder(typedColumn.expr, Ascending)))(typedColumn.uencoder)
+
+    object defaultAscendingPoly extends Poly1 {
+      implicit def caseTypedColumn[T, U : CatalystOrdered] = at[TypedColumn[T, U]](c => defaultAscending(c))
+      implicit def caseTypeSortedColumn[T, U] = at[SortedTypedColumn[T, U]](identity)
+    }
+  }
 
 
 object TypedColumn {

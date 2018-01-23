@@ -5,14 +5,14 @@ import java.util
 import frameless.ops._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
-import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
-import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
+import org.apache.spark.sql.catalyst.expressions.{ Alias, Attribute, AttributeReference, CreateStruct, EqualTo }
+import org.apache.spark.sql.catalyst.plans.logical.{ Join, Project }
+import org.apache.spark.sql.catalyst.plans.{ Inner, LeftOuter }
 import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
-import shapeless.ops.record.{Keys, Remover, Values}
+import shapeless.ops.hlist.{ Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler }
+import shapeless.ops.record.{ Keys, Remover, Values }
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -708,6 +708,61 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
           TypedDataset.create[Out](selected)
       }
+  }
+
+  /** Sort each partition in the dataset by the given column expressions
+    * {{{
+    *   d.sortWithinPartitions(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object sortWithinPartitions extends ProductArgs {
+    def applyProduct[U <: HList, O <: HList](columns: U)
+      (implicit
+        i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .sortWithinPartitions(i0(columns).toList[SortedTypedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
+  }
+
+  /** Orders the TypedDataset using the column selected. */
+  def orderBy[A: CatalystOrdered](ca: SortedTypedColumn[T, A]): TypedDataset[T] =
+    orderByMany(ca)
+
+  /** Orders the TypedDataset using the columns selected. */
+  def orderBy[A: CatalystOrdered, B: CatalystOrdered](
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B]
+  ): TypedDataset[T] = orderByMany(ca, cb)
+
+ /** Orders the TypedDataset using the columns selected. */
+ def orderBy[A: CatalystOrdered, B: CatalystOrdered, C: CatalystOrdered](
+   ca: SortedTypedColumn[T, A],
+   cb: SortedTypedColumn[T, B],
+   cc: SortedTypedColumn[T, C]
+ ): TypedDataset[T] = orderByMany(ca, cb, cc)
+
+  /** Sort the dataset by any number of column expressions
+    * {{{
+    *   d.orderByMany(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object orderByMany extends ProductArgs {
+    def applyProduct[U <: HList, O <: HList](columns: U)
+      (implicit
+        i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .orderBy(i0(columns).toList[SortedTypedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
   }
 
   /** Returns a new Dataset as a tuple with the specified
