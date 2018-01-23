@@ -1,12 +1,14 @@
 package frameless
 
+import java.util
+
 import frameless.ops._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
-import org.apache.spark.sql._
+import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
@@ -119,6 +121,19 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
+  /**
+    * Returns a checkpointed version of this [[TypedDataset]]. Checkpointing can be used to truncate the
+    * logical plan of this Dataset, which is especially useful in iterative algorithms where the
+    * plan may grow exponentially. It will be saved to files inside the checkpoint
+    * directory set with `SparkContext#setCheckpointDir`.
+    *
+    * Differs from `Dataset#checkpoint` by wrapping it's result into an effect-suspending `F[_]`.
+    *
+    * apache/spark
+    */
+  def checkpoint[F[_]](eager: Boolean)(implicit F: SparkDelay[F]): F[TypedDataset[T]] =
+    F.delay(TypedDataset.create[T](dataset.checkpoint(eager)))
+
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type.
     * Unlike `as` the projection U may include a subset of the columns of T and the column names and types must agree.
     *
@@ -222,6 +237,22 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
     F.delay(dataset.take(num))
+
+  /**
+    * Return an iterator that contains all rows in this [[TypedDataset]].
+    *
+    * The iterator will consume as much memory as the largest partition in this [[TypedDataset]].
+    *
+    * NOTE: this results in multiple Spark jobs, and if the input [[TypedDataset]] is the result
+    * of a wide transformation (e.g. join with different partitioners), to avoid
+    * recomputing the input [[TypedDataset]] should be cached first.
+    *
+    * Differs from `Dataset#toLocalIterator()` by wrapping it's result into an effect-suspending `F[_]`.
+    *
+    * apache/spark
+    */
+  def toLocalIterator[F[_]]()(implicit F: SparkDelay[F]): F[util.Iterator[T]] =
+    F.delay(dataset.toLocalIterator())
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:
@@ -693,7 +724,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param replacement column to replace the value with
     * @param i0 Evidence that a column with the correct type and name exists
     */
-  def withColumn[A](
+  def withColumnReplaced[A](
     column: Witness.Lt[Symbol],
     replacement: TypedColumn[T, A]
   )(implicit

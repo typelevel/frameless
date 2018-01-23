@@ -57,7 +57,7 @@ class WithColumnTest extends TypedDatasetSuite {
     def prop[A : TypedEncoder](startValue: A, replaceValue: A): Prop = {
       val d = TypedDataset.create(X2(startValue, replaceValue) :: Nil)
 
-      val X2(a, b) = d.withColumn('a, d('b))
+      val X2(a, b) = d.withColumnReplaced('a, d('b))
         .collect()
         .run()
         .head

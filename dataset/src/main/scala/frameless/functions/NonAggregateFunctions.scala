@@ -27,8 +27,6 @@ trait NonAggregateFunctions {
     new TypedColumn[T, Double](untyped.acos(column.cast[Double].untyped))
   }
 
-
-
   /** Non-Aggregate function: returns true if value is contained with in the array in the specified column
     *
     * apache/spark
@@ -102,6 +100,23 @@ trait NonAggregateFunctions {
   def bitwiseNOT[A: CatalystBitwise, T](column: TypedColumn[T, A]): TypedColumn[T, A] = {
     implicit val c = column.uencoder
     new TypedColumn[T, A](untyped.bitwiseNOT(column.untyped))
+  }
+
+  /** Non-Aggregate function: file name of the current Spark task. Empty string if row did not originate from
+    * a file
+    *
+    * apache/spark
+    */
+  def inputFileName[T](): TypedColumn[T, String] = {
+    new TypedColumn[T, String](untyped.input_file_name())
+  }
+
+  /** Non-Aggregate function: generates monotonically increasing id
+    *
+    * apache/spark
+    */
+  def monotonicallyIncreasingId[T](): TypedColumn[T, Long] = {
+    new TypedColumn[T, Long](untyped.monotonically_increasing_id())
   }
 
   /** Non-Aggregate function: Evaluates a list of conditions and returns one of multiple

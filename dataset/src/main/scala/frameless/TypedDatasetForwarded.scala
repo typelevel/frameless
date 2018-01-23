@@ -1,8 +1,11 @@
 package frameless
 
+import java.util
+
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -19,6 +22,18 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
 
   override def toString: String =
     dataset.toString
+
+  /**
+    * Returns a `SparkSession` from this [[TypedDataset]].
+    */
+  def sparkSession: SparkSession =
+    dataset.sparkSession
+
+  /**
+    * Returns a `SQLContext` from this [[TypedDataset]].
+    */
+  def sqlContext: SQLContext =
+    dataset.sqlContext
 
   /**
     * Returns the schema of this Dataset.
@@ -41,6 +56,17 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
    */
   def explain(extended: Boolean = false): Unit =
     dataset.explain(extended)
+
+  /**
+    * Returns a `QueryExecution` from this [[TypedDataset]].
+    *
+    * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
+    * access to the intermediate phases of query execution for developers.
+    *
+    * apache/spark
+    */
+  def queryExecution: QueryExecution =
+    dataset.queryExecution
 
   /** Converts this strongly typed collection of data to generic Dataframe.  In contrast to the
     * strongly typed objects that Dataset operations work on, a Dataframe returns generic Row
@@ -65,6 +91,31 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def repartition(numPartitions: Int): TypedDataset[T] =
     TypedDataset.create(dataset.repartition(numPartitions))
 
+
+  /**
+    * Get the [[TypedDataset]]'s current storage level, or StorageLevel.NONE if not persisted.
+    *
+    * apache/spark
+    */
+  def storageLevel(): StorageLevel =
+    dataset.storageLevel
+
+  /**
+    * Returns the content of the [[TypedDataset]] as a Dataset of JSON strings.
+    *
+    * apache/spark
+    */
+  def toJSON: TypedDataset[String] =
+    TypedDataset.create(dataset.toJSON)
+
+  /**
+    * Interface for saving the content of the non-streaming [[TypedDataset]] out into external storage.
+    *
+    * apache/spark
+    */
+  def write: DataFrameWriter[T] =
+    dataset.write
+
   /** Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
     * Similar to coalesce defined on an RDD, this operation results in a narrow dependency, e.g.
     * if you go from 1000 partitions to 100 partitions, there will not be a shuffle, instead each of
@@ -74,6 +125,12 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def coalesce(numPartitions: Int): TypedDataset[T] =
     TypedDataset.create(dataset.coalesce(numPartitions))
+
+  /**
+    * Returns an `Array` that contains all column names in this [[TypedDataset]].
+    */
+  def columns: Array[String] =
+    dataset.columns
 
   /** Concise syntax for chaining custom transformations.
     *
@@ -108,6 +165,39 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def distinct: TypedDataset[T] =
     TypedDataset.create(dataset.distinct)
 
+  /**
+    * Returns a best-effort snapshot of the files that compose this [[TypedDataset]]. This method simply
+    * asks each constituent BaseRelation for its respective files and takes the union of all results.
+    * Depending on the source relations, this may not find all input files. Duplicates are removed.
+    *
+    * apache/spark
+    */
+
+  def inputFiles: Array[String] =
+    dataset.inputFiles
+
+  /**
+    * Returns true if the `collect` and `take` methods can be run locally
+    * (without any Spark executors).
+    *
+    * apache/spark
+    */
+  def isLocal: Boolean =
+    dataset.isLocal
+
+  /**
+    * Returns true if this [[TypedDataset]] contains one or more sources that continuously
+    * return data as it arrives. A [[TypedDataset]] that reads data from a streaming source
+    * must be executed as a `StreamingQuery` using the `start()` method in
+    * `DataStreamWriter`. Methods that return a single answer, e.g. `count()` or
+    * `collect()`, will throw an `AnalysisException` when there is a streaming
+    * source present.
+    *
+    * apache/spark
+    */
+  def isStreaming: Boolean =
+    dataset.isStreaming
+
   /** Returns a new [[TypedDataset]] that contains only the elements of this [[TypedDataset]] that are also
     * present in `other`.
     *
@@ -129,6 +219,38 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     */
   def union(other: TypedDataset[T]): TypedDataset[T] =
     TypedDataset.create(dataset.union(other.dataset))
+
+  /**
+    * Randomly splits this [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+  // $COVERAGE-OFF$ We can not test this method because it is non-deterministic.
+  def randomSplit(weights: Array[Double]): Array[TypedDataset[T]] =
+    dataset.randomSplit(weights).map(TypedDataset.create[T])
+  // $COVERAGE-ON$
+
+  /**
+    * Randomly splits this [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+  def randomSplit(weights: Array[Double], seed: Long): Array[TypedDataset[T]] =
+    dataset.randomSplit(weights, seed).map(TypedDataset.create[T])
+
+  /**
+    * Returns a Java list that contains randomly split [[TypedDataset]] with the provided weights.
+    * Weights for splits, will be normalized if they don't sum to 1.
+    *
+    * apache/spark
+    */
+  def randomSplitAsList(weights: Array[Double], seed: Long): util.List[TypedDataset[T]] = {
+    val values = randomSplit(weights, seed)
+    java.util.Arrays.asList(values: _*)
+  }
+
 
   /** Returns a new Dataset containing rows in this Dataset but not in another Dataset.
     * This is equivalent to `EXCEPT` in SQL.

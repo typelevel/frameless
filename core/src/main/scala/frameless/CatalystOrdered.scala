@@ -21,4 +21,10 @@ object CatalystOrdered {
   implicit val framelessSQLDateOrdered     : CatalystOrdered[SQLDate]      = of[SQLDate]
   implicit val framelessSQLTimestampOrdered: CatalystOrdered[SQLTimestamp] = of[SQLTimestamp]
   implicit val framelessStringOrdered      : CatalystOrdered[String]       = of[String]
+
+  implicit def injectionOrdered[A, B](
+    implicit
+    injection: Injection[A, B],
+    ordered: CatalystOrdered[B]
+  ) : CatalystOrdered[A] = of[A]
 }

@@ -1,6 +1,8 @@
 package frameless
 
-import org.scalacheck.Prop
+import java.time.Instant
+
+import org.scalacheck.{ Arbitrary, Gen, Prop }
 import org.scalacheck.Prop._
 
 import scala.math.Ordering.Implicits._
@@ -26,6 +28,12 @@ class ColumnTests extends TypedDatasetSuite {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
     implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
 
+    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(
+      Gen.chooseNum(0L, Instant.MAX.getEpochSecond)
+        .map(Instant.ofEpochSecond))
+    implicit val instantAsLongInjection: Injection[Instant, Long] =
+      Injection(_.getEpochSecond, Instant.ofEpochSecond)
+
     check(forAll(prop[Int] _))
     check(forAll(prop[Boolean] _))
     check(forAll(prop[Byte] _))
@@ -36,6 +44,7 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
+    check(forAll(prop[Instant] _))
   }
 
   test("toString") {
