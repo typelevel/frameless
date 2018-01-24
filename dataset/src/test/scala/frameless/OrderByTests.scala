@@ -44,7 +44,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[List[String]] _))
-//    check(forAll(prop[List[X2[Int, X1[String]]]] _))
+//    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Struct
 //    check(forAll(prop[UdtEncodedClass] _))
   }
 
@@ -69,7 +69,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[List[String]] _))
-    //    check(forAll(prop[List[X2[Int, X1[String]]]] _))
+    //    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Struct
     //    check(forAll(prop[UdtEncodedClass] _))
   }
 
@@ -132,11 +132,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("fail when selected column is not sortable") {
-    val d = TypedDataset.create(X2(1, List(1)) :: X2(2, List(2)) :: Nil)
+    val d = TypedDataset.create(X2(1, Map(1 -> 2)) :: X2(2, Map(2 -> 2)) :: Nil)
     d.orderBy(d('a).desc)
-    illTyped("""d.orderByDesc('b)""")
-    d.orderBy(d('a).desc)
-//    illTyped("""d.orderByMany(d('b).desc)""")
-//    illTyped("""d.orderByMany(d('a))""") // column is correct, but no ordering is selected
+    illTyped("""d.orderBy(d('b).desc)""")
   }
 }
