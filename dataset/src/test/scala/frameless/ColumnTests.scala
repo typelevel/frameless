@@ -45,6 +45,22 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[Instant] _))
+
+      /*
+      Fails at runtime!!
+       Cause: org.apache.spark.sql.AnalysisException:
+       cannot resolve '(`a` < `b`)' due to data type mismatch: '(`a` < `b`)'
+       requires (boolean or tinyint or smallint or int or bigint or float or double or decimal or timestamp or date or string or binary) type, not array<int>;;
+       */
+//    check(forAll(prop[List[Int]] _)) //Fails at runtime!!
+
+    /*
+    Fails test!!
+      Comparing a null/None item with another results in null/None in spark.
+      This is different than what `Ordering` does!!
+     */
+//    check(forAll(prop[Option[Int]] _))
+
   }
 
   test("toString") {
