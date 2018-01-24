@@ -4,41 +4,86 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.Matchers
 import shapeless.test.illTyped
+import org.apache.spark.sql.Column
 
 class OrderByTests extends TypedDatasetSuite with Matchers {
-  test("sorting single column descending") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
+  def sortings[A : CatalystOrdered, T]: Seq[(TypedColumn[T, A] => SortedTypedColumn[T, A], Column => Column)] = Seq(
+    (_.desc, _.desc),
+    (_.asc, _.asc),
+    (t => t, t => t)
+  )
+
+  def optionSortings[A : CatalystOrdered, T]: Seq[(TypedColumn[T, Option[A]] => SortedTypedColumn[T, Option[A]], Column => Column)] = Seq(
+    (_.desc, _.desc),
+    (_.descNonesLast, _.desc_nulls_last),
+    (_.descNonesFirst, _.desc_nulls_first),
+    (_.asc, _.asc),
+    (_.ascNonesLast, _.asc_nulls_last),
+    (_.ascNonesFirst, _.asc_nulls_first),
+    (t => t, t => t)
+  )
+
+  test("single column nullable sorting") {
+    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[Option[A]]]): Prop = {
       val ds = TypedDataset.create(data)
 
-      ds.dataset.orderBy(ds.dataset.col("a").desc).collect().toVector.?=(
-        ds.orderBy(ds('a).desc).collect().run().toVector)
+      optionSortings[A, X1[Option[A]]].map { case (typ, untyp) =>
+        ds.dataset.orderBy(untyp(ds.dataset.col("a"))).collect().toVector.?=(
+          ds.orderBy(typ(ds('a))).collect().run().toVector)
+      }.reduce(_ && _)
     }
 
     check(forAll(prop[Int] _))
-    check(forAll(prop[String] _))
-  }
-
-  test("sorting single column ascending") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
-      val ds = TypedDataset.create(data)
-
-      ds.dataset.orderBy(ds.dataset.col("a").asc).collect().toVector.?=(
-        ds.orderBy(ds('a).asc).collect().run().toVector)
-    }
-
-    check(forAll(prop[Int] _))
-    check(forAll(prop[String] _))
     check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[List[String]] _))
+//    check(forAll(prop[List[X2[Int, X1[String]]]] _))
+//    check(forAll(prop[UdtEncodedClass] _))
   }
 
-  test("sorting on two columns") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A,B]]): Prop = {
+  test("single column non nullable sorting") {
+    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
-      val vanillaSpark = ds.dataset.orderBy(ds.dataset.col("a").asc, ds.dataset.col("b").desc).collect().toVector
-      vanillaSpark.?=(ds.orderBy(ds('a).asc, ds('b).desc).collect().run().toVector).&&(
-        vanillaSpark ?= ds.orderBy(ds('a).asc, ds('b).desc).collect().run().toVector
-      )
+      sortings[A, X1[A]].map { case (typ, untyp) =>
+        ds.dataset.orderBy(untyp(ds.dataset.col("a"))).collect().toVector.?=(
+          ds.orderBy(typ(ds('a))).collect().run().toVector)
+      }.reduce(_ && _)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[List[String]] _))
+    //    check(forAll(prop[List[X2[Int, X1[String]]]] _))
+    //    check(forAll(prop[UdtEncodedClass] _))
+  }
+
+
+  test("two columns nullable sorting") {
+    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[Option[A],Option[B]]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      optionSortings[A, X2[Option[A], Option[B]]].reverse.zip(optionSortings[B, X2[Option[A], Option[B]]]).map { case ((typA, untypA), (typB, untypB)) =>
+        val vanillaSpark = ds.dataset.orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b"))).collect().toVector
+        vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b))).collect().run().toVector).&&(
+          vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b))).collect().run().toVector
+        )
+      }.reduce(_ && _)
     }
 
     check(forAll(prop[SQLDate, Long] _))
@@ -46,24 +91,44 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp, Long] _))
   }
 
-  test("sorting on three columns") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered]
-    (data: Vector[X3[A, B, A]]): Prop = {
+  test("two columns non nullable sorting") {
+    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A,B]]): Prop = {
       val ds = TypedDataset.create(data)
 
-      val vanillaSpark =  ds.dataset.orderBy(
-        ds.dataset.col("a").desc,
-        ds.dataset.col("b").desc,
-        ds.dataset.col("c").asc
-      ).collect().toVector
-
-      vanillaSpark.?=(ds.orderBy(ds('a).desc, ds('b).desc, ds('c).asc).collect().run().toVector).&&(
-        vanillaSpark ?= ds.orderBy(ds('a).desc, ds('b).desc, ds('c).asc).collect().run().toVector)
+      sortings[A, X2[A, B]].reverse.zip(sortings[B, X2[A, B]]).map { case ((typA, untypA), (typB, untypB)) =>
+        val vanillaSpark = ds.dataset.orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b"))).collect().toVector
+        vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b))).collect().run().toVector).&&(
+          vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b))).collect().run().toVector
+        )
+      }.reduce(_ && _)
     }
 
-    check(forAll(prop[Int, Long] _))
-    check(forAll(prop[String, SQLDate] _))
-    check(forAll(prop[Boolean, Long] _))
+    check(forAll(prop[SQLDate, Long] _))
+    check(forAll(prop[String, Boolean] _))
+    check(forAll(prop[SQLTimestamp, Long] _))
+  }
+
+  test("three columns non nullable sorting") {
+    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X3[A,B,A]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      sortings[A, X3[A, B, A]].reverse
+        .zip(sortings[B, X3[A, B, A]])
+        .zip(sortings[A, X3[A, B, A]])
+        .map { case (((typA, untypA), (typB, untypB)), (typA2, untypA2)) =>
+          val vanillaSpark = ds.dataset
+            .orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b")), untypA2(ds.dataset.col("c")))
+            .collect().toVector
+
+          vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector).&&(
+            vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector
+          )
+        }.reduce(_ && _)
+    }
+
+    check(forAll(prop[SQLDate, Long] _))
+    check(forAll(prop[String, Boolean] _))
+    check(forAll(prop[SQLTimestamp, Long] _))
   }
 
   test("fail when selected column is not sortable") {
@@ -71,7 +136,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     d.orderBy(d('a).desc)
     illTyped("""d.orderByDesc('b)""")
     d.orderBy(d('a).desc)
-    illTyped("""d.orderByMany(d('b).desc)""")
+//    illTyped("""d.orderByMany(d('b).desc)""")
 //    illTyped("""d.orderByMany(d('a))""") // column is correct, but no ordering is selected
   }
 }

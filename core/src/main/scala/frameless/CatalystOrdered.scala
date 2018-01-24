@@ -27,4 +27,13 @@ object CatalystOrdered {
     injection: Injection[A, B],
     ordered: CatalystOrdered[B]
   ) : CatalystOrdered[A] = of[A]
+
+  implicit def optionEv[A](implicit catalystOrdered: CatalystOrdered[A]): CatalystOrdered[Option[A]] =
+    of[Option[A]]
+
+  implicit def derivedOrderingForCollections[C[_], A]
+  (implicit
+    a: CatalystOrdered[A],
+    b: CatalystCollection[C]
+  ): CatalystOrdered[C[A]] = theInstance.asInstanceOf[CatalystOrdered[C[A]]]
 }
