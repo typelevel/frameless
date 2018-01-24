@@ -5,7 +5,7 @@ import java.util
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -215,10 +215,25 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * Note that, this function is not a typical set union operation, in that it does not eliminate
     * duplicate items.  As such, it is analogous to `UNION ALL` in SQL.
     *
+    * Differs from `Dataset#union` by aligning fields if possible.
+    *
+    * Example:
+    * {{{
+    *   case class Foo(x: Int, y: Long)
+    *   case class Bar(y: Long, x: Int)
+    *   df1: TypedDataset[Foo] = ...
+    *   df2: TypedDataset[Bar] = ...
+    *
+    *   df1.union(df2): TypedDataset[Foo]
+    * }}}
+    *
     * apache/spark
     */
-  def union(other: TypedDataset[T]): TypedDataset[T] =
-    TypedDataset.create(dataset.union(other.dataset))
+  def union[T2](other: TypedDataset[T2]): TypedDataset[T] = {
+    val columns = dataset.columns.map(new Column(_)).toSeq
+    val alignedDataset = TypedDataset.createUnsafe[T](other.dataset.select(columns: _*))
+    TypedDataset.create(dataset.union(alignedDataset.dataset))
+  }
 
   /**
     * Randomly splits this [[TypedDataset]] with the provided weights.
