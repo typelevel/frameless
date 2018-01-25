@@ -177,14 +177,14 @@ object TypedEncoder {
     def catalystRepr: DataType = DateType
 
     def toCatalyst(path: Expression): Expression =
-      Invoke(path, "days", IntegerType)
+      Invoke(path, "days", DateType)
 
     def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLDate.getClass,
         dataType = jvmRepr,
         functionName = "apply",
-        arguments = intEncoder.fromCatalyst(path) :: Nil,
+        arguments = path :: Nil,
         propagateNull = true
       )
   }
@@ -196,14 +196,14 @@ object TypedEncoder {
     def catalystRepr: DataType = TimestampType
 
     def toCatalyst(path: Expression): Expression =
-      Invoke(path, "us", LongType)
+      Invoke(path, "us", TimestampType)
 
     def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
         staticObject = SQLTimestamp.getClass,
         dataType = jvmRepr,
         functionName = "apply",
-        arguments = longEncoder.fromCatalyst(path) :: Nil,
+        arguments = path :: Nil,
         propagateNull = true
       )
   }
