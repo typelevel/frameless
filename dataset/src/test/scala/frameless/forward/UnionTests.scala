@@ -2,9 +2,20 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+import shapeless.test.illTyped
 
 class UnionTests extends TypedDatasetSuite {
-  test("Union") {
+
+  test("fail to compile on not aligned schema") {
+    val dataset1 = TypedDataset.create(Foo(1, 1) :: Nil)
+    val dataset2 = TypedDataset.create(Baz(1, 1, 1) :: Nil)
+
+    illTyped {
+      """val fNew = dataset1.union(dataset2)"""
+    }
+  }
+
+  test("Union for simple data types") {
     def prop[A: TypedEncoder](data1: Vector[A], data2: Vector[A]): Prop = {
       val dataset1 = TypedDataset.create(data1)
       val dataset2 = TypedDataset.create(data2)
@@ -18,7 +29,7 @@ class UnionTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
   }
 
-  test("align fields") {
+  test("Align fields for case classes") {
     def prop[A: TypedEncoder, B: TypedEncoder](data1: Vector[(A, B)], data2: Vector[(A, B)]): Prop = {
 
       val dataset1 = TypedDataset.create(data1.map((Foo.apply[A, B] _).tupled))
@@ -37,3 +48,5 @@ class UnionTests extends TypedDatasetSuite {
 final case class Foo[A, B](x: A, y: B)
 
 final case class Bar[A, B](y: B, x: A)
+
+final case class Baz[A, B, C](x: A, y: B, z: C)

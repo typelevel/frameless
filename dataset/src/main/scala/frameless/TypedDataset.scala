@@ -151,6 +151,48 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def project[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = projector.apply(this)
 
+  /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
+    * combined.
+    *
+    * Note that, this function is not a typical set union operation, in that it does not eliminate
+    * duplicate items. As such, it is analogous to `UNION ALL` in SQL.
+    *
+    * Differs from `Dataset#union` by aligning fields if possible.
+    * It will not compile if `Datasets` have not compatible schema.
+    *
+    * Example:
+    * {{{
+    *   case class Foo(x: Int, y: Long)
+    *   case class Bar(y: Long, x: Int)
+    *   case class Faz(x: Int, y: Int, z: Int)
+    *
+    *   df1: TypedDataset[Foo] = ...
+    *   df2: TypedDataset[Bar] = ...
+    *   df3: TypedDataset[Faz] = ...
+    *
+    *   df1.union(df2): TypedDataset[Foo]
+    *
+    *   // fails to compile
+    *   df1.union(df3)
+    * }}}
+    *
+    * apache/spark
+    */
+  def union[U: TypedEncoder](other: TypedDataset[U])(implicit union: Union[T, U]): TypedDataset[T] =
+    union.apply(self, other)
+
+  /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
+    * combined.
+    *
+    * Note that, this function is not a typical set union operation, in that it does not eliminate
+    * duplicate items. As such, it is analogous to `UNION ALL` in SQL.
+    *
+    * apache/spark
+    */
+  def union(other: TypedDataset[T]): TypedDataset[T] = {
+    TypedDataset.create(dataset.union(other.dataset))
+  }
+
   /** Returns the number of elements in the [[TypedDataset]].
     *
     * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
