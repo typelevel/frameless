@@ -253,6 +253,26 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def toLocalIterator[F[_]]()(implicit F: SparkDelay[F]): F[util.Iterator[T]] =
     F.delay(dataset.toLocalIterator())
+  
+  /** Alias for firstOption().
+    */
+  def headOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] = firstOption()
+
+  /** Alias for take().
+    */
+  def head[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] = take(num)
+
+  // $COVERAGE-OFF$
+  /** Alias for firstOption().
+    */
+  @deprecated("Method may throw exception. Use headOption or firstOption instead.", "0.5.0")
+  def head: T = dataset.head()
+
+  /** Alias for firstOption().
+    */
+  @deprecated("Method may throw exception. Use headOption or firstOption instead.", "0.5.0")
+  def first: T = dataset.head()
+  // $COVERAGE-ONN$
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:
