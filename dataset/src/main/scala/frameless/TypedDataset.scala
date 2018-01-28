@@ -166,20 +166,21 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *   case class Bar(y: Long, x: Int)
     *   case class Faz(x: Int, y: Int, z: Int)
     *
-    *   df1: TypedDataset[Foo] = ...
-    *   df2: TypedDataset[Bar] = ...
-    *   df3: TypedDataset[Faz] = ...
+    *   foo: TypedDataset[Foo] = ...
+    *   bar: TypedDataset[Bar] = ...
+    *   faz: TypedDataset[Faz] = ...
     *
-    *   df1.union(df2): TypedDataset[Foo]
+    *   foo union bar: TypedDataset[Foo]
+    *   foo union faz: TypedDataset[Foo]
+    *   // won't compile, you need to reverse order, you can't project from more fields to less
+    *   faz union foo
     *
-    *   // fails to compile
-    *   df1.union(df3)
     * }}}
     *
     * apache/spark
     */
-  def union[U: TypedEncoder](other: TypedDataset[U])(implicit union: Union[T, U]): TypedDataset[T] =
-    union.apply(self, other)
+  def union[U: TypedEncoder](other: TypedDataset[U])(implicit projector: SmartProject[U, T]): TypedDataset[T] =
+    TypedDataset.create(dataset.union(other.project[T].dataset))
 
   /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
     * combined.
