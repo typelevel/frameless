@@ -175,35 +175,38 @@ trait NonAggregateFunctions {
     column.typed(untyped.base64(column.untyped))
 
   /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
+    * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
     *
     * apache/spark
     */
-  def concat[T](c1: TypedColumn[T, String], xs: TypedColumn[T, String]*): TypedColumn[T, String] =
-    c1.typed(untyped.concat((c1 +: xs).map(_.untyped): _*))
-
-  /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
-    * using the given separator.
-    *
-    * apache/spark
-    */
-  def concatWs[T](sep: String, c1: TypedColumn[T, String], xs: TypedColumn[T, String]*): TypedColumn[T, String] =
-    c1.typed(untyped.concat_ws(sep, (c1 +: xs).map(_.untyped): _*))
+  def concat[T](columns: TypedColumn[T, String]*): TypedColumn[T, String] =
+    new TypedColumn(untyped.concat(columns.map(_.untyped): _*))
 
   /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
+    * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
     *
     * apache/spark
     */
-  def concat[T](c1: TypedAggregate[T, String], xs: TypedAggregate[T, String]*): TypedAggregate[T, String] =
-    c1.typed(untyped.concat((c1 +: xs).map(_.untyped): _*))
-
+  def concat[T](columns: TypedAggregate[T, String]*): TypedAggregate[T, String] =
+    new TypedAggregate(untyped.concat(columns.map(_.untyped): _*))
 
   /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
     * using the given separator.
+    * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
     *
     * apache/spark
     */
-  def concatWs[T](sep: String, c1: TypedAggregate[T, String], xs: TypedAggregate[T, String]*): TypedAggregate[T, String] =
-    c1.typed(untyped.concat_ws(sep, (c1 +: xs).map(_.untyped): _*))
+  def concatWs[T](sep: String, columns: TypedAggregate[T, String]*): TypedAggregate[T, String] =
+    new TypedAggregate(untyped.concat_ws(sep, columns.map(_.untyped): _*))
+
+  /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
+    * using the given separator.
+    * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
+    *
+    * apache/spark
+    */
+  def concatWs[T](sep: String, columns: TypedColumn[T, String]*): TypedColumn[T, String] =
+    new TypedColumn(untyped.concat_ws(sep, columns.map(_.untyped): _*))
 
   /** Non-Aggregate function: Locates the position of the first occurrence of substring column
     * in given string
