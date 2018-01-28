@@ -7,15 +7,6 @@ import org.apache.spark.sql.{functions => untyped}
 import frameless.syntax._
 
 trait AggregateFunctions {
-
-  /** Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
-    * sure the injection instance is in scope.
-    *
-    * apache/spark
-    */
-  def litAggr[A: TypedEncoder, T](value: A): TypedAggregate[T, A] =
-    frameless.functions.lit(value).untyped.typedAggregate
-
   /** Aggregate function: returns the number of items in a group.
     *
     * apache/spark
