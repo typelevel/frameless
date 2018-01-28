@@ -41,7 +41,7 @@ class UnionTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop[Int, String] _))
-    check(forAll(prop[String, Long] _))
+    check(forAll(prop[String, X1[Option[Long]]] _))
   }
 
   test("Align fields for different number of columns") {
@@ -55,8 +55,8 @@ class UnionTests extends TypedDatasetSuite {
       datasetUnion ?= dataUnion
     }
 
-    check(forAll(prop[Int, String, Long] _))
-    check(forAll(prop[String, Long, Boolean] _))
+    check(forAll(prop[Option[Int], String, Array[Long]] _))
+    check(forAll(prop[String, X1[Option[Int]], X2[String, Array[Int]]] _))
   }
 }
 

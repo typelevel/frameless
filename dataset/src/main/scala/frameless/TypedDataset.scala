@@ -172,7 +172,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     *   foo union bar: TypedDataset[Foo]
     *   foo union faz: TypedDataset[Foo]
-    *   // won't compile, you need to reverse order, you can't project from more fields to less
+    *   // won't compile, you need to reverse order, you can't project from less fields to more
     *   faz union foo
     *
     * }}}
