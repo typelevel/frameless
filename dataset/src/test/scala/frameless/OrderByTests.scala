@@ -44,8 +44,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[List[String]] _))
-//    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Struct
-//    check(forAll(prop[UdtEncodedClass] _))
+//    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Support for structs
+//    check(forAll(prop[UdtEncodedClass] _)) //TODO: Support for UDTs
   }
 
   test("single column non nullable sorting") {
@@ -69,8 +69,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[List[String]] _))
-    //    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Struct
-    //    check(forAll(prop[UdtEncodedClass] _))
+    //    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Support for structs
+    //    check(forAll(prop[UdtEncodedClass] _)) //TODO: Support for UDTs
   }
 
 

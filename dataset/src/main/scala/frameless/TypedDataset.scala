@@ -5,14 +5,14 @@ import java.util
 import frameless.ops._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.{ Alias, Attribute, AttributeReference, CreateStruct, EqualTo }
-import org.apache.spark.sql.catalyst.plans.logical.{ Join, Project }
-import org.apache.spark.sql.catalyst.plans.{ Inner, LeftOuter }
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
+import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
+import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{ Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler }
-import shapeless.ops.record.{ Keys, Remover, Values }
+import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
+import shapeless.ops.record.{Keys, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
