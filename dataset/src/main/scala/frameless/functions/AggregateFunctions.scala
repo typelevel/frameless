@@ -7,12 +7,15 @@ import org.apache.spark.sql.{functions => untyped}
 
 trait AggregateFunctions {
 
+  private def typedColumnToAggregate[A: TypedEncoder, T](a: TypedColumn[T, A]): TypedAggregate[T, A] =
+    new TypedAggregate[T,A](a.expr)
+
   /** Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
     * sure the injection instance is in scope.
     *
     * apache/spark
     */
-  def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = frameless.functions.lit(value)
+  def litAggr[A: TypedEncoder, T](value: A): TypedAggregate[T, A] = typedColumnToAggregate(lit(value))
 
   /** Aggregate function: returns the number of items in a group.
     *
