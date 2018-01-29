@@ -11,7 +11,7 @@ import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
 import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{Diff, IsHCons, Prepend, ToTraversable, Tupler}
+import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
 import shapeless.ops.record.{Keys, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
@@ -697,6 +697,44 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
           TypedDataset.create[Out](selected)
       }
+  }
+
+  /** Sort each partition in the dataset by the given column expressions
+    * {{{
+    *   d.sortWithinPartitions(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object sortWithinPartitions extends ProductArgs {
+    def applyProduct[U <: HList, O <: HList](columns: U)
+      (implicit
+        i0: Mapper.Aux[TypedSortedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, TypedSortedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .sortWithinPartitions(i0(columns).toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
+  }
+
+  /** Sort the dataset by the given column expressions
+    * {{{
+    *   d.sort(d('a).asc, d('b).desc)
+    * }}}
+    */
+  object sort extends ProductArgs {
+    def applyProduct[U <: HList, O <: HList](columns: U)
+      (implicit
+        i0: Mapper.Aux[TypedSortedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, TypedSortedColumn[T, _]]
+      ): TypedDataset[T] = {
+      val sorted = dataset.toDF()
+        .sort(i0(columns).toList[TypedSortedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .as[T](TypedExpressionEncoder[T])
+
+      TypedDataset.create[T](sorted)
+    }
   }
 
   /** Returns a new Dataset as a tuple with the specified

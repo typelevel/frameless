@@ -278,6 +278,60 @@ sealed class TypedColumn[T, U](
     */
   def /(u: U)(implicit n: CatalystNumeric[U]): TypedColumn[T, Double] = self.untyped.divide(u).typed
 
+  /** Returns a descending ordering used in sorting
+    *
+    * apache/spark
+    */
+  def desc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending)
+    })
+
+  /** Returns a descending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
+  def descNonesFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsFirst, Set.empty)
+    })
+
+  /** Returns a descending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
+  def descNonesLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Descending, NullsLast, Set.empty)
+    })
+
+  /** Returns an ascending ordering used in sorting
+    *
+    * apache/spark
+    */
+  def asc(implicit catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending)
+    })
+
+  /** Returns an ascending ordering used in sorting where None values appear before non-None values
+    *
+    * apache/spark
+    */
+  def ascNonesFirst(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsFirst, Set.empty)
+    })
+
+  /** Returns an ascending ordering used in sorting where None values appear after non-None values
+    *
+    * apache/spark
+    */
+  def ascNonesLast(implicit isOption: U <:< Option[_], catalystRowOrdering: CatalystRowOrdered[U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](withExpr {
+      SortOrder(expr, Ascending, NullsLast, Set.empty)
+    })
+
   /**
     * Bitwise AND this expression and another expression.
     * {{{
@@ -482,6 +536,28 @@ sealed class TypedAggregate[T, U](val expr: Expression)(
 
   def this(column: Column)(implicit e: TypedEncoder[U]) {
     this(FramelessInternals.expr(column))
+  }
+}
+
+sealed class TypedSortedColumn[T, U](val expr: Expression)(
+  implicit
+  val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T] {
+
+  def this(column: Column)(implicit e: TypedEncoder[U]) {
+    this(FramelessInternals.expr(column))
+  }
+
+  def untyped: Column = new Column(expr)
+}
+
+object TypedSortedColumn {
+  implicit def defaultAscending[T, U : CatalystRowOrdered](typedColumn: TypedColumn[T, U]): TypedSortedColumn[T, U] =
+    new TypedSortedColumn[T, U](new Column(SortOrder(typedColumn.expr, Ascending)))(typedColumn.uencoder)
+
+  object defaultAscendingPoly extends Poly1 {
+    implicit def caseTypedColumn[T, U : CatalystRowOrdered] = at[TypedColumn[T, U]](c => defaultAscending(c))
+    implicit def caseTypeSortedColumn[T, U] = at[TypedSortedColumn[T, U]](identity)
   }
 }
 
