@@ -314,24 +314,6 @@ abstract class AbstractTypedColumn[T, U]
       SortOrder(expr, Descending)
     })
 
-  /** Returns a descending ordering used in sorting where None values appear before non-None values
-    *
-    * apache/spark
-    */
-  def descNonesFirst(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](withExpr {
-      SortOrder(expr, Descending, NullsFirst, Set.empty)
-    })
-
-  /** Returns a descending ordering used in sorting where None values appear after non-None values
-    *
-    * apache/spark
-    */
-  def descNonesLast(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](withExpr {
-      SortOrder(expr, Descending, NullsLast, Set.empty)
-    })
-
   /** Returns an ascending ordering used in sorting
     *
     * apache/spark
@@ -339,24 +321,6 @@ abstract class AbstractTypedColumn[T, U]
   def asc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
     new SortedTypedColumn[T, U](withExpr {
       SortOrder(expr, Ascending)
-    })
-
-  /** Returns an ascending ordering used in sorting where None values appear before non-None values
-    *
-    * apache/spark
-    */
-  def ascNonesFirst(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](withExpr {
-      SortOrder(expr, Ascending, NullsFirst, Set.empty)
-    })
-
-  /** Returns an ascending ordering used in sorting where None values appear after non-None values
-    *
-    * apache/spark
-    */
-  def ascNonesLast(implicit isOption: U <:< Option[_], catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](withExpr {
-      SortOrder(expr, Ascending, NullsLast, Set.empty)
     })
 
   /**

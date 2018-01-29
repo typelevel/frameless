@@ -13,41 +13,6 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     (t => t, t => t)
   )
 
-  def optionSortings[A : CatalystOrdered, T]: Seq[(TypedColumn[T, Option[A]] => SortedTypedColumn[T, Option[A]], Column => Column)] = Seq(
-    (_.desc, _.desc),
-    (_.descNonesLast, _.desc_nulls_last),
-    (_.descNonesFirst, _.desc_nulls_first),
-    (_.asc, _.asc),
-    (_.ascNonesLast, _.asc_nulls_last),
-    (_.ascNonesFirst, _.asc_nulls_first),
-    (t => t, t => t)
-  )
-
-  test("single column nullable sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[Option[A]]]): Prop = {
-      val ds = TypedDataset.create(data)
-
-      optionSortings[A, X1[Option[A]]].map { case (typ, untyp) =>
-        ds.dataset.orderBy(untyp(ds.dataset.col("a"))).collect().toVector.?=(
-          ds.orderBy(typ(ds('a))).collect().run().toVector)
-      }.reduce(_ && _)
-    }
-
-    check(forAll(prop[Int] _))
-    check(forAll(prop[Boolean] _))
-    check(forAll(prop[Byte] _))
-    check(forAll(prop[Short] _))
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Float] _))
-    check(forAll(prop[Double] _))
-    check(forAll(prop[SQLDate] _))
-    check(forAll(prop[SQLTimestamp] _))
-    check(forAll(prop[String] _))
-    check(forAll(prop[List[String]] _))
-//    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Support for structs
-//    check(forAll(prop[UdtEncodedClass] _)) //TODO: Support for UDTs
-  }
-
   test("single column non nullable sorting") {
     def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
@@ -68,27 +33,6 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
-    check(forAll(prop[List[String]] _))
-    //    check(forAll(prop[List[X2[Int, X1[String]]]] _)) //TODO: Support for structs
-    //    check(forAll(prop[UdtEncodedClass] _)) //TODO: Support for UDTs
-  }
-
-
-  test("two columns nullable sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[Option[A],Option[B]]]): Prop = {
-      val ds = TypedDataset.create(data)
-
-      optionSortings[A, X2[Option[A], Option[B]]].reverse.zip(optionSortings[B, X2[Option[A], Option[B]]]).map { case ((typA, untypA), (typB, untypB)) =>
-        val vanillaSpark = ds.dataset.orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b"))).collect().toVector
-        vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b))).collect().run().toVector).&&(
-          vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b))).collect().run().toVector
-        )
-      }.reduce(_ && _)
-    }
-
-    check(forAll(prop[SQLDate, Long] _))
-    check(forAll(prop[String, Boolean] _))
-    check(forAll(prop[SQLTimestamp, Long] _))
   }
 
   test("two columns non nullable sorting") {
