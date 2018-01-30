@@ -3,12 +3,9 @@ package functions
 
 import java.io.File
 
-
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Encoder, SaveMode, functions => untyped}
-import org.scalacheck.Gen
-import org.apache.spark.sql.{Column, Encoder, Row, functions => untyped}
+import org.apache.spark.sql.{Encoder, Row, SaveMode, functions => untyped}
 import org.scalacheck.Prop._
 import org.scalacheck.{Gen, Prop}
 
@@ -656,9 +653,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   test("concat for TypedAggregate") {
     val spark = session
-    import spark.implicits._
-
     import frameless.functions.aggregate._
+    import spark.implicits._
     val pairs = for {
       y <- Gen.alphaStr
       x <- Gen.nonEmptyListOf(X2(y, y))
@@ -704,9 +700,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   test("concat_ws for TypedAggregate") {
     val spark = session
-    import spark.implicits._
-
     import frameless.functions.aggregate._
+    import spark.implicits._
     val pairs = for {
       y <- Gen.alphaStr
       x <- Gen.listOfN(10, X2(y, y))
@@ -1042,24 +1037,17 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       case _ => None
     }
 
-    def optionFuncProp[A: Encoder](
-                                    strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
-                                    sparkFunc: Column => Column,
-                                    nullHandler: Row => Option[A]
-                                  )(implicit
-                                    E: Encoder[Option[A]]
-                                  ): List[String] => Prop =
-      (values: List[String]) => {
-        val ds = TypedDataset.create(values.map(X1.apply))
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+        val ds = TypedDataset.create(data)
 
         val sparkResult = ds.toDF()
-          .select(sparkFunc(untyped.col("a")))
+          .select(untyped.year($"a"))
           .map(nullHandler)
           .collect()
           .toList
 
         val typed = ds
-          .select(strFunc(ds[String]('a)))
+          .select(year(ds[String]('a)))
           .collect()
           .run()
           .toList
@@ -1067,27 +1055,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         typed ?= sparkResult
       }
 
-    check(forAll(dateTimeStringGen)(optionFuncProp(year, untyped.year, nullHandler)))
-    check(forAll(optionFuncProp(year, untyped.year, nullHandler)))
-  }
-
-  def stringFuncProp[A : Encoder](strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], A], sparkFunc: Column => Column) = {
-    forAll { values: List[X1[String]] =>
-      val ds = TypedDataset.create(values)
-
-      val sparkResult: List[A] = ds.toDF()
-        .select(sparkFunc(untyped.col("a")))
-        .map(_.getAs[A](0))
-        .collect()
-        .toList
-
-      val typed: List[A] = ds
-        .select(strFunc(ds[String]('a)))
-        .collect()
-        .run()
-        .toList
-
-      typed ?= sparkResult
-    }
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
   }
 }
