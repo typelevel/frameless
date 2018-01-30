@@ -209,17 +209,6 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def intersect(other: TypedDataset[T]): TypedDataset[T] =
     TypedDataset.create(dataset.intersect(other.dataset))
 
-  /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
-    * combined.
-    *
-    * Note that, this function is not a typical set union operation, in that it does not eliminate
-    * duplicate items.  As such, it is analogous to `UNION ALL` in SQL.
-    *
-    * apache/spark
-    */
-  def union(other: TypedDataset[T]): TypedDataset[T] =
-    TypedDataset.create(dataset.union(other.dataset))
-
   /**
     * Randomly splits this [[TypedDataset]] with the provided weights.
     * Weights for splits, will be normalized if they don't sum to 1.

@@ -1,11 +1,12 @@
 package frameless
 package functions
+
 import java.io.File
 
 
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{ Column, Encoder, SaveMode, functions => untyped }
+import org.apache.spark.sql.{Encoder, SaveMode, functions => untyped}
 import org.scalacheck.Gen
 import org.apache.spark.sql.{Column, Encoder, Row, functions => untyped}
 import org.scalacheck.Prop._
@@ -56,32 +57,33 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     import spark.implicits._
 
     def prop[A: TypedEncoder : Encoder]
-      (values: List[X1[A]])
-      (
-        implicit catalystAbsolute: CatalystAbsolute[A, A],
-        encX1:Encoder[X1[A]]
-      )= {
-        val cDS = session.createDataset(values)
-        val resCompare = cDS
-          .select(org.apache.spark.sql.functions.abs(cDS("a")))
-          .map(_.getAs[A](0))
-          .collect().toList
+    (values: List[X1[A]])
+    (
+      implicit catalystAbsolute: CatalystAbsolute[A, A],
+      encX1: Encoder[X1[A]]
+    ) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(org.apache.spark.sql.functions.abs(cDS("a")))
+        .map(_.getAs[A](0))
+        .collect().toList
 
-        val typedDS = TypedDataset.create(values)
-        val res = typedDS
-          .select(abs(typedDS('a)))
-          .collect()
-          .run()
-          .toList
 
-        res ?= resCompare
-      }
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(abs(typedDS('a)))
+        .collect()
+        .run()
+        .toList
 
-      check(forAll(prop[Int] _))
-      check(forAll(prop[Long] _))
-      check(forAll(prop[Short] _))
-      check(forAll(prop[Double] _))
+      res ?= resCompare
     }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Double] _))
+  }
 
   test("acos") {
     val spark = session
@@ -126,8 +128,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     * [[https://issues.apache.org/jira/browse/SPARK-21204]]
     */
   test("arrayContains"){
-
-
     val spark = session
     import spark.implicits._
 
@@ -170,7 +170,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       val cDS = session.createDataset(List(values))
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.array_contains(cDS("value"), contained))
+        .select(untyped.array_contains(cDS("value"), contained))
         .map(_.getAs[Boolean](0))
         .collect().toList
 
@@ -221,16 +221,16 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
-      val cDS = session.createDataset(values)
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
+    (na: A, values: List[X1[A]])(implicit encX1: Encoder[X1[A]]) = {
+      val cDS = session.createDataset(X1(na) :: values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.atan(cDS("a")))
+        .select(untyped.atan(cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
-
-      val typedDS = TypedDataset.create(values)
+      val typedDS = TypedDataset.create(cDS)
       val res = typedDS
         .select(atan(typedDS('a)))
         .deserialized
@@ -239,7 +239,15 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .run()
         .toList
 
-      res ?= resCompare
+      val aggrTyped = typedDS.agg(atan(
+        frameless.functions.aggregate.first(typedDS('a)))
+      ).firstOption().run().get
+
+      val aggrSpark = cDS.select(
+        untyped.atan(untyped.first("a")).as[Double]
+      ).first()
+
+      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
     }
 
     check(forAll(prop[Int] _))
@@ -254,16 +262,17 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
+    (values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.asin(cDS("a")))
+        .select(untyped.asin(cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
 
-      val typedDS = TypedDataset.create(values)
+      val typedDS = TypedDataset.create(cDS)
       val res = typedDS
         .select(asin(typedDS('a)))
         .deserialized
@@ -287,17 +296,18 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder, B: CatalystNumeric : TypedEncoder : Encoder](values: List[X2[A, B]])
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder,
+             B: CatalystNumeric : TypedEncoder : Encoder](na: X2[A, B], values: List[X2[A, B]])
             (implicit encEv: Encoder[X2[A,B]]) = {
-      val cDS = session.createDataset(values)
+      val cDS = session.createDataset(na +: values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.atan2(cDS("a"), cDS("b")))
+        .select(untyped.atan2(cDS("a"), cDS("b")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
 
-      val typedDS = TypedDataset.create(values)
+      val typedDS = TypedDataset.create(cDS)
       val res = typedDS
         .select(atan2(typedDS('a), typedDS('b)))
         .deserialized
@@ -306,7 +316,16 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .run()
         .toList
 
-      res ?= resCompare
+      val aggrTyped = typedDS.agg(atan2(
+        frameless.functions.aggregate.first(typedDS('a)),
+        frameless.functions.aggregate.first(typedDS('b)))
+      ).firstOption().run().get
+
+      val aggrSpark = cDS.select(
+        untyped.atan2(untyped.first("a"),untyped.first("b")).as[Double]
+      ).first()
+
+      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
     }
 
 
@@ -322,16 +341,17 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
-      val cDS = session.createDataset(value)
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
+    (na: X1[A], value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
+      val cDS = session.createDataset(na +: value)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.atan2(lit, cDS("a")))
+        .select(untyped.atan2(lit, cDS("a")))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
 
-      val typedDS = TypedDataset.create(value)
+      val typedDS = TypedDataset.create(cDS)
       val res = typedDS
         .select(atan2(lit, typedDS('a)))
         .deserialized
@@ -340,7 +360,16 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .run()
         .toList
 
-      res ?= resCompare
+      val aggrTyped = typedDS.agg(atan2(
+        lit,
+        frameless.functions.aggregate.first(typedDS('a)))
+      ).firstOption().run().get
+
+      val aggrSpark = cDS.select(
+        untyped.atan2(lit, untyped.first("a")).as[Double]
+      ).first()
+
+      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
     }
 
     check(forAll(prop[Int] _))
@@ -355,16 +384,17 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder](value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
-      val cDS = session.createDataset(value)
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
+    (na: X1[A], value: List[X1[A]], lit:Double)(implicit encX1:Encoder[X1[A]]) = {
+      val cDS = session.createDataset(na +: value)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.atan2(cDS("a"), lit))
+        .select(untyped.atan2(cDS("a"), lit))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
 
-      val typedDS = TypedDataset.create(value)
+      val typedDS = TypedDataset.create(cDS)
       val res = typedDS
         .select(atan2(typedDS('a), lit))
         .deserialized
@@ -373,7 +403,16 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .run()
         .toList
 
-      res ?= resCompare
+      val aggrTyped = typedDS.agg(atan2(
+        frameless.functions.aggregate.first(typedDS('a)),
+        lit)
+      ).firstOption().run().get
+
+      val aggrSpark = cDS.select(
+        untyped.atan2(untyped.first("a"), lit).as[Double]
+      ).first()
+
+      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
     }
 
 
@@ -392,7 +431,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop(values:List[X1[Array[Byte]]])(implicit encX1:Encoder[X1[Array[Byte]]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.base64(cDS("a")))
+        .select(untyped.base64(cDS("a")))
         .map(_.getAs[String](0))
         .collect().toList
 
@@ -416,7 +455,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop(values:List[X1[Long]])(implicit encX1:Encoder[X1[Long]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.bin(cDS("a")))
+        .select(untyped.bin(cDS("a")))
         .map(_.getAs[String](0))
         .collect().toList
 
@@ -433,15 +472,15 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop _))
   }
 
-
   test("bitwiseNOT"){
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystBitwise : TypedEncoder : Encoder](values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+    def prop[A: CatalystBitwise : TypedEncoder : Encoder]
+    (values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
-        .select(org.apache.spark.sql.functions.bitwiseNOT(cDS("a")))
+        .select(untyped.bitwiseNOT(cDS("a")))
         .map(_.getAs[A](0))
         .collect().toList
 
@@ -531,7 +570,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A : TypedEncoder : Encoder](condition1: Boolean, condition2: Boolean, value1: A, value2: A, otherwise: A) = {
+    def prop[A : TypedEncoder : Encoder]
+    (condition1: Boolean, condition2: Boolean, value1: A, value2: A, otherwise: A) = {
       val ds = TypedDataset.create(X5(condition1, condition2, value1, value2, otherwise) :: Nil)
 
       val untypedWhen = ds.toDF()
@@ -567,113 +607,430 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
   test("ascii") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
 
-    check(stringFuncProp(ascii, untyped.ascii))
+      val sparkResult = ds.toDF()
+        .select(untyped.ascii($"a"))
+        .map(_.getAs[Int](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(ascii(ds('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("concat") {
     val spark = session
     import spark.implicits._
 
-    check(stringFuncProp(concat(_, lit("hello")), untyped.concat(_, untyped.lit("hello"))))
+    val pairs = for {
+      y <- Gen.alphaStr
+      x <- Gen.nonEmptyListOf(X2(y, y))
+    } yield x
+
+    check(forAll(pairs) { values: List[X2[String, String]] =>
+      val ds = TypedDataset.create(values)
+
+      val sparkResult = ds.toDF()
+        .select(untyped.concat($"a", $"b"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(concat(ds('a), ds('b)))
+        .collect()
+        .run()
+        .toVector
+
+      (typed ?= sparkResult).&&(typed ?= values.map(x => s"${x.a}${x.b}").toVector)
+    })
+  }
+
+  test("concat for TypedAggregate") {
+    val spark = session
+    import spark.implicits._
+
+    import frameless.functions.aggregate._
+    val pairs = for {
+      y <- Gen.alphaStr
+      x <- Gen.nonEmptyListOf(X2(y, y))
+    } yield x
+
+    check(forAll(pairs) { values: List[X2[String, String]] =>
+      val ds = TypedDataset.create(values)
+      val td = ds.agg(concat(first(ds('a)),first(ds('b)))).collect().run().toVector
+      val spark = ds.dataset.select(untyped.concat(
+        untyped.first($"a").as[String],
+        untyped.first($"b").as[String])).as[String].collect().toVector
+      td ?= spark
+    })
   }
 
   test("concat_ws") {
     val spark = session
     import spark.implicits._
 
-    check(stringFuncProp(concatWs(",", _, lit("hello")), untyped.concat_ws(",", _, untyped.lit("hello"))))
+    val pairs = for {
+      y <- Gen.alphaStr
+      x <- Gen.nonEmptyListOf(X2(y, y))
+    } yield x
+
+    check(forAll(pairs) { values: List[X2[String, String]] =>
+      val ds = TypedDataset.create(values)
+
+      val sparkResult = ds.toDF()
+        .select(untyped.concat_ws(",", $"a", $"b"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(concatWs(",", ds('a), ds('b)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
+  }
+
+  test("concat_ws for TypedAggregate") {
+    val spark = session
+    import spark.implicits._
+
+    import frameless.functions.aggregate._
+    val pairs = for {
+      y <- Gen.alphaStr
+      x <- Gen.listOfN(10, X2(y, y))
+    } yield x
+
+    check(forAll(pairs) { values: List[X2[String, String]] =>
+      val ds = TypedDataset.create(values)
+      val td = ds.agg(concatWs(",",first(ds('a)),first(ds('b)), last(ds('b)))).collect().run().toVector
+      val spark = ds.dataset.select(untyped.concat_ws(",",
+        untyped.first($"a").as[String],
+        untyped.first($"b").as[String],
+        untyped.last($"b").as[String])).as[String].collect().toVector
+      td ?= spark
+    })
   }
 
   test("instr") {
     val spark = session
     import spark.implicits._
+    check(forAll(Gen.nonEmptyListOf(Gen.alphaStr)) { values: List[String] =>
+      val ds = TypedDataset.create(values.map(x => X1(x + values.head)))
 
-    check(stringFuncProp(instr(_, "hello"), untyped.instr(_, "hello")))
+      val sparkResult = ds.toDF()
+        .select(untyped.instr($"a", values.head))
+        .map(_.getAs[Int](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(instr(ds('a), values.head))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("length") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
 
-    check(stringFuncProp(length, untyped.length))
+      val sparkResult = ds.toDF()
+        .select(untyped.length($"a"))
+        .map(_.getAs[Int](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(length(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      (typed ?= sparkResult).&&(values.map(_.a.length).toVector ?= typed)
+    })
   }
 
   test("levenshtein") {
     val spark = session
     import spark.implicits._
+    check(forAll { (na: X1[String], values: List[X1[String]]) =>
+      val ds = TypedDataset.create(na +: values)
 
-    check(stringFuncProp(levenshtein(_, lit("hello")), untyped.levenshtein(_, untyped.lit("hello"))))
-  }
+      val sparkResult = ds.toDF()
+        .select(untyped.levenshtein($"a", untyped.concat($"a",untyped.lit("Hello"))))
+        .map(_.getAs[Int](0))
+        .collect()
+        .toVector
 
-  test("lower") {
-    val spark = session
-    import spark.implicits._
+      val typed = ds
+        .select(levenshtein(ds('a), concat(ds('a),lit("Hello"))))
+        .collect()
+        .run()
+        .toVector
 
-    check(stringFuncProp(lower, untyped.lower))
-  }
+      val cDS = ds.dataset
+      val aggrTyped = ds.agg(
+        levenshtein(frameless.functions.aggregate.first(ds('a)), litAggr("Hello"))
+      ).firstOption().run().get
 
-  test("lpad") {
-    val spark = session
-    import spark.implicits._
+      val aggrSpark = cDS.select(
+        untyped.levenshtein(untyped.first("a"), untyped.lit("Hello")).as[Int]
+      ).first()
 
-    check(stringFuncProp(lpad(_, 5, "hello"), untyped.lpad(_, 5, "hello")))
-  }
-
-  test("ltrim") {
-    val spark = session
-    import spark.implicits._
-
-    check(stringFuncProp(ltrim, untyped.ltrim))
+      (typed ?= sparkResult).&&(aggrTyped ?= aggrSpark)
+    })
   }
 
   test("regexp_replace") {
     val spark = session
     import spark.implicits._
+    check(forAll { (values: List[X1[String]], n: Int) =>
+      val ds = TypedDataset.create(values.map(x => X1(s"$n${x.a}-$n$n")))
 
-    check(stringFuncProp(regexpReplace(_, "\\d+".r, "n"), untyped.regexp_replace(_, "\\d+", "n")))
+      val sparkResult = ds.toDF()
+        .select(untyped.regexp_replace($"a", "\\d+", "n"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(regexpReplace(ds[String]('a), "\\d+".r, "n"))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("reverse") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
 
-    check(stringFuncProp(reverse, untyped.reverse))
+      val sparkResult = ds.toDF()
+        .select(untyped.reverse($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(reverse(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      (typed ?= sparkResult).&&(values.map(_.a.reverse).toVector ?= typed)
+    })
   }
 
   test("rpad") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
 
-    check(stringFuncProp(rpad(_, 5, "hello"), untyped.rpad(_, 5, "hello")))
+      val sparkResult = ds.toDF()
+        .select(untyped.rpad($"a", 5, "hello"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(rpad(ds[String]('a), 5, "hello"))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
+  }
+
+  test("lpad") {
+    val spark = session
+    import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
+
+      val sparkResult = ds.toDF()
+        .select(untyped.lpad($"a", 5, "hello"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(lpad(ds[String]('a), 5, "hello"))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("rtrim") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values.map(x => X1(s"  ${x.a}    ")))
 
-    check(stringFuncProp(rtrim, untyped.rtrim))
+      val sparkResult = ds.toDF()
+        .select(untyped.rtrim($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(rtrim(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
+  }
+
+  test("ltrim") {
+    val spark = session
+    import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values.map(x => X1(s"  ${x.a}    ")))
+
+      val sparkResult = ds.toDF()
+        .select(untyped.ltrim($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(ltrim(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("substring") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values)
 
-    check(stringFuncProp(substring(_, 5, 3), untyped.substring(_, 5, 3)))
+      val sparkResult = ds.toDF()
+        .select(untyped.substring($"a", 5, 3))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(substring(ds[String]('a), 5, 3))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("trim") {
     val spark = session
     import spark.implicits._
+    check(forAll { values: List[X1[String]] =>
+      val ds = TypedDataset.create(values.map(x => X1(s"  ${x.a}    ")))
 
-    check(stringFuncProp(trim, untyped.trim))
+      val sparkResult = ds.toDF()
+        .select(untyped.trim($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(trim(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
   }
 
   test("upper") {
     val spark = session
     import spark.implicits._
+    check(forAll(Gen.listOf(Gen.alphaStr)) { values: List[String] =>
+      val ds = TypedDataset.create(values.map(X1(_)))
 
-    check(stringFuncProp(upper, untyped.upper))
+      val sparkResult = ds.toDF()
+        .select(untyped.upper($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(upper(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
+  }
+
+  test("lower") {
+    val spark = session
+    import spark.implicits._
+    check(forAll(Gen.listOf(Gen.alphaStr)) { values: List[String] =>
+      val ds = TypedDataset.create(values.map(X1(_)))
+
+      val sparkResult = ds.toDF()
+        .select(untyped.lower($"a"))
+        .map(_.getAs[String](0))
+        .collect()
+        .toVector
+
+      val typed = ds
+        .select(lower(ds[String]('a)))
+        .collect()
+        .run()
+        .toVector
+
+      typed ?= sparkResult
+    })
+  }
+
+  test("Empty vararg tests") {
+    import frameless.functions.aggregate._
+    def prop[A : TypedEncoder, B: TypedEncoder](data: Vector[X2[A, B]]) = {
+      val ds = TypedDataset.create(data)
+      val frameless = ds.select(ds('a), concat(), ds('b), concatWs(":")).collect().run().toVector
+      val framelessAggr = ds.agg(first(ds('a)), concat(), concatWs("x"), litAggr(2)).collect().run().toVector
+      val scala = data.map(x => (x.a, "", x.b, ""))
+      val scalaAggr = if (data.nonEmpty) Vector((data.head.a, "", "", 2)) else Vector.empty
+      (frameless ?= scala).&&(framelessAggr ?= scalaAggr)
+    }
+
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Option[Vector[Boolean]], Long] _))
   }
 
   test("year") {
@@ -681,34 +1038,34 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     import spark.implicits._
 
     val nullHandler: Row => Option[Int] = _.get(0) match {
-        case i: Int => Some(i)
-        case _ => None
-      }
+      case i: Int => Some(i)
+      case _ => None
+    }
 
     def optionFuncProp[A: Encoder](
-      strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
-      sparkFunc: Column => Column,
-      nullHandler: Row => Option[A]
-    )(implicit
-      E: Encoder[Option[A]]
-    ): List[String] => Prop =
-        (values: List[String]) => {
-          val ds = TypedDataset.create(values.map(X1.apply))
+                                    strFunc: TypedColumn[X1[String], String] => TypedColumn[X1[String], Option[A]],
+                                    sparkFunc: Column => Column,
+                                    nullHandler: Row => Option[A]
+                                  )(implicit
+                                    E: Encoder[Option[A]]
+                                  ): List[String] => Prop =
+      (values: List[String]) => {
+        val ds = TypedDataset.create(values.map(X1.apply))
 
-          val sparkResult = ds.toDF()
-            .select(sparkFunc(untyped.col("a")))
-            .map(nullHandler)
-            .collect()
-            .toList
+        val sparkResult = ds.toDF()
+          .select(sparkFunc(untyped.col("a")))
+          .map(nullHandler)
+          .collect()
+          .toList
 
-          val typed = ds
-            .select(strFunc(ds[String]('a)))
-            .collect()
-            .run()
-            .toList
+        val typed = ds
+          .select(strFunc(ds[String]('a)))
+          .collect()
+          .run()
+          .toList
 
-          typed ?= sparkResult
-        }
+        typed ?= sparkResult
+      }
 
     check(forAll(dateTimeStringGen)(optionFuncProp(year, untyped.year, nullHandler)))
     check(forAll(optionFuncProp(year, untyped.year, nullHandler)))

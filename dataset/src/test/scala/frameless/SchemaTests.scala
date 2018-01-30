@@ -1,6 +1,7 @@
 package frameless
 
 import frameless.functions.aggregate._
+import frameless.functions._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.Matchers

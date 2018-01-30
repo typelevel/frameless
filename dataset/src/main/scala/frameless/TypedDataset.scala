@@ -151,6 +151,49 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def project[U](implicit projector: SmartProject[T,U]): TypedDataset[U] = projector.apply(this)
 
+  /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
+    * combined.
+    *
+    * Note that, this function is not a typical set union operation, in that it does not eliminate
+    * duplicate items. As such, it is analogous to `UNION ALL` in SQL.
+    *
+    * Differs from `Dataset#union` by aligning fields if possible.
+    * It will not compile if `Datasets` have not compatible schema.
+    *
+    * Example:
+    * {{{
+    *   case class Foo(x: Int, y: Long)
+    *   case class Bar(y: Long, x: Int)
+    *   case class Faz(x: Int, y: Int, z: Int)
+    *
+    *   foo: TypedDataset[Foo] = ...
+    *   bar: TypedDataset[Bar] = ...
+    *   faz: TypedDataset[Faz] = ...
+    *
+    *   foo union bar: TypedDataset[Foo]
+    *   foo union faz: TypedDataset[Foo]
+    *   // won't compile, you need to reverse order, you can't project from less fields to more
+    *   faz union foo
+    *
+    * }}}
+    *
+    * apache/spark
+    */
+  def union[U: TypedEncoder](other: TypedDataset[U])(implicit projector: SmartProject[U, T]): TypedDataset[T] =
+    TypedDataset.create(dataset.union(other.project[T].dataset))
+
+  /** Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
+    * combined.
+    *
+    * Note that, this function is not a typical set union operation, in that it does not eliminate
+    * duplicate items. As such, it is analogous to `UNION ALL` in SQL.
+    *
+    * apache/spark
+    */
+  def union(other: TypedDataset[T]): TypedDataset[T] = {
+    TypedDataset.create(dataset.union(other.dataset))
+  }
+
   /** Returns the number of elements in the [[TypedDataset]].
     *
     * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
@@ -253,6 +296,26 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def toLocalIterator[F[_]]()(implicit F: SparkDelay[F]): F[util.Iterator[T]] =
     F.delay(dataset.toLocalIterator())
+  
+  /** Alias for firstOption().
+    */
+  def headOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] = firstOption()
+
+  /** Alias for take().
+    */
+  def head[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] = take(num)
+
+  // $COVERAGE-OFF$
+  /** Alias for firstOption().
+    */
+  @deprecated("Method may throw exception. Use headOption or firstOption instead.", "0.5.0")
+  def head: T = dataset.head()
+
+  /** Alias for firstOption().
+    */
+  @deprecated("Method may throw exception. Use headOption or firstOption instead.", "0.5.0")
+  def first: T = dataset.head()
+  // $COVERAGE-ONN$
 
   /** Displays the content of this [[TypedDataset]] in a tabular form. Strings more than 20 characters
     * will be truncated, and all cells will be aligned right. For example:

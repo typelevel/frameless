@@ -4,45 +4,34 @@ package functions
 import org.apache.spark.sql.FramelessInternals.expr
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{functions => untyped}
+import frameless.syntax._
 
 trait AggregateFunctions {
-
-  /** Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
-    * sure the injection instance is in scope.
-    *
-    * apache/spark
-    */
-  def lit[A: TypedEncoder, T](value: A): TypedColumn[T, A] = frameless.functions.lit(value)
-
   /** Aggregate function: returns the number of items in a group.
     *
     * apache/spark
     */
-  def count[T](): TypedAggregate[T, Long] = {
-    new TypedAggregate(untyped.count(untyped.lit(1)))
-  }
+  def count[T](): TypedAggregate[T, Long] =
+    untyped.count(untyped.lit(1)).typedAggregate
 
   /** Aggregate function: returns the number of items in a group for which the selected column is not null.
     *
     * apache/spark
     */
-  def count[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.count(column.untyped))
-  }
+  def count[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
+    untyped.count(column.untyped).typedAggregate
 
   /** Aggregate function: returns the number of distinct items in a group.
     *
     * apache/spark
     */
-  def countDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.countDistinct(column.untyped))
-  }
+  def countDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
+    untyped.countDistinct(column.untyped).typedAggregate
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     */
-  def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped))
-  }
+  def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
+    untyped.approx_count_distinct(column.untyped).typedAggregate
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     *
@@ -50,25 +39,22 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] = {
-    new TypedAggregate[T, Long](untyped.approx_count_distinct(column.untyped, rsd))
-  }
+  def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] =
+    untyped.approx_count_distinct(column.untyped, rsd).typedAggregate
 
   /** Aggregate function: returns a list of objects with duplicates.
     *
     * apache/spark
     */
-  def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
-    new TypedAggregate[T, Vector[A]](untyped.collect_list(column.untyped))
-  }
+  def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] =
+    untyped.collect_list(column.untyped).typedAggregate
 
   /** Aggregate function: returns a set of objects with duplicate elements eliminated.
     *
     * apache/spark
     */
-  def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] = {
-    new TypedAggregate[T, Vector[A]](untyped.collect_set(column.untyped))
-  }
+  def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] =
+    untyped.collect_set(column.untyped).typedAggregate
 
   /** Aggregate function: returns the sum of all values in the given column.
     *
@@ -114,7 +100,6 @@ trait AggregateFunctions {
     new TypedAggregate[T, Out](untyped.avg(column.untyped))
   }
 
-
   /** Aggregate function: returns the unbiased variance of the values in a group.
     *
     * @note In Spark variance always returns Double
@@ -122,9 +107,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
-    new TypedAggregate[T, Double](untyped.variance(column.untyped))
-  }
+  def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] =
+    untyped.variance(column.untyped).typedAggregate
 
   /** Aggregate function: returns the sample standard deviation.
     *
@@ -133,9 +117,8 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] = {
-    new TypedAggregate[T, Double](untyped.stddev(column.untyped))
-  }
+  def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] =
+    untyped.stddev(column.untyped).typedAggregate
 
   /**
     * Aggregate function: returns the standard deviation of a column by population.
@@ -175,7 +158,7 @@ trait AggregateFunctions {
     */
   def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, A](untyped.max(column.untyped))
+    untyped.max(column.untyped).typedAggregate
   }
 
   /** Aggregate function: returns the minimum value of the column in a group.
@@ -184,7 +167,7 @@ trait AggregateFunctions {
     */
   def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, A](untyped.min(column.untyped))
+    untyped.min(column.untyped).typedAggregate
   }
 
   /** Aggregate function: returns the first value in a group.
@@ -196,7 +179,7 @@ trait AggregateFunctions {
     */
   def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, A](untyped.first(column.untyped))
+    untyped.first(column.untyped).typedAggregate(column.uencoder)
   }
 
   /**
@@ -209,7 +192,7 @@ trait AggregateFunctions {
     */
   def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    new TypedAggregate[T, A](untyped.last(column.untyped))
+    untyped.last(column.untyped).typedAggregate
   }
 
   /**
