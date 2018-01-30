@@ -325,7 +325,6 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def year[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] = {
+  def year[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
     str.typed[Option[Int]](untyped.year(str.untyped))
-  }
 }
