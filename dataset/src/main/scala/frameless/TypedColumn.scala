@@ -17,6 +17,16 @@ sealed trait UntypedExpression[T] {
   override def toString: String = expr.toString()
 }
 
+/** Expression used while sorting a TypedDataset. It prevents all other future column operations since they
+  * lead in runtime errors in Spark.
+  *
+  * @tparam T type of dataset
+  * @tparam U type of column
+  */
+sealed class SortedTypedColumn[T, U](val expr: Expression)(
+   implicit val uencoder: TypedEncoder[U]
+) extends UntypedExpression[T]
+
 /** Expression used in `select`-like constructions.
   */
 sealed class TypedColumn[T, U](expr: Expression)(
@@ -86,6 +96,14 @@ abstract class AbstractTypedColumn[T, U]
   /** Creates a typed column of either TypedColumn or TypedAggregate.
     */
   def lit[U1: TypedEncoder](c: U1): ThisType[T, U1]
+
+  /** Prepares the column to be used for sorting in descending order by converting it to a [[SortedTypedColumn]]
+    */
+  def desc: SortedTypedColumn[T, U] = new SortedTypedColumn[T, U](FramelessInternals.expr(untyped.desc))
+
+  /** Prepares the column to be used for sorting in ascending order by converting it to a [[SortedTypedColumn]]
+    */
+  def asc: SortedTypedColumn[T, U] = new SortedTypedColumn[T, U](FramelessInternals.expr(untyped.asc))
 
   /** Equality test.
     * {{{
