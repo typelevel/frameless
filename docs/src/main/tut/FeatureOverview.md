@@ -207,6 +207,78 @@ case class PriceInfo3(ratio: Int, price: Double) // ratio should be Double
 aptWithRatio.project[PriceInfo3]
 ```
 
+### Union uses the common fields
+
+Lets create a projection of our original dataset that has just a subset of the fields.
+
+```tut:silent
+case class ApartmentShortInfo(city: String, price: Double, bedrooms: Int)
+
+val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[ApartmentShortInfo]
+```
+
+The union `aptTypedDs2` with `aptTypedDs` uses the common fields of the caller. 
+
+```tut:book
+aptTypedDs2.union(aptTypedDs).show().run
+```
+
+The other way around will not compile. 
+
+```tut:book:fail
+aptTypedDs.union(aptTypedDs2).show().run
+```
+
+Finally, as with `project`, `union` will align fields that have same names and types,
+so they don't have to be in the same order. 
+
+
+### Drop/Replace/Add fields to a TypedDataset
+
+`dropTupled()` drops a single column and results in a tuple-based schema.
+
+```tut:book
+aptTypedDs2.dropTupled('price): TypedDataset[(String,Int)]
+```
+
+To drop columns and use a specific schema backed up with a case class use `drop()`.
+
+```tut:book
+case class CityBeds(city: String, bedrooms: Int)
+val cityBeds: TypedDataset[CityBeds] = aptTypedDs2.drop[CityBeds] 
+```
+
+Often, you just want to replace a single column with a modified value.
+ 
+```tut:book
+val inflation = aptTypedDs2.withColumnReplaced('price, aptTypedDs2('price) * 2)
+ 
+inflation.show(2).run()
+```
+
+Or use a literal instead.
+
+```tut:book
+import frameless.functions.lit
+aptTypedDs2.withColumnReplaced('price, lit(0.001)) 
+```
+
+Adding a column using `withColumnTupled()` results in a tupled-based schema.
+
+```tut:book
+aptTypedDs2.withColumnTupled(lit(Array("a","b","c"))).show(2).run()
+```
+
+Similarly, `withColumn()` adds a column expecting a schema.
+
+```tut:book
+case class CityBedsOther(city: String, bedrooms: Int, other: List[String])
+
+cityBeds.
+   withColumn[CityBedsOther](lit(List("a","b","c"))).
+   show(1).run()
+```
+
 ## User Defined Functions
 
 Frameless supports lifting any Scala function (up to five arguments) to the
@@ -275,6 +347,19 @@ encoding potentially missing columns with `Option`.
 bedroomStats.collect().run().foreach(println)
 ```
 
+#### Working with Optional fields
+
+Optional fields can be converted to non-optional using `getOrElse()`. 
+
+```tut:book
+val sampleStats = bedroomStats.select(
+   bedroomStats('AvgPriceBeds2).getOrElse(0.0),
+   bedroomStats('AvgPriceBeds3).getOrElse(0.0))
+
+sampleStats.show().run()   
+``` 
+
+
 ### Entire TypedDataset Aggregation
 
 We often want to aggregate the entire `TypedDataset` and skip the `groupBy()` clause.
@@ -296,6 +381,18 @@ aptds.agg(
    collectSet(aptds('city))
 ).as[Stats].show().run()
 ```
+
+You may apply any `TypedColumn` operation to a `TypedAggregate` column as well.
+
+```tut:book
+import frameless.functions._
+aptds.agg(
+   avg(aptds('price)) * min(aptds('surface)).cast[Double], 
+   avg(aptds('surface)) * 0.2,
+   litAggr("Hello World")
+).show().run()
+```
+
 
 ## Joins
 
