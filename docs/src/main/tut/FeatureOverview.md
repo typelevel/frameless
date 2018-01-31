@@ -209,7 +209,7 @@ aptWithRatio.project[PriceInfo3]
 
 ### Union uses the common fields
 
-Lets create a projection of our original dataset that has just a subset of the fields.
+Lets create a projection of our original dataset with a subset of the fields.
 
 ```tut:silent
 case class ApartmentShortInfo(city: String, price: Double, bedrooms: Int)
@@ -217,20 +217,22 @@ case class ApartmentShortInfo(city: String, price: Double, bedrooms: Int)
 val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[ApartmentShortInfo]
 ```
 
-The union `aptTypedDs2` with `aptTypedDs` uses the common fields of the caller. 
+The union of `aptTypedDs2` with `aptTypedDs` uses all the fields of the caller (`aptTypedDs2`)
+and expects the other (`aptTypedDs`) dataset to include all those fields. If fields do not much
+you will get a compilation error. 
 
 ```tut:book
 aptTypedDs2.union(aptTypedDs).show().run
 ```
 
-The other way around will not compile. 
+The other way around will not compile, since `aptTypedDs2` has only a subset of the fields. 
 
 ```tut:book:fail
 aptTypedDs.union(aptTypedDs2).show().run
 ```
 
-Finally, as with `project`, `union` will align fields that have same names and types,
-so they don't have to be in the same order. 
+Finally, as with `project`, `union` will align fields that have same names/types,
+so fields do not have to be in the same order. 
 
 
 ### Drop/Replace/Add fields to a TypedDataset
@@ -278,6 +280,17 @@ cityBeds.
    withColumn[CityBedsOther](lit(List("a","b","c"))).
    show(1).run()
 ```
+
+Finally, we can conditionally change a column using the `when/otherwise` operation. 
+
+```tut:book
+import frameless.functions.nonAggregate.when
+aptTypedDs2.withColumnTupled(
+   when(aptTypedDs2('city) === "Paris", aptTypedDs2('price)).
+   when(aptTypedDs2('city) === "Lyon", lit(1.1)).
+   otherwise(lit(0.0))).show(8).run()
+```
+
 
 ## User Defined Functions
 
