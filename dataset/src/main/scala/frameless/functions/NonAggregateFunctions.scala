@@ -1,8 +1,7 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.{functions => untyped}
+import org.apache.spark.sql.{Column, functions => untyped}
 
 import scala.util.matching.Regex
 
@@ -318,4 +317,14 @@ trait NonAggregateFunctions {
     */
   def upper[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, String] =
     str.typed(untyped.upper(str.untyped))
+
+  /**
+    * Non-Aggregate function: Extracts the year as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#year` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def year[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed[Option[Int]](untyped.year(str.untyped))
 }

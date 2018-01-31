@@ -1,3 +1,6 @@
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime => JavaLocalDateTime}
+
 import org.scalacheck.{Arbitrary, Gen}
 
 package object frameless {
@@ -38,6 +41,25 @@ package object frameless {
       doubles <- Gen.listOf(arbDouble.arbitrary)
     } yield new UdtEncodedClass(int, doubles.toArray)
   }
+
+  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+  implicit val localDateArb: Arbitrary[JavaLocalDateTime] = Arbitrary {
+    for {
+      year <- Gen.chooseNum(1900, 2027)
+      month <- Gen.chooseNum(1, 12)
+      dayOfMonth <- Gen.chooseNum(1, 28)
+      hour <- Gen.chooseNum(1, 23)
+      minute <- Gen.chooseNum(1, 59)
+    } yield JavaLocalDateTime.of(year, month, dayOfMonth, hour, minute)
+  }
+
+  /** LocalDateTime String Generator to test time related Spark functions */
+  val dateTimeStringGen: Gen[List[String]] =
+    for {
+      listOfDates <- Gen.listOf(localDateArb.arbitrary)
+      localDate <- listOfDates
+    } yield localDate.format(dateTimeFormatter)
 
   val TEST_OUTPUT_DIR = "target/test-output"
 }

@@ -5,9 +5,9 @@ import java.io.File
 
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Encoder, SaveMode, functions => untyped}
-import org.scalacheck.Gen
+import org.apache.spark.sql.{Encoder, Row, SaveMode, functions => untyped}
 import org.scalacheck.Prop._
+import org.scalacheck.{Gen, Prop}
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
   val testTempFiles = "target/testoutput"
@@ -32,7 +32,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
           .select(org.apache.spark.sql.functions.abs(cDS("a")))
           .map(_.getAs[B](0))
           .collect().toList
-
 
         val typedDS = TypedDataset.create(values)
         val col = typedDS('a)
@@ -98,7 +97,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
-
       val typedDS = TypedDataset.create(values)
       val res = typedDS
         .select(acos(typedDS('a)))
@@ -118,7 +116,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Byte] _))
     check(forAll(prop[Double] _))
   }
-
 
    /*
     * Currently not all Collection types play nice with the Encoders.
@@ -174,7 +171,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(_.getAs[Boolean](0))
         .collect().toList
 
-
       val typedDS = TypedDataset.create(List(X1(values)))
       val res = typedDS
         .select(arrayContains(typedDS('a), contained))
@@ -184,7 +180,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       res ?= resCompare
     }
-
 
     check(
       forAll(
@@ -286,7 +281,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
     check(forAll(prop[Short] _))
@@ -374,7 +368,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
     }
-
 
     check(forAll(prop[Int] _))
     check(forAll(prop[Long] _))
@@ -660,9 +653,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   test("concat for TypedAggregate") {
     val spark = session
-    import spark.implicits._
-
     import frameless.functions.aggregate._
+    import spark.implicits._
     val pairs = for {
       y <- Gen.alphaStr
       x <- Gen.nonEmptyListOf(X2(y, y))
@@ -708,9 +700,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   test("concat_ws for TypedAggregate") {
     val spark = session
-    import spark.implicits._
-
     import frameless.functions.aggregate._
+    import spark.implicits._
     val pairs = for {
       y <- Gen.alphaStr
       x <- Gen.listOfN(10, X2(y, y))
@@ -1036,5 +1027,36 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Long, Long] _))
     // This fails due to issue #239
     //check(forAll(prop[Option[Vector[Boolean]], Long] _))
+  }
+
+  test("year") {
+    val spark = session
+    import spark.implicits._
+
+    val nullHandler: Row => Option[Int] = _.get(0) match {
+      case i: Int => Some(i)
+      case _ => None
+    }
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+        val ds = TypedDataset.create(data)
+
+        val sparkResult = ds.toDF()
+          .select(untyped.year($"a"))
+          .map(nullHandler)
+          .collect()
+          .toList
+
+        val typed = ds
+          .select(year(ds[String]('a)))
+          .collect()
+          .run()
+          .toList
+
+        typed ?= sparkResult
+      }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
   }
 }
