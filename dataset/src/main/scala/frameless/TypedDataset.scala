@@ -127,7 +127,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * plan may grow exponentially. It will be saved to files inside the checkpoint
     * directory set with `SparkContext#setCheckpointDir`.
     *
-    * Differs from `Dataset#checkpoint` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#checkpoint` by wrapping its result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
@@ -196,12 +196,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Returns the number of elements in the [[TypedDataset]].
     *
-    * Differs from `Dataset#count` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#count` by wrapping its result into an effect-suspending `F[_]`.
     */
   def count[F[_]]()(implicit F: SparkDelay[F]): F[Long] =
     F.delay(dataset.count)
 
-  /** Returns `TypedColumn` of type `A` given it's name.
+  /** Returns `TypedColumn` of type `A` given its name.
     *
     * {{{
     * tf('id)
@@ -215,7 +215,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       i1: TypedEncoder[A]
     ): TypedColumn[T, A] = col(column)
 
-  /** Returns `TypedColumn` of type `A` given it's name.
+  /** Returns `TypedColumn` of type `A` given its name.
     *
     * {{{
     * tf.col('id)
@@ -251,14 +251,14 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Running this operation requires moving all the data into the application's driver process, and
     * doing so on a very large [[TypedDataset]] can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#collect` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#collect` by wrapping its result into an effect-suspending `F[_]`.
     */
   def collect[F[_]]()(implicit F: SparkDelay[F]): F[Seq[T]] =
     F.delay(dataset.collect())
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
-    * Differs from `Dataset#first` by wrapping it's result into an `Option` and an effect-suspending `F[_]`.
+    * Differs from `Dataset#first` by wrapping its result into an `Option` and an effect-suspending `F[_]`.
     */
   def firstOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] =
     F.delay {
@@ -274,7 +274,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Running take requires moving data into the application's driver process, and doing so with
     * a very large `num` can crash the driver process with OutOfMemoryError.
     *
-    * Differs from `Dataset#take` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#take` by wrapping its result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
@@ -290,7 +290,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * of a wide transformation (e.g. join with different partitioners), to avoid
     * recomputing the input [[TypedDataset]] should be cached first.
     *
-    * Differs from `Dataset#toLocalIterator()` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#toLocalIterator()` by wrapping its result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
@@ -331,7 +331,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param truncate Whether truncate long strings. If true, strings more than 20 characters will
     *   be truncated and all cells will be aligned right
     *
-    * Differs from `Dataset#show` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#show` by wrapping its result into an effect-suspending `F[_]`.
     *
     * apache/spark
     */
@@ -354,14 +354,14 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /** Runs `func` on each element of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreach` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#foreach` by wrapping its result into an effect-suspending `F[_]`.
     */
   def foreach[F[_]](func: T => Unit)(implicit F: SparkDelay[F]): F[Unit] =
     F.delay(dataset.foreach(func))
 
   /** Runs `func` on each partition of this [[TypedDataset]].
     *
-    * Differs from `Dataset#foreachPartition` by wrapping it's result into an effect-suspending `F[_]`.
+    * Differs from `Dataset#foreachPartition` by wrapping its result into an effect-suspending `F[_]`.
     */
   def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
     F.delay(dataset.foreachPartition(func))
@@ -506,7 +506,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
     TypedEncoder[A].catalystRepr match {
       case StructType(_) =>
-        // if column is struct, we use all it's fields
+        // if column is struct, we use all its fields
         val df = tuple1
           .dataset
           .selectExpr("_1.*")

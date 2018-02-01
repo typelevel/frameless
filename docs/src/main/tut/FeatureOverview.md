@@ -71,7 +71,7 @@ This is completely type-safe, for instance suppose we misspell `city` as `citi`:
 aptTypedDs.select(aptTypedDs('citi))
 ```
 
-This gets raised at compile-time, whereas with the standard `Dataset` API the error appears at run-time (enjoy the stack trace):
+This gets raised at compile time, whereas with the standard `Dataset` API the error appears at runtime (enjoy the stack trace):
 
 ```tut:book:fail
 aptDs.select('citi)
@@ -83,7 +83,7 @@ aptDs.select('citi)
 aptTypedDs.select(aptTypedDs('surface) * 10, aptTypedDs('surface) + 2).show().run()
 ```
 
-Note that unlike the standard Spark API where some operations are lazy and some are not, **TypedDatasets have all operations to be lazy.** 
+Note that unlike the standard Spark API, where some operations are lazy and some are not, **all TypedDatasets operations are lazy.** 
 In the above example, `show()` is lazy. It requires to apply `run()` for the `show` job to materialize.
 A more detailed explanation of `Job` is given [here](Job.md).
 
@@ -286,7 +286,7 @@ bedroomStats.collect().run().foreach(println)
 ### Entire TypedDataset Aggregation
 
 We often want to aggregate the entire `TypedDataset` and skip the `groupBy()` clause.
-In `Frameless` you can do this using the `agg()` operator directly on the `TypedDataset`. 
+In Frameless you can do this using the `agg()` operator directly on the `TypedDataset`. 
 In the following example, we compute the average price, the average surface,  
 the minimum surface, and the set of cities for the entire dataset. 
 
@@ -319,7 +319,7 @@ val cityInfo = Seq(
 val citiInfoTypedDS = TypedDataset.create(cityInfo)
 ```
 
-Here is how to join the population information to the apartment's dataset.
+Here is how to join the population information to the apartment's dataset:
 
 ```tut:book
 val withCityInfo = aptTypedDs.join(citiInfoTypedDS, aptTypedDs('city), citiInfoTypedDS('name))

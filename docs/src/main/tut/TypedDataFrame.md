@@ -1,8 +1,8 @@
 # Proof of Concept: TypedDataFrame
 
-`TypedDataFrame` is the API developed in the early stages of frameless to manipulate Spark `DataFrame`s in a type-safe manner. With the introduction of `Dataset` in Spark 1.6, `DataFrame` seems deprecated and won't be the focus of future developments of frameless. However, the design is interesting enough for being documented.
+`TypedDataFrame` is the API developed in the early stages of frameless to manipulate Spark `DataFrame`s in a type-safe manner. With the introduction of `Dataset` in Spark 1.6, `DataFrame` seems deprecated and won't be the focus of future development of frameless. However, the design is interesting enough to document.
 
-To safely manipulate `DataFrame`s we use a technique called *shadow type*, which consists in storing additional information about a value in a "dummy" type. Mirroring value-level computation at the type-level lets us leverage the type system to catch common mistakes at compile time.
+To safely manipulate `DataFrame`s we use a technique called a *shadow type*, which consists in storing additional information about a value in a "dummy" type. Mirroring value-level computation at the type-level lets us leverage the type system to catch common mistakes at compile time.
 
 ### Diving in
 
@@ -28,7 +28,7 @@ As you can see, instead of the `def filter(conditionExpr: String): DataFrame` de
 
 ### Type-level column referencing
 
-For Spark's `DataFrame`s, column referencing is done directly by `String`s or using the `Column` type which provides no additional type safety. `TypedDataFrame` improves on that by catching column referencing at compile type. When everything goes well, frameless select is very similar to vanilla select, except that it keeps track of the selected column types:
+For Spark's `DataFrame`s, column referencing is done directly by `String`s or using the `Column` type which provides no additional type safety. `TypedDataFrame` improves on that by catching invalid column references compile type. When everything goes well, frameless select is very similar to vanilla select, except that it keeps track of the selected column types:
 
 ```scala
 import frameless.TypedDataFrame
@@ -39,7 +39,7 @@ def selectIntString(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] =
   tf.select('i, 's)
 ```
 
-However, in case of typo, it gets coughs right away:
+However, in case of typo, it gets caught right away:
 
 ```scala
 def selectIntStringTypo(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] =
@@ -48,7 +48,7 @@ def selectIntStringTypo(tf: TypedDataFrame[Foo]): TypedDataFrame[(Int, String)] 
 
 ### Type-level joins
 
-Joins can available with two different syntaxes, the first lets you reference different columns on each `TypedDataFrame`, and ensures that their all exists and have compatible types:
+Joins can available with two different syntaxes. The first lets you reference different columns on each `TypedDataFrame`, and ensures that they all exist and have compatible types:
 
 ```scala
 case class Bar(i: Int, j: String, b: Boolean)
@@ -58,7 +58,7 @@ def join1(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
   tf1.innerJoin(tf2).on('s).and('j)
 ```
 
-The second syntax bring some convenience when the joining columns have identical names in both tables:
+The second syntax brings some convenience when the joining columns have identical names in both tables:
 
 ```scala
 def join2(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
@@ -70,7 +70,7 @@ Further example are available in the [TypedDataFrame join tests.](../dataframe/s
 
 ### Complete example
 
-We now consider a complete example to see how the type system can frameless can improve not only correctness but also the readability of Spark jobs. Consider the following domain of phonebooks, city map and neighborhood:
+We now consider a complete example to see how the type system can frameless can improve not only correctness but also the readability of Spark jobs. Consider the following domain of phonebooks, city maps and neighborhoods:
 
 ```tut:silent
 type Neighborhood = String
@@ -98,7 +98,7 @@ object NLPLib {
 }
 ```
 
-Suppose we manage to obtain a `TypedDataFrame[PhoneBookEntry]` and a `TypedDataFrame[CityMapEntry]` public data, here is what our Spark job could look like with frameless:
+Suppose we manage to obtain public data for a `TypedDataFrame[PhoneBookEntry]` and `TypedDataFrame[CityMapEntry]`. Here is what our Spark job could look like with frameless:
 
 ```scala
 import org.apache.spark.sql.SQLContext
@@ -130,7 +130,7 @@ def bestNeighborhood
 }
 ```
 
-If you compare this version from Spark vanilla where every line is a `DataFrame`, you see how much types can improve readability. An executable version of this example is available in the [BestNeighborhood test](../dataframe/src/test/scala/BestNeighborhood.scala).
+If you compare this version to vanilla Spark where every line is a `DataFrame`, you see how much types can improve readability. An executable version of this example is available in the [BestNeighborhood test](../dataframe/src/test/scala/BestNeighborhood.scala).
 
 ### Limitations
 

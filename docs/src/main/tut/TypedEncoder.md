@@ -9,7 +9,7 @@ implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCr
 System.setProperty("spark.cleaner.ttl", "300")
 ```
 
-Spark uses Reflection to derive it's `Encoder`s, which is why they can fail at run time. For example, because Spark does not supports `java.util.Date`, the following leads to an error:
+Spark uses Reflection to derive its `Encoder`s, which is why they can fail at run time. For example, because Spark does not support `java.util.Date`, the following leads to an error:
 
 ```tut:silent
 import org.apache.spark.sql.Dataset
@@ -22,9 +22,9 @@ case class DateRange(s: java.util.Date, e: java.util.Date)
 val ds: Dataset[DateRange] = sqlContext.createDataset(Seq(DateRange(new java.util.Date, new java.util.Date)))
 ```
 
-As shown by the stack trace, this runtime error goes thought [ScalaReflection](https://github.com/apache/spark/blob/19cf208063f035d793d2306295a251a9af7e32f6/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/ScalaReflection.scala) to try to derive an `Encoder` for `Dataset` schema. Beside the annoyance of not detecting this error at compile time, a more important limitation of the reflection based approach is it's inability to be extended for custom types. See this Stack Overflow question for a summary of the current situation (as of 2.0) in vanilla Spark: [How to store custom objects in a Dataset?](http://stackoverflow.com/a/39442829/2311362).
+As shown by the stack trace, this runtime error goes through [ScalaReflection](https://github.com/apache/spark/blob/19cf208063f035d793d2306295a251a9af7e32f6/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/ScalaReflection.scala) to try to derive an `Encoder` for `Dataset` schema. Beside the annoyance of not detecting this error at compile time, a more important limitation of the reflection-based approach is its inability to be extended for custom types. See this Stack Overflow question for a summary of the current situation (as of 2.0) in vanilla Spark: [How to store custom objects in a Dataset?](http://stackoverflow.com/a/39442829/2311362).
 
-Frameless introduces a new type class called `TypeEncoder` to solve these issues. `TypeEncoder`s are passed around as implicit parameters to every frameless method to ensure that the data being manipulated is `Encoder`. It uses a standard implicit resolution coupled with shapeless type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the code `java.util.Date` example won't compile with frameless:
+Frameless introduces a new type class called `TypeEncoder` to solve these issues. `TypeEncoder`s are passed around as implicit parameters to every frameless method to ensure that the data being manipulated is `Encoder`. It uses a standard implicit resolution coupled with shapeless' type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the `java.util.Date` example won't compile with frameless:
 
 ```tut:silent
 import frameless.TypedDataset
@@ -55,7 +55,7 @@ case class FooDate(i: Int, b: BarDate)
 val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, "s", new java.util.Date))))
 ```
 
-It should be noted that once derived, reflection based `Encoder`s and implicitly derived `TypeEncoder`s have identical performances. The derivation mechanism is different, but the objects generated to encode and decode JVM object in the Spark internal representation behave the same at run-time.
+It should be noted that once derived, reflection-based `Encoder`s and implicitly derived `TypeEncoder`s have identical performance. The derivation mechanism is different, but the objects generated to encode and decode JVM objects in Spark's internal representation behave the same at runtime.
 
 ```tut:invisible
 spark.stop()
