@@ -116,7 +116,7 @@ in a compilation error.
 Check [here](https://github.com/typelevel/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala)
 for the set of available `CatalystCast.`
 
-## TypeSafe TypedDataset casting and projections
+## Typesafe casting and projections
 
 With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
@@ -207,7 +207,7 @@ case class PriceInfo3(ratio: Int, price: Double) // ratio should be Double
 aptWithRatio.project[PriceInfo3]
 ```
 
-### Union uses the common fields
+### Union of TypedDatasets 
 
 Lets create a projection of our original dataset with a subset of the fields.
 
@@ -218,8 +218,8 @@ val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[Apartment
 ```
 
 The union of `aptTypedDs2` with `aptTypedDs` uses all the fields of the caller (`aptTypedDs2`)
-and expects the other (`aptTypedDs`) dataset to include all those fields. If fields do not much
-you will get a compilation error. 
+and expects the other (`aptTypedDs`) dataset to include all those fields. 
+If field names/types do not much you get a compilation error. 
 
 ```tut:book
 aptTypedDs2.union(aptTypedDs).show().run
@@ -234,8 +234,21 @@ aptTypedDs.union(aptTypedDs2).show().run
 Finally, as with `project`, `union` will align fields that have same names/types,
 so fields do not have to be in the same order. 
 
+## TypedDataset functions and transformations
 
-### Drop/Replace/Add fields to a TypedDataset
+Frameless supports many of Spark's functions and transformations. Whenever a function
+you need exists in standard Spark but not in Frameless, you can convert back to a regular
+`Dataset` by calling the `.dataset` method on any `TypedDataset`. 
+
+Below there is a list of imports related to Frameless aggregate and non-aggregate functions.
+
+```scala
+import frameless.functions._                // For literals
+import frameless.functions.nonAggregate._
+import frameless.functions.aggregate._
+```
+
+### Drop/Replace/Add fields
 
 `dropTupled()` drops a single column and results in a tuple-based schema.
 
@@ -291,6 +304,54 @@ aptTypedDs2.withColumnTupled(
    otherwise(lit(0.0))).show(8).run()
 ```
 
+### Working with collections
+
+
+```tut:book
+import frameless.functions._
+import frameless.functions.nonAggregate._
+```
+
+```tut:book
+val t = cityRatio.select(cityRatio('city), lit(List("abc","c","d")))
+t.withColumnTupled(
+   arrayContains(t('_2), "abc")
+).show(1).run()
+```
+
+If accidentally you apply a collection function on a column that is not a collection,
+you get a compilation error.
+
+```tut:book:fail
+t.withColumnTupled(
+   arrayContains(t('_1), "abc")
+)
+```
+
+
+### Collecting data to the driver
+
+In Frameless all Spark actions (such as `collect()`) are safe.
+
+Take the first element from a dataset (if the dataset is empty return `None`).
+
+```tut:book
+cityBeds.headOption.run()
+```
+
+Take the first `n` elements.
+
+```tut:book
+cityBeds.take(2).run()
+```
+
+```tut:book
+cityBeds.head(3).run()
+```
+
+```tut:book
+cityBeds.limit(4).collect().run()
+```
 
 ## User Defined Functions
 
