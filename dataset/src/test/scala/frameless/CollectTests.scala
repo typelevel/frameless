@@ -54,6 +54,15 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Option[SQLTimestamp]] _))
 
     check(forAll(prop[Vector[Int]] _))
+    check(forAll(prop[List[Int]] _))
+    check(forAll(prop[Seq[Int]] _))
+    check(forAll(prop[Vector[Char]] _))
+    check(forAll(prop[List[Char]] _))
+    check(forAll(prop[Seq[Char]] _))
+    check(forAll(prop[Seq[Seq[Seq[Char]]]] _))
+    check(forAll(prop[Seq[Option[String]]] _))
+    check(forAll(prop[Seq[Map[String, Long]]] _))
+    check(forAll(prop[Seq[Map[String, X2[Option[Long], Vector[Boolean]]]]] _))
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Vector[X2[Int, Int]]] _))
 

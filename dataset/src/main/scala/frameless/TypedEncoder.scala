@@ -317,9 +317,10 @@ object TypedEncoder {
       }
 
       def toCatalyst(path: Expression): Expression = ExternalMapToCatalyst(
-        path,
+        path: Expression,
         encodeA.jvmRepr,
         encodeA.toCatalyst,
+        encodeA.nullable,
         encodeB.jvmRepr,
         encodeB.toCatalyst,
         encodeB.nullable)

@@ -1,4 +1,4 @@
-val sparkVersion = "2.2.0"
+val sparkVersion = "2.2.1"
 val catsCoreVersion = "1.0.1"
 val catsEffectVersion = "0.7"
 val catsMtlVersion = "0.2.2"
@@ -82,7 +82,7 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  scalaVersion := "2.11.11",
+  scalaVersion := "2.11.12",
   scalacOptions ++= commonScalacOptions,
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
