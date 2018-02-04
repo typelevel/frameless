@@ -232,6 +232,18 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       new TypedColumn[T, A](colExpr)
     }
 
+  /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
+    * {{{
+    *   ts: TypedDataset[Foo] = ...
+    *   ts.select(ts.asCol, ts.asCol): TypedDataset[(Foo,Foo)]
+    * }}}
+    */
+  def asCol: TypedColumn[T, T] = {
+    val allColumns: Array[Column] = dataset.columns.map(dataset.col)
+    val projectedColumn: Column = org.apache.spark.sql.functions.struct(allColumns: _*)
+    new TypedColumn[T,T](projectedColumn)
+  }
+
   object colMany extends SingletonProductArgs {
     def applyProduct[U <: HList, Out](columns: U)
       (implicit
@@ -241,7 +253,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): TypedColumn[T, Out] = {
         val names = columns.toList[Symbol].map(_.name)
         val colExpr = FramelessInternals.resolveExpr(dataset, names)
-
           new TypedColumn[T, Out](colExpr)
       }
   }

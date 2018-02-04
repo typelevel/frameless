@@ -127,4 +127,23 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
   }
+
+  test("asCol") {
+    def prop[A: TypedEncoder, B: TypedEncoder](a: Seq[X2[A,B]]) = {
+      val ds: TypedDataset[X2[A, B]] = TypedDataset.create(a)
+
+      val frameless: Seq[(A, X2[A, B], X2[A, B], X2[A, B], B)] =
+        ds.select(ds('a), ds.asCol, ds.asCol, ds.asCol, ds('b)).collect().run()
+
+      val scala: Seq[(A, X2[A, B], X2[A, B], X2[A, B], B)] =
+        a.map(x => (x.a, x, x, x, x.b))
+
+      scala ?= frameless
+    }
+
+    check(forAll(prop[Int, Option[Long]] _))
+    check(forAll(prop[Vector[Char], Option[Boolean]] _))
+    check(forAll(prop[Vector[Vector[String]], Vector[Vector[BigDecimal]]] _))
+  }
+
 }
