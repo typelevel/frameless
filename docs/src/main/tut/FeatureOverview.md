@@ -236,16 +236,17 @@ so fields do not have to be in the same order.
 
 ## TypedDataset functions and transformations
 
-Frameless supports many of Spark's functions and transformations. Whenever a function
-you need exists in standard Spark but not in Frameless, you can convert back to a regular
-`Dataset` by calling the `.dataset` method on any `TypedDataset`. 
+Frameless supports many of Spark's functions and transformations. 
+However, whenever a Spark function does not exist in Frameless, 
+calling the `.dataset` will take you back to vanilla `Dataset` where
+you can apply the function you need.  
 
-Below there is a list of imports related to Frameless aggregate and non-aggregate functions.
+These are the main imports for Frameless' aggregate and non-aggregate functions.
 
 ```scala
 import frameless.functions._                // For literals
-import frameless.functions.nonAggregate._
-import frameless.functions.aggregate._
+import frameless.functions.nonAggregate._   // e.g., concat, abs
+import frameless.functions.aggregate._      // e.g., count, sum, avg 
 ```
 
 ### Drop/Replace/Add fields
@@ -256,14 +257,14 @@ import frameless.functions.aggregate._
 aptTypedDs2.dropTupled('price): TypedDataset[(String,Int)]
 ```
 
-To drop columns and use a specific schema backed up with a case class use `drop()`.
+To drop a column and specify a new schema use `drop()`.
 
 ```tut:book
 case class CityBeds(city: String, bedrooms: Int)
 val cityBeds: TypedDataset[CityBeds] = aptTypedDs2.drop[CityBeds] 
 ```
 
-Often, you just want to replace a single column with a modified value.
+Often, you want to replace an existing column with a new value.
  
 ```tut:book
 val inflation = aptTypedDs2.withColumnReplaced('price, aptTypedDs2('price) * 2)
@@ -284,7 +285,7 @@ Adding a column using `withColumnTupled()` results in a tupled-based schema.
 aptTypedDs2.withColumnTupled(lit(Array("a","b","c"))).show(2).run()
 ```
 
-Similarly, `withColumn()` adds a column expecting a schema.
+Similarly, `withColumn()` adds a column explicitly expects a schema for the result.
 
 ```tut:book
 case class CityBedsOther(city: String, bedrooms: Int, other: List[String])
@@ -294,7 +295,7 @@ cityBeds.
    show(1).run()
 ```
 
-Finally, we can conditionally change a column using the `when/otherwise` operation. 
+To conditionally change a column use the `when/otherwise` operation. 
 
 ```tut:book
 import frameless.functions.nonAggregate.when
@@ -303,6 +304,24 @@ aptTypedDs2.withColumnTupled(
    when(aptTypedDs2('city) === "Lyon", lit(1.1)).
    otherwise(lit(0.0))).show(8).run()
 ```
+
+A simple way to add a column without loosing important schema information is
+to project the entire source schema into a column. 
+
+```tut:book
+val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
+c.show(1).run()
+```
+
+Using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
+need of an extra `case class` to define the result schema.
+
+To access nested columns, use the `colMany()` method.
+
+```tut:book
+c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
+```
+
 
 ### Working with collections
 
