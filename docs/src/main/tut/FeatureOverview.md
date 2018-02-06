@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
 import frameless.TypedDataset
 
-val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
+val conf = new SparkConf().setMaster("local[*]").setAppName("Frameless repl").set("spark.ui.enabled", "false")
 implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
 spark.sparkContext.setLogLevel("WARN")
 
