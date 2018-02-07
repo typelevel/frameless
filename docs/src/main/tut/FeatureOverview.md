@@ -285,7 +285,7 @@ Adding a column using `withColumnTupled()` results in a tupled-based schema.
 aptTypedDs2.withColumnTupled(lit(Array("a","b","c"))).show(2).run()
 ```
 
-Similarly, `withColumn()` adds a column explicitly expects a schema for the result.
+Similarly, `withColumn()` adds a column and explicitly expects a schema for the result.
 
 ```tut:book
 case class CityBedsOther(city: String, bedrooms: Int, other: List[String])
@@ -306,7 +306,7 @@ aptTypedDs2.withColumnTupled(
 ```
 
 A simple way to add a column without loosing important schema information is
-to project the entire source schema into a column. 
+to project the entire source schema into a single column. 
 
 ```tut:book
 val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
@@ -316,7 +316,7 @@ c.show(1).run()
 Using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
 need of an extra `case class` to define the result schema.
 
-To access nested columns, use the `colMany()` method.
+To access nested columns, use the `colMany()` method. 
 
 ```tut:book
 c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
