@@ -1,11 +1,11 @@
 package frameless
 package ops
 
-import org.scalacheck.{Gen, Prop}
-import org.scalacheck.Prop._
-import org.scalacheck.Arbitrary.arbitrary
 import frameless.functions.aggregate._
 import org.apache.spark.sql.{functions => sparkFunctions}
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Prop._
+import org.scalacheck.{Gen, Prop}
 
 class PivotTest extends TypedDatasetSuite {
   def withCustomGenX4: Gen[Vector[X4[String, String, Int, Boolean]]] = {
@@ -58,5 +58,23 @@ class PivotTest extends TypedDatasetSuite {
       pivot(d('c)).on(1L, 20L).
       agg(count[X3[String, String, Long]]()).
       collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
+  }
+
+  test("Pivot with cube on two columns, pivot on Long") {
+    val x: Seq[X3[String, String, Long]] = Seq(X3("a", "x", 1), X3("a", "x", 1), X3("a", "c", 20))
+    val d = TypedDataset.create(x)
+    d.cube(d('a), d('b))
+      .pivot(d('c)).on(1L, 20L)
+      .agg(count[X3[String, String, Long]]())
+      .collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
+  }
+
+  test("Pivot with rollup on two columns, pivot on Long") {
+    val x: Seq[X3[String, String, Long]] = Seq(X3("a", "x", 1), X3("a", "x", 1), X3("a", "c", 20))
+    val d = TypedDataset.create(x)
+    d.rollup(d('a), d('b))
+      .pivot(d('c)).on(1L, 20L)
+      .agg(count[X3[String, String, Long]]())
+      .collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
   }
 }

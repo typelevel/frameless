@@ -377,6 +377,24 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
     F.delay(dataset.foreachPartition(func))
 
+  def cube[K1](
+    c1: TypedColumn[T, K1]
+  ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
+
+  def cube[K1, K2](
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
+
+  object cubeMany extends ProductArgs {
+    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
+      (implicit
+        i0: ColumnTypes.Aux[T, TK, K],
+        i1: Tupler.Aux[K, KT],
+        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+      ): CubeManyOps[T, TK, K, KT] = new CubeManyOps[T, TK, K, KT](self, groupedBy)
+  }
+
   def groupBy[K1](
     c1: TypedColumn[T, K1]
   ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
@@ -393,6 +411,24 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i1: Tupler.Aux[K, KT],
         i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
       ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
+  }
+
+  def rollup[K1](
+    c1: TypedColumn[T, K1]
+  ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
+
+  def rollup[K1, K2](
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
+
+  object rollupMany extends ProductArgs {
+    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
+      (implicit
+        i0: ColumnTypes.Aux[T, TK, K],
+        i1: Tupler.Aux[K, KT],
+        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+      ): CubeManyOps[T, TK, K, KT] = new CubeManyOps[T, TK, K, KT](self, groupedBy)
   }
 
   /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
