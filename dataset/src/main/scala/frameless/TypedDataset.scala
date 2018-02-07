@@ -728,8 +728,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb, cc)
 
   /** Sort each partition in the dataset by the given column expressions
+    * Default sort order is ascending.
     * {{{
-    *   d.sortWithinPartitionsMany(d('a).asc, d('b).desc)
+    *   d.sortWithinPartitionsMany(d('a), d('b).desc, d('c).asc)
     * }}}
     */
   object sortWithinPartitionsMany extends ProductArgs {
@@ -763,9 +764,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
    cc: SortedTypedColumn[T, C]
  ): TypedDataset[T] = orderByMany(ca, cb, cc)
 
-  /** Sort the dataset by any number of column expressions
+  /** Sort the dataset by any number of column expressions.
+    * Default sort order is ascending.
     * {{{
-    *   d.orderByMany(d('a).asc, d('b).desc)
+    *   d.orderByMany(d('a), d('b).desc, d('c).asc)
     * }}}
     */
   object orderByMany extends ProductArgs {

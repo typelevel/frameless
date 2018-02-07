@@ -10,7 +10,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   def sortings[A : CatalystOrdered, T]: Seq[(TypedColumn[T, A] => SortedTypedColumn[T, A], Column => Column)] = Seq(
     (_.desc, _.desc),
     (_.asc, _.asc),
-    (t => t, t => t)
+    (t => t, t => t) //default ascending
   )
 
   test("single column non nullable orderBy") {
@@ -130,6 +130,21 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
             vanillaSpark ?= ds.sortWithinPartitionsMany(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector
           )
         }.reduce(_ && _)
+    }
+
+    check(forAll(prop[SQLDate, Long] _))
+    check(forAll(prop[String, Boolean] _))
+    check(forAll(prop[SQLTimestamp, Long] _))
+  }
+
+  test("sort support for mixed default and explicit ordering") {
+    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A, B]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      ds.dataset.orderBy(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
+        ds.orderByMany(ds('a), ds('b).desc).collect().run().toVector) &&
+      ds.dataset.sortWithinPartitions(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
+        ds.sortWithinPartitionsMany(ds('a), ds('b).desc).collect().run().toVector)
     }
 
     check(forAll(prop[SQLDate, Long] _))
