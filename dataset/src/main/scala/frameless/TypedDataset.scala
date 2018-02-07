@@ -739,7 +739,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
       ): TypedDataset[T] = {
       val sorted = dataset.toDF()
-        .sortWithinPartitions(i0(columns).toList[SortedTypedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .sortWithinPartitions(i0(columns).toList[SortedTypedColumn[T, _]].map(_.untyped):_*)
         .as[T](TypedExpressionEncoder[T])
 
       TypedDataset.create[T](sorted)
@@ -775,7 +775,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
       ): TypedDataset[T] = {
       val sorted = dataset.toDF()
-        .orderBy(i0(columns).toList[SortedTypedColumn[T, _]].map(c => new Column(c.expr)):_*)
+        .orderBy(i0(columns).toList[SortedTypedColumn[T, _]].map(_.untyped):_*)
         .as[T](TypedExpressionEncoder[T])
 
       TypedDataset.create[T](sorted)
