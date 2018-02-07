@@ -33,7 +33,7 @@ implicit val sync: Sync[ReaderT[IO, SparkSession, ?]] = new Sync[ReaderT[IO, Spa
 }
 ```
 
-There are two main parts to the `cats` integration offered by frameless:
+There are two main parts to the `cats` integration offered by Frameless:
 - effect suspension in `TypedDataset` using `cats-effect` and `cats-mtl`
 - `RDD` enhancements using algebraic typeclasses in `cats-kernel`
 
