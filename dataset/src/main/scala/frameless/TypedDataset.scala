@@ -710,12 +710,29 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       }
   }
 
+  /** Sort each partition in the dataset using the columns selected. */
+  def sortWithinPartitions[A: CatalystOrdered](ca: SortedTypedColumn[T, A]): TypedDataset[T] =
+    sortWithinPartitionsMany(ca)
+
+  /** Sort each partition in the dataset using the columns selected. */
+  def sortWithinPartitions[A: CatalystOrdered, B: CatalystOrdered](
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B]
+  ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb)
+
+  /** Sort each partition in the dataset using the columns selected. */
+  def sortWithinPartitions[A: CatalystOrdered, B: CatalystOrdered, C: CatalystOrdered](
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B],
+    cc: SortedTypedColumn[T, C]
+  ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb, cc)
+
   /** Sort each partition in the dataset by the given column expressions
     * {{{
-    *   d.sortWithinPartitions(d('a).asc, d('b).desc)
+    *   d.sortWithinPartitionsMany(d('a).asc, d('b).desc)
     * }}}
     */
-  object sortWithinPartitions extends ProductArgs {
+  object sortWithinPartitionsMany extends ProductArgs {
     def applyProduct[U <: HList, O <: HList](columns: U)
       (implicit
         i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
