@@ -310,14 +310,14 @@ abstract class AbstractTypedColumn[T, U]
     * apache/spark
     */
   def desc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](FramelessInternals.expr(untyped.desc))
+    new SortedTypedColumn[T, U](untyped.desc)
 
   /** Returns an ascending ordering used in sorting
     *
     * apache/spark
     */
   def asc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
-    new SortedTypedColumn[T, U](FramelessInternals.expr(untyped.asc))
+    new SortedTypedColumn[T, U](untyped.asc)
 
   /**
     * Bitwise AND this expression and another expression.
