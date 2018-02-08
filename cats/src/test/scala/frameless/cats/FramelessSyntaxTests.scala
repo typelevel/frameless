@@ -40,7 +40,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
       def pure[A](x: A): ReaderT[IO, SparkSession, A] = ReaderT.pure(x)
       def handleErrorWith[A](fa: ReaderT[IO, SparkSession, A])(f: Throwable => ReaderT[IO, SparkSession, A]): ReaderT[IO, SparkSession, A] =
         ReaderT(r => fa.run(r).handleErrorWith(e => f(e).run(r)))
-      def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.lift(IO.raiseError(e))
+      def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.liftF(IO.raiseError(e))
       def flatMap[A, B](fa: ReaderT[IO, SparkSession, A])(f: A => ReaderT[IO, SparkSession, B]): ReaderT[IO, SparkSession, B] = fa.flatMap(f)
       def tailRecM[A, B](a: A)(f: A => ReaderT[IO, SparkSession, Either[A, B]]): ReaderT[IO, SparkSession, B] =
         ReaderT.catsDataMonadForKleisli[IO, SparkSession].tailRecM(a)(f)

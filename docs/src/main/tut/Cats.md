@@ -27,7 +27,7 @@ implicit val sync: Sync[ReaderT[IO, SparkSession, ?]] = new Sync[ReaderT[IO, Spa
   def pure[A](x: A): ReaderT[IO, SparkSession, A] = ReaderT.pure(x)
   def handleErrorWith[A](fa: ReaderT[IO, SparkSession, A])(f: Throwable => ReaderT[IO, SparkSession, A]): ReaderT[IO, SparkSession, A] =
     ReaderT(r => fa.run(r).handleErrorWith(e => f(e).run(r)))
-  def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.lift(IO.raiseError(e))
+  def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.liftF(IO.raiseError(e))
   def flatMap[A, B](fa: ReaderT[IO, SparkSession, A])(f: A => ReaderT[IO, SparkSession, B]): ReaderT[IO, SparkSession, B] = fa.flatMap(f)
   def tailRecM[A, B](a: A)(f: A => ReaderT[IO, SparkSession, Either[A, B]]): ReaderT[IO, SparkSession, B] =
     ReaderT.catsDataMonadForKleisli[IO, SparkSession].tailRecM(a)(f)
@@ -101,7 +101,7 @@ And now, we can set the description for the computation being run:
 val resultWithDescription: Action[(Seq[(Int, String)], Long)] = for {
   r <- result.withDescription("fancy cats")
   session <- ReaderT.ask[IO, SparkSession]
-  _ <- ReaderT.lift {
+  _ <- ReaderT.liftF {
          IO {
            println(s"Description: ${session.sparkContext.getLocalProperty("spark.job.description")}")
          }
