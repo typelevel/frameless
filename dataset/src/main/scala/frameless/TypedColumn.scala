@@ -630,7 +630,7 @@ sealed class SortedTypedColumn[T, U](val expr: Expression)(
 
 object SortedTypedColumn {
   implicit def defaultAscending[T, U : CatalystOrdered](typedColumn: TypedColumn[T, U]): SortedTypedColumn[T, U] =
-      new SortedTypedColumn[T, U](new Column(SortOrder(typedColumn.expr, Ascending)))(typedColumn.uencoder)
+    new SortedTypedColumn[T, U](typedColumn.untyped.asc)(typedColumn.uencoder)
 
     object defaultAscendingPoly extends Poly1 {
       implicit def caseTypedColumn[T, U : CatalystOrdered] = at[TypedColumn[T, U]](c => defaultAscending(c))
