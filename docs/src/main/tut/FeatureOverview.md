@@ -116,7 +116,7 @@ in a compilation error.
 Check [here](https://github.com/typelevel/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala)
 for the set of available `CatalystCast.`
 
-## Typesafe casting and projections
+## Casting and projections
 
 With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
@@ -371,6 +371,25 @@ cityBeds.head(3).run()
 ```tut:book
 cityBeds.limit(4).collect().run()
 ```
+
+## Sorting columns
+
+
+Only column types that can be sorted are allowed to be selected for sorting. 
+
+```tut:book
+aptTypedDs.orderBy(aptTypedDs('city).asc).show(2).run()
+```
+
+The ordering can be changed by selecting `.acs` or `.desc`. 
+
+```tut:book
+aptTypedDs.orderBy(
+   aptTypedDs('city).asc, 
+   aptTypedDs('price).desc
+).show(2).run()
+```
+
 
 ## User Defined Functions
 
