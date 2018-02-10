@@ -1,56 +1,41 @@
 package frameless
 
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.{functions => sfuncs}
+import org.apache.spark.sql.{ functions => sfuncs }
 import frameless.functions.WindowFunctions._
+import org.scalacheck.Prop
+import org.scalacheck.Prop._
 
 object WindowTests {
   case class Foo(a: Int, b: String)
   case class FooRank(a: Int, b: String, rank: Int)
 }
+
 class WindowTests extends TypedDatasetSuite {
-  import WindowTests._
+  test("dense rank") {
+    def prop[
+      A : TypedEncoder,
+      B : TypedEncoder : CatalystOrdered
+    ](data: Vector[X2[A, B]]): Prop = {
+      val ds = TypedDataset.create(data)
 
-  test("basic") {
-    val spark = session
-    import spark.implicits._
+      val untypedWindow = Window.partitionBy("a").orderBy("b")
 
-    val inputSeq = Seq(
-      Foo(1, "a"),
-      Foo(1, "b"),
-      Foo(1, "c"),
-      Foo(1, "d"),
-      Foo(2, "a"),
-      Foo(2, "b"),
-      Foo(2, "c"),
-      Foo(3, "c")
-    )
+      val untyped = TypedDataset.createUnsafe[X3[A, B, Int]](ds.toDF()
+        .withColumn("c", sfuncs.dense_rank().over(untypedWindow))
+      ).collect().run().toVector
 
-    val ds = TypedDataset.create(inputSeq)
+      val denseRankWindow = denseRank(TypedWindow.orderBy(ds[B]('b))
+          .partitionBy(ds('a)))
 
-    val untypedWindow = Window.partitionBy("a").orderBy("b")
+      val typed = ds.withColumn[X3[A, B, Int]](denseRankWindow)
+        .collect().run().toVector
 
-    val untyped = ds.toDF()
-      .withColumn("rank", sfuncs.dense_rank().over(untypedWindow))
-      .as[FooRank]
-      .collect()
-      .toList
+      typed ?= untyped
+    }
 
-    val denseRankWindowed = denseRank(
-      TypedWindow
-        //TODO: default won't work unless `ds.apply` is typed. Or could just call `.asc`
-        .orderBy(ds[String]('b))
-        .partitionBy(ds('a))
-    )
-
-    val typed = ds.withColumn[FooRank](
-      denseRankWindowed
-    ).collect()
-      .run()
-      .toList
-
-    assert(untyped === typed)
-
+    check(forAll(prop[Int, String] _))
+    check(forAll(prop[SQLDate, SQLDate] _))
+    check(forAll(prop[String, Boolean] _))
   }
-
 }
