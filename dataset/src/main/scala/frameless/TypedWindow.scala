@@ -21,23 +21,25 @@ class TypedWindow[T, A] private (
   //TODO: frame
 
 
-  /* TODO: Do we want single column versions like we do for agg for better type inference?
-  def partitionBy[U](column: TypedColumn[T, U]): TypedWindow[T, A with PartitionedWindow] =
-    new TypedWindow[T, A with PartitionedWindow](
-      partitionSpec = Seq(column),
-      orderSpec = orderSpec,
-      frame = frame
-    )
+  def partitionBy[U](
+    column: TypedColumn[T, U]
+  ): TypedWindow[T, A with PartitionedWindow] =
+    partitionByMany(column)
 
-  def orderBy[U](column: TypedSortedColumn[T, U]): TypedWindow[T, A with OrderedWindow] =
-    new TypedWindow[T, A with OrderedWindow](
-      partitionSpec = partitionSpec,
-      orderSpec = Seq(column),
-      frame = frame
-    )
-    */
+  def partitionBy[U, V](
+    column1: TypedColumn[T, U],
+    column2: TypedColumn[T, V]
+  ): TypedWindow[T, A with PartitionedWindow] =
+    partitionByMany(column1, column2)
 
-  object partitionBy extends ProductArgs {
+  def partitionBy[U, V, W](
+    column1: TypedColumn[T, U],
+    column2: TypedColumn[T, V],
+    column3: TypedColumn[T,W]
+  ): TypedWindow[T, A with PartitionedWindow] =
+    partitionByMany(column1, column2, column3)
+
+  object partitionByMany extends ProductArgs {
     def applyProduct[U <: HList](columns: U)
       (implicit
         i1: ToTraversable.Aux[U, List, TypedColumn[T, _]]
@@ -50,7 +52,25 @@ class TypedWindow[T, A] private (
     }
   }
 
-  object orderBy extends ProductArgs {
+  def orderBy[U](
+    column: SortedTypedColumn[T, U]
+  ): TypedWindow[T, A with OrderedWindow] =
+    orderByMany(column)
+
+  def orderBy[U, V](
+    column1: SortedTypedColumn[T, U],
+    column2: SortedTypedColumn[T, V]
+  ): TypedWindow[T, A with OrderedWindow] =
+    orderByMany(column1, column2)
+
+  def orderBy[U, V, W](
+    column1: SortedTypedColumn[T, U],
+    column2: SortedTypedColumn[T, V],
+    column3: SortedTypedColumn[T, W]
+  ): TypedWindow[T, A with OrderedWindow] =
+    orderByMany(column1, column2, column3)
+
+  object orderByMany extends ProductArgs {
     def applyProduct[U <: HList, O <: HList](columns: U)
       (implicit
         i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
