@@ -87,21 +87,70 @@ class TypedWindow[T, A] private (
 
 object TypedWindow {
 
-  //TODO: Multiple columns.
-  def partitionBy[T](column: TypedColumn[T, _]): TypedWindow[T, PartitionedWindow] = {
-    new TypedWindow[T, PartitionedWindow](
-      partitionSpec = Seq(column),
-      orderSpec = Seq.empty,
-      frame = UnspecifiedFrame
-    )
+  def orderBy[T](
+    column: SortedTypedColumn[T, _]
+  ): TypedWindow[T, OrderedWindow] =
+    new orderByManyNew[T].apply(column) //TODO: This is some ugly syntax
+
+  def orderBy[T](
+    column1: SortedTypedColumn[T, _],
+    column2: SortedTypedColumn[T, _]
+  ): TypedWindow[T, OrderedWindow] =
+    new orderByManyNew[T].apply(column1, column2)
+
+  def orderBy[T](
+    column1: SortedTypedColumn[T, _],
+    column2: SortedTypedColumn[T, _],
+    column3: SortedTypedColumn[T, _]
+  ): TypedWindow[T, OrderedWindow] =
+    new orderByManyNew[T].apply(column1, column2, column3)
+
+  //Need different name because companion class has `orderByMany` defined as well
+  //Need a class and not object in order to define what `T` is explicitly. Otherwise it's a mess
+  //This makes for some pretty horrid syntax though.
+  class orderByManyNew[T] extends ProductArgs {
+    def applyProduct[U <: HList, O <: HList](columns: U)
+      (implicit
+        i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
+        i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
+      ): TypedWindow[T, OrderedWindow] = {
+      new TypedWindow[T, OrderedWindow](
+        partitionSpec = Seq.empty,
+        orderSpec = i0(columns).toList[SortedTypedColumn[T, _]],
+        frame = UnspecifiedFrame
+      )
+    }
   }
 
-  def orderBy[T](column: SortedTypedColumn[T, _]): TypedWindow[T, OrderedWindow] = {
-    new TypedWindow[T, OrderedWindow](
-      partitionSpec = Seq.empty,
-      orderSpec = Seq(column),
-      frame = UnspecifiedFrame
-    )
+  def partitionBy[T](
+    column: TypedColumn[T, _]
+  ): TypedWindow[T, PartitionedWindow] =
+    new partitionByManyNew[T].apply(column)
+
+  def partitionBy[T](
+    column1: TypedColumn[T, _],
+    column2: TypedColumn[T, _]
+  ): TypedWindow[T, PartitionedWindow] =
+    new partitionByManyNew[T].apply(column1, column2)
+
+  def partitionBy[T](
+    column1: TypedColumn[T, _],
+    column2: TypedColumn[T, _],
+    column3: TypedColumn[T, _]
+  ): TypedWindow[T, PartitionedWindow] =
+    new partitionByManyNew[T].apply(column1, column2, column3)
+
+  class partitionByManyNew[T] extends ProductArgs {
+    def applyProduct[U <: HList](columns: U)
+      (implicit
+        i1: ToTraversable.Aux[U, List, TypedColumn[T, _]]
+      ): TypedWindow[T, PartitionedWindow] = {
+      new TypedWindow[T, PartitionedWindow](
+        partitionSpec = columns.toList[TypedColumn[T, _]],
+        orderSpec = Seq.empty,
+        frame = UnspecifiedFrame
+      )
+    }
   }
 }
 
