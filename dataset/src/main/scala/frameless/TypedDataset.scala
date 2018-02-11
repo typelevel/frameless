@@ -250,9 +250,35 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): TypedColumn[T, Out] = {
         val names = columns.toList[Symbol].map(_.name)
         val colExpr = FramelessInternals.resolveExpr(dataset, names)
-          new TypedColumn[T, Out](colExpr)
+        new TypedColumn[T, Out](colExpr)
       }
   }
+
+  /** Right hand side disambiguation of `col` for join expressions.
+    * To be used  when writting self-joins, noop in other circumstances.
+    *
+    * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
+    * String based aliases, which is obviously unsafe.
+    */
+  def colRight[A](column: Witness.Lt[Symbol])
+    (implicit
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]
+    ): TypedColumn[T, A] =
+      new TypedColumn[T, A](FramelessInternals.DisambiguateRight(col(column).expr))
+
+  /** Left hand side disambiguation of `col` for join expressions.
+    * To be used  when writting self-joins, noop in other circumstances.
+    *
+    * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
+    * String based aliases, which is obviously unsafe.
+    */
+  def colLeft[A](column: Witness.Lt[Symbol])
+    (implicit
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]
+    ): TypedColumn[T, A] =
+      new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
