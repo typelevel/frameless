@@ -3,7 +3,6 @@ package frameless
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
-import frameless.implicits.widen._
 import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
@@ -383,9 +382,9 @@ class SelectTests extends TypedDatasetSuite {
   }
 
   test("unary - on arithmetic") {
-    val e = TypedDataset.create[(Int, String, Long)]((1, "a", 2L) :: (2, "b", 4L) :: (2, "b", 1L) :: Nil)
+    val e = TypedDataset.create[(Int, String, Int)]((1, "a", 2) :: (2, "b", 4) :: (2, "b", 1) :: Nil)
     assert(e.select(-e('_1)).collect().run().toVector === Vector(-1, -2, -2))
-    assert(e.select(-(e('_1) + e('_3))).collect().run().toVector === Vector(-3L, -6L, -3L))
+    assert(e.select(-(e('_1) + e('_3))).collect().run().toVector === Vector(-3, -6, -3))
   }
 
   test("unary - on strings should not type check") {
