@@ -218,8 +218,8 @@ val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[Apartment
 ```
 
 The union of `aptTypedDs2` with `aptTypedDs` uses all the fields of the caller (`aptTypedDs2`)
-and expects the other (`aptTypedDs`) dataset to include all those fields. 
-If field names/types do not much you get a compilation error. 
+and expects the other dataset (`aptTypedDs`) to include all those fields. 
+If field names/types do not match you get a compilation error. 
 
 ```tut:book
 aptTypedDs2.union(aptTypedDs).show().run
@@ -238,8 +238,9 @@ so fields do not have to be in the same order.
 
 Frameless supports many of Spark's functions and transformations. 
 However, whenever a Spark function does not exist in Frameless, 
-calling the `.dataset` will take you back to vanilla `Dataset` where
-you can apply the function you need.  
+calling `.dataset` will expose the underlying 
+`Dataset` (from org.apache.spark.sql, the original Spark APIs), 
+where you can use anything that would be missing from the Frameless' API.
 
 These are the main imports for Frameless' aggregate and non-aggregate functions.
 
@@ -306,14 +307,18 @@ aptTypedDs2.withColumnTupled(
 ```
 
 A simple way to add a column without loosing important schema information is
-to project the entire source schema into a single column. 
+to project the entire source schema into a single column using the `asCol()` method.
 
 ```tut:book
 val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
 c.show(1).run()
 ```
 
-Using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
+`asCol()` is a new method, without a direct equivalent in Spark's `Dataset` or `DataFrame` APIs.
+When working with Spark's `DataFrames`, you often select all columns using `.select($"*", ...)`. 
+In a way, `asCol()` is a typed equivalent of `$"*"`. 
+    
+Finally, note that using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
 need of an extra `case class` to define the result schema.
 
 To access nested columns, use the `colMany()` method. 

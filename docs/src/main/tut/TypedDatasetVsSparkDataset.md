@@ -165,7 +165,7 @@ TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
 
 ## Aggregate vs Projected columns 
 
-Vanilla `Datasets` do not distinguish between columns created from aggregate operations, 
+Spark's `Dataset` do not distinguish between columns created from aggregate operations, 
 such as summing or averaging, and simple projections/selections. 
 This is problematic when you start mixing the two.
 
@@ -180,7 +180,7 @@ ds.select(sum($"i"), $"i"*2)
 In Frameless, mixing the two results in a compilation error.
 
 ```tut:book
-// To avoid confusing frameless' sum with the vanilla Spark sum
+// To avoid confusing frameless' sum with the standard Spark's sum
 import frameless.functions.aggregate.{sum => fsum}
 ```
 
