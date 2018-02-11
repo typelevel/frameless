@@ -121,8 +121,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
 
-  /**
-    * Returns a checkpointed version of this [[TypedDataset]]. Checkpointing can be used to truncate the
+  /** Returns a checkpointed version of this [[TypedDataset]]. Checkpointing can be used to truncate the
     * logical plan of this Dataset, which is especially useful in iterative algorithms where the
     * plan may grow exponentially. It will be saved to files inside the checkpoint
     * directory set with `SparkContext#setCheckpointDir`.
@@ -227,10 +226,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     (implicit
       i0: TypedColumn.Exists[T, column.T, A],
       i1: TypedEncoder[A]
-    ): TypedColumn[T, A] = {
-      val colExpr = dataset.col(column.value.name).as[A](TypedExpressionEncoder[A])
-      new TypedColumn[T, A](colExpr)
-    }
+    ): TypedColumn[T, A] =
+      new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
 
   /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
     * {{{
@@ -292,8 +289,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
     F.delay(dataset.take(num))
 
-  /**
-    * Return an iterator that contains all rows in this [[TypedDataset]].
+  /** Return an iterator that contains all rows in this [[TypedDataset]].
     *
     * The iterator will consume as much memory as the largest partition in this [[TypedDataset]].
     *
@@ -307,7 +303,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def toLocalIterator[F[_]]()(implicit F: SparkDelay[F]): F[util.Iterator[T]] =
     F.delay(dataset.toLocalIterator())
-  
+
   /** Alias for firstOption().
     */
   def headOption[F[_]]()(implicit F: SparkDelay[F]): F[Option[T]] = firstOption()
