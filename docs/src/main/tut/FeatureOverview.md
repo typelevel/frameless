@@ -314,7 +314,7 @@ val citiInfoTypedDS = TypedDataset.create(cityInfo)
 Here is how to join the population information to the apartment's dataset:
 
 ```tut:book
-val withCityInfo = aptTypedDs.join(citiInfoTypedDS, aptTypedDs('city), citiInfoTypedDS('name))
+val withCityInfo = aptTypedDs.joinInner(citiInfoTypedDS) { aptTypedDs('city) === citiInfoTypedDS('name) }
 
 withCityInfo.show().run()
 ```

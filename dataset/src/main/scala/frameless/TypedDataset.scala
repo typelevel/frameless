@@ -4,11 +4,11 @@ import java.util
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, AttributeReference, CreateStruct, EqualTo}
-import org.apache.spark.sql.catalyst.plans.logical.{Join, Project}
-import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter}
+import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
+import org.apache.spark.sql.catalyst.plans.logical.Join
+import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter, RightOuter, FullOuter}
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql._
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
@@ -417,81 +417,96 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
-  /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
-  private def resolveSelfJoin(join: Join): Join = {
-    val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
-    val hasConflict = plan.left.output.intersect(plan.right.output).nonEmpty
+  /** Computes the cartesian project of `this` `Dataset` with the `other` `Dataset` */
+  def joinCross[U](other: TypedDataset[U])
+    (implicit e: TypedEncoder[(T, U)]): TypedDataset[(T, U)] =
+      new TypedDataset(self.dataset.joinWith(other.dataset, new Column(Literal(true)), "cross"))
 
-    if (!hasConflict) {
-      val selfJoinFix = spark.sqlContext.getConf("spark.sql.selfJoinAutoResolveAmbiguity", "true").toBoolean
-      if (!selfJoinFix) throw new IllegalStateException("Frameless requires spark.sql.selfJoinAutoResolveAmbiguity to be true")
-
-      val cond = plan.condition.map(_.transform {
-        case catalyst.expressions.EqualTo(a: AttributeReference, b: AttributeReference)
-          if a.sameRef(b) =>
-          val leftDs = FramelessInternals.ofRows(spark, plan.left)
-          val rightDs = FramelessInternals.ofRows(spark, plan.right)
-
-          catalyst.expressions.EqualTo(
-            FramelessInternals.resolveExpr(leftDs, Seq(a.name)),
-            FramelessInternals.resolveExpr(rightDs, Seq(b.name))
-          )
-      })
-
-      plan.copy(condition = cond)
-    } else {
-      join
+  /** Computes the full outer join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinFull[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
+    (implicit e: TypedEncoder[(Option[T], Option[U])]): TypedDataset[(Option[T], Option[U])] = {
+      import FramelessInternals._
+      val leftPlan = logicalPlan(dataset)
+      val rightPlan = logicalPlan(other.dataset)
+      val join = disambiguate(Join(leftPlan, rightPlan, FullOuter, Some(condition.expr)))
+      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
+      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(Option[T], Option[U])])
+      TypedDataset.create[(Option[T], Option[U])](joinedDs)
     }
-  }
 
-  def join[A, B](
-    right: TypedDataset[A],
-    leftCol: TypedColumn[T, B],
-    rightCol: TypedColumn[A, B]
-  ): TypedDataset[(T, A)] = {
-    implicit def re = right.encoder
+  /** Computes the inner join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinInner[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
+    (implicit e: TypedEncoder[(T, U)]): TypedDataset[(T, U)] = {
+      import FramelessInternals._
+      val leftPlan = logicalPlan(dataset)
+      val rightPlan = logicalPlan(other.dataset)
+      val join = disambiguate(Join(leftPlan, rightPlan, Inner, Some(condition.expr)))
+      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
+      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, U)])
+      TypedDataset.create[(T, U)](joinedDs)
+    }
 
-    val leftPlan = FramelessInternals.logicalPlan(dataset)
-    val rightPlan = FramelessInternals.logicalPlan(right.dataset)
-    val condition = EqualTo(leftCol.expr, rightCol.expr)
+  /** Computes the left outer join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinLeft[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
+    (implicit e: TypedEncoder[(T, Option[U])]): TypedDataset[(T, Option[U])] = {
+      import FramelessInternals._
+      val leftPlan = logicalPlan(dataset)
+      val rightPlan = logicalPlan(other.dataset)
+      val join = disambiguate(Join(leftPlan, rightPlan, LeftOuter, Some(condition.expr)))
+      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
+      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[U])])
 
-    val join = resolveSelfJoin(Join(leftPlan, rightPlan, Inner, Some(condition)))
-    val joined = FramelessInternals.executePlan(dataset, join)
-    val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
-    val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
+      TypedDataset.create[(T, Option[U])](joinedDs)
+    }
 
-    val joinedPlan = Project(List(
-      Alias(CreateStruct(leftOutput), "_1")(),
-      Alias(CreateStruct(rightOutput), "_2")()
-    ), joined.analyzed)
+  /** Computes the left semi join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinLeftSemi[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean]): TypedDataset[T] =
+    new TypedDataset(self.dataset.join(other.dataset, condition.untyped, "leftsemi")
+      .as[T](TypedExpressionEncoder(encoder)))
 
-    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, A)])
+  /** Computes the left anti join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinLeftAnti[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean]): TypedDataset[T] =
+    new TypedDataset(self.dataset.join(other.dataset, condition.untyped, "leftanti")
+      .as[T](TypedExpressionEncoder(encoder)))
 
-    TypedDataset.create[(T, A)](joinedDs)
-  }
+  /** Computes the right outer join of `this` `Dataset` with the `other` `Dataset`,
+    * returning a `Tuple2` for each pair where condition evaluates to true.
+    */
+  def joinRight[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
+    (implicit e: TypedEncoder[(Option[T], U)]): TypedDataset[(Option[T], U)] = {
+      import FramelessInternals._
+      val leftPlan = logicalPlan(dataset)
+      val rightPlan = logicalPlan(other.dataset)
+      val join = disambiguate(Join(leftPlan, rightPlan, RightOuter, Some(condition.expr)))
+      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
+      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(Option[T], U)])
+      TypedDataset.create[(Option[T], U)](joinedDs)
+    }
 
-  def joinLeft[A: TypedEncoder, B](
-    right: TypedDataset[A],
-    leftCol: TypedColumn[T, B],
-    rightCol: TypedColumn[A, B]
-  )(implicit e: TypedEncoder[(T, Option[A])]): TypedDataset[(T, Option[A])] = {
-    val leftPlan = FramelessInternals.logicalPlan(dataset)
-    val rightPlan = FramelessInternals.logicalPlan(right.dataset)
-    val condition = EqualTo(leftCol.expr, rightCol.expr)
+  private def disambiguate(join: Join): Join = {
+    val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
+    val disambiguated = plan.condition.map(_.transform {
+      case FramelessInternals.DisambiguateLeft(tagged: AttributeReference) =>
+        val leftDs = FramelessInternals.ofRows(spark, plan.left)
+        FramelessInternals.resolveExpr(leftDs, Seq(tagged.name))
 
-    val join = resolveSelfJoin(Join(leftPlan, rightPlan, LeftOuter, Some(condition)))
-    val joined = FramelessInternals.executePlan(dataset, join)
-    val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
-    val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
+      case FramelessInternals.DisambiguateRight(tagged: AttributeReference) =>
+        val rightDs = FramelessInternals.ofRows(spark, plan.right)
+        FramelessInternals.resolveExpr(rightDs, Seq(tagged.name))
 
-    val joinedPlan = Project(List(
-      Alias(CreateStruct(leftOutput), "_1")(),
-      Alias(CreateStruct(rightOutput), "_2")()
-    ), joined.analyzed)
-
-    val joinedDs = FramelessInternals.mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[A])])
-
-    TypedDataset.create[(T, Option[A])](joinedDs)
+      case x => x
+    })
+    plan.copy(condition = disambiguated)
   }
 
   /** Takes a function from A => R and converts it to a UDF for TypedColumn[T, A] => TypedColumn[T, R].
