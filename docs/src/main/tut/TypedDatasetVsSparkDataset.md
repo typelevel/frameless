@@ -17,8 +17,8 @@ org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 ```
 
 **Goal:**
-  This tutorial compares the standard Spark Datasets api with the one provided by
-  frameless' TypedDataset. It shows how TypedDatsets allows for an expressive and
+  This tutorial compares the standard Spark Datasets API with the one provided by
+  Frameless' `TypedDataset`. It shows how `TypedDataset`s allow for an expressive and
   type-safe api with no compromises on performance.
 
 For this tutorial we first create a simple dataset and save it on disk as a parquet file.
@@ -109,7 +109,7 @@ Intuitively, Spark currently doesn't have a way to look inside the code we pass 
 closures. It only knows that they both take one argument of type `Foo`, but it has no way of knowing if
 we use just one or all of `Foo`'s fields.
 
-The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax
+The `TypedDataset` in Frameless solves this problem. It allows for a simple and type-safe syntax
 with a fully optimized query plan.
 
 ```tut:book

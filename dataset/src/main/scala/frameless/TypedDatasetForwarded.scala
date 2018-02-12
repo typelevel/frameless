@@ -354,7 +354,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     /** Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
       * `func` must be commutative and associative or the result may be non-deterministic.
       *
-      * Differs from `Dataset#reduce` by wrapping it's result into an `Option` and an effect-suspending `F`.
+      * Differs from `Dataset#reduce` by wrapping its result into an `Option` and an effect-suspending `F`.
       */
     def reduceOption[F[_]](func: (T, T) => T)(implicit F: SparkDelay[F]): F[Option[T]] =
       F.delay {
