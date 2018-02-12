@@ -377,15 +377,66 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
     F.delay(dataset.foreachPartition(func))
 
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified column,
+    * so we can run aggregation on it.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   def cube[K1](
     c1: TypedColumn[T, K1]
   ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
 
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   def cube[K1, K2](
     c1: TypedColumn[T, K1],
     c2: TypedColumn[T, K2]
   ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
 
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.cubeMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     15    null    1
+    *     15      25    1
+    *   null    null    2
+    *   null      25    1
+    *   null      20    1
+    *     10    null    1
+    *     10      20    1
+    *
+    * }}}
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   object cubeMany extends ProductArgs {
     def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
       (implicit
@@ -395,15 +446,52 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): CubeManyOps[T, TK, K, KT] = new CubeManyOps[T, TK, K, KT](self, groupedBy)
   }
 
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * apache/spark
+    */
   def groupBy[K1](
     c1: TypedColumn[T, K1]
   ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
 
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * apache/spark
+    */
   def groupBy[K1, K2](
     c1: TypedColumn[T, K1],
     c2: TypedColumn[T, K2]
   ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
 
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+    *
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.groupByMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     10      20    1
+    *     15      25    1
+    *
+    * }}}
+    *
+    * apache/spark
+    */
   object groupByMany extends ProductArgs {
     def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
       (implicit
@@ -413,22 +501,71 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified column,
+    * so we can run aggregation on it.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   def rollup[K1](
     c1: TypedColumn[T, K1]
-  ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
+  ): Rollup1Ops[K1, T] = new Rollup1Ops[K1, T](this, c1)
 
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   def rollup[K1, K2](
     c1: TypedColumn[T, K1],
     c2: TypedColumn[T, K2]
-  ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
+  ): Rollup2Ops[K1, K2, T] = new Rollup2Ops[K1, K2, T](this, c1, c2)
 
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+    *
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.rollupMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     15    null    1
+    *     15      25    1
+    *   null    null    2
+    *     10    null    1
+    *     10      20    1
+    *
+    * }}}
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
   object rollupMany extends ProductArgs {
     def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
       (implicit
         i0: ColumnTypes.Aux[T, TK, K],
         i1: Tupler.Aux[K, KT],
         i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
-      ): CubeManyOps[T, TK, K, KT] = new CubeManyOps[T, TK, K, KT](self, groupedBy)
+      ): RollupManyOps[T, TK, K, KT] = new RollupManyOps[T, TK, K, KT](self, groupedBy)
   }
 
   /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/

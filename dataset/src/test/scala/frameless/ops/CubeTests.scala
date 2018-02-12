@@ -133,7 +133,7 @@ class CubeTests extends TypedDatasetSuite {
         .&&(framelessSumBCBCB ?= sparkSumBCBCB)
     }
 
-    check(forAll(prop[String, Long, BigDecimal, Long, BigDecimal] _))
+    check(forAll(prop[String, Long, Double, Long, Double] _))
   }
 
   test("cube('a, 'b).agg(sum('c), sum('d))") {
@@ -168,7 +168,7 @@ class CubeTests extends TypedDatasetSuite {
       framelessSumByAB ?= sparkSumByAB
     }
 
-    check(forAll(prop[Byte, Int, Long, BigDecimal, Long, BigDecimal] _))
+    check(forAll(prop[Byte, Int, Long, Double, Long, Double] _))
   }
 
   test("cube('a, 'b).mapGroups('a, 'b, sum('c))") {
@@ -281,7 +281,7 @@ class CubeTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.cubeMany(A).agg(count()).collect().run().toVector.sortBy(_._2)
+      val received = dataset.cubeMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_._2)
       val expected = dataset.dataset.cube("a").count().collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_._2)
 

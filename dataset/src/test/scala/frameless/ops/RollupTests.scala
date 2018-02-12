@@ -133,7 +133,7 @@ class RollupTests extends TypedDatasetSuite {
         .&&(framelessSumBCBCB ?= sparkSumBCBCB)
     }
 
-    check(forAll(prop[String, Long, BigDecimal, Long, BigDecimal] _))
+    check(forAll(prop[String, Long, Double, Long, Double] _))
   }
 
   test("rollup('a, 'b).agg(sum('c), sum('d))") {
@@ -158,17 +158,17 @@ class RollupTests extends TypedDatasetSuite {
       val framelessSumByAB = dataset
         .rollup(A, B)
         .agg(sum(C), sum(D))
-        .collect().run().toVector.sortBy(x => (x._1, x._2))
+        .collect().run().toVector.sortBy(_._2)
 
       val sparkSumByAB = dataset.dataset
         .rollup("a", "b").sum("c", "d").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutD](3)))
-        .sortBy(x => (x._1, x._2))
+        .sortBy(_._2)
 
       framelessSumByAB ?= sparkSumByAB
     }
 
-    check(forAll(prop[Byte, Int, Long, BigDecimal, Long, BigDecimal] _))
+    check(forAll(prop[Byte, Int, Long, Double, Long, Double] _))
   }
 
   test("rollup('a, 'b).mapGroups('a, 'b, sum('c))") {
@@ -281,7 +281,7 @@ class RollupTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.rollupMany(A).agg(count()).collect().run().toVector.sortBy(_._2)
+      val received = dataset.rollupMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_._2)
       val expected = dataset.dataset.rollup("a").count().collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_._2)
 
