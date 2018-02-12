@@ -4,11 +4,11 @@ import java.util
 
 import frameless.ops._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.Join
-import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter, RightOuter, FullOuter}
+import org.apache.spark.sql.catalyst.plans.{FullOuter, Inner, LeftOuter, RightOuter}
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql._
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
@@ -590,8 +590,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       ): RollupManyOps[T, TK, K, KT] = new RollupManyOps[T, TK, K, KT](self, groupedBy)
   }
 
-  /** Fixes SPARK-6231, for more details see original code in [[Dataset#join]] **/
-  private def resolveSelfJoin(join: Join): Join = {
   /** Computes the cartesian project of `this` `Dataset` with the `other` `Dataset` */
   def joinCross[U](other: TypedDataset[U])
     (implicit e: TypedEncoder[(T, U)]): TypedDataset[(T, U)] =
