@@ -116,7 +116,7 @@ in a compilation error.
 Check [here](https://github.com/typelevel/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala)
 for the set of available `CatalystCast.`
 
-## TypeSafe TypedDataset casting and projections
+## Casting and projections
 
 With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
@@ -207,6 +207,195 @@ case class PriceInfo3(ratio: Int, price: Double) // ratio should be Double
 aptWithRatio.project[PriceInfo3]
 ```
 
+### Union of TypedDatasets 
+
+Lets create a projection of our original dataset with a subset of the fields.
+
+```tut:silent
+case class ApartmentShortInfo(city: String, price: Double, bedrooms: Int)
+
+val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[ApartmentShortInfo]
+```
+
+The union of `aptTypedDs2` with `aptTypedDs` uses all the fields of the caller (`aptTypedDs2`)
+and expects the other dataset (`aptTypedDs`) to include all those fields. 
+If field names/types do not match you get a compilation error. 
+
+```tut:book
+aptTypedDs2.union(aptTypedDs).show().run
+```
+
+The other way around will not compile, since `aptTypedDs2` has only a subset of the fields. 
+
+```tut:book:fail
+aptTypedDs.union(aptTypedDs2).show().run
+```
+
+Finally, as with `project`, `union` will align fields that have same names/types,
+so fields do not have to be in the same order. 
+
+## TypedDataset functions and transformations
+
+Frameless supports many of Spark's functions and transformations. 
+However, whenever a Spark function does not exist in Frameless, 
+calling `.dataset` will expose the underlying 
+`Dataset` (from org.apache.spark.sql, the original Spark APIs), 
+where you can use anything that would be missing from the Frameless' API.
+
+These are the main imports for Frameless' aggregate and non-aggregate functions.
+
+```scala
+import frameless.functions._                // For literals
+import frameless.functions.nonAggregate._   // e.g., concat, abs
+import frameless.functions.aggregate._      // e.g., count, sum, avg 
+```
+
+### Drop/Replace/Add fields
+
+`dropTupled()` drops a single column and results in a tuple-based schema.
+
+```tut:book
+aptTypedDs2.dropTupled('price): TypedDataset[(String,Int)]
+```
+
+To drop a column and specify a new schema use `drop()`.
+
+```tut:book
+case class CityBeds(city: String, bedrooms: Int)
+val cityBeds: TypedDataset[CityBeds] = aptTypedDs2.drop[CityBeds] 
+```
+
+Often, you want to replace an existing column with a new value.
+ 
+```tut:book
+val inflation = aptTypedDs2.withColumnReplaced('price, aptTypedDs2('price) * 2)
+ 
+inflation.show(2).run()
+```
+
+Or use a literal instead.
+
+```tut:book
+import frameless.functions.lit
+aptTypedDs2.withColumnReplaced('price, lit(0.001)) 
+```
+
+Adding a column using `withColumnTupled()` results in a tupled-based schema.
+
+```tut:book
+aptTypedDs2.withColumnTupled(lit(Array("a","b","c"))).show(2).run()
+```
+
+Similarly, `withColumn()` adds a column and explicitly expects a schema for the result.
+
+```tut:book
+case class CityBedsOther(city: String, bedrooms: Int, other: List[String])
+
+cityBeds.
+   withColumn[CityBedsOther](lit(List("a","b","c"))).
+   show(1).run()
+```
+
+To conditionally change a column use the `when/otherwise` operation. 
+
+```tut:book
+import frameless.functions.nonAggregate.when
+aptTypedDs2.withColumnTupled(
+   when(aptTypedDs2('city) === "Paris", aptTypedDs2('price)).
+   when(aptTypedDs2('city) === "Lyon", lit(1.1)).
+   otherwise(lit(0.0))).show(8).run()
+```
+
+A simple way to add a column without loosing important schema information is
+to project the entire source schema into a single column using the `asCol()` method.
+
+```tut:book
+val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
+c.show(1).run()
+```
+
+`asCol()` is a new method, without a direct equivalent in Spark's `Dataset` or `DataFrame` APIs.
+When working with Spark's `DataFrames`, you often select all columns using `.select($"*", ...)`. 
+In a way, `asCol()` is a typed equivalent of `$"*"`. 
+    
+Finally, note that using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
+need of an extra `case class` to define the result schema.
+
+To access nested columns, use the `colMany()` method. 
+
+```tut:book
+c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
+```
+
+
+### Working with collections
+
+
+```tut:book
+import frameless.functions._
+import frameless.functions.nonAggregate._
+```
+
+```tut:book
+val t = cityRatio.select(cityRatio('city), lit(List("abc","c","d")))
+t.withColumnTupled(
+   arrayContains(t('_2), "abc")
+).show(1).run()
+```
+
+If accidentally you apply a collection function on a column that is not a collection,
+you get a compilation error.
+
+```tut:book:fail
+t.withColumnTupled(
+   arrayContains(t('_1), "abc")
+)
+```
+
+
+### Collecting data to the driver
+
+In Frameless all Spark actions (such as `collect()`) are safe.
+
+Take the first element from a dataset (if the dataset is empty return `None`).
+
+```tut:book
+cityBeds.headOption.run()
+```
+
+Take the first `n` elements.
+
+```tut:book
+cityBeds.take(2).run()
+```
+
+```tut:book
+cityBeds.head(3).run()
+```
+
+```tut:book
+cityBeds.limit(4).collect().run()
+```
+
+## Sorting columns
+
+
+Only column types that can be sorted are allowed to be selected for sorting. 
+
+```tut:book
+aptTypedDs.orderBy(aptTypedDs('city).asc).show(2).run()
+```
+
+The ordering can be changed by selecting `.acs` or `.desc`. 
+
+```tut:book
+aptTypedDs.orderBy(
+   aptTypedDs('city).asc, 
+   aptTypedDs('price).desc
+).show(2).run()
+```
+
+
 ## User Defined Functions
 
 Frameless supports lifting any Scala function (up to five arguments) to the
@@ -275,6 +464,19 @@ encoding potentially missing columns with `Option`.
 bedroomStats.collect().run().foreach(println)
 ```
 
+#### Working with Optional fields
+
+Optional fields can be converted to non-optional using `getOrElse()`. 
+
+```tut:book
+val sampleStats = bedroomStats.select(
+   bedroomStats('AvgPriceBeds2).getOrElse(0.0),
+   bedroomStats('AvgPriceBeds3).getOrElse(0.0))
+
+sampleStats.show().run()   
+``` 
+
+
 ### Entire TypedDataset Aggregation
 
 We often want to aggregate the entire `TypedDataset` and skip the `groupBy()` clause.
@@ -296,6 +498,18 @@ aptds.agg(
    collectSet(aptds('city))
 ).as[Stats].show().run()
 ```
+
+You may apply any `TypedColumn` operation to a `TypedAggregate` column as well.
+
+```tut:book
+import frameless.functions._
+aptds.agg(
+   avg(aptds('price)) * min(aptds('surface)).cast[Double], 
+   avg(aptds('surface)) * 0.2,
+   litAggr("Hello World")
+).show().run()
+```
+
 
 ## Joins
 
