@@ -1,6 +1,6 @@
-package frameless.ops
+package frameless
+package ops
 
-import frameless._
 import shapeless.ops.hlist.{ToTraversable, Tupler}
 import shapeless.{HList, HNil}
 

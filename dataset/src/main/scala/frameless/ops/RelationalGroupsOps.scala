@@ -1,6 +1,6 @@
-package frameless.ops
+package frameless
+package ops
 
-import frameless._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
 import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
