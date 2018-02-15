@@ -42,6 +42,21 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     check(forAll(prop[X2[Int, Option[Long]]] _))
   }
 
+  test("size on Map") {
+    def prop[A](xs: List[X1[Map[A, A]]])(implicit arb: Arbitrary[Map[A, A]], enc: TypedEncoder[Map[A, A]]): Prop = {
+      val tds = TypedDataset.create(xs)
+
+      val framelessResults = tds.select(size(tds('a))).collect().run().toVector
+      val scalaResults = xs.map(x => x.a.size).toVector
+
+      framelessResults ?= scalaResults
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Char] _))
+  }
+
   test("sort in ascending order") {
     def prop[F[X] <: SeqLike[X, F[X]] : CatalystSortableCollection, A: Ordering](xs: List[X1[F[A]]])(implicit enc: TypedEncoder[F[A]]): Prop = {
       val tds = TypedDataset.create(xs)
