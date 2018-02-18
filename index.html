@@ -254,47 +254,87 @@
 <a href="https://codecov.io/gh/typelevel/frameless" target="_blank"><img src="https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg" alt="Codecov Badge"></a>
 <a href="https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.11" target="_blank"><img src="https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.11.svg" alt="Maven Badge"></a>
 <a href="https://gitter.im/typelevel/frameless" target="_blank"><img src="https://badges.gitter.im/typelevel/frameless.svg" alt="Gitter Badge"></a></p>
-<p>Frameless is a proof-of-concept library for working with <a href="http://spark.apache.org/" target="_blank">Spark</a> using more expressive types.
+<p>Frameless is a Scala library for working with <a href="http://spark.apache.org/" target="_blank">Spark</a> using more expressive types. 
 It consists of the following modules:</p>
 <ul>
-<li><code>dataset</code> for more strongly typed <code>Dataset</code>s  (supports Spark 2.0.x)</li>
-<li><code>cats</code> for using Spark with <a href="https://github.com/typelevel/cats" target="_blank">cats</a> (supports Cats 0.9.x)</li>
-<li><code>ml</code> for a more strongly typed use of Spark ML based on <code>dataset</code></li>
+<li><code>frameless-dataset</code> for a more strongly typed <code>Dataset</code>/<code>DataFrame</code> API   </li>
+<li><code>frameless-ml</code> for a more strongly typed Spark ML API based on <code>frameless-dataset</code></li>
+<li><code>frameless-cats</code> for using Spark&apos;s <code>RDD</code> API with <a href="https://github.com/typelevel/cats" target="_blank">cats</a></li>
 </ul>
+<p>Note that while Frameless is still getting off the ground, it is very possible that breaking changes will be
+made for at least the next few versions.</p>
 <p>The Frameless project and contributors support the
 <a href="http://typelevel.org/" target="_blank">Typelevel</a> <a href="http://typelevel.org/conduct.html" target="_blank">Code of Conduct</a> and want all its
 associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.</p>
+<h2 id="versions-and-dependencies">Versions and dependencies</h2>
+<p>The compatible versions of <a href="http://spark.apache.org/" target="_blank">Spark</a> and 
+<a href="https://github.com/typelevel/cats" target="_blank">cats</a> are as follows:   </p>
+<table>
+<thead>
+<tr>
+<th>Frameless</th>
+<th>Spark</th>
+<th>Cats</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.4.0</td>
+<td>2.2.0</td>
+<td>1.0.0-MF</td>
+</tr>
+<tr>
+<td>0.4.1</td>
+<td>2.2.0</td>
+<td>1.0.1</td>
+</tr>
+<tr>
+<td>0.5.0</td>
+<td>2.2.1</td>
+<td>1.0.1</td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>only</strong> dependency of the <code>frameless-dataset</code> module is on <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a> 2.3.2. 
+Therefore, depending on <code>frameless-dataset</code>, has a minimal overhead on your Spark&apos;s application jar. 
+Only the <code>frameless-cats</code> module depends on cats, so if you prefer to work just with <code>Datasets</code> and not with <code>RDD</code>s, 
+you may choose not to depend on <code>frameless-cats</code>. </p>
+<p>Frameless intentionally <strong>does not</strong> have a compile dependency on Spark. 
+This essentially allows you to use any version of Frameless with any version of Spark. 
+The aforementioned table simply provides the versions of Spark we officially compile 
+and test Frameless with, but other versions may probably work as well. </p>
+<h2 id="why">Why?</h2>
+<p>Frameless introduces a new Spark API, called <code>TypedDataset</code>. 
+The benefits of using <code>TypedDataset</code> compared to the standard Spark <code>Dataset</code> API are as follows:</p>
+<ul>
+<li>Typesafe columns referencing (e.g., no more runtime errors when accessing non-existing columns)</li>
+<li>Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile) </li>
+<li>Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you 
+get a compilation error)</li>
+<li>Typesafe casting and projectios</li>
+</ul>
+<p>Click <a href="http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html" target="_blank">here</a> for a 
+detailed comparison of <code>TypedDataset</code> with Spark&apos;s <code>Dataset</code> API. </p>
 <h2 id="documentation">Documentation</h2>
 <ul>
 <li><a href="http://typelevel.org/frameless/FeatureOverview.html" target="_blank">TypedDataset: Feature Overview</a></li>
+<li><a href="http://typelevel.org/frameless/TypedML.html" target="_blank">Typed Spark ML</a></li>
 <li><a href="http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html" target="_blank">Comparing TypedDatasets with Spark&apos;s Datasets</a></li>
 <li><a href="http://typelevel.org/frameless/TypedEncoder.html" target="_blank">Typed Encoders in Frameless</a></li>
 <li><a href="http://typelevel.org/frameless/Injection.html" target="_blank">Injection: Creating Custom Encoders</a></li>
 <li><a href="http://typelevel.org/frameless/Job.html" target="_blank">Job[A]</a></li>
 <li><a href="http://typelevel.org/frameless/Cats.html" target="_blank">Using Cats with RDDs</a></li>
-<li><a href="http://typelevel.org/frameless/TypedML.html" target="_blank">TypedDataset support for Spark ML</a></li>
 <li><a href="http://typelevel.org/frameless/TypedDataFrame.html" target="_blank">Proof of Concept: TypedDataFrame</a></li>
-</ul>
-<h2 id="why">Why?</h2>
-<p>Benefits of using <code>TypedDataset</code> compared to the standard Spark <code>Dataset</code> API:</p>
-<ul>
-<li>Typesafe columns referencing and expressions</li>
-<li>Customizable, typesafe encoders</li>
-<li>Typesafe casting and projections</li>
-<li>Enhanced type signature for some built-in functions</li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
 <p>Frameless is compiled against Scala 2.11.x.</p>
-<p>Note that while Frameless is still getting off the ground, it is very possible that breaking changes will be
-made for at least the next few versions.</p>
 <p>To use Frameless in your project add the following in your <code>build.sbt</code> file as needed:</p>
-<pre><code class="lang-scala">resolvers += <span class="hljs-type">Resolver</span>.sonatypeRepo(<span class="hljs-string">&quot;releases&quot;</span>)
-
-<span class="hljs-keyword">val</span> framelessVersion = <span class="hljs-string">&quot;0.3.0&quot;</span>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> framelessVersion = <span class="hljs-string">&quot;0.5.0&quot;</span>
 
 libraryDependencies ++= <span class="hljs-type">List</span>(
-  <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-cats&quot;</span>      % framelessVersion,
-  <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-dataset&quot;</span>   % framelessVersion
+  <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-dataset&quot;</span> % framelessVersion,
+  <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-ml&quot;</span>      % framelessVersion,
+  <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-cats&quot;</span>    % framelessVersion  
 )
 </code></pre>
 <p>An easy way to bootstrap a Frameless sbt project:</p>
@@ -310,6 +350,9 @@ libraryDependencies ++= <span class="hljs-type">List</span>(
 </code></pre>
 <p>Typing <code>sbt console</code> inside your project will bring up a shell with Frameless
 and all its dependencies loaded (including Spark).</p>
+<h2 id="need-help">Need help?</h2>
+<p>Feel free to messages us on our <a href="https://gitter.im/typelevel/frameless" target="_blank">gitter</a> 
+channel for any issues/questions.</p>
 <h2 id="development">Development</h2>
 <p>We require at least <em>one</em> sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
 (people who can merge pull requests) are:</p>
@@ -363,7 +406,7 @@ as well as in the LICENSE file. This is the same license used as Spark.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2017-10-18T16:21:41.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2017-10-18T16:22:33.699Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2018-02-18T23:19:00.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
