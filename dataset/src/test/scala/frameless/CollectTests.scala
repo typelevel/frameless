@@ -1,7 +1,7 @@
 package frameless
 
 import frameless.CollectTests.{ prop, propArray }
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import scala.reflect.ClassTag
@@ -54,6 +54,15 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Option[SQLTimestamp]] _))
 
     check(forAll(prop[Vector[Int]] _))
+    check(forAll(prop[List[Int]] _))
+    check(forAll(prop[Seq[Int]] _))
+    check(forAll(prop[Vector[Char]] _))
+    check(forAll(prop[List[Char]] _))
+    check(forAll(prop[Seq[Char]] _))
+    check(forAll(prop[Seq[Seq[Seq[Char]]]] _))
+    check(forAll(prop[Seq[Option[String]]] _))
+    check(forAll(prop[Seq[Map[String, Long]]] _))
+    check(forAll(prop[Seq[Map[String, X2[Option[Long], Vector[Boolean]]]]] _))
     check(forAll(prop[Option[Int]] _))
     check(forAll(prop[Vector[X2[Int, Int]]] _))
 
@@ -75,10 +84,10 @@ class CollectTests extends TypedDatasetSuite {
 object CollectTests {
   import frameless.syntax._
 
-  def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SQLContext): Prop =
+  def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SparkSession): Prop =
     TypedDataset.create(data).collect().run().toVector ?= data
 
-  def propArray[A: TypedEncoder : ClassTag](data: Vector[X1[Array[A]]])(implicit c: SQLContext): Prop =
+  def propArray[A: TypedEncoder : ClassTag](data: Vector[X1[Array[A]]])(implicit c: SparkSession): Prop =
     Prop(TypedDataset.create(data).collect().run().toVector.zip(data).forall {
       case (X1(l), X1(r)) => l.sameElements(r)
     })

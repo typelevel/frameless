@@ -1,12 +1,12 @@
 language: scala
 sudo: false
 scala:
-- 2.11.11
+- 2.11.12
 
 sbt_args: "-J-Xmx2G"
 
 script:
-  - scripts/travis-publish.sh
+  - travis_wait 65 scripts/travis-publish.sh
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 

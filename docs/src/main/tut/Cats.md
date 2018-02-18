@@ -6,9 +6,8 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
 
 val conf: SparkConf = new SparkConf().setMaster("local[4]").setAppName("cats.bec test")
-val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
-implicit val sc: SC = spark.sparkContext
-implicit val sqlContext = spark.sqlContext
+implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+val sc: SC = spark.sparkContext
 
 spark.sparkContext.setLogLevel("WARN")
 System.clearProperty("spark.master.port")
@@ -27,14 +26,14 @@ implicit val sync: Sync[ReaderT[IO, SparkSession, ?]] = new Sync[ReaderT[IO, Spa
   def pure[A](x: A): ReaderT[IO, SparkSession, A] = ReaderT.pure(x)
   def handleErrorWith[A](fa: ReaderT[IO, SparkSession, A])(f: Throwable => ReaderT[IO, SparkSession, A]): ReaderT[IO, SparkSession, A] =
     ReaderT(r => fa.run(r).handleErrorWith(e => f(e).run(r)))
-  def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.lift(IO.raiseError(e))
+  def raiseError[A](e: Throwable): ReaderT[IO, SparkSession, A] = ReaderT.liftF(IO.raiseError(e))
   def flatMap[A, B](fa: ReaderT[IO, SparkSession, A])(f: A => ReaderT[IO, SparkSession, B]): ReaderT[IO, SparkSession, B] = fa.flatMap(f)
   def tailRecM[A, B](a: A)(f: A => ReaderT[IO, SparkSession, Either[A, B]]): ReaderT[IO, SparkSession, B] =
     ReaderT.catsDataMonadForKleisli[IO, SparkSession].tailRecM(a)(f)
 }
 ```
 
-There are two main parts to the `cats` integration offered by frameless:
+There are two main parts to the `cats` integration offered by Frameless:
 - effect suspension in `TypedDataset` using `cats-effect` and `cats-mtl`
 - `RDD` enhancements using algebraic typeclasses in `cats-kernel`
 
@@ -101,7 +100,7 @@ And now, we can set the description for the computation being run:
 val resultWithDescription: Action[(Seq[(Int, String)], Long)] = for {
   r <- result.withDescription("fancy cats")
   session <- ReaderT.ask[IO, SparkSession]
-  _ <- ReaderT.lift {
+  _ <- ReaderT.liftF {
          IO {
            println(s"Description: ${session.sparkContext.getLocalProperty("spark.job.description")}")
          }
@@ -131,6 +130,21 @@ println(data.cmax)
 println(data.cmin)
 ```
 
+In case the RDD is empty, the `csum`, `cmax` and `cmin` will use the default values for the type of
+elements inside the RDD. There are counterpart operations to those that have an `Option` return type
+to deal with the case of an empty RDD:
+
+```tut:book
+val data: RDD[(Int, Int, Int)] = sc.emptyRDD
+
+println(data.csum)
+println(data.csumOption)
+println(data.cmax)
+println(data.cmaxOption)
+println(data.cmin)
+println(data.cminOption)
+``` 
+
 The following example aggregates all the elements with a common key.
 
 ```tut:book
@@ -148,9 +162,11 @@ totalPerUser.collectAsMap
 The same example would work for more complex keys.
 
 ```tut:book
+import scala.collection.immutable.SortedMap
+
 val allDataComplexKeu =
-   sc.makeRDD( ("Bob", Map("task1" -> 10)) ::
-    ("Joe", Map("task1" -> 1, "task2" -> 3)) :: ("Bob", Map("task1" -> 10, "task2" -> 1)) :: ("Joe", Map("task3" -> 4)) :: Nil )
+   sc.makeRDD( ("Bob", SortedMap("task1" -> 10)) ::
+    ("Joe", SortedMap("task1" -> 1, "task2" -> 3)) :: ("Bob", SortedMap("task1" -> 10, "task2" -> 1)) :: ("Joe", SortedMap("task3" -> 4)) :: Nil )
 
 val overalTasksPerUser = allDataComplexKeu.csumByKey
 

@@ -8,75 +8,92 @@ import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
 
 
-class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
-  self: TypedDataset[T],
-  groupedBy: TK
-)(
-  implicit
-  ct: ColumnTypes.Aux[T, TK, K],
-  toTraversable: ToTraversable.Aux[TK, List, UntypedExpression[T]],
-  tupler: Tupler.Aux[K, KT]
-) {
+class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
+  (self: TypedDataset[T], groupedBy: TK)
+  (implicit
+    i0: ColumnTypes.Aux[T, TK, K],
+    i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
+    i3: Tupler.Aux[K, KT]
+  ) {
   object agg extends ProductArgs {
-    def applyProduct[TC <: HList, C <: HList, Out0 <: HList, Out1](columns: TC)(
-      implicit
-      tc: AggregateTypes.Aux[T, TC, C],
-      append: Prepend.Aux[K, C, Out0],
-      toTuple: Tupler.Aux[Out0, Out1],
-      encoder: TypedEncoder[Out1],
-      columnsToList: ToTraversable.Aux[TC, List, UntypedExpression[T]]
-    ): TypedDataset[Out1] = {
+    def applyProduct[TC <: HList, C <: HList, Out0 <: HList, Out1]
+      (columns: TC)
+      (implicit
+        i3: AggregateTypes.Aux[T, TC, C],
+        i4: Prepend.Aux[K, C, Out0],
+        i5: Tupler.Aux[Out0, Out1],
+        i6: TypedEncoder[Out1],
+        i7: ToTraversable.Aux[TC, List, UntypedExpression[T]]
+      ): TypedDataset[Out1] = {
+        def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
 
-      def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
+        val groupByExprs = groupedBy.toList[UntypedExpression[T]].map(expr)
+        val aggregates =
+          if (retainGroupColumns) columns.toList[UntypedExpression[T]].map(expr)
+          else groupByExprs ++ columns.toList[UntypedExpression[T]].map(expr)
 
-      val groupByExprs = toTraversable(groupedBy).map(expr)
-      val aggregates =
-        if (retainGroupColumns) columnsToList(columns).map(expr)
-        else groupByExprs ++ columnsToList(columns).map(expr)
+        val aggregated = self.dataset.toDF()
+          .groupBy(groupByExprs: _*)
+          .agg(aggregates.head, aggregates.tail: _*)
+          .as[Out1](TypedExpressionEncoder[Out1])
 
-      val aggregated = self.dataset.toDF()
-        .groupBy(groupByExprs: _*)
-        .agg(aggregates.head, aggregates.tail: _*)
-        .as[Out1](TypedExpressionEncoder[Out1])
-
-      TypedDataset.create[Out1](aggregated)
-    }
+        TypedDataset.create[Out1](aggregated)
+      }
   }
 
-  def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
-    implicit kencoder: TypedEncoder[KT]
-  ): TypedDataset[U] = {
-    val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
-    flatMapGroups(func)
-  }
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
+  def mapGroups[U: TypedEncoder](
+    f: (KT, Iterator[T]) => U
+  )(implicit e: TypedEncoder[KT] ): TypedDataset[U] =
+    deserialized.mapGroups(f)
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](
     f: (KT, Iterator[T]) => TraversableOnce[U]
-  )(implicit kencoder: TypedEncoder[KT]): TypedDataset[U] = {
-    implicit val tendcoder = self.encoder
+  )(implicit e: TypedEncoder[KT]): TypedDataset[U] =
+    deserialized.flatMapGroups(f)
+  // $COVERAGE-ON$
 
-    val cols = toTraversable(groupedBy)
-    val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
-    val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
-    val withKey = Project(withKeyColumns, logicalPlan)
-    val executed = FramelessInternals.executePlan(self.dataset, withKey)
-    val keyAttributes = executed.analyzed.output.takeRight(cols.size)
-    val dataAttributes = executed.analyzed.output.dropRight(cols.size)
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
+      implicit e: TypedEncoder[KT]
+    ): TypedDataset[U] = {
+      val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
+      flatMapGroups(func)
+    }
 
-    val mapGroups = MapGroups(
-      f,
-      keyAttributes,
-      dataAttributes,
-      executed.analyzed
-    )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
+    def flatMapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => TraversableOnce[U]
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
+      implicit val tendcoder = self.encoder
 
-    val groupedAndFlatMapped = FramelessInternals.mkDataset(
-      self.dataset.sqlContext,
-      mapGroups,
-      TypedExpressionEncoder[U]
-    )
+      val cols = groupedBy.toList[UntypedExpression[T]]
+      val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
+      val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
+      val withKey = Project(withKeyColumns, logicalPlan)
+      val executed = FramelessInternals.executePlan(self.dataset, withKey)
+      val keyAttributes = executed.analyzed.output.takeRight(cols.size)
+      val dataAttributes = executed.analyzed.output.dropRight(cols.size)
 
-    TypedDataset.create(groupedAndFlatMapped)
+      val mapGroups = MapGroups(
+        f,
+        keyAttributes,
+        dataAttributes,
+        executed.analyzed
+      )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
+
+      val groupedAndFlatMapped = FramelessInternals.mkDataset(
+        self.dataset.sqlContext,
+        mapGroups,
+        TypedExpressionEncoder[U]
+      )
+
+      TypedDataset.create(groupedAndFlatMapped)
+    }
   }
 
   private def retainGroupColumns: Boolean = {
@@ -127,12 +144,29 @@ class GroupedBy1Ops[K1, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
-    underlying.mapGroups(GroupedByManyOps.tuple1(f))
+    deserialized.mapGroups(f)
   }
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    underlying.flatMapGroups(GroupedByManyOps.tuple1(f))
+    deserialized.flatMapGroups(f)
+  }
+  // $COVERAGE-ON$
+
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
+      underlying.deserialized.mapGroups(GroupedByManyOps.tuple1(f))
+    }
+
+    def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
+      underlying.deserialized.flatMapGroups(GroupedByManyOps.tuple1(f))
+    }
   }
 
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]): PivotNotValues[V, TypedColumn[V,K1] :: HNil, P] =
@@ -174,12 +208,29 @@ class GroupedBy2Ops[K1, K2, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
+  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
-    underlying.mapGroups(f)
+    deserialized.mapGroups(f)
   }
 
+  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
   def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    underlying.flatMapGroups(f)
+    deserialized.flatMapGroups(f)
+  }
+  // $COVERAGE-ON$
+
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
+      underlying.deserialized.mapGroups(f)
+    }
+
+    def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
+      underlying.deserialized.flatMapGroups(f)
+    }
   }
 
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
@@ -197,39 +248,32 @@ final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList](
 ) {
 
   object agg extends ProductArgs {
-    def applyProduct[
-    AggrColumns <: HList,
-    AggrColumnTypes <: HList,
-    GroupedColumnTypes <: HList,
-    NumValues <: Nat,
-    TypesForPivotedValues <: HList,
-    TypesForPivotedValuesOpt <: HList,
-    OutAsHList <: HList,
-    Out](aggrColumns: AggrColumns)(
-      implicit
-      tc: AggregateTypes.Aux[T, AggrColumns, AggrColumnTypes],
-      columnTypes: ColumnTypes.Aux[T, GroupedColumns, GroupedColumnTypes],
-      len: Length.Aux[Values, NumValues],
-      rep: Repeat.Aux[AggrColumnTypes, NumValues, TypesForPivotedValues],
-      opt: Mapped.Aux[TypesForPivotedValues, Option, TypesForPivotedValuesOpt],
-      append: Prepend.Aux[GroupedColumnTypes, TypesForPivotedValuesOpt, OutAsHList],
-      toTuple: Tupler.Aux[OutAsHList, Out],
-      encoder: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
-      def mapAny[X](h: HList)(f: Any => X): List[X] =
-        h match {
-          case HNil    => Nil
-          case x :: xs => f(x) :: mapAny(xs)(f)
-        }
+    def applyProduct[AggrColumns <: HList, AggrColumnTypes <: HList, GroupedColumnTypes <: HList, NumValues <: Nat, TypesForPivotedValues <: HList, TypesForPivotedValuesOpt <: HList, OutAsHList <: HList, Out]
+      (aggrColumns: AggrColumns)
+      (implicit
+        i0: AggregateTypes.Aux[T, AggrColumns, AggrColumnTypes],
+        i1: ColumnTypes.Aux[T, GroupedColumns, GroupedColumnTypes],
+        i2: Length.Aux[Values, NumValues],
+        i3: Repeat.Aux[AggrColumnTypes, NumValues, TypesForPivotedValues],
+        i4: Mapped.Aux[TypesForPivotedValues, Option, TypesForPivotedValuesOpt],
+        i5: Prepend.Aux[GroupedColumnTypes, TypesForPivotedValuesOpt, OutAsHList],
+        i6: Tupler.Aux[OutAsHList, Out],
+        i7: TypedEncoder[Out]
+      ): TypedDataset[Out] = {
+        def mapAny[X](h: HList)(f: Any => X): List[X] =
+          h match {
+            case HNil    => Nil
+            case x :: xs => f(x) :: mapAny(xs)(f)
+          }
 
-      val aggCols: Seq[Column] = mapAny(aggrColumns)(x => new Column(x.asInstanceOf[TypedAggregate[_,_]].expr))
-      val tmp = ds.dataset.toDF()
-        .groupBy(mapAny(groupedBy)(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
-        .pivot(pivotedBy.untyped.toString, mapAny(values)(identity))
-        .agg(aggCols.head, aggCols.tail:_*)
-        .as[Out](TypedExpressionEncoder[Out])
-      TypedDataset.create(tmp)
-    }
+        val aggCols: Seq[Column] = mapAny(aggrColumns)(x => new Column(x.asInstanceOf[TypedAggregate[_,_]].expr))
+        val tmp = ds.dataset.toDF()
+          .groupBy(mapAny(groupedBy)(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
+          .pivot(pivotedBy.untyped.toString, mapAny(values)(identity))
+          .agg(aggCols.head, aggCols.tail:_*)
+          .as[Out](TypedExpressionEncoder[Out])
+        TypedDataset.create(tmp)
+      }
   }
 }
 
@@ -240,7 +284,6 @@ final case class PivotNotValues[T, GroupedColumns <: HList, PivotType](
 ) extends ProductArgs {
 
   def onProduct[Values <: HList](values: Values)(
-    implicit
-    validValues: ToList[Values, PivotType] // validValues: FilterNot.Aux[Values, PivotType, HNil] // did not work
+    implicit validValues: ToList[Values, PivotType] // validValues: FilterNot.Aux[Values, PivotType, HNil] // did not work
   ): Pivot[T, GroupedColumns, PivotType, Values] = Pivot(ds, groupedBy, pivotedBy, values)
 }

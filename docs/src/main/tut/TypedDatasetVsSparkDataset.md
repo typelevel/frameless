@@ -5,7 +5,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 val conf = new SparkConf().setMaster("local[*]").setAppName("test").set("spark.ui.enabled", "false").set("spark.app.id", "tut-dataset")
-val spark = SparkSession.builder().config(conf).getOrCreate()
+implicit val spark = SparkSession.builder().config(conf).getOrCreate()
 
 System.clearProperty("spark.master.port")
 System.clearProperty("spark.driver.port")
@@ -17,8 +17,8 @@ org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 ```
 
 **Goal:**
-  This tutorial compares the standard Spark Datasets api with the one provided by
-  frameless' TypedDataset. It shows how TypedDatsets allows for an expressive and
+  This tutorial compares the standard Spark Datasets API with the one provided by
+  Frameless' `TypedDataset`. It shows how `TypedDataset`s allow for an expressive and
   type-safe api with no compromises on performance.
 
 For this tutorial we first create a simple dataset and save it on disk as a parquet file.
@@ -77,10 +77,9 @@ a non existing column `x`:
 ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
-There are two things to improve here. First, we would want to avoid the `at[Long]` casting that we are required
-to type for type-safety. This is clearly an area where we can introduce a bug by casting to an incompatible
-type. Second, we want a solution where reference to a
-non existing column name fails at compilation time.
+There are two things to improve here. First, we would want to avoid the `as[Long]` casting that we are required
+to type for type-safety. This is clearly an area where we may introduce a bug by casting to an incompatible
+type. Second, we want a solution where reference to a non existing column name fails at compilation time.
 The standard Spark Dataset can achieve this using the following syntax.
 
 ```tut:book
@@ -104,12 +103,11 @@ ds.filter(_.i == 10).map(_.i).explain()
 As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
 Reading the parquet file will required loading all the fields of `Foo`. This might be ok for
 small datasets or for datasets with few columns, but will be extremely slow for most practical
-applications.
-Intuitively, Spark currently doesn't have a way to look inside the code we pass in these two
+applications. Intuitively, Spark currently does not have a way to look inside the code we pass in these two
 closures. It only knows that they both take one argument of type `Foo`, but it has no way of knowing if
 we use just one or all of `Foo`'s fields.
 
-The TypedDataset in frameless solves this problem. It allows for a simple and type-safe syntax
+The `TypedDataset` in Frameless solves this problem. It allows for a simple and type-safe syntax
 with a fully optimized query plan.
 
 ```tut:book
@@ -117,19 +115,19 @@ import frameless.TypedDataset
 import frameless.syntax._
 val fds = TypedDataset.create(ds)
 
-fds.filter( fds('i) === 10 ).select( fds('i) ).show().run()
+fds.filter(fds('i) === 10).select(fds('i)).show().run()
 ```
 
 And the optimized Physical Plan:
 
 ```tut:book
-fds.filter( fds('i) === 10 ).select( fds('i) ).explain()
+fds.filter(fds('i) === 10).select(fds('i)).explain()
 ```
 
 And the compiler is our friend.
 
 ```tut:fail
-fds.filter( fds('i) === 10 ).select( fds('x) )
+fds.filter(fds('i) === 10).select(fds('x))
 ```
 
 ## Differences in Encoders
@@ -162,6 +160,47 @@ In comparison, a TypedDataset will notify about the encoding problem at compile 
 
 ```tut:book:fail
 TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+```
+
+
+## Aggregate vs Projected columns 
+
+Spark's `Dataset` do not distinguish between columns created from aggregate operations, 
+such as summing or averaging, and simple projections/selections. 
+This is problematic when you start mixing the two.
+
+```tut:book
+import org.apache.spark.sql.functions.sum
+```
+
+```tut:book:fail
+ds.select(sum($"i"), $"i"*2)
+```
+
+In Frameless, mixing the two results in a compilation error.
+
+```tut:book
+// To avoid confusing frameless' sum with the standard Spark's sum
+import frameless.functions.aggregate.{sum => fsum}
+```
+
+```tut:book:fail
+fds.select(fsum(fds('i)))
+```
+
+As the error suggests, we expected a `TypedColumn` but we got a `TypedAggregate` instead. 
+
+Here is how you apply an aggregation method in Frameless: 
+
+```tut:book
+fds.agg(fsum(fds('i))+22).show().run()
+```
+
+Similarly, mixing projections while aggregating does not make sense, and in Frameless
+you get a compilation error.  
+
+```tut:book:fail
+fds.agg(fsum(fds('i)), fds('i)).show().run()
 ```
 
 

@@ -48,4 +48,18 @@ class LitTests extends TypedDatasetSuite {
     // doesn't work, object has to be serializable
     // check(prop[frameless.LocalDateTime] _)
   }
+
+  test("#205: comparing literals encoded using Injection") {
+    import org.apache.spark.sql.catalyst.util.DateTimeUtils
+    implicit val dateAsInt: Injection[java.sql.Date, Int] =
+      Injection(DateTimeUtils.fromJavaDate, DateTimeUtils.toJavaDate)
+
+    val today = new java.sql.Date(System.currentTimeMillis)
+    val data = Vector(P(42, today))
+    val tds = TypedDataset.create(data)
+
+    tds.filter(tds('d) === today).collect().run()
+  }
 }
+
+final case class P(i: Int, d: java.sql.Date)

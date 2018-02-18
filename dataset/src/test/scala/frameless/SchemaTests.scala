@@ -1,6 +1,7 @@
 package frameless
 
 import frameless.functions.aggregate._
+import frameless.functions._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.Matchers
@@ -8,7 +9,12 @@ import org.scalatest.Matchers
 class SchemaTests extends TypedDatasetSuite with Matchers {
 
   def prop[A](dataset: TypedDataset[A]): Prop = {
-    TypedExpressionEncoder.targetStructType(dataset.encoder) ?= dataset.dataset.schema
+    val schema = dataset.dataset.schema
+
+    Prop.all(
+      dataset.schema ?= schema,
+      TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
+    )
   }
 
   test("schema of groupBy('a).agg(sum('b))") {
