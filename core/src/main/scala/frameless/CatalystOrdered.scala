@@ -42,7 +42,7 @@ object CatalystOrdered {
   implicit def deriveCaseClass[C, H <: HList]
     (implicit
       i0: Generic.Aux[C, H],
-      i1: CatalystOrdered[H]
+      i1: Lazy[CatalystOrdered[H]]
     ): CatalystOrdered[C] =
       of[C]
 }
