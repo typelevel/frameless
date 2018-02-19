@@ -40,8 +40,10 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 
 class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
   // Limit size of generated collections and number of checks because Travis
-  implicit override val generatorDrivenConfig =
-    PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
+  implicit override val generatorDrivenConfig = {
+    val i: PosZInt = scala.util.Properties.envOrNone("CI").fold(PosZInt(100))(_ => PosZInt(10))
+    PropertyCheckConfiguration(sizeRange = i, minSize = i)
+  }
 
   implicit val sparkDelay: SparkDelay[Job] = Job.framelessSparkDelayForJob
 
