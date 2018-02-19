@@ -1036,8 +1036,15 @@ object TypedDataset {
     val shouldReshape = output.zip(targetColNames).exists {
       case (expr, colName) => expr.name != colName
     }
+    val canSelect = targetColNames.toSet.subsetOf(output.map(_.name).toSet)
 
-    val reshaped = if (shouldReshape) df.toDF(targetColNames: _*) else df
+    val reshaped = if (shouldReshape && canSelect) {
+      df.select(targetColNames.head, targetColNames.tail:_*)
+    } else if (shouldReshape) {
+      df.toDF(targetColNames: _*)
+    } else {
+      df
+    }
 
     new TypedDataset[A](reshaped.as[A](TypedExpressionEncoder[A]))
   }
