@@ -1,12 +1,23 @@
 language: scala
 sudo: false
 scala:
-- 2.11.11
+  - 2.11.12
 
 sbt_args: "-J-Xmx2G"
 
+jobs:
+  include:
+    - stage: Documentation
+      env: PHASE=A
+    - stage: Unit Tests
+      env: PHASE=B
+    - stage: Publish
+      env: PHASE=C
+
 script:
   - scripts/travis-publish.sh
+
+after_script:
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 

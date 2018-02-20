@@ -11,11 +11,17 @@ export publish_cmd="publishLocal"
 
 sbt_cmd="sbt ++$TRAVIS_SCALA_VERSION -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M"
 
-test_cmd="$sbt_cmd test"
-
-docs_cmd="$sbt_cmd doc tut"
-
-coverage="$sbt_cmd coverage test && sbt coverageReport && bash <(curl -s https://codecov.io/bash)"
-
-run_cmd="$coverage && $docs_cmd && $test_cmd $publish_cmd"
+case "$PHASE" in
+  A) 
+     docs_cmd="$sbt_cmd doc tut"
+     run_cmd="$docs_cmd"
+  ;;
+  B)
+     coverage="$sbt_cmd coverage test && sbt coverageReport && bash <(curl -s https://codecov.io/bash)"
+     run_cmd="$coverage"
+  ;;
+  C) 
+     run_cmd="$sbt_cmd clean $publish_cmd"
+  ;;   
+esac 
 eval $run_cmd
