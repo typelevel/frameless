@@ -6,12 +6,19 @@ import org.apache.spark.sql.{Column, functions => sparkFunctions}
 import scala.math.Ordering
 
 trait UnaryFunctions {
-  /** Returns length of array or map.
+  /** Returns length of array
     *
     * apache/spark
     */
   def size[T, A, V[_] : CatalystSizableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, Int] =
     new TypedColumn[T, Int](implicitly[CatalystSizableCollection[V]].sizeOp(column.untyped))
+
+  /** Returns length of Map
+    *
+    * apache/spark
+    */
+  def size[T, A, B](column: TypedColumn[T, Map[A, B]]): TypedColumn[T, Int] =
+    new TypedColumn[T, Int](sparkFunctions.size(column.untyped))
 
   /** Sorts the input array for the given column in ascending order, according to
     * the natural ordering of the array elements.
@@ -55,6 +62,7 @@ object CatalystSizableCollection {
   implicit def sizableList: CatalystSizableCollection[List] = new CatalystSizableCollection[List] {
     def sizeOp(col: Column): Column = sparkFunctions.size(col)
   }
+
 }
 
 trait CatalystExplodableCollection[V[_]]
