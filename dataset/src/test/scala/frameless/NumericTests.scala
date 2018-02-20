@@ -98,4 +98,26 @@ class NumericTests extends TypedDatasetSuite {
 
     check(prop _)
   }
+
+  test("modulo") {
+    def prop[A: TypedEncoder: CatalystIntegral: Integral](a: A, b: A): Prop = {
+
+
+      val df = TypedDataset.create(X2(a, b) :: Nil)
+      if (b == 0) proved else {
+        val result = implicitly[Integral[A]].rem(a, b)
+        val got = df.select(df.col('a) % df.col('b)).collect().run()
+
+        got ?= (result :: Nil)
+      }
+    }
+
+//    check(prop[BigDecimal] _) TODO: cant find evidence for Integral
+//    check(prop[Double] _) TODO: same here
+
+    check(prop[Byte] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
 }
