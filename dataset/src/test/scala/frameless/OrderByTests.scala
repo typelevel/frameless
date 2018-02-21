@@ -158,4 +158,51 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
     illTyped("""d.orderBy(d('b).desc)""")
     illTyped("""d.sortWithinPartitions(d('b).desc)""")
   }
+
+  test("derives a CatalystOrdered for case classes when all fields are comparable") {
+    type T[A, B] = X3[Int, Boolean, X2[A, B]]
+    def prop[
+      A: TypedEncoder : CatalystOrdered,
+      B: TypedEncoder : CatalystOrdered
+    ](data: Vector[T[A, B]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      sortings[X2[A, B], T[A, B]].map { case (typX2, untypX2) =>
+        val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("c"))).collect().toVector
+        val frameless = ds.orderBy(typX2(ds('c))).collect().run.toVector
+        vanilla ?= frameless
+      }.reduce(_ && _)
+    }
+
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[(String, SQLDate), Float] _))
+    // Check that nested case classes are properly derived too
+    check(forAll(prop[X2[Boolean, Float], X4[SQLTimestamp, Double, Short, Byte]] _))
+  }
+
+  test("derives a CatalystOrdered for tuples when all fields are comparable") {
+    type T[A, B] = X2[Int, (A, B)]
+    def prop[
+      A: TypedEncoder : CatalystOrdered,
+      B: TypedEncoder : CatalystOrdered
+    ](data: Vector[T[A, B]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      sortings[(A, B), T[A, B]].map { case (typX2, untypX2) =>
+        val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("b"))).collect().toVector
+        val frameless = ds.orderBy(typX2(ds('b))).collect().run.toVector
+        vanilla ?= frameless
+      }.reduce(_ && _)
+    }
+
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[(String, SQLDate), Float] _))
+    check(forAll(prop[X2[Boolean, Float], X1[(SQLTimestamp, Double, Short, Byte)]] _))
+  }
+
+  test("fails to compile when one of the field isn't comparable") {
+    type T = X2[Int, X2[Int, Map[String, String]]]
+    val d = TypedDataset.create(X2(1, X2(2, Map("not" -> "comparable"))) :: Nil)
+    illTyped("d.orderBy(d('b).desc)", """Cannot compare columns of type frameless.X2\[Int,scala.collection.immutable.Map\[String,String]].""")
+  }
 }

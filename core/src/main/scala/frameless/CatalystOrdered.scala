@@ -1,6 +1,8 @@
 package frameless
 
 import scala.annotation.implicitNotFound
+import shapeless.{Generic, HList, Lazy}
+import shapeless.ops.hlist.LiftAll
 
 /** Types that can be ordered/compared by Catalyst. */
 @implicitNotFound("Cannot compare columns of type ${A}.")
@@ -27,4 +29,10 @@ object CatalystOrdered {
       i0: Injection[A, B],
       i1: CatalystOrdered[B]
     ): CatalystOrdered[A] = of[A]
+
+  implicit def deriveGeneric[G, H <: HList]
+    (implicit
+      i0: Generic.Aux[G, H],
+      i1: Lazy[LiftAll[CatalystOrdered, H]]
+    ): CatalystOrdered[G] = of[G]
 }
