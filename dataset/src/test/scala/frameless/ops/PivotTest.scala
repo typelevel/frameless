@@ -69,6 +69,15 @@ class PivotTest extends TypedDatasetSuite {
       .collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
   }
 
+  test("Pivot with cube on Boolean") {
+    val x: Seq[X3[String, Boolean, Boolean]] = Seq(X3("a", true, true), X3("a", true, true), X3("a", true, false))
+    val d = TypedDataset.create(x)
+    d.cube(d('a)).
+      pivot(d('c)).on(true, false).
+      agg(count[X3[String, Boolean, Boolean]]()).
+      collect().run().toVector ?= Vector(("a", Some(2L), Some(1L)))
+  }
+
   test("Pivot with rollup on two columns, pivot on Long") {
     val x: Seq[X3[String, String, Long]] = Seq(X3("a", "x", 1), X3("a", "x", 1), X3("a", "c", 20))
     val d = TypedDataset.create(x)
@@ -76,5 +85,14 @@ class PivotTest extends TypedDatasetSuite {
       .pivot(d('c)).on(1L, 20L)
       .agg(count[X3[String, String, Long]]())
       .collect().run().toSet ?= Set(("a", "x", Some(2L), None), ("a", "c", None, Some(1L)))
+  }
+
+  test("Pivot with rollup on Boolean") {
+    val x: Seq[X3[String, Boolean, Boolean]] = Seq(X3("a", true, true), X3("a", true, true), X3("a", true, false))
+    val d = TypedDataset.create(x)
+    d.rollupMany(d('a)).
+      pivot(d('c)).on(true, false).
+      agg(count[X3[String, Boolean, Boolean]]()).
+      collect().run().toVector ?= Vector(("a", Some(2L), Some(1L)))
   }
 }
