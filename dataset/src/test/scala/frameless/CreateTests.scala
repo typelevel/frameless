@@ -143,9 +143,10 @@ class CreateTests extends TypedDatasetSuite with Matchers {
           Vector((b1, a1))
         ).dataset.toDF("b", "a").as[X2[A, B]](TypedExpressionEncoder[X2[A, B]])
         TypedDataset.create(ds).collect().run().head ?= X2(a1, b1)
+
       }
     }
-    check(prop[Double, Double])
+    check(prop[X1[Double], X1[X1[SQLDate]]])
     check(prop[String, Int])
   }
 }
