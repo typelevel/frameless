@@ -506,6 +506,38 @@ abstract class AbstractTypedColumn[T, U]
   def contains[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.contains(other.untyped))
 
+  /** 'Starts with' test.
+    * {{{
+    *   df.filter ( df.col('a).startsWith("foo")
+    * }}}
+    */
+  def startsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.startsWith(other))
+
+  /** 'Starts with' test.
+    * {{{
+    *   df.filter ( df.col('a).startsWith(df.col('b))
+    * }}}
+    */
+  def startsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.startsWith(other.untyped))
+
+  /** 'Ends with' test.
+    * {{{
+    *   df.filter ( df.col('a).endsWith("foo")
+    * }}}
+    */
+  def endsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.endsWith(other))
+
+  /** 'Ends with' test.
+    * {{{
+    *   df.filter ( df.col('a).endsWith(df.col('b))
+    * }}}
+    */
+  def endsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.endsWith(other.untyped))
+
   /** Boolean AND.
     * {{{
     *   df.filter ( (df.col('a) === 1).and(df.col('b) > 5) )

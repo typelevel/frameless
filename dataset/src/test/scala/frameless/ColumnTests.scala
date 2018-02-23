@@ -2,8 +2,9 @@ package frameless
 
 import java.time.Instant
 
-import org.scalacheck.{ Arbitrary, Gen, Prop }
 import org.scalacheck.Prop._
+import org.scalacheck.{Arbitrary, Gen, Prop}
+import shapeless.test.illTyped
 
 import scala.math.Ordering.Implicits._
 
@@ -16,7 +17,7 @@ class ColumnTests extends TypedDatasetSuite {
       val B = dataset.col('b)
 
       val dataset2 = dataset.selectMany(
-        A < B, A < b,   // One test uses columns, other uses literals
+        A < B, A < b, // One test uses columns, other uses literals
         A <= B, A <= b,
         A > B, A > b,
         A >= B, A >= b
@@ -48,7 +49,7 @@ class ColumnTests extends TypedDatasetSuite {
   }
 
   test("toString") {
-    val t = TypedDataset.create((1,2)::Nil)
+    val t = TypedDataset.create((1, 2) :: Nil)
     t('_1).toString ?= t.dataset.col("_1").toString()
   }
 
@@ -100,6 +101,72 @@ class ColumnTests extends TypedDatasetSuite {
         typedContains ?= untypedContains
       }
     }
+
+    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds.select(ds('_1).contains("foo"))""")
+    illTyped("""ds.select(ds('_2).contains("foo"))""")
+    illTyped("""ds.select(ds('_3).contains("foo"))""")
+  }
+
+  test("startsWith") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: String) =>
+        val ds = TypedDataset.create(X2(a, b) :: Nil)
+
+        val typedStartsWith = ds
+          .select(ds('a).startsWith(ds('b)), ds('b).startsWith(a))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedStartsWith = untypedDs
+          .select(untypedDs("a").startsWith(untypedDs("b")), untypedDs("b").startsWith(a))
+          .as[(Boolean, Boolean)]
+          .collect()
+          .toList
+
+        typedStartsWith ?= untypedStartsWith
+      }
+    }
+
+    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds.select(ds('_1).startsWith("foo"))""")
+    illTyped("""ds.select(ds('_2).startsWith("foo"))""")
+    illTyped("""ds.select(ds('_3).startsWith("foo"))""")
+  }
+
+  test("endsWith") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: String) =>
+        val ds = TypedDataset.create(X2(a, b) :: Nil)
+        val typedStartsWith = ds
+          .select(ds('a).endsWith(ds('b)), ds('b).endsWith(a))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedStartsWith = untypedDs
+          .select(untypedDs("a").endsWith(untypedDs("b")), untypedDs("b").endsWith(a))
+          .as[(Boolean, Boolean)]
+          .collect()
+          .toList
+
+        typedStartsWith ?= untypedStartsWith
+      }
+    }
+
+    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds.select(ds('_1).endsWith("foo"))""")
+    illTyped("""ds.select(ds('_2).endsWith("foo"))""")
+    illTyped("""ds.select(ds('_3).endsWith("foo"))""")
   }
 
   test("getOrElse") {
@@ -129,7 +196,7 @@ class ColumnTests extends TypedDatasetSuite {
   }
 
   test("asCol") {
-    def prop[A: TypedEncoder, B: TypedEncoder](a: Seq[X2[A,B]]) = {
+    def prop[A: TypedEncoder, B: TypedEncoder](a: Seq[X2[A, B]]) = {
       val ds: TypedDataset[X2[A, B]] = TypedDataset.create(a)
 
       val frameless: Seq[(A, X2[A, B], X2[A, B], X2[A, B], B)] =
