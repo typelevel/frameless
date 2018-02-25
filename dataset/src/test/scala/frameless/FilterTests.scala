@@ -144,4 +144,21 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Option[X1[X1[String]]]] _))
     check(forAll(prop[Option[X1[X1[Vector[Option[Int]]]]]] _))
   }
+
+  test("filter with isin values") {
+    def prop[A: TypedEncoder](data: Vector[X1[A]], values: Vector[A])(implicit a : CatalystIsin[A]): Prop = {
+      val ds = TypedDataset.create(data)
+      val res = ds.filter(ds('a).isin(values:_*)).collect().run().toVector
+      res ?= data.filter(d => values.contains(d.a))
+    }
+
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[String] _))
+  }
 }
