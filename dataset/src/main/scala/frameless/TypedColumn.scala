@@ -641,6 +641,19 @@ abstract class AbstractTypedColumn[T, U]
     */
   def >=(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped >= lit(u)(self.uencoder).untyped)
+
+  /**
+    * Returns true if the value of this column is contained in of the arguments.
+    * {{{
+    *   // The following selects people with age 15, 20, or 30.
+    *   df.select( df('age).isin(15, 20, 30) )
+    * }}}
+    *
+    * @param values are constants of the same type
+    * apache/spark
+    */
+  def isin(values: U*)(implicit e: CatalystIsin[U]): ThisType[T, Boolean] =
+    typed(self.untyped.isin(values:_*))
 }
 
 
