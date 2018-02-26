@@ -59,15 +59,16 @@ private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT]
     * deserialization of `T`, and execute outside of the Catalyst runtime.
     */
   object deserialized {
-    def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
-      implicit e: TypedEncoder[KT]
-    ): TypedDataset[U] = {
+    def mapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => U
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
       val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
       flatMapGroups(func)
     }
 
-    def flatMapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => TraversableOnce[U])
-                                      (implicit e: TypedEncoder[KT]): TypedDataset[U] = {
+    def flatMapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => TraversableOnce[U]
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
       implicit val tendcoder = self.encoder
 
       val cols = groupedBy.toList[UntypedExpression[T]]
