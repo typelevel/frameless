@@ -23,12 +23,6 @@ private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT]
   ) {
   object agg extends ProductArgs {
     /**
-      * @param i3 shares individual columns' types
-      * @param i4 maps all types in HList to Option
-      * @param i5 concatenates two HLists
-      * @param i6 converts HList to Tuple
-      * @param i7 proof that there is `TypedEncoder` for the output type
-      * @param i8 allows converting thi HList to ordinary List
       * @tparam TC resulting columns after aggregation function
       * @tparam C individual columns' types as HList
       * @tparam OptK columns' types mapped to Option
@@ -38,12 +32,12 @@ private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT]
     def applyProduct[TC <: HList, C <: HList, OptK <: HList, Out0 <: HList, Out1]
     (columns: TC)
     (implicit
-     i3: AggregateTypes.Aux[T, TC, C],
-     i4: Mapped.Aux[K, Option, OptK],
-     i5: Prepend.Aux[OptK, C, Out0],
-     i6: Tupler.Aux[Out0, Out1],
-     i7: TypedEncoder[Out1],
-     i8: ToTraversable.Aux[TC, List, UntypedExpression[T]]
+     i3: AggregateTypes.Aux[T, TC, C], // shares individual columns' types after agg function as HList
+     i4: Mapped.Aux[K, Option, OptK],  // maps all original columns' types to Option
+     i5: Prepend.Aux[OptK, C, Out0],   // concatenates Option columns with those resulting from applying agg function
+     i6: Tupler.Aux[Out0, Out1],       // converts resulting HList into Tuple for output type
+     i7: TypedEncoder[Out1],           // proof that there is `TypedEncoder` for the output type
+     i8: ToTraversable.Aux[TC, List, UntypedExpression[T]]  // allows converting this HList to ordinary List
     ): TypedDataset[Out1] = {
       def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
 
@@ -209,4 +203,34 @@ private[ops] abstract class RelationalGroups2Ops[K1, K2, V](self: TypedDataset[V
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
   PivotNotValues[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P] =
     PivotNotValues(self, g1 :: g2 :: HNil, pivotColumn)
+}
+
+class RollupManyOps[T, TK <: HList, K <: HList, KT](self: TypedDataset[T], groupedBy: TK)
+  (implicit
+    i0: ColumnTypes.Aux[T, TK, K],
+    i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
+    i2: Tupler.Aux[K, KT]
+  ) extends RelationalGroupsOps[T, TK, K, KT](self, groupedBy, (dataset, cols) => dataset.rollup(cols: _*))
+
+class Rollup1Ops[K1, V](self: TypedDataset[V], g1: TypedColumn[V, K1]) extends RelationalGroups1Ops(self, g1) {
+  override protected def underlying = new RollupManyOps(self, g1 :: HNil)
+}
+
+class Rollup2Ops[K1, K2, V](self: TypedDataset[V], g1: TypedColumn[V, K1], g2: TypedColumn[V, K2]) extends RelationalGroups2Ops(self, g1, g2) {
+  override protected def underlying = new RollupManyOps(self, g1 :: g2 :: HNil)
+}
+
+class CubeManyOps[T, TK <: HList, K <: HList, KT](self: TypedDataset[T], groupedBy: TK)
+  (implicit
+    i0: ColumnTypes.Aux[T, TK, K],
+    i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
+    i2: Tupler.Aux[K, KT]
+  ) extends RelationalGroupsOps[T, TK, K, KT](self, groupedBy, (dataset, cols) => dataset.cube(cols: _*))
+
+class Cube1Ops[K1, V](self: TypedDataset[V], g1: TypedColumn[V, K1]) extends RelationalGroups1Ops(self, g1) {
+  override protected def underlying = new CubeManyOps(self, g1 :: HNil)
+}
+
+class Cube2Ops[K1, K2, V](self: TypedDataset[V], g1: TypedColumn[V, K1], g2: TypedColumn[V, K2]) extends RelationalGroups2Ops(self, g1, g2) {
+  override protected def underlying = new CubeManyOps(self, g1 :: g2 :: HNil)
 }
