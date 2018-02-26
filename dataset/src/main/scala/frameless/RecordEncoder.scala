@@ -46,7 +46,7 @@ object RecordEncoderFields {
     }
 }
 
-trait NewInstanceExprs[T <: HList] {
+trait NewInstanceExprs[T <: HList] extends Serializable {
   def from(exprs: List[Expression]): Seq[Expression]
 }
 
