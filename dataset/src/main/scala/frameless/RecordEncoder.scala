@@ -5,8 +5,9 @@ import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{Invoke, NewInstance}
 import org.apache.spark.sql.types._
-import shapeless.labelled.FieldType
 import shapeless._
+import shapeless.labelled.FieldType
+import shapeless.ops.hlist.{FilterNot, IsHCons, SubtypeUnifier}
 
 import scala.reflect.ClassTag
 
@@ -21,6 +22,7 @@ trait RecordEncoderFields[T <: HList] extends Serializable {
 }
 
 object RecordEncoderFields {
+
   implicit def deriveRecordLast[K <: Symbol, H]
     (implicit
       key: Witness.Aux[K],
@@ -44,10 +46,41 @@ object RecordEncoderFields {
     }
 }
 
-class RecordEncoder[F, G <: HList]
+trait NewInstanceExprs[T <: HList] {
+  def from(exprs: List[Expression]): Seq[Expression]
+}
+
+object NewInstanceExprs {
+
+  implicit def deriveHNilBoth: NewInstanceExprs[HNil] = new NewInstanceExprs[HNil] {
+    def from(exprs: List[Expression]): Seq[Expression] = Nil
+  }
+
+  implicit def deriveUnitLeft[K <: Symbol, T <: HList]
+    (implicit
+      tail: NewInstanceExprs[T]
+    ): NewInstanceExprs[FieldType[K, Unit] :: T] = new NewInstanceExprs[FieldType[K, Unit] :: T] {
+      def from(exprs: List[Expression]): Seq[Expression] =
+        Literal.fromObject(()) +: tail.from(exprs)
+    }
+
+  implicit def deriveNonUnitLeft[K <: Symbol, V , T <: HList]
+    (implicit
+      notUnit: V =:!= Unit,
+      tail: NewInstanceExprs[T]
+    ): NewInstanceExprs[FieldType[K, V] :: T] = new NewInstanceExprs[FieldType[K, V] :: T] {
+      def from(exprs: List[Expression]): Seq[Expression] = exprs.head +: tail.from(exprs.tail)
+    }
+}
+
+class RecordEncoder[F, G <: HList, H <: HList, I <: HList]
   (implicit
     lgen: LabelledGeneric.Aux[F, G],
-    fields: Lazy[RecordEncoderFields[G]],
+    unifiedUnits: SubtypeUnifier.Aux[G, FieldType[_, Unit], H],
+    nonUnitFields: FilterNot.Aux[H, FieldType[_, Unit], I],
+    hasFields: IsHCons[I],
+    fields: Lazy[RecordEncoderFields[I]],
+    newInstanceExprs: Lazy[NewInstanceExprs[G]],
     classTag: ClassTag[F]
   ) extends TypedEncoder[F] {
     def nullable: Boolean = false
@@ -96,6 +129,6 @@ class RecordEncoder[F, G <: HList]
         field.encoder.fromCatalyst(fieldPath)
       }
 
-      NewInstance(classTag.runtimeClass, exprs, jvmRepr, propagateNull = true)
+      NewInstance(classTag.runtimeClass, newInstanceExprs.value.from(exprs), jvmRepr, propagateNull = true)
     }
 }
