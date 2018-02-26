@@ -12,15 +12,15 @@ object TupleWithUnits {
 }
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
-  test("Unable to encode only units") {
+  test("Unable to encode products made from units only") {
     illTyped("""TypedEncoder[UnitsOnly]""")
   }
 
-  test("Unit fields are skipped") {
+  test("Representation skips units") {
     assert(TypedEncoder[(Int, String)].catalystRepr == TypedEncoder[TupleWithUnits].catalystRepr)
   }
 
-  test("") {
+  test("Serialization skips units") {
     val df = session.createDataFrame(Seq((1, "one"), (2, "two")))
     val ds = df.as[TupleWithUnits](TypedExpressionEncoder[TupleWithUnits])
     val tds = TypedDataset.create(Seq(TupleWithUnits(1, "one"), TupleWithUnits(2, "two")))
