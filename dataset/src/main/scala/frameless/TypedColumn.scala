@@ -494,6 +494,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).contains("foo") )
     * }}}
+    *
+    * @param other a string that is being tested against.
+    * apache/spark
     */
   def contains(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
     typed(self.untyped.contains(other))
@@ -502,6 +505,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).contains(df.col('b) )
     * }}}
+    *
+    * @param other a column which values is used as a string that is being tested against.
+    * apache/spark
     */
   def contains[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.contains(other.untyped))
@@ -510,6 +516,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).startsWith("foo")
     * }}}
+    *
+    * @param other a prefix that is being tested against.
+    * apache/spark
     */
   def startsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
     typed(self.untyped.startsWith(other))
@@ -518,6 +527,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).startsWith(df.col('b))
     * }}}
+    *
+    * @param other a column which values is used as a prefix that is being tested against.
+    * apache/spark
     */
   def startsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.startsWith(other.untyped))
@@ -526,6 +538,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).endsWith("foo")
     * }}}
+    *
+    * @param other a suffix that is being tested against.
+    * apache/spark
     */
   def endsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
     typed(self.untyped.endsWith(other))
@@ -534,6 +549,9 @@ abstract class AbstractTypedColumn[T, U]
     * {{{
     *   df.filter ( df.col('a).endsWith(df.col('b))
     * }}}
+    *
+    * @param other a column which values is used as a suffix that is being tested against.
+    * apache/spark
     */
   def endsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.endsWith(other.untyped))
