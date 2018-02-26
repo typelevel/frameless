@@ -1,9 +1,7 @@
 package frameless
 package ops
 
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
-import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
-import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
+import org.apache.spark.sql.{Column, Dataset, RelationalGroupedDataset}
 import shapeless.ops.hlist.{Mapped, Prepend, ToTraversable, Tupler}
 import shapeless.{::, HList, HNil, ProductArgs}
 
@@ -17,14 +15,15 @@ import shapeless.{::, HList, HNil, ProductArgs}
 private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT]
   (self: TypedDataset[T], groupedBy: TK, groupingFunc: (Dataset[T], Seq[Column]) => RelationalGroupedDataset)
   (implicit
-   i0: ColumnTypes.Aux[T, TK, K],
-   i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
-   i2: Tupler.Aux[K, KT]
-  ) {
+    i0: ColumnTypes.Aux[T, TK, K],
+    i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
+    i2: Tupler.Aux[K, KT]
+  ) extends AggregatingOps(self, groupedBy, groupingFunc){
+
   object agg extends ProductArgs {
     /**
-      * @tparam TC resulting columns after aggregation function
-      * @tparam C individual columns' types as HList
+      * @tparam TC   resulting columns after aggregation function
+      * @tparam C    individual columns' types as HList
       * @tparam OptK columns' types mapped to Option
       * @tparam Out0 OptK columns appended to C
       * @tparam Out1 output type
@@ -32,83 +31,15 @@ private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT]
     def applyProduct[TC <: HList, C <: HList, OptK <: HList, Out0 <: HList, Out1]
     (columns: TC)
     (implicit
-     i3: AggregateTypes.Aux[T, TC, C], // shares individual columns' types after agg function as HList
-     i4: Mapped.Aux[K, Option, OptK],  // maps all original columns' types to Option
-     i5: Prepend.Aux[OptK, C, Out0],   // concatenates Option columns with those resulting from applying agg function
-     i6: Tupler.Aux[Out0, Out1],       // converts resulting HList into Tuple for output type
-     i7: TypedEncoder[Out1],           // proof that there is `TypedEncoder` for the output type
-     i8: ToTraversable.Aux[TC, List, UntypedExpression[T]]  // allows converting this HList to ordinary List
+      i3: AggregateTypes.Aux[T, TC, C], // shares individual columns' types after agg function as HList
+      i4: Mapped.Aux[K, Option, OptK], // maps all original columns' types to Option
+      i5: Prepend.Aux[OptK, C, Out0], // concatenates Option columns with those resulting from applying agg function
+      i6: Tupler.Aux[Out0, Out1], // converts resulting HList into Tuple for output type
+      i7: TypedEncoder[Out1], // proof that there is `TypedEncoder` for the output type
+      i8: ToTraversable.Aux[TC, List, UntypedExpression[T]] // allows converting this HList to ordinary List
     ): TypedDataset[Out1] = {
-      def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
-
-      val groupByExprs = groupedBy.toList[UntypedExpression[T]].map(expr)
-      val aggregates =
-        if (retainGroupColumns) columns.toList[UntypedExpression[T]].map(expr)
-        else groupByExprs ++ columns.toList[UntypedExpression[T]].map(expr)
-
-      val aggregated =
-        groupingFunc(self.dataset, groupByExprs)
-          .agg(aggregates.head, aggregates.tail: _*)
-          .as[Out1](TypedExpressionEncoder[Out1])
-
-      TypedDataset.create[Out1](aggregated)
+      aggregate[TC, Out1](columns)
     }
-  }
-
-  /** Methods on `TypedDataset[T]` that go through a full serialization and
-    * deserialization of `T`, and execute outside of the Catalyst runtime.
-    */
-  object deserialized {
-    def mapGroups[U: TypedEncoder](
-      f: (KT, Iterator[T]) => U
-    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
-      val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
-      flatMapGroups(func)
-    }
-
-    def flatMapGroups[U: TypedEncoder](
-      f: (KT, Iterator[T]) => TraversableOnce[U]
-    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
-      implicit val tendcoder = self.encoder
-
-      val cols = groupedBy.toList[UntypedExpression[T]]
-      val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
-      val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
-      val withKey = Project(withKeyColumns, logicalPlan)
-      val executed = FramelessInternals.executePlan(self.dataset, withKey)
-      val keyAttributes = executed.analyzed.output.takeRight(cols.size)
-      val dataAttributes = executed.analyzed.output.dropRight(cols.size)
-
-      val mapGroups = MapGroups(
-        f,
-        keyAttributes,
-        dataAttributes,
-        executed.analyzed
-      )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
-
-      val groupedAndFlatMapped = FramelessInternals.mkDataset(
-        self.dataset.sqlContext,
-        mapGroups,
-        TypedExpressionEncoder[U]
-      )
-
-      TypedDataset.create(groupedAndFlatMapped)
-    }
-  }
-
-  private def retainGroupColumns: Boolean = {
-    self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
-  }
-
-  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]):
-  PivotNotValues[T, TK, P] =
-    PivotNotValues(self, groupedBy, pivotColumn)
-}
-
-private[ops] object RelationalGroupsOps {
-  /** Utility function to help Spark with serialization of closures */
-  def tuple1[K1, V, U](f: (K1, Iterator[V]) => U): (Tuple1[K1], Iterator[V]) => U = {
-    (x: Tuple1[K1], it: Iterator[V]) => f(x._1, it)
   }
 }
 
@@ -146,11 +77,11 @@ private[ops] abstract class RelationalGroups1Ops[K1, V](self: TypedDataset[V], g
     */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
-      underlying.deserialized.mapGroups(RelationalGroupsOps.tuple1(f))
+      underlying.deserialized.mapGroups(AggregatingOps.tuple1(f))
     }
 
     def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-      underlying.deserialized.flatMapGroups(RelationalGroupsOps.tuple1(f))
+      underlying.deserialized.flatMapGroups(AggregatingOps.tuple1(f))
     }
   }
 
