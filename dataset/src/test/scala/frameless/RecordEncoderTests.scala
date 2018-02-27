@@ -1,6 +1,7 @@
 package frameless
 
 import org.scalatest.Matchers
+import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
 
 case class UnitsOnly(a: Unit, b: Unit)
@@ -14,6 +15,12 @@ object TupleWithUnits {
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
     illTyped("""TypedEncoder[UnitsOnly]""")
+  }
+
+  test("Dropping fields") {
+    def dropUnitValues[L <: HList](l: L)(implicit d: DropUnitValues[L]): d.Out = d(l)
+    val fields = LabelledGeneric[TupleWithUnits].to(TupleWithUnits(42, "something"))
+    dropUnitValues(fields) shouldEqual LabelledGeneric[(Int, String)].to((42, "something"))
   }
 
   test("Representation skips units") {
