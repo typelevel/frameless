@@ -7,7 +7,7 @@ import org.apache.spark.sql.catalyst.expressions.objects.{Invoke, NewInstance}
 import org.apache.spark.sql.types._
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{FilterNot, IsHCons, SubtypeUnifier}
+import shapeless.ops.hlist.IsHCons
 
 import scala.reflect.ClassTag
 
@@ -52,11 +52,11 @@ trait NewInstanceExprs[T <: HList] extends Serializable {
 
 object NewInstanceExprs {
 
-  implicit def deriveHNilBoth: NewInstanceExprs[HNil] = new NewInstanceExprs[HNil] {
+  implicit def deriveHNil: NewInstanceExprs[HNil] = new NewInstanceExprs[HNil] {
     def from(exprs: List[Expression]): Seq[Expression] = Nil
   }
 
-  implicit def deriveUnitLeft[K <: Symbol, T <: HList]
+  implicit def deriveUnit[K <: Symbol, T <: HList]
     (implicit
       tail: NewInstanceExprs[T]
     ): NewInstanceExprs[FieldType[K, Unit] :: T] = new NewInstanceExprs[FieldType[K, Unit] :: T] {
@@ -64,7 +64,7 @@ object NewInstanceExprs {
         Literal.fromObject(()) +: tail.from(exprs)
     }
 
-  implicit def deriveNonUnitLeft[K <: Symbol, V , T <: HList]
+  implicit def deriveNonUnit[K <: Symbol, V , T <: HList]
     (implicit
       notUnit: V =:!= Unit,
       tail: NewInstanceExprs[T]
@@ -73,13 +73,42 @@ object NewInstanceExprs {
     }
 }
 
-class RecordEncoder[F, G <: HList, H <: HList, I <: HList]
+trait DropUnitValues[L <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
+
+object DropUnitValues {
+  def apply[L <: HList](implicit dropUnitValues: DropUnitValues[L]): Aux[L, dropUnitValues.Out] = dropUnitValues
+
+  type Aux[L <: HList, Out0 <: HList] = DropUnitValues[L] { type Out = Out0 }
+
+  implicit def deriveHNil[H]: Aux[HNil, HNil] = new DropUnitValues[HNil] {
+    type Out = HNil
+    def apply(l: HNil): Out = HNil
+  }
+
+  implicit def deriveUnit[K <: Symbol, T <: HList, OutT <: HList]
+    (implicit
+      dropUnitValues : DropUnitValues.Aux[T, OutT]
+    ): Aux[FieldType[K, Unit] :: T, OutT] = new DropUnitValues[FieldType[K, Unit] :: T] {
+      type Out = OutT
+      def apply(l : FieldType[K, Unit] :: T): Out = dropUnitValues(l.tail)
+    }
+
+  implicit def deriveNonUnit[K <: Symbol, V, T <: HList, OutH, OutT <: HList]
+    (implicit
+      nonUnit: V =:!= Unit,
+      dropUnitValues : DropUnitValues.Aux[T, OutT]
+    ): Aux[FieldType[K, V] :: T, FieldType[K, V] :: OutT] = new DropUnitValues[FieldType[K, V] :: T] {
+      type Out = FieldType[K, V] :: OutT
+      def apply(l : FieldType[K, V] :: T): Out = l.head :: dropUnitValues(l.tail)
+    }
+}
+
+class RecordEncoder[F, G <: HList, H <: HList]
   (implicit
     lgen: LabelledGeneric.Aux[F, G],
-    unifiedUnits: SubtypeUnifier.Aux[G, FieldType[_, Unit], H],
-    nonUnitFields: FilterNot.Aux[H, FieldType[_, Unit], I],
-    hasFields: IsHCons[I],
-    fields: Lazy[RecordEncoderFields[I]],
+    nonUnitFields: DropUnitValues.Aux[G, H],
+    hasFields: IsHCons[H],
+    fields: Lazy[RecordEncoderFields[H]],
     newInstanceExprs: Lazy[NewInstanceExprs[G]],
     classTag: ClassTag[F]
   ) extends TypedEncoder[F] {
