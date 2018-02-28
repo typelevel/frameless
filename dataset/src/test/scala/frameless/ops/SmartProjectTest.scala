@@ -40,4 +40,20 @@ class SmartProjectTest extends TypedDatasetSuite {
     check(forAll(prop[X2[String, Boolean], (Boolean, Boolean), String, Boolean] _))
     check(forAll(prop[X2[String, Boolean], X3[Boolean, Boolean, Long], String, String] _))
   }
+
+  test("X3U to X1,X2,X3 projections") {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](data: Vector[X3U[A, B, C]]): Prop = {
+      val dataset = TypedDataset.create(data)
+
+      dataset.project[X3[A, B, C]].collect().run().toVector ?= data.map(x => X3(x.a, x.b, x.c))
+      dataset.project[X2[A, B]].collect().run().toVector ?= data.map(x => X2(x.a, x.b))
+      dataset.project[X1[A]].collect().run().toVector ?= data.map(x => X1(x.a))
+    }
+
+    check(forAll(prop[Int, String, X1[String]] _))
+    check(forAll(prop[Short, Long, String] _))
+    check(forAll(prop[Short, (Boolean, Boolean), String] _))
+    check(forAll(prop[X2[String, Boolean], (Boolean, Boolean), String] _))
+    check(forAll(prop[X2[String, Boolean], X3[Boolean, Boolean, Long], String] _))
+  }
 }

@@ -94,6 +94,7 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[X1[X1[Food]]] _))
     check(forAll(prop[X2[Country, X2[LocalDateTime, Food]]] _))
     check(forAll(prop[X3[Country, LocalDateTime, Food]] _))
+    check(forAll(prop[X3U[Country, LocalDateTime, Food]] _))
 
     check(forAll(prop[I[Int]] _))
     check(forAll(prop[I[Option[Int]]] _))
