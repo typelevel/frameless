@@ -47,8 +47,8 @@ object RecordEncoderFields {
 }
 
 /**
-  * Assists the generation of constructor call parameters from a [[LabelledGeneric]] representation.
-  * As [[Unit]] typed fields were removed earlier, we need to put back [[()]] literals in the  appropriate positions.
+  * Assists the generation of constructor call parameters from a labelled generic representation.
+  * As Unit typed fields were removed earlier, we need to put back unit literals in the  appropriate positions.
   *
   * @tparam T labelled generic representation of type fields
   */
@@ -80,7 +80,7 @@ object NewInstanceExprs {
 }
 
 /**
-  * Drops fields with [[Unit]] type from [[LabelledGeneric]] representation of types.
+  * Drops fields with Unit type from labelled generic representation of types.
   *
   * @tparam L labelled generic representation of type fields
   */
