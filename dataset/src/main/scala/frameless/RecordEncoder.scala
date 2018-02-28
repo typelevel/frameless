@@ -46,6 +46,12 @@ object RecordEncoderFields {
     }
 }
 
+/**
+  * Assists the generation of constructor call parameters from a [[LabelledGeneric]] representation.
+  * As [[Unit]] typed fields were removed earlier, we need to put back [[()]] literals in the  appropriate positions.
+  *
+  * @tparam T labelled generic representation of type fields
+  */
 trait NewInstanceExprs[T <: HList] extends Serializable {
   def from(exprs: List[Expression]): Seq[Expression]
 }
@@ -73,6 +79,11 @@ object NewInstanceExprs {
     }
 }
 
+/**
+  * Drops fields with [[Unit]] type from [[LabelledGeneric]] representation of types.
+  *
+  * @tparam L labelled generic representation of type fields
+  */
 trait DropUnitValues[L <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 
 object DropUnitValues {
@@ -105,9 +116,9 @@ object DropUnitValues {
 
 class RecordEncoder[F, G <: HList, H <: HList]
   (implicit
-    lgen: LabelledGeneric.Aux[F, G],
-    nonUnitFields: DropUnitValues.Aux[G, H],
-    hasFields: IsHCons[H],
+    i0: LabelledGeneric.Aux[F, G],
+    i1: DropUnitValues.Aux[G, H],
+    i2: IsHCons[H],
     fields: Lazy[RecordEncoderFields[H]],
     newInstanceExprs: Lazy[NewInstanceExprs[G]],
     classTag: ClassTag[F]
