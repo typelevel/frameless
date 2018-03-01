@@ -67,8 +67,7 @@ abstract class AbstractTypedColumn[T, U]
 
   type ThisType[A, B] <: AbstractTypedColumn[A, B]
 
-  /** Fall back to an untyped Column
-    */
+  /** Fall back to an untyped Column */
   def untyped: Column = new Column(expr)
 
   private def equalsTo[TT, W](other: ThisType[TT, U])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] = typed {
@@ -76,17 +75,14 @@ abstract class AbstractTypedColumn[T, U]
     else EqualTo(self.expr, other.expr)
   }
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate from an expression.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate from an expression. */
   protected def typed[W, U1: TypedEncoder](e: Expression): ThisType[W, U1] =
     typed(new Column(e))
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate. */
   def typed[W, U1: TypedEncoder](c: Column): ThisType[W, U1]
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate. */
   def lit[U1: TypedEncoder](c: U1): ThisType[T, U1]
 
   /** Equality test.
@@ -285,8 +281,7 @@ abstract class AbstractTypedColumn[T, U]
   def *(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.multiply(u))
 
-  /**
-    * Division this expression by another expression.
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
@@ -298,8 +293,7 @@ abstract class AbstractTypedColumn[T, U]
   def divide[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystDivisible[U, Out], w: With.Aux[T, TT, W]): ThisType[W, Out] =
     typed(self.untyped.divide(other.untyped))
 
-  /**
-    * Division this expression by another expression.
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
@@ -311,8 +305,7 @@ abstract class AbstractTypedColumn[T, U]
   def /[Out, TT, W](other: ThisType[TT, U])(implicit n: CatalystDivisible[U, Out], e: TypedEncoder[Out], w: With.Aux[T, TT, W]): ThisType[W, Out] =
     divide(other)
 
-  /**
-    * Division this expression by another expression.
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / 2 )
@@ -338,8 +331,7 @@ abstract class AbstractTypedColumn[T, U]
   def asc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
     new SortedTypedColumn[T, U](untyped.asc)
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
     * }}}
@@ -350,8 +342,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseAND(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseAND(u))
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
     * }}}
@@ -362,8 +353,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseAND[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseAND(other.untyped))
 
-  /**
-    * Bitwise AND this expression and another expression (of same type).
+  /** Bitwise AND this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Int] & -1)
     * }}}
@@ -374,8 +364,7 @@ abstract class AbstractTypedColumn[T, U]
   def &(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseAND(u)
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) & (df.col('colB)))
     * }}}
@@ -386,8 +375,7 @@ abstract class AbstractTypedColumn[T, U]
   def &[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     bitwiseAND(other)
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
     * }}}
@@ -398,8 +386,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseOR(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseOR(u))
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
     * }}}
@@ -410,8 +397,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseOR[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseOR(other.untyped))
 
-  /**
-    * Bitwise OR this expression and another expression (of same type).
+  /** Bitwise OR this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Long] | 1L)
     * }}}
@@ -422,8 +408,7 @@ abstract class AbstractTypedColumn[T, U]
   def |(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseOR(u)
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) | (df.col('colB)))
     * }}}
@@ -434,8 +419,7 @@ abstract class AbstractTypedColumn[T, U]
   def |[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     bitwiseOR(other)
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
     * }}}
@@ -446,8 +430,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseXOR(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseXOR(u))
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
     * }}}
@@ -458,8 +441,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseXOR[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseXOR(other.untyped))
 
-  /**
-    * Bitwise XOR this expression and another expression (of same type).
+  /** Bitwise XOR this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Long] ^ 1L)
     * }}}
@@ -470,8 +452,7 @@ abstract class AbstractTypedColumn[T, U]
   def ^(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseXOR(u)
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) ^ (df.col('colB)))
     * }}}
@@ -490,21 +471,71 @@ abstract class AbstractTypedColumn[T, U]
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): ThisType[T, A] =
     typed(self.untyped.cast(TypedEncoder[A].catalystRepr))
 
-  /** Contains test.
+  /** String contains another string literal.
     * {{{
     *   df.filter ( df.col('a).contains("foo") )
     * }}}
+    *
+    * @param other a string that is being tested against.
+    * apache/spark
     */
   def contains(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
     typed(self.untyped.contains(other))
 
-  /** Contains test.
+  /** String contains.
     * {{{
     *   df.filter ( df.col('a).contains(df.col('b) )
     * }}}
+    *
+    * @param other a column which values is used as a string that is being tested against.
+    * apache/spark
     */
   def contains[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.contains(other.untyped))
+
+  /** String starts with another string literal.
+    * {{{
+    *   df.filter ( df.col('a).startsWith("foo")
+    * }}}
+    *
+    * @param other a prefix that is being tested against.
+    * apache/spark
+    */
+  def startsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.startsWith(other))
+
+  /** String starts with.
+    * {{{
+    *   df.filter ( df.col('a).startsWith(df.col('b))
+    * }}}
+    *
+    * @param other a column which values is used as a prefix that is being tested against.
+    * apache/spark
+    */
+  def startsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.startsWith(other.untyped))
+
+  /** String ends with another string literal.
+    * {{{
+    *   df.filter ( df.col('a).endsWith("foo")
+    * }}}
+    *
+    * @param other a suffix that is being tested against.
+    * apache/spark
+    */
+  def endsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.endsWith(other))
+
+  /** String ends with.
+    * {{{
+    *   df.filter ( df.col('a).endsWith(df.col('b))
+    * }}}
+    *
+    * @param other a column which values is used as a suffix that is being tested against.
+    * apache/spark
+    */
+  def endsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.endsWith(other.untyped))
 
   /** Boolean AND.
     * {{{
@@ -538,8 +569,7 @@ abstract class AbstractTypedColumn[T, U]
   def || [TT, W](other: ThisType[TT, Boolean])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     or(other)
 
-  /**
-    * Less than.
+  /** Less than.
     * {{{
     *   // The following selects people younger than the maxAge column.
     *   df.select( df('age) < df('maxAge) )
@@ -551,8 +581,7 @@ abstract class AbstractTypedColumn[T, U]
   def <[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped < other.untyped)
 
-  /**
-    * Less than or equal to.
+  /** Less than or equal to.
     * {{{
     *   // The following selects people younger or equal than the maxAge column.
     *   df.select( df('age) <= df('maxAge)
@@ -564,8 +593,7 @@ abstract class AbstractTypedColumn[T, U]
   def <=[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped <= other.untyped)
 
-  /**
-    * Greater than.
+  /** Greater than.
     * {{{
     *   // The following selects people older than the maxAge column.
     *   df.select( df('age) > df('maxAge) )
@@ -577,8 +605,7 @@ abstract class AbstractTypedColumn[T, U]
   def >[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped > other.untyped)
 
-  /**
-    * Greater than or equal.
+  /** Greater than or equal.
     * {{{
     *   // The following selects people older or equal than the maxAge column.
     *   df.select( df('age) >= df('maxAge) )
@@ -590,8 +617,7 @@ abstract class AbstractTypedColumn[T, U]
   def >=[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped >= other.untyped)
 
-  /**
-    * Less than.
+  /** Less than.
     * {{{
     *   // The following selects people younger than 21.
     *   df.select( df('age) < 21 )
@@ -603,8 +629,7 @@ abstract class AbstractTypedColumn[T, U]
   def <(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped < lit(u)(self.uencoder).untyped)
 
-  /**
-    * Less than or equal to.
+  /** Less than or equal to.
     * {{{
     *   // The following selects people younger than 22.
     *   df.select( df('age) <= 2 )
@@ -616,8 +641,7 @@ abstract class AbstractTypedColumn[T, U]
   def <=(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped <= lit(u)(self.uencoder).untyped)
 
-  /**
-    * Greater than.
+  /** Greater than.
     * {{{
     *   // The following selects people older than 21.
     *   df.select( df('age) > 21 )
@@ -629,8 +653,7 @@ abstract class AbstractTypedColumn[T, U]
   def >(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped > lit(u)(self.uencoder).untyped)
 
-  /**
-    * Greater than or equal.
+  /** Greater than or equal.
     * {{{
     *   // The following selects people older than 20.
     *   df.select( df('age) >= 21 )
@@ -681,9 +704,7 @@ object SortedTypedColumn {
 
 
 object TypedColumn {
-  /**
-    * Evidence that type `T` has column `K` with type `V`.
-    */
+  /** Evidence that type `T` has column `K` with type `V`. */
   @implicitNotFound(msg = "No column ${K} of type ${V} in ${T}")
   trait Exists[T, K, V]
 
