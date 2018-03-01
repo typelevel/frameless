@@ -24,6 +24,7 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[Int, Char, X2[Option[Country], Country], Int] _))
     check(forAll(prop[X2[Int, Int], Int, Boolean, Vector[Food]] _))
     check(forAll(prop[String, Food, X3[Food, Country, Boolean], Int] _))
+    check(forAll(prop[String, Food, X3U[Food, Country, Boolean], Int] _))
     check(forAll(prop[
       Option[Vector[Food]],
       Vector[Vector[X2[Vector[(Person, X1[Char])], Country]]],

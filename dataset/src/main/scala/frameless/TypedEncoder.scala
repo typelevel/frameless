@@ -9,6 +9,8 @@ import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
+import shapeless.ops.hlist.IsHCons
+
 import scala.reflect.ClassTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
@@ -399,13 +401,16 @@ object TypedEncoder {
         }
       }
 
-  /** Encodes things as records if there is not Injection defined */
-  implicit def usingDerivation[F, G <: HList]
+  /** Encodes things as records if there is no Injection defined */
+  implicit def usingDerivation[F, G <: HList, H <: HList]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
-      i1: Lazy[RecordEncoderFields[G]],
-      i2: ClassTag[F]
-    ): TypedEncoder[F] = new RecordEncoder[F, G]
+      i1: DropUnitValues.Aux[G, H],
+      i2: IsHCons[H],
+      i3: Lazy[RecordEncoderFields[H]],
+      i4: Lazy[NewInstanceExprs[G]],
+      i5: ClassTag[F]
+    ): TypedEncoder[F] = new RecordEncoder[F, G, H]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {

@@ -65,6 +65,7 @@ class UdfTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int, Int] _))
     check(forAll(prop[String, Int, Int] _))
     check(forAll(prop[X3[Int, String, Boolean], Int, Int] _))
+    check(forAll(prop[X3U[Int, String, Boolean], Int, Int] _))
   }
 
   test("two argument udf") {
