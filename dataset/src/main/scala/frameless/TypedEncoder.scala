@@ -401,7 +401,7 @@ object TypedEncoder {
         }
       }
 
-  /** Encodes things as records if there is not Injection defined */
+  /** Encodes things as records if there is no Injection defined */
   implicit def usingDerivation[F, G <: HList, H <: HList]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
