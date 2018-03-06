@@ -471,6 +471,31 @@ abstract class AbstractTypedColumn[T, U]
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): ThisType[T, A] =
     typed(self.untyped.cast(TypedEncoder[A].catalystRepr))
 
+  /**
+    * An expression that returns a substring
+    * {{{
+    *   df.select(df('a).substr(0, 5))
+    * }}}
+    *
+    * @param startPos starting position
+    * @param len length of the substring
+    */
+  def substr(startPos: Int, len: Int)(implicit ev: U =:= String): ThisType[T, String] =
+    typed(self.untyped.substr(startPos, len))
+
+  /**
+    * An expression that returns a substring
+    * {{{
+    *   df.select(df('a).substr(df('b), df('c)))
+    * }}}
+    *
+    * @param startPos expression for the starting position
+    * @param len expression for the length of the substring
+    */
+  def substr[TT, W](startPos: ThisType[TT, Int], len: ThisType[TT, Int])
+                   (implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, String] =
+    typed(self.untyped.substr(startPos.untyped, len.untyped))
+
   /** String contains another string literal.
     * {{{
     *   df.filter ( df.col('a).contains("foo") )
