@@ -77,6 +77,59 @@ class ColumnTests extends TypedDatasetSuite {
     }
   }
 
+  test("substr") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: Int, c: Int) =>
+        val ds = TypedDataset.create(X3(a, b, c) :: Nil)
+
+        val typedSubstr = ds
+          .select(ds('a).substr(ds('b), ds('c)))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedSubstr = untypedDs
+          .select(untypedDs("a").substr(untypedDs("b"), untypedDs("c")))
+          .as[String]
+          .collect()
+          .toList
+
+        typedSubstr ?= untypedSubstr
+      }
+    }
+
+    check {
+      forAll { (a: String, b: Int, c: Int) =>
+        val ds = TypedDataset.create(X1(a) :: Nil)
+
+        val typedSubstr = ds
+          .select(ds('a).substr(b, c))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedSubstr = untypedDs
+          .select(untypedDs("a").substr(b, c))
+          .as[String]
+          .collect()
+          .toList
+
+        typedSubstr ?= untypedSubstr
+      }
+    }
+
+    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds1.select(ds1('_1).substr(0, 5))""")
+    illTyped("""ds1.select(ds1('_2).substr(0, 5))""")
+    illTyped("""ds1.select(ds1('_3).substr(0, 5))""")
+    illTyped("""ds1.select(ds1('_1).substr(ds1('_2), ds1('_3)))""")
+  }
+
   test("contains") {
     val spark = session
     import spark.implicits._
