@@ -173,7 +173,7 @@ class RecordEncoder[F, G <: HList, H <: HList]
 
       val nullExpr = Literal.create(null, jvmRepr)
       val newArgs = newInstanceExprs.value.from(exprs)
-      val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = false)
+      val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
       If(IsNull(path), nullExpr, newExpr)
     }
 }
