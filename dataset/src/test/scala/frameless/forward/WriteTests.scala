@@ -52,11 +52,11 @@ class WriteTests extends TypedDatasetSuite {
 
       dataset.collect().run().groupBy(identity) ?= input.collect().run().groupBy(identity)
     }
+
     check(forAll(Gen.listOf(genWriteExample))(prop[WriteExample]))
-
   }
-
 }
+
 case class Nested(i: Double, v: String)
 case class OptionFieldsOnly(o1: Option[Int], o2: Option[Nested])
 case class WriteExample(i: Int, s: String, on: Option[Nested], ooo: Option[OptionFieldsOnly])
