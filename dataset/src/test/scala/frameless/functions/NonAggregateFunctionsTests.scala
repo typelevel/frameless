@@ -1,6 +1,8 @@
 package frameless
 package functions
 
+import java.io.File
+
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => untyped}
