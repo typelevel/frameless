@@ -1,5 +1,7 @@
 package frameless
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
 import org.scalatest.Matchers
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
@@ -11,6 +13,8 @@ case class TupleWithUnits(u0: Unit, _1: Int, u1: Unit, u2: Unit, _2: String, u3:
 object TupleWithUnits {
   def apply(_1: Int, _2: String): TupleWithUnits = TupleWithUnits((), _1, (), (), _2, ())
 }
+
+case class OptionalNesting(o: Option[TupleWithUnits])
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
@@ -34,5 +38,19 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     df.collect shouldEqual tds.toDF.collect
     ds.collect.toSeq shouldEqual tds.collect.run
+  }
+
+  test("Empty nested record value becomes null on serialization") {
+    val ds = TypedDataset.create(Seq(OptionalNesting(Option.empty)))
+    val df = ds.toDF
+    df.na.drop.count shouldBe 0
+  }
+
+  test("Empty nested record value becomes none on deserialization") {
+    val rdd = sc.parallelize(Seq(Row(null)))
+    val schema = TypedEncoder[OptionalNesting].catalystRepr.asInstanceOf[StructType]
+    val df = session.createDataFrame(rdd, schema)
+    val ds = TypedDataset.createUnsafe(df)(TypedEncoder[OptionalNesting])
+    assert(ds.firstOption.run.get.o.isEmpty)
   }
 }

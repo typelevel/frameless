@@ -155,7 +155,9 @@ class RecordEncoder[F, G <: HList, H <: HList]
         case (nameExpr, valueExpr) => nameExpr :: valueExpr :: Nil
       }
 
-      CreateNamedStruct(exprs)
+      val nullExpr = Literal.create(null, catalystRepr)
+      val createExpr = CreateNamedStruct(exprs)
+      If(IsNull(path), nullExpr, createExpr)
     }
 
     def fromCatalyst(path: Expression): Expression = {
@@ -169,6 +171,9 @@ class RecordEncoder[F, G <: HList, H <: HList]
         field.encoder.fromCatalyst(fieldPath)
       }
 
-      NewInstance(classTag.runtimeClass, newInstanceExprs.value.from(exprs), jvmRepr, propagateNull = true)
+      val nullExpr = Literal.create(null, jvmRepr)
+      val newArgs = newInstanceExprs.value.from(exprs)
+      val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = false)
+      If(IsNull(path), nullExpr, newExpr)
     }
 }
