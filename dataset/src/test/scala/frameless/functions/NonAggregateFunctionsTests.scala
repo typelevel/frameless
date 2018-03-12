@@ -1126,34 +1126,160 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     //check(forAll(prop[Option[Vector[Boolean]], Long] _))
   }
 
+  def propYear(typedDS: TypedDataset[X1[String]])
+    (typedCol: TypedColumn[X1[String], Option[Int]], sparkFunc: Column => Column): Prop = {
+      val spark = session
+      import spark.implicits._
+
+      val nullHandler: Row => Option[Int] = _.get(0) match {
+        case i: Int => Some(i)
+        case _ => None
+      }
+
+      val sparkResult = typedDS.dataset
+        .select(sparkFunc($"a"))
+        .map(nullHandler)
+        .collect()
+        .toList
+
+      val typed = typedDS
+        .select(typedCol)
+        .collect()
+        .run()
+        .toList
+
+      typed ?= sparkResult
+  }
+
   test("year") {
     val spark = session
     import spark.implicits._
 
-    val nullHandler: Row => Option[Int] = _.get(0) match {
-      case i: Int => Some(i)
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(year(ds[String]('a)), untyped.year)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("dayofyear") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(dayofyear(ds[String]('a)), untyped.dayofyear)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("weekofyear") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(weekofyear(ds[String]('a)), untyped.weekofyear)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("month") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(month(ds[String]('a)), untyped.month)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("dayofmonth") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(dayofmonth(ds[String]('a)), untyped.dayofmonth)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("minute") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(minute(ds[String]('a)), untyped.minute)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("second") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      propYear(ds)(second(ds[String]('a)), untyped.second)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("next_day") {
+    val spark = session
+    import spark.implicits._
+
+    val weekDays = List(
+      "SU", "SUN", "SUNDAY",
+      "MO", "MON", "MONDAY",
+      "TU", "TUE", "TUESDAY",
+      "WE", "WED", "WEDNESDAY",
+      "TH", "THU", "THURSDAY",
+      "FR", "FRI", "FRIDAY",
+      "SA", "SAT", "SATURDAY"
+    )
+
+    val nullHandler: Row => Option[java.sql.Date] = _.get(0) match {
+      case d: java.sql.Date => Some(d)
       case _ => None
     }
 
-    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
-        val ds = TypedDataset.create(data)
+    def prop(data: List[X1[String]], dayOfWeek: String)(implicit E: Encoder[Option[java.sql.Date]]): Prop = {
+      val typedDS = TypedDataset.create(data)
 
-        val sparkResult = ds.toDF()
-          .select(untyped.year($"a"))
-          .map(nullHandler)
-          .collect()
-          .toList
+      val sparkResult = typedDS.toDF()
+        .select(untyped.next_day($"a", dayOfWeek))
+        .map(nullHandler)
+        .collect()
+        .toList
 
-        val typed = ds
-          .select(year(ds[String]('a)))
-          .collect()
-          .run()
-          .toList
+      val typed = typedDS
+        .select(next_day(typedDS[String]('a), dayOfWeek))
+        .collect()
+        .run()
+        .toList
 
-        typed ?= sparkResult
-      }
+      typed ?= sparkResult
+    }
 
-    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(dateTimeStringGen, Gen.oneOf(weekDays))((data, dayOfWeek) => prop(data.map(X1.apply), dayOfWeek)))
     check(forAll(prop _))
   }
 }

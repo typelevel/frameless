@@ -380,10 +380,95 @@ trait NonAggregateFunctions {
 
   /** Non-Aggregate function: Extracts the year as an integer from a given date/timestamp/string.
     *
-    * Differs from `Column#year` by wrapping it's result into an `Option`.
+    * Differs from `Column#year` by wrapping it's result into an `Option` in case column
+    * cannot be parsed into valid date.
     *
     * apache/spark
     */
-  def year[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
-    str.typed(untyped.year(str.untyped))
+  def year[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.year(date.untyped))
+
+  /** Non-Aggregate function: Extracts the day of the year as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#dayofyear` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def dayofyear[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.dayofyear(date.untyped))
+
+  /** Non-Aggregate function: Extracts the week number as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#weekofyear` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def weekofyear[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.weekofyear(date.untyped))
+
+  /** Non-Aggregate function: Extracts the month as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#month` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def month[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.month(date.untyped))
+
+  /** Non-Aggregate function: Extracts the month as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#dayofmonth` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def dayofmonth[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.dayofmonth(date.untyped))
+
+  /** Non-Aggregate function: Extracts the minutes as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#minute` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def minute[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.minute(date.untyped))
+
+  /** Non-Aggregate function: Extracts the seconds as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#second` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def second[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
+    date.typed(untyped.second(date.untyped))
+
+  /**
+    * Non-Aggregate function: Given a date column, returns the first date which is later than the value
+    * of the date column that is on the specified day of the week.
+    *
+    * For example, `next_day('2015-07-27', "Sunday")` returns 2015-08-02 because that is the first
+    * Sunday after 2015-07-27.
+    *
+    * Day of the week parameter is case insensitive, and accepts:
+    * "Su", "Sun", "Sunday",
+    * "Mo", "Mon", "Monday",
+    * "Tu", "Tue", "Tuesday",
+    * "We", "Wed", "Wednesday",
+    * "Th", "Thu", "Thursday",
+    * "Fr", "Fri", "Friday",
+    * "Sa", "Sat", "Saturday".
+    *
+    * Differs from `Column#next_day` by wrapping it's result into an `Option` in case the column
+    * cannot be parsed into valid date.
+    *
+    * apache/spark
+    */
+  def next_day[T](date: AbstractTypedColumn[T, String], dayOfWeek: String): date.ThisType[T, Option[java.sql.Date]] =
+    date.typed(untyped.next_day(date.untyped, dayOfWeek))
 }
