@@ -17,6 +17,66 @@ trait NonAggregateFunctions {
     ): column.ThisType[T, B] =
       column.typed(untyped.abs(column.untyped))(i1)
 
+  /** Non-Aggregate function: Computes the cosine of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def cos[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.cos(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the hyperbolic cosine of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def cosh[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.cosh(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the sine of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def sin[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.sin(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the hyperbolic sine of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def sinh[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.sinh(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the tangent of the given column.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def tan[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.tan(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the hyperbolic tangent of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def tanh[A, T](column: AbstractTypedColumn[T, A])
+    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+      column.typed(untyped.tanh(column.cast[Double].untyped))
+
   /** Non-Aggregate function: returns the acos of a numeric column
     *
     * Spark will expect a Double value for this expression. See:

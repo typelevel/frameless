@@ -5,7 +5,7 @@ import java.io.File
 
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Encoder, Row, SaveMode, functions => untyped}
+import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => untyped}
 import org.scalacheck.Prop._
 import org.scalacheck.{Gen, Prop}
 
@@ -82,24 +82,19 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
-  test("acos") {
-    val spark = session
-    import spark.implicits._
+  def propTrigonometric[A: CatalystNumeric: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
+    (typedCol: TypedColumn[X1[A], Double], sparkFunc: Column => Column): Prop = {
+      val spark = session
+      import spark.implicits._
 
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
-    (values: List[X1[A]])
-    (implicit encX1:Encoder[X1[A]])
-    = {
-      val cDS = session.createDataset(values)
-      val resCompare = cDS
-        .select(org.apache.spark.sql.functions.acos(cDS("a")))
+      val resCompare = typedDS.dataset
+        .select(sparkFunc($"a"))
         .map(_.getAs[Double](0))
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect().toList
 
-      val typedDS = TypedDataset.create(values)
       val res = typedDS
-        .select(acos(typedDS('a)))
+        .select(typedCol)
         .deserialized
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect()
@@ -107,6 +102,142 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toList
 
       res ?= resCompare
+  }
+
+  test("cos") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(cos(typedDS('a)), untyped.cos)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("cosh") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(cosh(typedDS('a)), untyped.cosh)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("acos") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(acos(typedDS('a)), untyped.acos)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("sin") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(sin(typedDS('a)), untyped.sin)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("sinh") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(sinh(typedDS('a)), untyped.sinh)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("asin") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(asin(typedDS('a)), untyped.asin)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("tan") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(tan(typedDS('a)), untyped.tan)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("tanh") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+      (implicit encX1:Encoder[X1[A]]) = {
+        val typedDS = TypedDataset.create(values)
+        propTrigonometric(typedDS)(tanh(typedDS('a)), untyped.tanh)
     }
 
     check(forAll(prop[Int] _))
@@ -245,40 +376,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       ).first()
 
       (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
-    }
-
-    check(forAll(prop[Int] _))
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Short] _))
-    check(forAll(prop[BigDecimal] _))
-    check(forAll(prop[Byte] _))
-    check(forAll(prop[Double] _))
-  }
-
-  test("asin") {
-    val spark = session
-    import spark.implicits._
-
-    def prop[A: CatalystNumeric : TypedEncoder : Encoder]
-    (values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
-      val cDS = session.createDataset(values)
-      val resCompare = cDS
-        .select(untyped.asin(cDS("a")))
-        .map(_.getAs[Double](0))
-        .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
-
-
-      val typedDS = TypedDataset.create(cDS)
-      val res = typedDS
-        .select(asin(typedDS('a)))
-        .deserialized
-        .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect()
-        .run()
-        .toList
-
-      res ?= resCompare
     }
 
     check(forAll(prop[Int] _))
