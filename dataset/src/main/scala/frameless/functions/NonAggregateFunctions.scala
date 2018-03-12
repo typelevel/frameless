@@ -418,7 +418,7 @@ trait NonAggregateFunctions {
   def month[T](date: AbstractTypedColumn[T, String]): date.ThisType[T, Option[Int]] =
     date.typed(untyped.month(date.untyped))
 
-  /** Non-Aggregate function: Extracts the month as an integer from a given date/timestamp/string.
+  /** Non-Aggregate function: Extracts the day of the month as an integer from a given date/timestamp/string.
     *
     * Differs from `Column#dayofmonth` by wrapping it's result into an `Option` in case the column
     * cannot be parsed into valid date.
