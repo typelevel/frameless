@@ -43,7 +43,6 @@ class WriteTests extends TypedDatasetSuite {
 
   test("write parquet") {
     def prop[A: TypedEncoder](data: List[A]): Prop = {
-
       val filePath = s"$TEST_OUTPUT_DIR/${UUID.randomUUID()}"
       val input = TypedDataset.create(data)
       input.write.parquet(filePath)
