@@ -434,12 +434,32 @@ trait NonAggregateFunctions {
 
   /** Non-Aggregate function: Computes the square root of the specified float value.
     *
-    * Differs from `Column#year` by wrapping it's result into an `Option`.
-    *
     * apache/spark
     */
   def sqrt[A, T](col: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): col.ThisType[T, Double] =
     col.typed(untyped.sqrt(col.cast[Double].untyped))
+
+  /** Non-Aggregate function: Returns the double value that is closest in value to the argument and
+    * is equal to a mathematical integer.
+    *
+    * apache/spark
+    */
+  def rint[A, T](col: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): col.ThisType[T, Double] =
+    col.typed(untyped.rint(col.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the exponential of the given value.
+    *
+    * apache/spark
+    */
+  def exp[A, T](col: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): col.ThisType[T, Double] =
+    col.typed(untyped.exp(col.cast[Double].untyped))
+
+  /** Non-Aggregate function: Computes the exponential of the given value minus one.
+    *
+    * apache/spark
+    */
+  def expm1[A, T](col: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): col.ThisType[T, Double] =
+    col.typed(untyped.expm1(col.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the natural logarithm of the given value.
     *
