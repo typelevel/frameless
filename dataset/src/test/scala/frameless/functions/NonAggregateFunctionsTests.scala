@@ -82,26 +82,48 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
-  def propTrigonometric[A: CatalystNumeric: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
-    (typedCol: TypedColumn[X1[A], Double], sparkFunc: Column => Column): Prop = {
-      val spark = session
-      import spark.implicits._
+  def propDoubleArithmetic1[A: CatalystNumeric: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
+                                                                       (typedCol: TypedColumn[X1[A], Double], sparkFunc: Column => Column): Prop = {
+    val spark = session
+    import spark.implicits._
 
-      val resCompare = typedDS.dataset
-        .select(sparkFunc($"a"))
-        .map(_.getAs[Double](0))
-        .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect().toList
+    val resCompare = typedDS.dataset
+      .select(sparkFunc($"a"))
+      .map(_.getAs[Double](0))
+      .map(DoubleBehaviourUtils.nanNullHandler)
+      .collect().toList
 
-      val res = typedDS
-        .select(typedCol)
-        .deserialized
-        .map(DoubleBehaviourUtils.nanNullHandler)
-        .collect()
-        .run()
-        .toList
+    val res = typedDS
+      .select(typedCol)
+      .deserialized
+      .map(DoubleBehaviourUtils.nanNullHandler)
+      .collect()
+      .run()
+      .toList
 
-      res ?= resCompare
+    res ?= resCompare
+  }
+
+  def propDoubleArithmetic2[A: CatalystNumeric: TypedEncoder : Encoder](typedDS: TypedDataset[X2[A, A]])
+                                                                       (typedCol: TypedColumn[X2[A, A], Double], sparkFunc: (Column, Column) => Column): Prop = {
+    val spark = session
+    import spark.implicits._
+
+    val resCompare = typedDS.dataset
+      .select(sparkFunc($"a", $"b"))
+      .map(_.getAs[Double](0))
+      .map(DoubleBehaviourUtils.nanNullHandler)
+      .collect().toList
+
+    val res = typedDS
+      .select(typedCol)
+      .deserialized
+      .map(DoubleBehaviourUtils.nanNullHandler)
+      .collect()
+      .run()
+      .toList
+
+    res ?= resCompare
   }
 
   test("cos") {
@@ -111,7 +133,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(cos(typedDS('a)), untyped.cos)
+        propDoubleArithmetic1(typedDS)(cos(typedDS('a)), untyped.cos)
     }
 
     check(forAll(prop[Int] _))
@@ -129,7 +151,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(cosh(typedDS('a)), untyped.cosh)
+        propDoubleArithmetic1(typedDS)(cosh(typedDS('a)), untyped.cosh)
     }
 
     check(forAll(prop[Int] _))
@@ -147,7 +169,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(acos(typedDS('a)), untyped.acos)
+        propDoubleArithmetic1(typedDS)(acos(typedDS('a)), untyped.acos)
     }
 
     check(forAll(prop[Int] _))
@@ -165,7 +187,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(sin(typedDS('a)), untyped.sin)
+        propDoubleArithmetic1(typedDS)(sin(typedDS('a)), untyped.sin)
     }
 
     check(forAll(prop[Int] _))
@@ -183,7 +205,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(sinh(typedDS('a)), untyped.sinh)
+        propDoubleArithmetic1(typedDS)(sinh(typedDS('a)), untyped.sinh)
     }
 
     check(forAll(prop[Int] _))
@@ -201,7 +223,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(asin(typedDS('a)), untyped.asin)
+        propDoubleArithmetic1(typedDS)(asin(typedDS('a)), untyped.asin)
     }
 
     check(forAll(prop[Int] _))
@@ -219,7 +241,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(tan(typedDS('a)), untyped.tan)
+        propDoubleArithmetic1(typedDS)(tan(typedDS('a)), untyped.tan)
     }
 
     check(forAll(prop[Int] _))
@@ -237,7 +259,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
       (implicit encX1:Encoder[X1[A]]) = {
         val typedDS = TypedDataset.create(values)
-        propTrigonometric(typedDS)(tanh(typedDS('a)), untyped.tanh)
+        propDoubleArithmetic1(typedDS)(tanh(typedDS('a)), untyped.tanh)
     }
 
     check(forAll(prop[Int] _))
@@ -1155,5 +1177,103 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
     check(forAll(prop _))
+  }
+
+  test("pow") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X2[A, A]])
+                                                         (implicit encX2:Encoder[X2[A, A]]) = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic2(typedDS)(pow(typedDS('a), typedDS('b)), untyped.pow)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
+
+  test("sqrt") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])
+                                                         (implicit encX1:Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic1(typedDS)(sqrt(typedDS('a)), untyped.sqrt)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
+
+  test("log") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: Vector[X1[A]])(implicit ev: CatalystCast[A, Double]): Prop = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic1(typedDS)(log(typedDS('a)), untyped.log)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
+
+  test("log2") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: Vector[X1[A]])(implicit ev: CatalystCast[A, Double]): Prop = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic1(typedDS)(log2(typedDS('a)), untyped.log2)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
+
+  test("log1p") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: Vector[X1[A]])(implicit ev: CatalystCast[A, Double]): Prop = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic1(typedDS)(log1p(typedDS('a)), untyped.log1p)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
+  }
+
+  test("log10") {
+    val spark = session
+    import spark.implicits._
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: Vector[X1[A]])(implicit ev: CatalystCast[A, Double]): Prop = {
+      val typedDS = TypedDataset.create(values)
+      propDoubleArithmetic1(typedDS)(log10(typedDS('a)), untyped.log10)
+    }
+
+    check(prop[BigDecimal] _)
+    check(prop[Byte] _)
+    check(prop[Double] _)
+    check(prop[Int] _)
+    check(prop[Long] _)
+    check(prop[Short] _)
   }
 }
