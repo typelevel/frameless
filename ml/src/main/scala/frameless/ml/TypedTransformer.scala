@@ -18,7 +18,7 @@ sealed trait TypedTransformer
 trait AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer] extends TypedTransformer {
   val transformer: InnerTransformer
 
-  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out, F[_]](ds: TypedDataset[T])(
+  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out](ds: TypedDataset[T])(
     implicit
     i0: SmartProject[T, Inputs],
     i1: Generic.Aux[T, TVals],
