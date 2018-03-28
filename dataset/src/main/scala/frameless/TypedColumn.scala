@@ -71,7 +71,7 @@ abstract class AbstractTypedColumn[T, U]
   def untyped: Column = new Column(expr)
 
   private def equalsTo[TT, W](other: ThisType[TT, U])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] = typed {
-    if (uencoder.nullable && uencoder.catalystRepr.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    if (uencoder.nullable) EqualNullSafe(self.expr, other.expr)
     else EqualTo(self.expr, other.expr)
   }
 
