@@ -51,6 +51,15 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val schema = TypedEncoder[OptionalNesting].catalystRepr.asInstanceOf[StructType]
     val df = session.createDataFrame(rdd, schema)
     val ds = TypedDataset.createUnsafe(df)(TypedEncoder[OptionalNesting])
-    assert(ds.firstOption.run.get.o.isEmpty)
+    ds.firstOption.run.get.o.isEmpty shouldBe true
+  }
+
+  test("Deeply nested optional values have correct deserialization") {
+    val rdd = sc.parallelize(Seq(Row(true, Row(null, null))))
+    type NestedOptionPair = X2[Boolean, Option[X2[Option[Int], Option[String]]]]
+    val schema = TypedEncoder[NestedOptionPair].catalystRepr.asInstanceOf[StructType]
+    val df = session.createDataFrame(rdd, schema)
+    val ds = TypedDataset.createUnsafe(df)(TypedEncoder[NestedOptionPair])
+    ds.firstOption.run.get shouldBe X2(true, Some(X2(None, None)))
   }
 }
