@@ -120,7 +120,8 @@ case class FramelessUdf[T, R](
     val code = CodeFormatter.stripOverlappingComments(
       new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
 
-    val codegen = CodeGenerator.compile(code)._1.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
+    val (clazz, _) = CodeGenerator.compile(code)
+    val codegen = clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
     codegen(input)
   }
@@ -133,15 +134,14 @@ case class FramelessUdf[T, R](
     val internalTerm = ctx.freshName("internal")
     val internalNullTerm = ctx.freshName("internalNull")
     val internalTpe = ctx.boxedType(rencoder.jvmRepr)
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
 
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
     val funcTerm = ctx.freshName("udf")
     val funcExpressionIdx = ctx.references.size - 1
-    ctx.addMutableState(funcClassName, funcTerm,
-      _ => s"this.$funcTerm = ($funcClassName)((($framelessUdfClassName)references" +
+    val funcTermRef = ctx.addMutableState(funcClassName, funcTerm,
+      v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
@@ -154,17 +154,18 @@ case class FramelessUdf[T, R](
         (convert, argTerm)
     }.unzip
 
-    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
+    val internalTermRef = ctx.addMutableState(internalTpe, internalTerm, v => s"$v = null;")
+    val internalNullTermRef = ctx.addMutableState("boolean", internalNullTerm, v => s"$v = false;")
+    val internalExpr = LambdaVariable(internalTermRef, internalNullTermRef, rencoder.jvmRepr)
 
-    ctx.addMutableState(internalTpe, internalTerm, _ => "")
-    ctx.addMutableState("boolean", internalNullTerm, _ => "")
+    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
     ev.copy(code = s"""
       ${argsCode.mkString("\n")}
 
-      $internalTerm =
-        ($internalTpe)$funcTerm.apply(${funcArguments.mkString(", ")});
-      $internalNullTerm = $internalTerm == null;
+      $internalTermRef =
+        ($internalTpe)$funcTermRef.apply(${funcArguments.mkString(", ")});
+      $internalNullTermRef = $internalTermRef == null;
 
       ${resultEval.code}
       """,
