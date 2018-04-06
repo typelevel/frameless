@@ -135,7 +135,7 @@ case class FramelessUdf[T, R](
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
     val funcExpressionIdx = ctx.references.size - 1
-    val funcTermRef = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
+    val funcTerm = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
       v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
@@ -160,7 +160,7 @@ case class FramelessUdf[T, R](
       ${argsCode.mkString("\n")}
 
       $internalTerm =
-        ($internalTpe)$funcTermRef.apply(${funcArguments.mkString(", ")});
+        ($internalTpe)$funcTerm.apply(${funcArguments.mkString(", ")});
       $internalNullTerm = $internalTerm == null;
 
       ${resultEval.code}
