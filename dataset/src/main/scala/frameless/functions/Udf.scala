@@ -120,7 +120,7 @@ case class FramelessUdf[T, R](
     val code = CodeFormatter.stripOverlappingComments(
       new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
 
-    val codegen = CodeGenerator.compile(code).generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
+    val codegen = CodeGenerator.compile(code)._1.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
     codegen(input)
   }
@@ -141,7 +141,7 @@ case class FramelessUdf[T, R](
     val funcTerm = ctx.freshName("udf")
     val funcExpressionIdx = ctx.references.size - 1
     ctx.addMutableState(funcClassName, funcTerm,
-      s"this.$funcTerm = ($funcClassName)((($framelessUdfClassName)references" +
+      _ => s"this.$funcTerm = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
@@ -156,8 +156,8 @@ case class FramelessUdf[T, R](
 
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
-    ctx.addMutableState(internalTpe, internalTerm, "")
-    ctx.addMutableState("boolean", internalNullTerm, "")
+    ctx.addMutableState(internalTpe, internalTerm, _ => "")
+    ctx.addMutableState("boolean", internalNullTerm, _ => "")
 
     ev.copy(code = s"""
       ${argsCode.mkString("\n")}

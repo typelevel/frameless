@@ -40,7 +40,7 @@ case class FramelessLit[A](obj: A, encoder: TypedEncoder[A]) extends Expression 
     val code = CodeFormatter.stripOverlappingComments(
       new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
 
-    val codegen = CodeGenerator.compile(code).generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
+    val codegen = CodeGenerator.compile(code)._1.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
     codegen(input)
   }
