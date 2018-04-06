@@ -131,16 +131,11 @@ case class FramelessUdf[T, R](
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
 
-    val internalTerm = ctx.freshName("internal")
-    val internalNullTerm = ctx.freshName("internalNull")
-    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
-
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
-    val funcTerm = ctx.freshName("udf")
     val funcExpressionIdx = ctx.references.size - 1
-    val funcTermRef = ctx.addMutableState(funcClassName, funcTerm,
+    val funcTermRef = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
       v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
@@ -154,18 +149,19 @@ case class FramelessUdf[T, R](
         (convert, argTerm)
     }.unzip
 
-    val internalTermRef = ctx.addMutableState(internalTpe, internalTerm, v => s"$v = null;")
-    val internalNullTermRef = ctx.addMutableState("boolean", internalNullTerm, v => s"$v = false;")
-    val internalExpr = LambdaVariable(internalTermRef, internalNullTermRef, rencoder.jvmRepr)
+    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
+    val internalTerm = ctx.addMutableState(internalTpe, ctx.freshName("internal"))
+    val internalNullTerm = ctx.addMutableState("boolean", ctx.freshName("internalNull"))
+    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
 
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
     ev.copy(code = s"""
       ${argsCode.mkString("\n")}
 
-      $internalTermRef =
+      $internalTerm =
         ($internalTpe)$funcTermRef.apply(${funcArguments.mkString(", ")});
-      $internalNullTermRef = $internalTermRef == null;
+      $internalNullTerm = $internalTerm == null;
 
       ${resultEval.code}
       """,
