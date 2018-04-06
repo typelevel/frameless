@@ -2,7 +2,7 @@ package frameless
 
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
-import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, Literal}
+import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If, Literal}
 import org.apache.spark.sql.types.StructType
 
 object TypedExpressionEncoder {
@@ -27,7 +27,7 @@ object TypedExpressionEncoder {
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
     val (out, toRowExpressions) = encoder.toCatalyst(in) match {
-      case x: CreateNamedStruct =>
+      case If(_, _, x: CreateNamedStruct) =>
         val out = BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
         (out, x.flatten)
