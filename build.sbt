@@ -96,6 +96,7 @@ lazy val framelessSettings = Seq(
 )
 
 lazy val commonScalacOptions = Seq(
+  "-target:jvm-1.8", 
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
