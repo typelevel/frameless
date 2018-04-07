@@ -120,7 +120,8 @@ case class FramelessUdf[T, R](
     val code = CodeFormatter.stripOverlappingComments(
       new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
 
-    val codegen = CodeGenerator.compile(code).generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
+    val (clazz, _) = CodeGenerator.compile(code)
+    val codegen = clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
     codegen(input)
   }
@@ -130,18 +131,12 @@ case class FramelessUdf[T, R](
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
 
-    val internalTerm = ctx.freshName("internal")
-    val internalNullTerm = ctx.freshName("internalNull")
-    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
-
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
-    val funcTerm = ctx.freshName("udf")
     val funcExpressionIdx = ctx.references.size - 1
-    ctx.addMutableState(funcClassName, funcTerm,
-      s"this.$funcTerm = ($funcClassName)((($framelessUdfClassName)references" +
+    val funcTerm = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
+      v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
@@ -154,10 +149,12 @@ case class FramelessUdf[T, R](
         (convert, argTerm)
     }.unzip
 
-    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
+    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
+    val internalTerm = ctx.addMutableState(internalTpe, ctx.freshName("internal"))
+    val internalNullTerm = ctx.addMutableState("boolean", ctx.freshName("internalNull"))
+    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
 
-    ctx.addMutableState(internalTpe, internalTerm, "")
-    ctx.addMutableState("boolean", internalNullTerm, "")
+    val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
     ev.copy(code = s"""
       ${argsCode.mkString("\n")}
