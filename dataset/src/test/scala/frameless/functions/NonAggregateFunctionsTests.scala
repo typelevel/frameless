@@ -314,8 +314,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
     check(
       forAll(
-        Gen.listOfN(listLength, Gen.choose(0,100)),
-        Gen.oneOf(true,false)
+        Gen.listOfN(listLength, Gen.choose(0, 100)),
+        Gen.oneOf(true, false)
       )
       (prop[List])
     )
@@ -1112,7 +1112,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
   test("Empty vararg tests") {
     import frameless.functions.aggregate._
-    def prop[A : TypedEncoder, B: TypedEncoder](data: Vector[X2[A, B]]) = {
+    def prop[A: TypedEncoder, B: TypedEncoder](data: Vector[X2[A, B]]) = {
       val ds = TypedDataset.create(data)
       val frameless = ds.select(ds('a), concat(), ds('b), concatWs(":")).collect().run().toVector
       val framelessAggr = ds.agg(first(ds('a)), concat(), concatWs("x"), litAggr(2)).collect().run().toVector
@@ -1261,7 +1261,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       case _ => None
     }
 
-    def prop(data: List[X1[String]], dayOfWeek: String)(implicit E: Encoder[Option[java.sql.Date]]): Prop = {
+    def prop(data: List[X1[String]], dayOfWeek: String)(implicit E: TypedEncoder[Option[java.sql.Date]]): Prop = {
       val typedDS = TypedDataset.create(data)
 
       val sparkResult = typedDS.toDF()

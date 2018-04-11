@@ -5,7 +5,7 @@ import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
@@ -187,6 +187,25 @@ object TypedEncoder {
         dataType = jvmRepr,
         functionName = "apply",
         arguments = path :: Nil,
+        propagateNull = true
+      )
+  }
+
+  implicit val javaSqlDate: TypedEncoder[java.sql.Date] = new TypedEncoder[java.sql.Date] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.sql.Date]
+
+    def catalystRepr: DataType = DateType
+
+    def toCatalyst(path: Expression): Expression = path
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        DateTimeUtils.getClass,
+        ObjectType(classOf[java.sql.Date]),
+        "toJavaDate",
+        path :: Nil,
         propagateNull = true
       )
   }
