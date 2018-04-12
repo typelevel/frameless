@@ -198,7 +198,14 @@ object TypedEncoder {
 
     def catalystRepr: DataType = DateType
 
-    def toCatalyst(path: Expression): Expression = path
+    def toCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        DateTimeUtils.getClass,
+        ObjectType(classOf[java.sql.Date]),
+        "fromJavaDate",
+        path :: Nil,
+        propagateNull = true
+      )
 
     def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
