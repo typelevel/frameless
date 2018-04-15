@@ -29,8 +29,10 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | --- | --- | --- |
 | 0.4.0  | 2.2.0  | 1.0.0-MF |
 | 0.4.1  | 2.2.0  | 1.0.1 | 
-| 0.5.0  | 2.2.1  | 1.0.1 |
+| 0.5.1  | 2.2.1  | 1.0.1 |
+| 0.6.0  | 2.3.0  | 1.0.1 |
 
+Versions 0.5.1 and 0.6.0 have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
 
 The **only** dependency of the `frameless-dataset` module is on [shapeless](https://github.com/milessabin/shapeless) 2.3.2. 
 Therefore, depending on `frameless-dataset`, has a minimal overhead on your Spark's application jar. 
@@ -73,7 +75,7 @@ Frameless is compiled against Scala 2.11.x.
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
-val framelessVersion = "0.5.0"
+val framelessVersion = "0.6.0" // for Spark 2.3.0 or use 0.5.1 for Spark 2.2.1
 
 libraryDependencies ++= List(
   "org.typelevel" %% "frameless-dataset" % framelessVersion,
