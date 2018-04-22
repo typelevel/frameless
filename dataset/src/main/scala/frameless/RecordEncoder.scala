@@ -171,9 +171,14 @@ class RecordEncoder[F, G <: HList, H <: HList]
         field.encoder.fromCatalyst(fieldPath)
       }
 
-      val nullExpr = Literal.create(null, jvmRepr)
       val newArgs = newInstanceExprs.value.from(exprs)
       val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
-      If(IsNull(path), nullExpr, newExpr)
+      path match {
+        case BoundReference(0, _, _) => newExpr
+        case _ => {
+          val nullExpr = Literal.create(null, jvmRepr)
+          If(IsNull(path), nullExpr, newExpr)
+        }
+      }
     }
 }
