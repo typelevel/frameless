@@ -9,20 +9,22 @@ object TypedExpressionEncoder {
 
   /** In Spark, DataFrame has always schema of StructType
     *
-    * DataFrames of primitive types become records with a single field called "_1".
+    * DataFrames of primitive types become records with a single field called "value".
     */
   def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
    encoder.catalystRepr match {
       case x: StructType =>
         if (encoder.nullable) StructType(x.fields.map(_.copy(nullable = true)))
         else x
-      case dt => new StructType().add("_1", dt, nullable = encoder.nullable)
+      case dt => new StructType().add("value", dt, nullable = encoder.nullable)
     }
   }
 
   def apply[T: TypedEncoder]: ExpressionEncoder[T] = {
     val encoder = TypedEncoder[T]
     val schema = targetStructType(encoder)
+    // FIXME does not work well for Option[T], see EncoderTests
+    val flat = !encoder.catalystRepr.isInstanceOf[StructType]
 
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
@@ -34,12 +36,12 @@ object TypedExpressionEncoder {
       case other =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
-        (out, CreateNamedStruct(Literal("_1") :: other :: Nil).flatten)
+        (out, CreateNamedStruct(Literal("value") :: other :: Nil).flatten)
     }
 
     new ExpressionEncoder[T](
       schema = schema,
-      flat = false,
+      flat = flat,
       serializer = toRowExpressions,
       deserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag

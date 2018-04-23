@@ -48,10 +48,10 @@ object TypedEncoder {
     def catalystRepr: DataType = StringType
 
     def toCatalyst(path: Expression): Expression =
-      StaticInvoke(classOf[UTF8String], catalystRepr, "fromString", path :: Nil)
+      StaticInvoke(classOf[UTF8String], catalystRepr, "fromString", path :: Nil, true, false)
 
     def fromCatalyst(path: Expression): Expression =
-      Invoke(path, "toString", jvmRepr)
+      Invoke(path, "toString", jvmRepr, Nil, true, false)
   }
 
   implicit val booleanEncoder: TypedEncoder[Boolean] = new TypedEncoder[Boolean] {
@@ -147,29 +147,29 @@ object TypedEncoder {
   }
 
   implicit val bigDecimalEncoder: TypedEncoder[BigDecimal] = new TypedEncoder[BigDecimal] {
-    def nullable: Boolean = false
+    def nullable: Boolean = true
 
     def jvmRepr: DataType = ScalaReflection.dataTypeFor[BigDecimal]
     def catalystRepr: DataType = DecimalType.SYSTEM_DEFAULT
 
     def toCatalyst(path: Expression): Expression =
-      StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil)
+      StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil, true, false)
 
     def fromCatalyst(path: Expression): Expression =
-      Invoke(path, "toBigDecimal", jvmRepr)
+      Invoke(path, "toBigDecimal", jvmRepr, Nil, true, false)
   }
 
   implicit val javaBigDecimalEncoder: TypedEncoder[java.math.BigDecimal] = new TypedEncoder[java.math.BigDecimal] {
-    def nullable: Boolean = false
+    def nullable: Boolean = true
 
     def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.math.BigDecimal]
     def catalystRepr: DataType = DecimalType.SYSTEM_DEFAULT
 
     def toCatalyst(path: Expression): Expression =
-      StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil)
+      StaticInvoke(Decimal.getClass, DecimalType.SYSTEM_DEFAULT, "apply", path :: Nil, true, false)
 
     def fromCatalyst(path: Expression): Expression =
-      Invoke(path, "toJavaBigDecimal", jvmRepr)
+      Invoke(path, "toJavaBigDecimal", jvmRepr, Nil, true, false)
   }
 
   implicit val sqlDate: TypedEncoder[SQLDate] = new TypedEncoder[SQLDate] {
@@ -212,7 +212,7 @@ object TypedEncoder {
 
   implicit def arrayEncoder[T: ClassTag](implicit encodeT: TypedEncoder[T]): TypedEncoder[Array[T]] =
     new TypedEncoder[Array[T]] {
-      def nullable: Boolean = false
+      def nullable: Boolean = true
 
       def jvmRepr: DataType = encodeT.jvmRepr match {
         case ByteType => BinaryType
@@ -227,7 +227,7 @@ object TypedEncoder {
       def toCatalyst(path: Expression): Expression =
         encodeT.jvmRepr match {
           case IntegerType | LongType | DoubleType | FloatType | ShortType | BooleanType  =>
-            StaticInvoke(classOf[UnsafeArrayData], catalystRepr, "fromPrimitiveArray", path :: Nil)
+            StaticInvoke(classOf[UnsafeArrayData], catalystRepr, "fromPrimitiveArray", path :: Nil, true, false)
 
           case ByteType => path
 
@@ -236,17 +236,17 @@ object TypedEncoder {
 
       def fromCatalyst(path: Expression): Expression =
         encodeT.jvmRepr match {
-          case IntegerType => Invoke(path, "toIntArray", jvmRepr)
-          case LongType => Invoke(path, "toLongArray", jvmRepr)
-          case DoubleType => Invoke(path, "toDoubleArray", jvmRepr)
-          case FloatType => Invoke(path, "toFloatArray", jvmRepr)
-          case ShortType => Invoke(path, "toShortArray", jvmRepr)
-          case BooleanType => Invoke(path, "toBooleanArray", jvmRepr)
+          case IntegerType => Invoke(path, "toIntArray", jvmRepr, Nil, true, false)
+          case LongType => Invoke(path, "toLongArray", jvmRepr, Nil, true, false)
+          case DoubleType => Invoke(path, "toDoubleArray", jvmRepr, Nil, true, false)
+          case FloatType => Invoke(path, "toFloatArray", jvmRepr, Nil, true, false)
+          case ShortType => Invoke(path, "toShortArray", jvmRepr, Nil, true, false)
+          case BooleanType => Invoke(path, "toBooleanArray", jvmRepr, Nil, true, false)
 
           case ByteType => path
 
           case otherwise =>
-            Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
+            Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr, Nil, true, false)
         }
     }
 
@@ -336,44 +336,9 @@ object TypedEncoder {
       def catalystRepr: DataType = underlying.catalystRepr
 
       def toCatalyst(path: Expression): Expression = {
-        // for primitive types we must manually unbox the value of the object
         underlying.jvmRepr match {
-          case IntegerType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Integer], path),
-              "intValue",
-              IntegerType)
-          case LongType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Long], path),
-              "longValue",
-              LongType)
-          case DoubleType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Double], path),
-              "doubleValue",
-              DoubleType)
-          case FloatType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Float], path),
-              "floatValue",
-              FloatType)
-          case ShortType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Short], path),
-              "shortValue",
-              ShortType)
-          case ByteType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Byte], path),
-              "byteValue",
-              ByteType)
-          case BooleanType =>
-            Invoke(
-              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Boolean], path),
-              "booleanValue",
-              BooleanType)
-
+          case IntegerType | LongType | DoubleType | FloatType | ShortType | ByteType | BooleanType
+            => UnwrapOption(catalystRepr, path)
           case other => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
         }
       }
