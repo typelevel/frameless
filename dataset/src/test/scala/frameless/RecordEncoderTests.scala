@@ -16,6 +16,10 @@ object TupleWithUnits {
 
 case class OptionalNesting(o: Option[TupleWithUnits])
 
+case class A(x: Int)
+case class B(a: Seq[A])
+case class C(b: B)
+
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
     illTyped("""TypedEncoder[UnitsOnly]""")
@@ -61,5 +65,12 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val df = session.createDataFrame(rdd, schema)
     val ds = TypedDataset.createUnsafe(df)(TypedEncoder[NestedOptionPair])
     ds.firstOption.run.get shouldBe X2(true, Some(X2(None, None)))
+  }
+
+  test("Nesting with collection") {
+    val obj = C(B(Seq(A(1))))
+    val rdd = sc.parallelize(Seq(obj))
+    val ds = session.createDataset(rdd)(TypedExpressionEncoder[C])
+    ds.collect.head shouldBe obj
   }
 }
