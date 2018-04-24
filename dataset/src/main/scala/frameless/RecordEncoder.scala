@@ -155,8 +155,8 @@ class RecordEncoder[F, G <: HList, H <: HList]
         case (nameExpr, valueExpr) => nameExpr :: valueExpr :: Nil
       }
 
-      val nullExpr = Literal.create(null, catalystRepr)
       val createExpr = CreateNamedStruct(exprs)
+      val nullExpr = Literal.create(null, createExpr.dataType)
       If(IsNull(path), nullExpr, createExpr)
     }
 
