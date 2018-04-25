@@ -10,8 +10,19 @@ import scala.math.Ordering.Implicits._
 
 class ColumnTests extends TypedDatasetSuite {
 
+  private implicit object OrderingImplicits {
+    implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
+    implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
+    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(
+      Gen.chooseNum(0L, Instant.MAX.getEpochSecond)
+        .map(Instant.ofEpochSecond))
+    implicit val instantAsLongInjection: Injection[Instant, Long] =
+      Injection(_.getEpochSecond, Instant.ofEpochSecond)
+  }
+
   test("select('a < 'b, 'a <= 'b, 'a > 'b, 'a >= 'b)") {
-    def prop[A: TypedEncoder : frameless.CatalystOrdered : scala.math.Ordering](a: A, b: A): Prop = {
+    import OrderingImplicits._
+    def prop[A: TypedEncoder : CatalystOrdered : Ordering](a: A, b: A): Prop = {
       val dataset = TypedDataset.create(X2(a, b) :: Nil)
       val A = dataset.col('a)
       val B = dataset.col('b)
@@ -26,14 +37,32 @@ class ColumnTests extends TypedDatasetSuite {
       dataset2 ?= Vector((a < b, a < b, a <= b, a <= b, a > b, a > b, a >= b, a >= b))
     }
 
-    implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
-    implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Boolean] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[SQLDate] _))
+    check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[Instant] _))
+  }
 
-    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(
-      Gen.chooseNum(0L, Instant.MAX.getEpochSecond)
-        .map(Instant.ofEpochSecond))
-    implicit val instantAsLongInjection: Injection[Instant, Long] =
-      Injection(_.getEpochSecond, Instant.ofEpochSecond)
+  test("between") {
+    import OrderingImplicits._
+    def prop[A: TypedEncoder : CatalystOrdered : Ordering](a: A, b: A, c: A): Prop = {
+      val dataset = TypedDataset.create(X3(a, b, c) :: Nil)
+      val A = dataset.col('a)
+      val B = dataset.col('b)
+      val C = dataset.col('c)
+
+      val isBetweeen = dataset.selectMany(A.between(B, C), A.between(b, c)).collect().run().toVector
+      val result = b <= a && a <= c
+
+      isBetweeen ?= Vector((result, result))
+    }
 
     check(forAll(prop[Int] _))
     check(forAll(prop[Boolean] _))

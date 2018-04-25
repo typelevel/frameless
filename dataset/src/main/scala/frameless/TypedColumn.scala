@@ -71,7 +71,7 @@ abstract class AbstractTypedColumn[T, U]
   def untyped: Column = new Column(expr)
 
   private def equalsTo[TT, W](other: ThisType[TT, U])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] = typed {
-    if (uencoder.nullable && uencoder.catalystRepr.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    if (uencoder.nullable) EqualNullSafe(self.expr, other.expr)
     else EqualTo(self.expr, other.expr)
   }
 
@@ -369,7 +369,7 @@ abstract class AbstractTypedColumn[T, U]
     *   df.select(df.col('colA) & (df.col('colB)))
     * }}}
     *
-    * @param u a constant of the same type
+    * @param other a constant of the same type
     * apache/spark
     */
   def &[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
@@ -705,6 +705,31 @@ abstract class AbstractTypedColumn[T, U]
     */
   def isin(values: U*)(implicit e: CatalystIsin[U]): ThisType[T, Boolean] =
     typed(self.untyped.isin(values:_*))
+
+  /**
+    * True if the current column is between the lower bound and upper bound, inclusive.
+    *
+    * @param lowerBound a constant of the same type
+    * @param upperBound a constant of the same type
+    * apache/spark
+    */
+  def between(lowerBound: U, upperBound: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
+    typed(self.untyped.between(lit(lowerBound)(self.uencoder).untyped, lit(upperBound)(self.uencoder).untyped))
+
+  /**
+    * True if the current column is between the lower bound and upper bound, inclusive.
+    *
+    * @param lowerBound another column of the same type
+    * @param upperBound another column of the same type
+    * apache/spark
+    */
+  def between[TT1, TT2, W1, W2](lowerBound: ThisType[TT1, U], upperBound: ThisType[TT2, U])
+    (implicit
+      i0: CatalystOrdered[U],
+      w0: With.Aux[T, TT1, W1],
+      w1: With.Aux[TT2, W1, W2]
+    ): ThisType[W2, Boolean] =
+      typed(self.untyped.between(lowerBound.untyped, upperBound.untyped))
 }
 
 

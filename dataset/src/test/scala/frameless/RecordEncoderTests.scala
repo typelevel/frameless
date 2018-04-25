@@ -1,5 +1,7 @@
 package frameless
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.StructType
 import org.scalatest.Matchers
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
@@ -10,6 +12,14 @@ case class TupleWithUnits(u0: Unit, _1: Int, u1: Unit, u2: Unit, _2: String, u3:
 
 object TupleWithUnits {
   def apply(_1: Int, _2: String): TupleWithUnits = TupleWithUnits((), _1, (), (), _2, ())
+}
+
+case class OptionalNesting(o: Option[TupleWithUnits])
+
+object RecordEncoderTests {
+  case class A(x: Int)
+  case class B(a: Seq[A])
+  case class C(b: B)
 }
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
@@ -34,5 +44,36 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     df.collect shouldEqual tds.toDF.collect
     ds.collect.toSeq shouldEqual tds.collect.run
+  }
+
+  test("Empty nested record value becomes null on serialization") {
+    val ds = TypedDataset.create(Seq(OptionalNesting(Option.empty)))
+    val df = ds.toDF
+    df.na.drop.count shouldBe 0
+  }
+
+  test("Empty nested record value becomes none on deserialization") {
+    val rdd = sc.parallelize(Seq(Row(null)))
+    val schema = TypedEncoder[OptionalNesting].catalystRepr.asInstanceOf[StructType]
+    val df = session.createDataFrame(rdd, schema)
+    val ds = TypedDataset.createUnsafe(df)(TypedEncoder[OptionalNesting])
+    ds.firstOption.run.get.o.isEmpty shouldBe true
+  }
+
+  test("Deeply nested optional values have correct deserialization") {
+    val rdd = sc.parallelize(Seq(Row(true, Row(null, null))))
+    type NestedOptionPair = X2[Boolean, Option[X2[Option[Int], Option[String]]]]
+    val schema = TypedEncoder[NestedOptionPair].catalystRepr.asInstanceOf[StructType]
+    val df = session.createDataFrame(rdd, schema)
+    val ds = TypedDataset.createUnsafe(df)(TypedEncoder[NestedOptionPair])
+    ds.firstOption.run.get shouldBe X2(true, Some(X2(None, None)))
+  }
+
+  test("Nesting with collection") {
+    import RecordEncoderTests._
+    val obj = C(B(Seq(A(1))))
+    val rdd = sc.parallelize(Seq(obj))
+    val ds = session.createDataset(rdd)(TypedExpressionEncoder[C])
+    ds.collect.head shouldBe obj
   }
 }

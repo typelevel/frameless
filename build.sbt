@@ -1,4 +1,4 @@
-val sparkVersion = "2.2.1"
+val sparkVersion = "2.3.0"
 val catsCoreVersion = "1.0.1"
 val catsEffectVersion = "0.8"
 val catsMtlVersion = "0.2.3"
@@ -90,12 +90,13 @@ lazy val framelessSettings = Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  javaOptions in Test ++= Seq("-Xmx1G"),
+  javaOptions in Test ++= Seq("-Xmx1G", "-ea"),
   fork in Test := true,
   parallelExecution in Test := false
 )
 
 lazy val commonScalacOptions = Seq(
+  "-target:jvm-1.8", 
   "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
