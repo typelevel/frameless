@@ -35,7 +35,7 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Char] _))
     check(forAll(prop[Boolean] _))
     check(forAll(prop[SQLTimestamp] _))
-    //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
+    check(forAll(prop[Vector[SQLTimestamp]] _))
   }
 
   test("filter('a =!= 'b)") {
@@ -55,7 +55,7 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Char] _))
     check(forAll(prop[Boolean] _))
     check(forAll(prop[SQLTimestamp] _))
-    //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
+    check(forAll(prop[Vector[SQLTimestamp]] _))
   }
 
   test("filter('a =!= 'b") {
@@ -74,7 +74,7 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
     check(forAll(prop[Char] _))
     check(forAll(prop[SQLTimestamp] _))
-    //check(forAll(prop[Vector[SQLTimestamp]] _)) // Commenting out since this fails randomly due to frameless Issue #124
+    check(forAll(prop[Vector[SQLTimestamp]] _))
   }
 
   test("filter with arithmetic expressions: addition") {
