@@ -252,7 +252,7 @@ object TypedEncoder {
 
   implicit def collectionEncoder[C[X] <: Seq[X], T]
     (implicit
-      encodeT: TypedEncoder[T],
+      encodeT: Lazy[TypedEncoder[T]],
       CT: ClassTag[C[T]]
     ): TypedEncoder[C[T]] =
       new TypedEncoder[C[T]] {
@@ -260,19 +260,19 @@ object TypedEncoder {
 
         def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
 
-        def catalystRepr: DataType = ArrayType(encodeT.catalystRepr, encodeT.nullable)
+        def catalystRepr: DataType = ArrayType(encodeT.value.catalystRepr, encodeT.value.nullable)
 
         def toCatalyst(path: Expression): Expression =
-          if (ScalaReflection.isNativeType(encodeT.jvmRepr))
+          if (ScalaReflection.isNativeType(encodeT.value.jvmRepr))
             NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
-          else MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+          else MapObjects(encodeT.value.toCatalyst, path, encodeT.value.jvmRepr, encodeT.value.nullable)
 
         def fromCatalyst(path: Expression): Expression =
           MapObjects(
-            encodeT.fromCatalyst,
+            encodeT.value.fromCatalyst,
             path,
-            encodeT.catalystRepr,
-            encodeT.nullable,
+            encodeT.value.catalystRepr,
+            encodeT.value.nullable,
             Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
           )
       }
