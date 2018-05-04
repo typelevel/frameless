@@ -16,4 +16,5 @@ object CatalystNumeric {
   implicit val framelessintNumeric       : CatalystNumeric[Int]        = of[Int]
   implicit val framelesslongNumeric      : CatalystNumeric[Long]       = of[Long]
   implicit val framelessshortNumeric     : CatalystNumeric[Short]      = of[Short]
+  // implicit val framelessfloatNumeric     : CatalystNumeric[Float]      = of[Float]
 }

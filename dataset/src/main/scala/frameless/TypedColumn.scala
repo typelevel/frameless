@@ -317,6 +317,13 @@ abstract class AbstractTypedColumn[T, U]
   def /(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, Double] =
     typed(self.untyped.divide(u))
 
+
+  def mod[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystIntegral[U], w: With.Aux[T, TT, W]): ThisType[W, Out] =
+    typed(self.untyped.mod(other.untyped))
+
+  def %[Out, TT, W](other: ThisType[TT, U])(implicit n: CatalystIntegral[U], e: TypedEncoder[Out], w: With.Aux[T, TT, W]): ThisType[W, Out] =
+    mod(other)
+
   /** Returns a descending ordering used in sorting
     *
     * apache/spark
