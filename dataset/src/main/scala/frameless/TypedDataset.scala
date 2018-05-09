@@ -2,6 +2,7 @@ package frameless
 
 import java.util
 
+//import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -12,7 +13,7 @@ import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
-import shapeless.ops.record.{Keys, Remover, Values}
+import shapeless.ops.record.{Keys, Modifier, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -1160,6 +1161,25 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
       TypedDataset.create[U](selected)
     }
+  }
+
+  def explode[A, TRep <: HList, V[_], OutRep <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, V[A]],
+   i5: TypedEncoder[A],
+   i1: LabelledGeneric.Aux[T, TRep],
+   i2: Modifier.Aux[TRep, column.T, V[A], A, OutRep],
+   i3: Tupler.Aux[OutRep, Out],
+   i4: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val df = dataset.toDF()
+    import org.apache.spark.sql.functions.{explode => sparkExplode}
+
+    val trans =
+      df.withColumn(column.value.name,
+        sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
   }
 }
 
