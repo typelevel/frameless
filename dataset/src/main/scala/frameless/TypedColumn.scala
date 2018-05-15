@@ -281,6 +281,27 @@ abstract class AbstractTypedColumn[T, U]
   def *(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.multiply(u))
 
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def mod[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, Out] =
+    typed(self.untyped.mod(other.untyped))
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %[TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
+    mod(other)
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
+    typed(self.untyped.mod(u))
+
   /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
