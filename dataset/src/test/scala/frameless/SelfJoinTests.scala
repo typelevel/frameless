@@ -2,7 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{SparkSession, functions => sqlf}
+import org.apache.spark.sql.{SparkSession, functions => sparkFunctions}
 
 class SelfJoinTests extends TypedDatasetSuite {
   // Without crossJoin.enabled=true Spark doesn't like trivial join conditions:
@@ -29,7 +29,7 @@ class SelfJoinTests extends TypedDatasetSuite {
       val df1 = ds.dataset.as("df1")
       val df2 = ds.dataset.as("df2")
       val vanilla = df1.join(df2,
-        sqlf.col("df1.a") === sqlf.col("df2.a")).count()
+        sparkFunctions.col("df1.a") === sparkFunctions.col("df2.a")).count()
 
       val typed = ds.joinInner(ds)(
         ds.colLeft('a) === ds.colRight('a)
@@ -54,8 +54,8 @@ class SelfJoinTests extends TypedDatasetSuite {
         // obtain a trivial join condition of shape df1.a == df1.a, Spark we
         // always interpret that as df1.a == df2.a. For the purpose of this
         // test we fall-back to lit(true) instead.
-        // val trivial = sqlf.col("df1.a") === sqlf.col("df1.a")
-        val trivial = sqlf.lit(true)
+        // val trivial = sparkFunctions.col("df1.a") === sparkFunctions.col("df1.a")
+        val trivial = sparkFunctions.lit(true)
         val vanilla = untyped.as("df1").join(untyped.as("df2"), trivial).count()
 
         val typed = ds.joinInner(ds)(ds.colLeft('a) === ds.colLeft('a)).count().run
@@ -76,8 +76,8 @@ class SelfJoinTests extends TypedDatasetSuite {
       val df2 = ds.dataset.alias("df2")
 
       val vanilla = df1.join(df2,
-        (sqlf.col("df1.a") + sqlf.col("df1.b")) ===
-        (sqlf.col("df2.a") + sqlf.col("df2.b"))).count()
+        (sparkFunctions.col("df1.a") + sparkFunctions.col("df1.b")) ===
+        (sparkFunctions.col("df2.a") + sparkFunctions.col("df2.b"))).count()
 
       val typed = ds.joinInner(ds)(
         (ds.colLeft('a) + ds.colLeft('b)) === (ds.colRight('a) + ds.colRight('b))
