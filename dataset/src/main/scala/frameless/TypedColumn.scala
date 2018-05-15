@@ -292,7 +292,7 @@ abstract class AbstractTypedColumn[T, U]
     *
     * apache/spark
     */
-  def %[TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W], t: ClassTag[U]): ThisType[W, U] =
+  def %[TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     mod(other)
 
   /** Modulo (a.k.a. remainder) expression.
