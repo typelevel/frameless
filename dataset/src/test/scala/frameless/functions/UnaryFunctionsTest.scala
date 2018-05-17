@@ -138,39 +138,4 @@ class UnaryFunctionsTest extends TypedDatasetSuite {
     check(forAll(prop[Int] _))
     check(forAll(prop[String] _))
   }
-
-  test("explode on vectors") {
-    def prop[F[X] <: Traversable[X] : CatalystExplodableCollection, A: TypedEncoder](xs: List[X1[F[A]]])(implicit arb: Arbitrary[F[A]], enc: TypedEncoder[F[A]]): Prop = {
-      val tds = TypedDataset.create(xs)
-
-      val framelessResults = tds.select(explode(tds('a))).collect().run().toSet
-      val scalaResults = xs.flatMap(_.a).toSet
-
-      framelessResults ?= scalaResults
-    }
-
-    check(forAll(prop[Vector, Long] _))
-    check(forAll(prop[Vector, Int] _))
-    check(forAll(prop[Vector, Char] _))
-    check(forAll(prop[Vector, String] _))
-    check(forAll(prop[List, Long] _))
-    check(forAll(prop[List, Int] _))
-    check(forAll(prop[List, Char] _))
-    check(forAll(prop[List, String] _))
-  }
-
-  test("explode on arrays") {
-    def prop[A: TypedEncoder: ClassTag](xs: List[X1[Array[A]]]): Prop = {
-      val tds = TypedDataset.create(xs)
-
-      val framelessResults = tds.select(explode(tds('a))).collect().run().toSet
-      val scalaResults = xs.flatMap(_.a).toSet
-
-      framelessResults ?= scalaResults
-    }
-
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Int] _))
-    check(forAll(prop[String] _))
-  }
 }
