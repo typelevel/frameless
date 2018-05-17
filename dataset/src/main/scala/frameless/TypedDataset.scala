@@ -4,7 +4,6 @@ import java.util
 
 import frameless.functions.CatalystExplodableCollection
 
-//import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
