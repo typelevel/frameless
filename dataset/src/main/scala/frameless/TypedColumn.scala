@@ -520,6 +520,34 @@ abstract class AbstractTypedColumn[T, U]
                     w2: With.Aux[W1, TT2, W2]): ThisType[W2, String] =
     typed(self.untyped.substr(startPos.untyped, len.untyped))
 
+  /** SQL like expression. Returns a boolean column based on a SQL LIKE match.
+    * {{{
+    *   val ds = TypedDataset.create(X2("foo", "bar") :: Nil)
+    *   // true
+    *   ds.select(ds('a).like("foo"))
+    *
+    *   // Selected column has value "bar"
+    *   ds.select(when(ds('a).like("f"), ds('a)).otherwise(ds('b))
+    * }}}
+    * apache/spark
+    */
+  def like(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.like(literal))
+
+  /** SQL RLIKE expression (LIKE with Regex). Returns a boolean column based on a regex match.
+    * {{{
+    *   val ds = TypedDataset.create(X1("foo") :: Nil)
+    *   // true
+    *   ds.select(ds('a).rlike("foo"))
+    *
+    *   // true
+    *   ds.select(ds('a).rlike(".*))
+    * }}}
+    * apache/spark
+    */
+  def rlike(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.rlike(literal))
+
   /** String contains another string literal.
     * {{{
     *   df.filter ( df.col('a).contains("foo") )

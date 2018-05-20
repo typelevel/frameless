@@ -159,6 +159,68 @@ class ColumnTests extends TypedDatasetSuite {
     illTyped("""ds1.select(ds1('_1).substr(ds1('_2), ds1('_3)))""")
   }
 
+  test("like") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: String) =>
+        val ds = TypedDataset.create(X2(a, b) :: Nil)
+
+        val typedLike = ds
+          .select(ds('a).like(a), ds('b).like(a))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedLike = untypedDs
+          .select(untypedDs("a").like(a), untypedDs("b").like(a))
+          .as[(Boolean, Boolean)]
+          .collect()
+          .toList
+
+        typedLike ?= untypedLike
+      }
+    }
+
+    val ds = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds.select(ds('_1).like("foo"))""")
+    illTyped("""ds.select(ds('_2).like("foo"))""")
+    illTyped("""ds.select(ds('_3).like("foo"))""")
+  }
+
+  test("rlike") {
+    val spark = session
+    import spark.implicits._
+
+    check {
+      forAll { (a: String, b: String) =>
+        val ds = TypedDataset.create(X2(a, b) :: Nil)
+
+        val typedLike = ds
+          .select(ds('a).rlike(a), ds('b).rlike(a), ds('a).rlike(".*"))
+          .collect()
+          .run()
+          .toList
+
+        val untypedDs = ds.toDF()
+        val untypedLike = untypedDs
+          .select(untypedDs("a").rlike(a), untypedDs("b").rlike(a), untypedDs("a").rlike(".*"))
+          .as[(Boolean, Boolean, Boolean)]
+          .collect()
+          .toList
+
+        (typedLike ?= untypedLike)
+      }
+    }
+
+    val ds = TypedDataset.create((1, false, 2.0) :: Nil)
+    illTyped("""ds.select(ds('_1).rlike("foo"))""")
+    illTyped("""ds.select(ds('_2).rlike("foo"))""")
+    illTyped("""ds.select(ds('_3).rlike("foo"))""")
+  }
+
   test("contains") {
     val spark = session
     import spark.implicits._
@@ -184,7 +246,7 @@ class ColumnTests extends TypedDatasetSuite {
       }
     }
 
-    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    val ds = TypedDataset.create((1, false, 2.0) :: Nil)
     illTyped("""ds.select(ds('_1).contains("foo"))""")
     illTyped("""ds.select(ds('_2).contains("foo"))""")
     illTyped("""ds.select(ds('_3).contains("foo"))""")
@@ -215,7 +277,7 @@ class ColumnTests extends TypedDatasetSuite {
       }
     }
 
-    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    val ds = TypedDataset.create((1, false, 2.0) :: Nil)
     illTyped("""ds.select(ds('_1).startsWith("foo"))""")
     illTyped("""ds.select(ds('_2).startsWith("foo"))""")
     illTyped("""ds.select(ds('_3).startsWith("foo"))""")
@@ -245,7 +307,7 @@ class ColumnTests extends TypedDatasetSuite {
       }
     }
 
-    val ds1 = TypedDataset.create((1, false, 2.0) :: Nil)
+    val ds = TypedDataset.create((1, false, 2.0) :: Nil)
     illTyped("""ds.select(ds('_1).endsWith("foo"))""")
     illTyped("""ds.select(ds('_2).endsWith("foo"))""")
     illTyped("""ds.select(ds('_3).endsWith("foo"))""")
