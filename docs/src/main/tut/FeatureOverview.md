@@ -354,7 +354,7 @@ t.withColumnTupled(
 
 Flattening columns in Spark is done with the `explode()` method. Unlike vanilla Spark, 
 in Frameless `explode()` is part of `TypedDataset` and not a function of a column. 
-This provides additional safety since more than one`explode()` applied in a single 
+This provides additional safety since more than one `explode()` applied in a single 
 statement results in runtime error in vanilla Spark.   
 
 
