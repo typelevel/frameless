@@ -500,6 +500,16 @@ val sampleStats = bedroomStats.select(
 sampleStats.show().run()   
 ``` 
 
+In addition, optional columns can be flatten using the `.flatten` method on `TypedDatset`.
+
+```tut:book
+val flattenStats = bedroomStats.flatten('AvgPriceBeds2)
+
+flattenStats.show().run()
+
+The result contains the rows for which the column `AvgPriceBeds2` is not null.
+```
+
 
 ### Entire TypedDataset Aggregation
 

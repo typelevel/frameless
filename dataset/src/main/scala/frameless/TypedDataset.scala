@@ -1189,6 +1189,29 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
     TypedDataset.create[Out](trans)
   }
+
+  /**
+    * Flattens a column of type Option[A]. Compiles only if the selected column is of type Option[A].
+    *
+    * @param column the column we wish to flatten
+    */
+  def flatten[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, V[A]],
+   i1: TypedEncoder[A],
+   i2: V[A] =:= Option[A],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
+   i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val df = dataset.toDF()
+    val trans = 
+      df.filter(df(column.value.name).isNotNull).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
+  }
 }
 
 object TypedDataset {
