@@ -506,10 +506,9 @@ In addition, optional columns can be flatten using the `.flatten` method on `Typ
 val flattenStats = bedroomStats.flatten('AvgPriceBeds2)
 
 flattenStats.show().run()
-
-The result contains the rows for which the column `AvgPriceBeds2` is not null.
 ```
 
+The result contains the rows for which the column `AvgPriceBeds2` is not null.
 
 ### Entire TypedDataset Aggregation
 
