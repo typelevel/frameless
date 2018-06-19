@@ -53,7 +53,7 @@ The benefits of using `TypedDataset` compared to the standard Spark `Dataset` AP
 * Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile) 
 * Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you 
 get a compilation error)
-* Typesafe casting and projectios
+* Typesafe casting and projections
 
 Click [here](http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html) for a 
 detailed comparison of `TypedDataset` with Spark's `Dataset` API. 
