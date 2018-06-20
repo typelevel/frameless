@@ -121,9 +121,9 @@ class SelfJoinTests extends TypedDatasetSuite {
       ex4: TypedEncoder[X4[A, B, C, D]]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val selectedCol      = dataset.select(dataset.col     [A]('a)).collect().run().toVector
-      val selectedColLeft  = dataset.select(dataset.colLeft [A]('a)).collect().run().toVector
-      val selectedColRight = dataset.select(dataset.colRight[A]('a)).collect().run().toVector
+      val selectedCol      = dataset.select(dataset.col     [A, X4[A, B, C, D]]('a)).collect().run().toVector
+      val selectedColLeft  = dataset.select(dataset.colLeft [A, X4[A, B, C, D]]('a)).collect().run().toVector
+      val selectedColRight = dataset.select(dataset.colRight[A, X4[A, B, C, D]]('a)).collect().run().toVector
 
       (selectedCol ?= selectedColLeft) && (selectedCol ?= selectedColRight)
     }
