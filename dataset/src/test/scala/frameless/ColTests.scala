@@ -7,24 +7,26 @@ import org.scalacheck.Prop._
 
 class ColTests extends TypedDatasetSuite {
   test("col") {
-    val x4 = TypedDataset.create[X4[Int, String, Long, Boolean]](Nil)
-    val t4 = TypedDataset.create[(Int, String, Long, Boolean)](Nil)
+    type X4T = X4[Int, String, Long, Boolean]
+    type T4 = (Int, String, Long, Boolean)
+    val x4 = TypedDataset.create[X4T](Nil)
+    val t4 = TypedDataset.create[T4](Nil)
 
     x4.col('a)
     t4.col('_1)
 
-    x4.col[Int]('a)
-    t4.col[Int]('_1)
+    x4.col[Int, X4T]('a)
+    t4.col[Int, T4]('_1)
 
-    illTyped("x4.col[String]('a)", "No column .* of type String in frameless.X4.*")
+    illTyped("x4.col[String, X4T]('a)", "No column .* of type String in frameless.X4.*")
 
     x4.col('b)
     t4.col('_2)
 
-    x4.col[String]('b)
-    t4.col[String]('_2)
+    x4.col[String, X4T]('b)
+    t4.col[String, T4]('_2)
 
-    illTyped("x4.col[Int]('b)", "No column .* of type Int in frameless.X4.*")
+    illTyped("x4.col[Int, X4T]('b)", "No column .* of type Int in frameless.X4.*")
 
     ()
   }
@@ -53,5 +55,17 @@ class ColTests extends TypedDatasetSuite {
     check(prop[Int] _)
     check(prop[X2[Int, Int]] _)
     check(prop[X2[X2[Int, Int], Int]] _)
+  }
+
+  test("schema wrapper test: wrapper activated") {
+    val t = TypedDataset.create(1 to 2)
+    t.col[Int, Tuple1[Int]]('_1)
+    ()
+  }
+
+  test("schema wrapper test: wrapper not activated") {
+    val t = TypedDataset.create(Seq(X1(1)))
+    t.col[Int, X1[Int]]('a)
+    ()
   }
 }

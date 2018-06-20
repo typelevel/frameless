@@ -217,10 +217,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * It is statically checked that column with such name exists and has type `A`.
     */
-  def apply[A](column: Witness.Lt[Symbol])
+  def apply[A, Tw](column: Witness.Lt[Symbol])
     (implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
+      i0: SchemaWrapper.Aux[T, Tw],
+      i1: TypedColumn.Exists[Tw, column.T, A],
+      i2: TypedEncoder[A]
     ): TypedColumn[T, A] = col(column)
 
   /** Returns `TypedColumn` of type `A` given its name.
@@ -228,15 +229,16 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * {{{
     * tf.col('id)
     * }}}
-    *
-    * It is statically checked that column with such name exists and has type `A`.
+  *
+  * It is statically checked that column with such name exists and has type `A`.
     */
-  def col[A](column: Witness.Lt[Symbol])
+  def col[A, Tw](column: Witness.Lt[Symbol])
     (implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
+      i0: SchemaWrapper.Aux[T, Tw],
+      i1: TypedColumn.Exists[Tw, column.T, A],
+      i2: TypedEncoder[A]
     ): TypedColumn[T, A] =
-      new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
+    new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
 
   /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
     * {{{
@@ -251,16 +253,16 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   }
 
   object colMany extends SingletonProductArgs {
-    def applyProduct[U <: HList, Out](columns: U)
+    def applyProduct[U <: HList, Out, Tw](columns: U)
       (implicit
-        i0: TypedColumn.ExistsMany[T, U, Out],
-        i1: TypedEncoder[Out],
-        i2: ToTraversable.Aux[U, List, Symbol]
-      ): TypedColumn[T, Out] = {
-        val names = columns.toList[Symbol].map(_.name)
-        val colExpr = FramelessInternals.resolveExpr(dataset, names)
-        new TypedColumn[T, Out](colExpr)
-      }
+        i0: SchemaWrapper.Aux[T, Tw],
+        i1: TypedColumn.ExistsMany[Tw, U, Out],
+        i2: TypedEncoder[Out],
+        i3: ToTraversable.Aux[U, List, Symbol]): TypedColumn[T, Out] = {
+      val names = columns.toList[Symbol].map(_.name)
+      val colExpr = FramelessInternals.resolveExpr(dataset, names)
+      new TypedColumn[T, Out](colExpr)
+    }
   }
 
   /** Right hand side disambiguation of `col` for join expressions.
@@ -269,12 +271,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
     * String based aliases, which is obviously unsafe.
     */
-  def colRight[A](column: Witness.Lt[Symbol])
+  def colRight[A, Tw](column: Witness.Lt[Symbol])
     (implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] =
-      new TypedColumn[T, A](FramelessInternals.DisambiguateRight(col(column).expr))
+      i0: SchemaWrapper.Aux[T, Tw],
+      i1: TypedColumn.Exists[Tw, column.T, A],
+      i2: TypedEncoder[A]): TypedColumn[T, A] =
+    new TypedColumn[T, A](FramelessInternals.DisambiguateRight(col(column).expr))
 
   /** Left hand side disambiguation of `col` for join expressions.
     * To be used  when writting self-joins, noop in other circumstances.
@@ -282,12 +284,12 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
     * String based aliases, which is obviously unsafe.
     */
-  def colLeft[A](column: Witness.Lt[Symbol])
+  def colLeft[A, Tw](column: Witness.Lt[Symbol])
     (implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] =
-      new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
+      i0: SchemaWrapper.Aux[T, Tw],
+      i1: TypedColumn.Exists[Tw, column.T, A],
+      i2: TypedEncoder[A]): TypedColumn[T, A] =
+    new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
     *
