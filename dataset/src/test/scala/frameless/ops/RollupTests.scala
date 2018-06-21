@@ -11,7 +11,7 @@ class RollupTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
     (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
+      val A = dataset.col[A]('a)
 
       val received = dataset.rollup(A).agg(count()).collect().run().toVector.sortBy(_._2)
       val expected = dataset.dataset.rollup("a").count().collect().toVector
@@ -27,8 +27,8 @@ class RollupTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
     (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
 
       val received = dataset.rollup(A, B).agg(count()).collect().run().toVector.sortBy(_._3)
       val expected = dataset.dataset.rollup("a", "b").count().collect().toVector
@@ -44,8 +44,8 @@ class RollupTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
     (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
 
       val received = dataset.rollup(A).agg(sum(B)).collect().run().toVector.sortBy(_._2)
       val expected = dataset.dataset.rollup("a").sum("b").collect().toVector
@@ -61,7 +61,7 @@ class RollupTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering, B: TypedEncoder : Numeric]
     (data: List[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
+      val A = dataset.col[A]('a)
 
       val received = dataset.rollup(A)
         .deserialized.mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
@@ -87,9 +87,9 @@ class RollupTests extends TypedDatasetSuite {
       summableC: CatalystSummable[C, OutC]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
-      val C = dataset.col('c)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
 
       val framelessSumBC = dataset
         .rollup(A)
@@ -150,10 +150,10 @@ class RollupTests extends TypedDatasetSuite {
       summableD: CatalystSummable[D, OutD]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
-      val C = dataset.col('c)
-      val D = dataset.col('d)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
+      val D = dataset.col[D]('d)
 
       val framelessSumByAB = dataset
         .rollup(A, B)
@@ -179,9 +179,9 @@ class RollupTests extends TypedDatasetSuite {
     OutC: TypedEncoder: Numeric
     ](data: List[X3[A, B, C]])(implicit summableC: CatalystSummable[C, OutC]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
-      val C = dataset.col('c)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
+      val C = dataset.col[C]('c)
 
       val framelessSumC = dataset
         .rollup(A, B)
@@ -255,8 +255,8 @@ class RollupTests extends TypedDatasetSuite {
     C: TypedEncoder : Numeric
     ](data: List[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
-      val B = dataset.col('b)
+      val A = dataset.col[A]('a)
+      val B = dataset.col[B]('b)
 
       val framelessSumByAB = dataset
         .rollup(A, B)
@@ -279,7 +279,7 @@ class RollupTests extends TypedDatasetSuite {
     B: TypedEncoder
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
+      val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .rollup(A)
@@ -302,7 +302,7 @@ class RollupTests extends TypedDatasetSuite {
     B: TypedEncoder : Ordering
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
+      val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .rollup(A)
@@ -330,8 +330,8 @@ class RollupTests extends TypedDatasetSuite {
     C: TypedEncoder : Ordering
     ](data: Vector[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data)
-      val cA = dataset.col('a)
-      val cB = dataset.col('b)
+      val cA = dataset.col[A]('a)
+      val cB = dataset.col[B]('b)
 
       val datasetGrouped = dataset
         .rollup(cA, cB)
@@ -356,7 +356,7 @@ class RollupTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
     (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col('a)
+      val A = dataset.col[A]('a)
 
       val received = dataset.rollupMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_._2)
       val expected = dataset.dataset.rollup("a").count().collect().toVector

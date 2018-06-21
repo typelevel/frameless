@@ -26,7 +26,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       summer: Sum4Tests[A, Out]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetSum: List[Out] = dataset.agg(sum(A)).collect().run().toList
 
@@ -66,7 +66,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       summer: Sum4Tests[A, Out]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetSum: List[Out] = dataset.agg(sumDistinct(A)).collect().run().toList
 
@@ -100,7 +100,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       averager: Averager4Tests[A, Out]
     ): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetAvg: Vector[Out] = dataset.agg(avg(A)).collect().run().toVector
 
@@ -133,7 +133,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
       val numeric = implicitly[Numeric[A]]
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetStdOpt = dataset.agg(stddev(A)).collect().run().toVector.headOption
       val datasetVarOpt = dataset.agg(variance(A)).collect().run().toVector.headOption
@@ -181,7 +181,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("count('a)") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
       val datasetCount = dataset.agg(count(A)).collect().run()
 
       datasetCount ?= List(xs.size.toLong)
@@ -194,7 +194,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("max") {
     def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
       val datasetMax = dataset.agg(max(A)).collect().run().toList
 
       datasetMax ?= xs.reduceOption(o.max).toList
@@ -211,7 +211,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("max with follow up multiplication") {
     def prop(xs: List[Long]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[Long, X1[Long]]('a)
+      val A = dataset.col[Long]('a)
       val datasetMax = dataset.agg(max(A) * 2).collect().run().headOption
 
       datasetMax ?= (if(xs.isEmpty) None else Some(xs.max * 2))
@@ -223,7 +223,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("min") {
     def prop[A: TypedEncoder: CatalystOrdered](xs: List[A])(implicit o: Ordering[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetMin = dataset.agg(min(A)).collect().run().toList
 
@@ -241,7 +241,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("first") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetFirst = dataset.agg(first(A)).collect().run().toList
 
@@ -260,7 +260,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("last") {
     def prop[A: TypedEncoder](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
-      val A = dataset.col[A, X1[A]]('a)
+      val A = dataset.col[A]('a)
 
       val datasetLast = dataset.agg(last(A)).collect().run().toList
 

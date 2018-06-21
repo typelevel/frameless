@@ -850,7 +850,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(length(ds[String, X1[String]]('a)))
+        .select(length(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -903,7 +903,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(regexpReplace(ds[String, X1[String]]('a), "\\d+".r, "n"))
+        .select(regexpReplace(ds[String]('a), "\\d+".r, "n"))
         .collect()
         .run()
         .toVector
@@ -925,7 +925,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(reverse(ds[String, X1[String]]('a)))
+        .select(reverse(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -947,7 +947,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(rpad(ds[String, X1[String]]('a), 5, "hello"))
+        .select(rpad(ds[String]('a), 5, "hello"))
         .collect()
         .run()
         .toVector
@@ -969,7 +969,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(lpad(ds[String, X1[String]]('a), 5, "hello"))
+        .select(lpad(ds[String]('a), 5, "hello"))
         .collect()
         .run()
         .toVector
@@ -991,7 +991,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(rtrim(ds[String, X1[String]]('a)))
+        .select(rtrim(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -1013,7 +1013,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(ltrim(ds[String, X1[String]]('a)))
+        .select(ltrim(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -1035,7 +1035,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(substring(ds[String, X1[String]]('a), 5, 3))
+        .select(substring(ds[String]('a), 5, 3))
         .collect()
         .run()
         .toVector
@@ -1057,7 +1057,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(trim(ds[String, X1[String]]('a)))
+        .select(trim(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -1079,7 +1079,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(upper(ds[String, X1[String]]('a)))
+        .select(upper(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -1101,7 +1101,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .toVector
 
       val typed = ds
-        .select(lower(ds[String, X1[String]]('a)))
+        .select(lower(ds[String]('a)))
         .collect()
         .run()
         .toVector
@@ -1145,7 +1145,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
           .toList
 
         val typed = ds
-          .select(year(ds[String, X1[String]]('a)))
+          .select(year(ds[String]('a)))
           .collect()
           .run()
           .toList
