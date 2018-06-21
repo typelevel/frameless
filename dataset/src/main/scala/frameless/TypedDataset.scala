@@ -217,10 +217,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * It is statically checked that column with such name exists and has type `A`.
     */
-  def apply[A, Tw](column: Witness.Lt[Symbol])
+  def apply[A](column: Witness.Lt[Symbol])
     (implicit
-      i0: SchemaWrapper.Aux[T, Tw],
-      i1: TypedColumn.Exists[Tw, column.T, A],
+      i1: TypedColumn.Exists[T, column.T, A],
       i2: TypedEncoder[A]
     ): TypedColumn[T, A] = col(column)
 
@@ -232,10 +231,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   *
   * It is statically checked that column with such name exists and has type `A`.
     */
-  def col[A, Tw](column: Witness.Lt[Symbol])
+  def col[A](column: Witness.Lt[Symbol])
     (implicit
-      i0: SchemaWrapper.Aux[T, Tw],
-      i1: TypedColumn.Exists[Tw, column.T, A],
+      i1: TypedColumn.Exists[T, column.T, A],
       i2: TypedEncoder[A]
     ): TypedColumn[T, A] =
     new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
@@ -255,8 +253,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   object colMany extends SingletonProductArgs {
     def applyProduct[U <: HList, Out, Tw](columns: U)
       (implicit
-        i0: SchemaWrapper.Aux[T, Tw],
-        i1: TypedColumn.ExistsMany[Tw, U, Out],
+        i1: TypedColumn.ExistsMany[T, U, Out],
         i2: TypedEncoder[Out],
         i3: ToTraversable.Aux[U, List, Symbol]): TypedColumn[T, Out] = {
       val names = columns.toList[Symbol].map(_.name)
@@ -271,10 +268,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
     * String based aliases, which is obviously unsafe.
     */
-  def colRight[A, Tw](column: Witness.Lt[Symbol])
+  def colRight[A](column: Witness.Lt[Symbol])
     (implicit
-      i0: SchemaWrapper.Aux[T, Tw],
-      i1: TypedColumn.Exists[Tw, column.T, A],
+      i1: TypedColumn.Exists[T, column.T, A],
       i2: TypedEncoder[A]): TypedColumn[T, A] =
     new TypedColumn[T, A](FramelessInternals.DisambiguateRight(col(column).expr))
 
@@ -284,10 +280,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Note: In vanilla Spark, disambiguation in self-joins is acheaved using
     * String based aliases, which is obviously unsafe.
     */
-  def colLeft[A, Tw](column: Witness.Lt[Symbol])
+  def colLeft[A](column: Witness.Lt[Symbol])
     (implicit
-      i0: SchemaWrapper.Aux[T, Tw],
-      i1: TypedColumn.Exists[Tw, column.T, A],
+      i1: TypedColumn.Exists[T, column.T, A],
       i2: TypedEncoder[A]): TypedColumn[T, A] =
     new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
 
@@ -1074,12 +1069,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * @param replacement column to replace the value with
     * @param i0 Evidence that a column with the correct type and name exists
     */
-  def withColumnReplaced[A, Tw](
+  def withColumnReplaced[A](
     column: Witness.Lt[Symbol],
     replacement: TypedColumn[T, A]
   )(implicit
-    i0: SchemaWrapper.Aux[T, Tw],
-    i1: TypedColumn.Exists[Tw, column.T, A]
+    i1: TypedColumn.Exists[T, column.T, A]
   ): TypedDataset[T] = {
     val updated = dataset.toDF().withColumn(column.value.name, replacement.untyped)
       .as[T](TypedExpressionEncoder[T])
@@ -1169,11 +1163,10 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * }}}
     * @param column the column we wish to explode
     */
-  def explode[A, Tw, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
+  def explode[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
   (column: Witness.Lt[Symbol])
   (implicit
-   i0: SchemaWrapper.Aux[T, Tw],
-   i1: TypedColumn.Exists[Tw, column.T, V[A]],
+   i1: TypedColumn.Exists[T, column.T, V[A]],
    i2: TypedEncoder[A],
    i3: CatalystExplodableCollection[V],
    i4: LabelledGeneric.Aux[T, TRep],

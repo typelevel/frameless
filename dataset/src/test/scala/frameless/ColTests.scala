@@ -15,18 +15,18 @@ class ColTests extends TypedDatasetSuite {
     x4.col('a)
     t4.col('_1)
 
-    x4.col[Int, X4T]('a)
-    t4.col[Int, T4]('_1)
+    x4.col[Int]('a)
+    t4.col[Int]('_1)
 
-    illTyped("x4.col[String, X4T]('a)", "No column .* of type String in frameless.X4.*")
+    illTyped("x4.col[String]('a)", "No column .* of type String in frameless.X4.*")
 
     x4.col('b)
     t4.col('_2)
 
-    x4.col[String, X4T]('b)
-    t4.col[String, T4]('_2)
+    x4.col[String]('b)
+    t4.col[String]('_2)
 
-    illTyped("x4.col[Int, X4T]('b)", "No column .* of type Int in frameless.X4.*")
+    illTyped("x4.col[Int]('b)", "No column .* of type Int in frameless.X4.*")
 
     ()
   }
@@ -59,13 +59,13 @@ class ColTests extends TypedDatasetSuite {
 
   test("schema wrapper test: wrapper activated") {
     val t = TypedDataset.create(1 to 2)
-    t.col[Int, Tuple1[Int]]('_1)
+    t.col[Int]('_1)
     ()
   }
 
   test("schema wrapper test: wrapper not activated") {
     val t = TypedDataset.create(Seq(X1(1)))
-    t.col[Int, X1[Int]]('a)
+    illTyped("""t.col[Int]('_1)""", """No column .* of type Int in frameless.X1.*""")
     ()
   }
 }
