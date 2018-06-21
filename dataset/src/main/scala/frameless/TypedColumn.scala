@@ -6,7 +6,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.{Column, FramelessInternals}
 import shapeless._
-import shapeless.ops.record.Selector
+import shapeless.ops.record.{SelectAll, Selector}
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
@@ -812,6 +812,19 @@ object TypedColumn {
 
   @implicitNotFound(msg = "No columns ${K} of type ${V} in ${T}")
   trait ExistsMany[T, K <: HList, V]
+
+  /** Evidence that all column names in `K` exist. */
+  @implicitNotFound(msg = "Cannot find all columns ${K} in ${T}")
+  trait ExistsAllByName[T, K <: HList]
+
+  object ExistsAllByName {
+    implicit def derive[T, H <: HList, K <: HList]
+      (implicit
+        i0: LabelledGeneric.Aux[T, H],
+        i1: SelectAll.Aux[H, K, _]
+      ): ExistsAllByName[T, K] =
+        new ExistsAllByName[T, K] {}
+  }
 
   object ExistsMany {
     implicit def deriveCons[T, KH, KT <: HList, V0, V1]

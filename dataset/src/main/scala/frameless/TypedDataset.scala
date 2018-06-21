@@ -1189,6 +1189,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
     TypedDataset.create[Out](trans)
   }
+
+  def na: NaFunctions[T] = new NaFunctions(this)
 }
 
 object TypedDataset {
