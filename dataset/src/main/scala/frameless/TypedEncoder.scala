@@ -11,6 +11,7 @@ import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
 import shapeless.ops.hlist.IsHCons
 
+import scala.collection.generic.IsTraversableLike
 import scala.reflect.ClassTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
@@ -250,8 +251,9 @@ object TypedEncoder {
         }
     }
 
-  implicit def collectionEncoder[C[X] <: Seq[X], T]
+  implicit def collectionEncoder[C[_], T]
     (implicit
+      is: IsTraversableLike[C[T]] { type A = T },
       encodeT: Lazy[TypedEncoder[T]],
       CT: ClassTag[C[T]]
     ): TypedEncoder[C[T]] =
