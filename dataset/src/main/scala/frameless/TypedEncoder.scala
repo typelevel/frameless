@@ -255,7 +255,7 @@ object TypedEncoder {
     (implicit
       is: IsTraversableLike[C[T]] { type A = T },
       encodeT: Lazy[TypedEncoder[T]],
-     CT: ClassTag[C[T]]
+      CT: ClassTag[C[T]]
     ): TypedEncoder[C[T]] =
       new TypedEncoder[C[T]] {
         def nullable: Boolean = false
