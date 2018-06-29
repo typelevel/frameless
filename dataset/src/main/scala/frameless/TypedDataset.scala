@@ -1195,7 +1195,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     *
     * @param column the column we wish to flatten
     */
-  def flatten[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
+  def flattenOption[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
   (column: Witness.Lt[Symbol])
   (implicit
    i0: TypedColumn.Exists[T, column.T, V[A]],
