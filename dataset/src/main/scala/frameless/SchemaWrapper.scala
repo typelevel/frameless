@@ -11,12 +11,12 @@ import shapeless.{HList, LabelledGeneric}
   * @tparam A the type to attempt to wrap
   */
 trait SchemaWrapper[A] {
-  type N // The wrapped type
-  type Z <: HList
+  type Wrapped
+  type RecordRep <: HList
 }
 
 object SchemaWrapper extends LowPrioritySchemaWrapper{
-  type Aux[A, B, C] = SchemaWrapper[A]{ type N = B; type Z = C }
+  type Aux[A, B, C] = SchemaWrapper[A]{ type Wrapped = B; type RecordRep = C }
 
   def apply[A](implicit schemaWrapper: SchemaWrapper[A]): SchemaWrapper[A] = schemaWrapper
 
@@ -25,14 +25,14 @@ object SchemaWrapper extends LowPrioritySchemaWrapper{
   (implicit
    i0: LabelledGeneric.Aux[A, ARep]
   ): SchemaWrapper.Aux[A, A, ARep] = new SchemaWrapper[A] {
-    type N = A
-    type Z = ARep
+    type Wrapped = A
+    type RecordRep = ARep
   }
 }
 
 trait LowPrioritySchemaWrapper {
   implicit def deriveSchemaWrapperTuple1[A]: SchemaWrapper.Aux[A, Tuple1[A], Record.`'_1 -> A`.T] = new SchemaWrapper[A] {
-    type N = Tuple1[A]
-    type Z = Record.`'_1 -> A`.T
+    type Wrapped = Tuple1[A]
+    type RecordRep = Record.`'_1 -> A`.T
   }
 }

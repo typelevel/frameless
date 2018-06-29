@@ -228,15 +228,15 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * {{{
     * tf.col('id)
     * }}}
-  *
-  * It is statically checked that column with such name exists and has type `A`.
+    *
+    * It is statically checked that column with such name exists and has type `A`.
     */
   def col[A](column: Witness.Lt[Symbol])
     (implicit
       i1: TypedColumn.Exists[T, column.T, A],
       i2: TypedEncoder[A]
     ): TypedColumn[T, A] =
-    new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
+      new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
 
   /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
     * {{{
