@@ -219,8 +219,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def apply[A](column: Witness.Lt[Symbol])
     (implicit
-      i1: TypedColumn.Exists[T, column.T, A],
-      i2: TypedEncoder[A]
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]
     ): TypedColumn[T, A] = col(column)
 
   /** Returns `TypedColumn` of type `A` given its name.
@@ -233,8 +233,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def col[A](column: Witness.Lt[Symbol])
     (implicit
-      i1: TypedColumn.Exists[T, column.T, A],
-      i2: TypedEncoder[A]
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]
     ): TypedColumn[T, A] =
       new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
 
@@ -253,9 +253,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   object colMany extends SingletonProductArgs {
     def applyProduct[U <: HList, Out, Tw](columns: U)
       (implicit
-        i1: TypedColumn.ExistsMany[T, U, Out],
-        i2: TypedEncoder[Out],
-        i3: ToTraversable.Aux[U, List, Symbol]): TypedColumn[T, Out] = {
+        i0: TypedColumn.ExistsMany[T, U, Out],
+        i1: TypedEncoder[Out],
+        i2: ToTraversable.Aux[U, List, Symbol]): TypedColumn[T, Out] = {
       val names = columns.toList[Symbol].map(_.name)
       val colExpr = FramelessInternals.resolveExpr(dataset, names)
       new TypedColumn[T, Out](colExpr)
@@ -270,8 +270,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def colRight[A](column: Witness.Lt[Symbol])
     (implicit
-      i1: TypedColumn.Exists[T, column.T, A],
-      i2: TypedEncoder[A]): TypedColumn[T, A] =
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]): TypedColumn[T, A] =
     new TypedColumn[T, A](FramelessInternals.DisambiguateRight(col(column).expr))
 
   /** Left hand side disambiguation of `col` for join expressions.
@@ -282,8 +282,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     */
   def colLeft[A](column: Witness.Lt[Symbol])
     (implicit
-      i1: TypedColumn.Exists[T, column.T, A],
-      i2: TypedEncoder[A]): TypedColumn[T, A] =
+      i0: TypedColumn.Exists[T, column.T, A],
+      i1: TypedEncoder[A]): TypedColumn[T, A] =
     new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
 
   /** Returns a `Seq` that contains all the elements in this [[TypedDataset]].
@@ -1073,7 +1073,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     column: Witness.Lt[Symbol],
     replacement: TypedColumn[T, A]
   )(implicit
-    i1: TypedColumn.Exists[T, column.T, A]
+    i0: TypedColumn.Exists[T, column.T, A]
   ): TypedDataset[T] = {
     val updated = dataset.toDF().withColumn(column.value.name, replacement.untyped)
       .as[T](TypedExpressionEncoder[T])
@@ -1166,13 +1166,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def explode[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
   (column: Witness.Lt[Symbol])
   (implicit
-   i1: TypedColumn.Exists[T, column.T, V[A]],
-   i2: TypedEncoder[A],
-   i3: CatalystExplodableCollection[V],
-   i4: LabelledGeneric.Aux[T, TRep],
-   i5: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
-   i6: Values.Aux[OutMod, OutModValues],
-   i8: Tupler.Aux[OutModValues, Out],
+   i0: TypedColumn.Exists[T, column.T, V[A]],
+   i1: TypedEncoder[A],
+   i2: CatalystExplodableCollection[V],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
    i7: TypedEncoder[Out]
   ): TypedDataset[Out] = {
     val df = dataset.toDF()
