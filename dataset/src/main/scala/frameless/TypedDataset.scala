@@ -1165,9 +1165,18 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   }
 
   /**
-    * Explodes (flattens) a single column at a time. It only compiles if the type of column supports this operation.
+    * Explodes a single column at a time. It only compiles if the type of column supports this operation.
     *
-    * @param column the column we wish to explode/flatten
+    * @example
+    *
+    * {{{
+    *   case class X(i: Int, j: Array[Int])
+    *   case class Y(i: Int, j: Int)
+    *
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.explode('j).as[Y]
+    * }}}
+    * @param column the column we wish to explode
     */
   def explode[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
   (column: Witness.Lt[Symbol])
@@ -1192,6 +1201,17 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
   /**
     * Flattens a column of type Option[A]. Compiles only if the selected column is of type Option[A].
+    *
+    *
+    * @example
+    *
+    * {{{
+    *   case class X(i: Int, j: Option[Int])
+    *   case class Y(i: Int, j: Int)
+    *
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.flattenOption('j).as[Y]
+    * }}}
     *
     * @param column the column we wish to flatten
     */
