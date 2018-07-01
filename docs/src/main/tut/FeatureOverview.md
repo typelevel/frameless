@@ -500,6 +500,24 @@ val sampleStats = bedroomStats.select(
 sampleStats.show().run()   
 ``` 
 
+In addition, optional columns can be flatten using the `.flattenOption` method on `TypedDatset`.
+The result contains the rows for which the flattened column is not None (or null). The schema
+is automatically adapted to reflect this change.
+
+```tut:book
+val flattenStats = bedroomStats.flattenOption('AvgPriceBeds2)
+
+
+// The second Option[Double] is now of type Double, since all 'null' values are removed
+flattenStats: TypedDataset[(String, Option[Double], Double, Option[Double], Option[Double])]
+```
+
+In a DataFrame, if you just ignore types, this would equivelantly be written as:
+
+```tut:book
+bedroomStats.dataset.toDF().filter($"AvgPriceBeds2".isNotNull)
+```
+
 
 ### Entire TypedDataset Aggregation
 
