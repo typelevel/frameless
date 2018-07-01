@@ -139,6 +139,13 @@ abstract class AbstractTypedColumn[T, U]
   def isNotNone(implicit i0: U <:< Option[_]): ThisType[T, Boolean] =
     typed(Not(equalsTo(lit(None.asInstanceOf[U])).expr))
 
+  /** True if the current expression is a fractional number and is not NaN.
+    *
+    * apache/spark
+    */
+  def isNaN(implicit i0: Fractional[U]): ThisType[T, Boolean] =
+    typed(self.untyped.isNaN)
+
   /** Convert an Optional column by providing a default value
     * {{{
     *   df( df('opt).getOrElse(df('defaultValue)) )
