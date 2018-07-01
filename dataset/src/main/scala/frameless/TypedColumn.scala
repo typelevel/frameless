@@ -189,6 +189,18 @@ abstract class AbstractTypedColumn[T, U]
   def +(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.plus(u))
 
+  /**
+    * Inversion of boolean expression, i.e. NOT.
+    * {{{
+    *   // Select rows that are not active (isActive === false)
+    *   df.filter( !df('isActive) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def unary_!(implicit i0: U <:< Boolean): ThisType[T, Boolean] =
+    typed(!untyped)
+
   /** Unary minus, i.e. negate the expression.
     * {{{
     *   // Select the amount column and negates all values.

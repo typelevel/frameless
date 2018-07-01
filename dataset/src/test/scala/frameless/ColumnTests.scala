@@ -4,6 +4,7 @@ import java.time.Instant
 
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalatest.Matchers._
 import shapeless.test.illTyped
 
 import scala.math.Ordering.Implicits._
@@ -357,4 +358,20 @@ class ColumnTests extends TypedDatasetSuite {
     check(forAll(prop[Vector[Vector[String]], Vector[Vector[BigDecimal]]] _))
   }
 
+  test("unary_!") {
+    val ds = TypedDataset.create((true, false) :: Nil)
+
+    val rs = ds.select(!ds('_1), !ds('_2)).collect().run().head
+    val expected = (false, true)
+
+    rs shouldEqual expected
+  }
+
+  test("unary_! with non-boolean columns should not compile") {
+    val ds = TypedDataset.create((1, "a", 2.0) :: Nil)
+
+    "ds.select(!ds('_1))" shouldNot typeCheck
+    "ds.select(!ds('_2))" shouldNot typeCheck
+    "ds.select(!ds('_3))" shouldNot typeCheck
+  }
 }
