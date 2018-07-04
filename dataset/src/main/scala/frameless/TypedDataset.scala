@@ -111,7 +111,6 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         val selected = dataset.toDF()
           .agg(cols.head.alias("_1"), cols.tail: _*)
           .as[Out](TypedExpressionEncoder[Out])
-          .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
 
         TypedDataset.create[Out](selected)
       }
