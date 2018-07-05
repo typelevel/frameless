@@ -106,7 +106,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       if (datasetAvg.size > 2) falsified
       else xs match {
-        case Nil => datasetAvg ?= Vector(null)
+        case Nil => datasetAvg ?= Vector(null.asInstanceOf[Out])
         case _ :: _ => datasetAvg.headOption match {
           case Some(x) => approximatelyEqual(averager.avg(xs), x)
           case None => falsified
