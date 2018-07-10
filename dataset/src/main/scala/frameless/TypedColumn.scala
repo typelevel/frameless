@@ -143,7 +143,7 @@ abstract class AbstractTypedColumn[T, U]
     *
     * apache/spark
     */
-  def isNaN(implicit i0: Fractional[U]): ThisType[T, Boolean] =
+  def isNaN(implicit n: CatalystNaN[U]): ThisType[T, Boolean] =
     typed(self.untyped.isNaN)
 
   /** Convert an Optional column by providing a default value

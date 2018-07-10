@@ -182,7 +182,7 @@ class NumericTests extends TypedDatasetSuite {
     }
     implicit val x1 = Arbitrary{ doubleWithNaN.arbitrary.map(X1(_)) }
 
-    def prop[A : TypedEncoder : Encoder : Fractional](data: List[X1[A]]): Prop = {
+    def prop[A : TypedEncoder : Encoder : CatalystNaN](data: List[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       val expected = ds.toDF().filter(!$"a".isNaN).map(_.getAs[A](0)).collect().toSeq
@@ -195,7 +195,7 @@ class NumericTests extends TypedDatasetSuite {
     check(forAll(prop[Double] _))
   }
 
-  test("isNaN with non-fractional types should not compile") {
+  test("isNaN with non-nan types should not compile") {
     val ds = TypedDataset.create((1, false, 'a, "b") :: Nil)
 
     "ds.filter(ds('_1).isNaN)" shouldNot typeCheck
