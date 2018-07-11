@@ -13,9 +13,7 @@ object TypedExpressionEncoder {
     */
   def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
    encoder.catalystRepr match {
-      case x: StructType =>
-        if (encoder.nullable) StructType(x.fields.map(_.copy(nullable = true)))
-        else x
+      case x: StructType => x
       case dt => new StructType().add("_1", dt, nullable = encoder.nullable)
     }
   }
