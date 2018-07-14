@@ -1,7 +1,10 @@
 package frameless
 
-import org.scalacheck.Prop
+import org.apache.spark.sql.Encoder
+import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop._
+import org.scalatest.Matchers._
+
 import scala.reflect.ClassTag
 
 class NumericTests extends TypedDatasetSuite {
@@ -168,5 +171,36 @@ class NumericTests extends TypedDatasetSuite {
     check(prop[Long  ] _)
     check(prop[Short ] _)
     check(prop[BigDecimal] _)
+  }
+
+  test("isNaN") {
+    val spark = session
+    import spark.implicits._
+
+    implicit val doubleWithNaN = Arbitrary {
+      implicitly[Arbitrary[Double]].arbitrary.flatMap(Gen.oneOf(_, Double.NaN))
+    }
+    implicit val x1 = Arbitrary{ doubleWithNaN.arbitrary.map(X1(_)) }
+
+    def prop[A : TypedEncoder : Encoder : CatalystNaN](data: List[X1[A]]): Prop = {
+      val ds = TypedDataset.create(data)
+
+      val expected = ds.toDF().filter(!$"a".isNaN).map(_.getAs[A](0)).collect().toSeq
+      val rs = ds.filter(!ds('a).isNaN).collect().run().map(_.a)
+
+      rs ?= expected
+    }
+
+    check(forAll(prop[Float] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("isNaN with non-nan types should not compile") {
+    val ds = TypedDataset.create((1, false, 'a, "b") :: Nil)
+
+    "ds.filter(ds('_1).isNaN)" shouldNot typeCheck
+    "ds.filter(ds('_2).isNaN)" shouldNot typeCheck
+    "ds.filter(ds('_3).isNaN)" shouldNot typeCheck
+    "ds.filter(ds('_4).isNaN)" shouldNot typeCheck
   }
 }
