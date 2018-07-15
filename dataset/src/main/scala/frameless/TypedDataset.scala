@@ -3,7 +3,6 @@ package frameless
 import java.util
 
 import frameless.functions.CatalystExplodableCollection
-
 import frameless.ops._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -106,15 +105,22 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i3: TypedEncoder[Out]
       ): TypedDataset[Out] = {
 
-        val cols = columns.toList[UntypedExpression[T]].map(c => new Column(c.expr))
+      val underlyingColumns = columns.toList[UntypedExpression[T]]
+      val cols: Seq[Column] = for {
+        (c, i) <- columns.toList[UntypedExpression[T]].zipWithIndex
+      } yield new Column(c.expr).as(s"_${i+1}")
 
-        val selected = dataset.toDF()
-          .agg(cols.head.alias("_1"), cols.tail: _*)
-          .as[Out](TypedExpressionEncoder[Out])
-          .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
+      // Workaround to SPARK-20346. The alternative is to allow the result to be Vector(null) for empty DataFrames.
+      val filterStr = (
+        for {
+          (c, i) <- underlyingColumns.zipWithIndex
+          if !c.uencoder.nullable
+        } yield s"_${i+1} is not null"
+        ).mkString(" or ")
 
-        TypedDataset.create[Out](selected)
-      }
+      val selected = dataset.toDF().agg(cols.head, cols.tail:_*).as[Out](TypedExpressionEncoder[Out])
+      TypedDataset.create[Out](if (filterStr.isEmpty) selected else selected.filter(filterStr))
+    }
   }
 
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */

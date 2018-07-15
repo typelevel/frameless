@@ -2193,19 +2193,17 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("Empty vararg tests") {
-    import frameless.functions.aggregate._
     def prop[A : TypedEncoder, B: TypedEncoder](data: Vector[X2[A, B]]) = {
       val ds = TypedDataset.create(data)
       val frameless = ds.select(ds('a), concat(), ds('b), concatWs(":")).collect().run().toVector
-      val framelessAggr = ds.agg(first(ds('a)), concat(), concatWs("x"), litAggr(2)).collect().run().toVector
+      val framelessAggr = ds.agg(concat(), concatWs("x"), litAggr(2)).collect().run().toVector
       val scala = data.map(x => (x.a, "", x.b, ""))
-      val scalaAggr = if (data.nonEmpty) Vector((data.head.a, "", "", 2)) else Vector.empty
+      val scalaAggr = Vector(("", "", 2))
       (frameless ?= scala).&&(framelessAggr ?= scalaAggr)
     }
 
     check(forAll(prop[Long, Long] _))
-    // This fails due to issue #239
-    //check(forAll(prop[Option[Vector[Boolean]], Long] _))
+    check(forAll(prop[Option[Boolean], Long] _))
   }
 
   test("year") {
