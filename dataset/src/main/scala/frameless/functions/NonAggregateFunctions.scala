@@ -233,6 +233,14 @@ trait NonAggregateFunctions {
   def base64[T](column: AbstractTypedColumn[T, Array[Byte]]): column.ThisType[T, String] =
     column.typed(sparkFunctions.base64(column.untyped))
 
+  /** Non-Aggregate function: Decodes a BASE64 encoded string column and returns it as a binary column.
+    * This is the reverse of base64.
+    *
+    * apache/spark
+    */
+  def unbase64[T](column: AbstractTypedColumn[T, String]): column.ThisType[T, Array[Byte]] =
+    column.typed(sparkFunctions.unbase64(column.untyped))
+
   /** Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
     * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
     *

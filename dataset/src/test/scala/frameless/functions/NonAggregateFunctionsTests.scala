@@ -536,7 +536,37 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .run()
         .toList
 
-      res ?= resCompare
+      val backAndForth = typedDS
+        .select(base64(unbase64(base64(typedDS('a)))))
+        .collect()
+        .run()
+        .toList
+
+      (res ?= resCompare) && (res ?= backAndForth)
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("unbase64") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[String]])(implicit encX1: Encoder[X1[String]]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.unbase64(cDS("a")))
+        .map(_.getAs[Array[Byte]](0))
+        .collect().toList
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(unbase64(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res.map(_.toList) ?= resCompare.map(_.toList)
     }
 
     check(forAll(prop _))
