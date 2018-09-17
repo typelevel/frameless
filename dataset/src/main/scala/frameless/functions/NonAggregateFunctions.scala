@@ -158,6 +158,24 @@ trait NonAggregateFunctions {
     (implicit i0: CatalystCast[A, Double]): TypedAggregate[T, Double] =
       atan2(l, l.lit(r))
 
+  def sqrt[A, T](column: AbstractTypedColumn[T, A])
+                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.sqrt(column.cast[Double].untyped))
+
+  def cbrt[A, T](column: AbstractTypedColumn[T, A])
+                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.cbrt(column.cast[Double].untyped))
+
+  def exp[A, T](column: AbstractTypedColumn[T, A])
+                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.exp(column.cast[Double].untyped))
+
+  def bround[A, B, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystBround[A, B], i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.bround(column.untyped))(i1)
+
+
   /** Non-Aggregate function: Returns the string representation of the binary value of the given long
     * column. For example, bin("12") returns "1100".
     *
