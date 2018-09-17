@@ -2,7 +2,6 @@ package frameless
 package functions
 
 import java.io.File
-
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => sparkFunctions}
@@ -16,6 +15,71 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     FileUtils.deleteDirectory(new File(testTempFiles))
     super.afterAll()
   }
+
+  test("ceil big decimal") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder: Encoder]
+    (values: List[X1[A]])
+    (
+      implicit catalystRound: CatalystRound[A, java.math.BigDecimal],
+      encX1:Encoder[X1[A]]
+    )= {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.ceil(cDS("a")))
+        .map(_.getAs[java.math.BigDecimal](0))
+        .collect()
+        .toList.map(_.setScale(0))
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(ceil(col))
+        .collect()
+        .run()
+        .toList
+
+      resCompare ?= res
+    }
+
+    check(forAll(prop[BigDecimal] _))
+  }
+
+  test("ceil") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder]
+    (values: List[X1[A]])
+    (
+      implicit catalystAbsolute: CatalystRound[A, Long],
+      encX1: Encoder[X1[A]]
+    ) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.ceil(cDS("a")))
+        .map(_.getAs[Long](0))
+        .collect().toList
+
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(ceil(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Double] _))
+  }
+
 
   test("abs big decimal") {
     val spark = session

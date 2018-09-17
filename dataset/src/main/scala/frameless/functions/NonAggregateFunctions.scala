@@ -6,6 +6,17 @@ import org.apache.spark.sql.{Column, functions => sparkFunctions}
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
+  /** Non-Aggregate function: returns  the ceiling of a numeric column
+    *
+    * apache/spark
+    */
+  def ceil[A, B, T](column: AbstractTypedColumn[T, A])
+   (implicit
+    i0: CatalystRound[A, B],
+    i1: TypedEncoder[B]
+   ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.ceil(column.untyped))(i1)
+
   /** Non-Aggregate function: returns the absolute value of a numeric column
     *
     * apache/spark
