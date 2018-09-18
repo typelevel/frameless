@@ -45,8 +45,8 @@ trait NonAggregateFunctions {
     */
   def abs[A, B, T](column: AbstractTypedColumn[T, A])
     (implicit
-      i0: CatalystAbsolute[A, B],
-      i1: TypedEncoder[B]
+     i0: CatalystNumericWithJavaBigDecimal[A, B],
+     i1: TypedEncoder[B]
     ): column.ThisType[T, B] =
       column.typed(sparkFunctions.abs(column.untyped))(i1)
 
@@ -191,22 +191,49 @@ trait NonAggregateFunctions {
     (implicit i0: CatalystCast[A, Double]): TypedAggregate[T, Double] =
       atan2(l, l.lit(r))
 
+  /** Non-Aggregate function: returns the square root value of a numeric column.
+    *
+    * apache/spark
+    */
   def sqrt[A, T](column: AbstractTypedColumn[T, A])
                 (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.sqrt(column.cast[Double].untyped))
 
+  /** Non-Aggregate function: returns the cubic root value of a numeric column.
+    *
+    * apache/spark
+    */
   def cbrt[A, T](column: AbstractTypedColumn[T, A])
                 (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.cbrt(column.cast[Double].untyped))
 
+  /** Non-Aggregate function: returns the exponential value of a numeric column.
+    *
+    * apache/spark
+    */
   def exp[A, T](column: AbstractTypedColumn[T, A])
-                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+               (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.exp(column.cast[Double].untyped))
 
+  /** Non-Aggregate function: Bankers Rounding - returns the rounded to 0 decimal places value with HALF_EVEN round mode
+    *  of a numeric column.
+    *
+    * apache/spark
+    */
   def bround[A, B, T](column: AbstractTypedColumn[T, A])(
-    implicit i0: CatalystBround[A, B], i1: TypedEncoder[B]
+    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.bround(column.untyped))(i1)
+
+  /** Non-Aggregate function: Bankers Rounding - returns the rounded to `scale` decimal places value with HALF_EVEN round mode
+    *  of a numeric column. If `scale` is greater than or equal to 0 or at integral part when `scale` is less than 0.
+    *
+    * apache/spark
+    */
+  def bround[A, B, T](column: AbstractTypedColumn[T, A], scale: Int)(
+    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.bround(column.untyped, scale))(i1)
 
 
   /** Non-Aggregate function: Returns the string representation of the binary value of the given long
