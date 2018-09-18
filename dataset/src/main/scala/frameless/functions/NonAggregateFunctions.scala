@@ -6,7 +6,7 @@ import org.apache.spark.sql.{Column, functions => sparkFunctions}
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
-  /** Non-Aggregate function: returns  the ceiling of a numeric column
+  /** Non-Aggregate function: returns the ceiling of a numeric column
     *
     * apache/spark
     */

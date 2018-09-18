@@ -16,52 +16,23 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     super.afterAll()
   }
 
-  test("ceil big decimal") {
-    val spark = session
-    import spark.implicits._
-
-    def prop[A: TypedEncoder: Encoder]
-    (values: List[X1[A]])
-    (
-      implicit catalystRound: CatalystRound[A, java.math.BigDecimal],
-      encX1:Encoder[X1[A]]
-    )= {
-      val cDS = session.createDataset(values)
-      val resCompare = cDS
-        .select(sparkFunctions.ceil(cDS("a")))
-        .map(_.getAs[java.math.BigDecimal](0))
-        .collect()
-        .toList.map(_.setScale(0))
-
-      val typedDS = TypedDataset.create(values)
-      val col = typedDS('a)
-      val res = typedDS
-        .select(ceil(col))
-        .collect()
-        .run()
-        .toList
-
-      resCompare ?= res
-    }
-
-    check(forAll(prop[BigDecimal] _))
-  }
-
   test("ceil") {
     val spark = session
     import spark.implicits._
 
-    def prop[A: TypedEncoder : Encoder]
-    (values: List[X1[A]])
-    (
-      implicit catalystAbsolute: CatalystRound[A, Long],
-      encX1: Encoder[X1[A]]
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]])(
+      implicit catalystAbsolute: CatalystRound[A, B], encX1: Encoder[X1[A]]
     ) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
         .select(sparkFunctions.ceil(cDS("a")))
-        .map(_.getAs[Long](0))
-        .collect().toList
+        .map(_.getAs[B](0))
+        .collect()
+        .toList.map{
+          case bigDecimal : java.math.BigDecimal => bigDecimal.setScale(0)
+          case other => other
+        }.asInstanceOf[List[B]]
 
 
       val typedDS = TypedDataset.create(values)
@@ -74,10 +45,11 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-    check(forAll(prop[Int] _))
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Short] _))
-    check(forAll(prop[Double] _))
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Short, Long] _))
+    check(forAll(prop[Double, Long] _))
+    check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
   }
 
 
