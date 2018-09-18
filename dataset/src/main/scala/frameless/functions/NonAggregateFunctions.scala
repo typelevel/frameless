@@ -11,11 +11,44 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   def ceil[A, B, T](column: AbstractTypedColumn[T, A])
-   (implicit
-    i0: CatalystRound[A, B],
-    i1: TypedEncoder[B]
-   ): column.ThisType[T, B] =
-    column.typed(sparkFunctions.ceil(column.untyped))(i1)
+    (implicit
+      i0: CatalystRound[A, B],
+      i1: TypedEncoder[B]
+    ): column.ThisType[T, B] =
+      column.typed(sparkFunctions.ceil(column.untyped))(i1)
+
+  /** Non-Aggregate function: unsigned shift the the given value numBits right. If given long, will return long else it will return an integer.
+    *
+    * apache/spark
+    */
+  def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
+    (implicit
+      i0: CatalystBitShift[A, B],
+      i1: TypedEncoder[B]
+    ): column.ThisType[T, B] =
+      column.typed(sparkFunctions.shiftRightUnsigned(column.untyped, numBits))
+
+  /** Non-Aggregate function: shift the the given value numBits right. If given long, will return long else it will return an integer.
+    *
+    * apache/spark
+    */
+  def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
+    (implicit
+      i0: CatalystBitShift[A, B],
+      i1: TypedEncoder[B]
+    ): column.ThisType[T, B] =
+      column.typed(sparkFunctions.shiftRight(column.untyped, numBits))
+
+  /** Non-Aggregate function: shift the the given value numBits left. If given long, will return long else it will return an integer.
+    *
+    * apache/spark
+    */
+  def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
+    (implicit
+      i0: CatalystBitShift[A, B],
+      i1: TypedEncoder[B]
+    ): column.ThisType[T, B] =
+      column.typed(sparkFunctions.shiftLeft(column.untyped, numBits))
 
   /** Non-Aggregate function: returns the absolute value of a numeric column
     *
