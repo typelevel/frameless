@@ -352,6 +352,30 @@ t.withColumnTupled(
 )
 ```
 
+Flattening columns in Spark is done with the `explode()` method. Unlike vanilla Spark, 
+in Frameless `explode()` is part of `TypedDataset` and not a function of a column. 
+This provides additional safety since more than one `explode()` applied in a single 
+statement results in runtime error in vanilla Spark.   
+
+
+```tut:book
+val t2 = cityRatio.select(cityRatio('city), lit(List(1,2,3,4)))
+val flattened = t2.explode('_2): TypedDataset[(String, Int)]
+flattened.show(4).run()
+```
+
+Here is an example of how `explode()` may fail in vanilla Spark. The Frameless 
+implementation does not suffer from this problem since, by design, it can only be applied
+to a single column at a time. 
+
+```tut:book:fail
+{
+  import org.apache.spark.sql.functions.{explode => sparkExplode}
+  t2.dataset.toDF().select(sparkExplode($"_2"), sparkExplode($"_2"))
+}
+```
+
+
 
 ### Collecting data to the driver
 
@@ -475,6 +499,24 @@ val sampleStats = bedroomStats.select(
 
 sampleStats.show().run()   
 ``` 
+
+In addition, optional columns can be flatten using the `.flattenOption` method on `TypedDatset`.
+The result contains the rows for which the flattened column is not None (or null). The schema
+is automatically adapted to reflect this change.
+
+```tut:book
+val flattenStats = bedroomStats.flattenOption('AvgPriceBeds2)
+
+
+// The second Option[Double] is now of type Double, since all 'null' values are removed
+flattenStats: TypedDataset[(String, Option[Double], Double, Option[Double], Option[Double])]
+```
+
+In a DataFrame, if you just ignore types, this would equivelantly be written as:
+
+```tut:book
+bedroomStats.dataset.toDF().filter($"AvgPriceBeds2".isNotNull)
+```
 
 
 ### Entire TypedDataset Aggregation

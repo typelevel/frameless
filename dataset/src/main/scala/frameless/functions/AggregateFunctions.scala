@@ -3,7 +3,7 @@ package functions
 
 import org.apache.spark.sql.FramelessInternals.expr
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.{functions => untyped}
+import org.apache.spark.sql.{functions => sparkFunctions}
 import frameless.syntax._
 
 trait AggregateFunctions {
@@ -12,26 +12,26 @@ trait AggregateFunctions {
     * apache/spark
     */
   def count[T](): TypedAggregate[T, Long] =
-    untyped.count(untyped.lit(1)).typedAggregate
+    sparkFunctions.count(sparkFunctions.lit(1)).typedAggregate
 
   /** Aggregate function: returns the number of items in a group for which the selected column is not null.
     *
     * apache/spark
     */
   def count[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
-    untyped.count(column.untyped).typedAggregate
+    sparkFunctions.count(column.untyped).typedAggregate
 
   /** Aggregate function: returns the number of distinct items in a group.
     *
     * apache/spark
     */
   def countDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
-    untyped.countDistinct(column.untyped).typedAggregate
+    sparkFunctions.countDistinct(column.untyped).typedAggregate
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     */
   def approxCountDistinct[T](column: TypedColumn[T, _]): TypedAggregate[T, Long] =
-    untyped.approx_count_distinct(column.untyped).typedAggregate
+    sparkFunctions.approx_count_distinct(column.untyped).typedAggregate
 
   /** Aggregate function: returns the approximate number of distinct items in a group.
     *
@@ -40,21 +40,21 @@ trait AggregateFunctions {
     * apache/spark
     */
   def approxCountDistinct[T](column: TypedColumn[T, _], rsd: Double): TypedAggregate[T, Long] =
-    untyped.approx_count_distinct(column.untyped, rsd).typedAggregate
+    sparkFunctions.approx_count_distinct(column.untyped, rsd).typedAggregate
 
   /** Aggregate function: returns a list of objects with duplicates.
     *
     * apache/spark
     */
   def collectList[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] =
-    untyped.collect_list(column.untyped).typedAggregate
+    sparkFunctions.collect_list(column.untyped).typedAggregate
 
   /** Aggregate function: returns a set of objects with duplicate elements eliminated.
     *
     * apache/spark
     */
   def collectSet[T, A: TypedEncoder](column: TypedColumn[T, A]): TypedAggregate[T, Vector[A]] =
-    untyped.collect_set(column.untyped).typedAggregate
+    sparkFunctions.collect_set(column.untyped).typedAggregate
 
   /** Aggregate function: returns the sum of all values in the given column.
     *
@@ -66,7 +66,7 @@ trait AggregateFunctions {
     oencoder: TypedEncoder[Out]
   ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
-    val sumExpr = expr(untyped.sum(column.untyped))
+    val sumExpr = expr(sparkFunctions.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
     new TypedAggregate[T, Out](sumOrZero)
@@ -82,7 +82,7 @@ trait AggregateFunctions {
     oencoder: TypedEncoder[Out]
   ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
-    val sumExpr = expr(untyped.sumDistinct(column.untyped))
+    val sumExpr = expr(sparkFunctions.sumDistinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
     new TypedAggregate[T, Out](sumOrZero)
@@ -97,7 +97,7 @@ trait AggregateFunctions {
     averageable: CatalystAverageable[A, Out],
     oencoder: TypedEncoder[Out]
   ): TypedAggregate[T, Out] = {
-    new TypedAggregate[T, Out](untyped.avg(column.untyped))
+    new TypedAggregate[T, Out](sparkFunctions.avg(column.untyped))
   }
 
   /** Aggregate function: returns the unbiased variance of the values in a group.
@@ -108,7 +108,7 @@ trait AggregateFunctions {
     * apache/spark
     */
   def variance[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] =
-    untyped.variance(column.untyped).typedAggregate
+    sparkFunctions.variance(column.untyped).typedAggregate
 
   /** Aggregate function: returns the sample standard deviation.
     *
@@ -118,7 +118,7 @@ trait AggregateFunctions {
     * apache/spark
     */
   def stddev[A: CatalystVariance, T](column: TypedColumn[T, A]): TypedAggregate[T, Double] =
-    untyped.stddev(column.untyped).typedAggregate
+    sparkFunctions.stddev(column.untyped).typedAggregate
 
   /**
     * Aggregate function: returns the standard deviation of a column by population.
@@ -132,7 +132,7 @@ trait AggregateFunctions {
     implicit val c1 = column.uencoder
 
     new TypedAggregate[T, Option[Double]](
-      untyped.stddev_pop(column.cast[Double].untyped)
+      sparkFunctions.stddev_pop(column.cast[Double].untyped)
     )
   }
 
@@ -148,7 +148,7 @@ trait AggregateFunctions {
     implicit val c1 = column.uencoder
 
     new TypedAggregate[T, Option[Double]](
-      untyped.stddev_samp(column.cast[Double].untyped)
+      sparkFunctions.stddev_samp(column.cast[Double].untyped)
     )
   }
 
@@ -158,7 +158,7 @@ trait AggregateFunctions {
     */
   def max[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    untyped.max(column.untyped).typedAggregate
+    sparkFunctions.max(column.untyped).typedAggregate
   }
 
   /** Aggregate function: returns the minimum value of the column in a group.
@@ -167,7 +167,7 @@ trait AggregateFunctions {
     */
   def min[A: CatalystOrdered, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    untyped.min(column.untyped).typedAggregate
+    sparkFunctions.min(column.untyped).typedAggregate
   }
 
   /** Aggregate function: returns the first value in a group.
@@ -179,7 +179,7 @@ trait AggregateFunctions {
     */
   def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    untyped.first(column.untyped).typedAggregate(column.uencoder)
+    sparkFunctions.first(column.untyped).typedAggregate(column.uencoder)
   }
 
   /**
@@ -192,7 +192,7 @@ trait AggregateFunctions {
     */
   def last[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
     implicit val c = column.uencoder
-    untyped.last(column.untyped).typedAggregate
+    sparkFunctions.last(column.untyped).typedAggregate
   }
 
   /**
@@ -211,7 +211,7 @@ trait AggregateFunctions {
       implicit val c1 = column1.uencoder
       implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
-        untyped.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
+        sparkFunctions.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
     }
 
@@ -231,7 +231,7 @@ trait AggregateFunctions {
       implicit val c1 = column1.uencoder
       implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
-        untyped.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
+        sparkFunctions.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
     }
 
@@ -251,7 +251,7 @@ trait AggregateFunctions {
       implicit val c1 = column1.uencoder
       implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
-        untyped.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
+        sparkFunctions.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
     }
 
@@ -267,7 +267,7 @@ trait AggregateFunctions {
   def kurtosis[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
     new TypedAggregate[T, Option[Double]](
-      untyped.kurtosis(column.cast[Double].untyped)
+      sparkFunctions.kurtosis(column.cast[Double].untyped)
     )
   }
 
@@ -282,7 +282,7 @@ trait AggregateFunctions {
   def skewness[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     implicit val c1 = column.uencoder
     new TypedAggregate[T, Option[Double]](
-      untyped.skewness(column.cast[Double].untyped)
+      sparkFunctions.skewness(column.cast[Double].untyped)
     )
   }
 }

@@ -139,6 +139,13 @@ abstract class AbstractTypedColumn[T, U]
   def isNotNone(implicit i0: U <:< Option[_]): ThisType[T, Boolean] =
     typed(Not(equalsTo(lit(None.asInstanceOf[U])).expr))
 
+  /** True if the current expression is a fractional number and is not NaN.
+    *
+    * apache/spark
+    */
+  def isNaN(implicit n: CatalystNaN[U]): ThisType[T, Boolean] =
+    typed(self.untyped.isNaN)
+
   /** Convert an Optional column by providing a default value
     * {{{
     *   df( df('opt).getOrElse(df('defaultValue)) )
@@ -188,6 +195,18 @@ abstract class AbstractTypedColumn[T, U]
     */
   def +(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.plus(u))
+
+  /**
+    * Inversion of boolean expression, i.e. NOT.
+    * {{{
+    *   // Select rows that are not active (isActive === false)
+    *   df.filter( !df('isActive) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def unary_!(implicit i0: U <:< Boolean): ThisType[T, Boolean] =
+    typed(!untyped)
 
   /** Unary minus, i.e. negate the expression.
     * {{{
@@ -280,6 +299,27 @@ abstract class AbstractTypedColumn[T, U]
     */
   def *(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.multiply(u))
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def mod[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, Out] =
+    typed(self.untyped.mod(other.untyped))
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %[TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
+    mod(other)
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
+    typed(self.untyped.mod(u))
 
   /** Division this expression by another expression.
     * {{{
@@ -498,6 +538,34 @@ abstract class AbstractTypedColumn[T, U]
                     w1: With.Aux[T, TT1, W1],
                     w2: With.Aux[W1, TT2, W2]): ThisType[W2, String] =
     typed(self.untyped.substr(startPos.untyped, len.untyped))
+
+  /** SQL like expression. Returns a boolean column based on a SQL LIKE match.
+    * {{{
+    *   val ds = TypedDataset.create(X2("foo", "bar") :: Nil)
+    *   // true
+    *   ds.select(ds('a).like("foo"))
+    *
+    *   // Selected column has value "bar"
+    *   ds.select(when(ds('a).like("f"), ds('a)).otherwise(ds('b))
+    * }}}
+    * apache/spark
+    */
+  def like(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.like(literal))
+
+  /** SQL RLIKE expression (LIKE with Regex). Returns a boolean column based on a regex match.
+    * {{{
+    *   val ds = TypedDataset.create(X1("foo") :: Nil)
+    *   // true
+    *   ds.select(ds('a).rlike("foo"))
+    *
+    *   // true
+    *   ds.select(ds('a).rlike(".*))
+    * }}}
+    * apache/spark
+    */
+  def rlike(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.rlike(literal))
 
   /** String contains another string literal.
     * {{{
