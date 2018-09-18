@@ -39,9 +39,9 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 
 
 class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
-  // Limit size of generated collections and number of checks because Travis
+  // Limit size of generated collections and number of checks to avoid OutOfMemoryError
   implicit override val generatorDrivenConfig = {
-    val i: PosZInt = scala.util.Properties.envOrNone("CI").fold(PosZInt(100))(_ => PosZInt(10))
+    val i: PosZInt = PosZInt(10)
     PropertyCheckConfiguration(sizeRange = i, minSize = i)
   }
 
