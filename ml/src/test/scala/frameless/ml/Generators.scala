@@ -1,6 +1,7 @@
 package frameless
 package ml
 
+import frameless.ml.params.linears.{LossStrategy, Solver}
 import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
 import org.scalacheck.{Arbitrary, Gen}
@@ -38,6 +39,21 @@ object Generators {
       Gen.const(FeatureSubsetStrategy.Sqrt),
       genRatio,
       genNumberOfFeatures
+    )
+  }
+
+  implicit val arbLossStrategy: Arbitrary[LossStrategy] = Arbitrary {
+    Gen.oneOf(
+      Gen.const(LossStrategy.SquaredError),
+      Gen.const(LossStrategy.SquaredError)
+    )
+  }
+
+  implicit val arbSolver: Arbitrary[Solver] = Arbitrary {
+    Gen.oneOf(
+      Gen.const(Solver.LBFGS),
+      Gen.const(Solver.Auto),
+      Gen.const(Solver.Normal)
     )
   }
 
