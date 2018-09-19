@@ -6,6 +6,28 @@ import org.apache.spark.sql.{Column, functions => sparkFunctions}
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
+
+  /** Non-Aggregate function: calculates the SHA-2 digest of a binary column and returns the value as a 40 character hex string
+    *
+    * apache/spark
+    */
+  def sha2[T](column: AbstractTypedColumn[T, Array[Byte]], numBits: Int): column.ThisType[T, String] =
+    column.typed(sparkFunctions.sha2(column.untyped, numBits))
+
+  /** Non-Aggregate function: calculates the SHA-1 digest of a binary column and returns the value as a 40 character hex string
+    *
+    * apache/spark
+    */
+  def sha1[T](column: AbstractTypedColumn[T, Array[Byte]]): column.ThisType[T, String] =
+    column.typed(sparkFunctions.sha1(column.untyped))
+
+  /** Non-Aggregate function: returns a cyclic redundancy check value of a binary column as long.
+    *
+    * apache/spark
+    */
+  def crc32[T](column: AbstractTypedColumn[T, Array[Byte]]): column.ThisType[T, Long] =
+    column.typed(sparkFunctions.crc32(column.untyped))
+
   /** Non-Aggregate function: unsigned shift the the given value numBits right. If given long, will return long else it will return an integer.
     *
     * apache/spark
