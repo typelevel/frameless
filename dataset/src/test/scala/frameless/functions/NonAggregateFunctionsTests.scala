@@ -2,7 +2,6 @@ package frameless
 package functions
 
 import java.io.File
-
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => sparkFunctions}
@@ -15,6 +14,116 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
   override def afterAll(): Unit = {
     FileUtils.deleteDirectory(new File(testTempFiles))
     super.afterAll()
+  }
+  
+  def propBitShift[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
+    (typedCol: TypedColumn[X1[A], B], sparkFunc: (Column,Int) => Column, numBits: Int): Prop = {
+    val spark = session
+    import spark.implicits._
+
+    val resCompare = typedDS.dataset
+      .select(sparkFunc($"a", numBits))
+      .map(_.getAs[B](0))
+      .collect()
+      .toList
+
+    val res = typedDS
+      .select(typedCol)
+      .collect()
+      .run()
+      .toList
+
+    res ?= resCompare
+  }
+
+  test("shiftRightUnsigned") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]], numBits: Int)
+    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      propBitShift(typedDS)(shiftRightUnsigned(typedDS('a), numBits), sparkFunctions.shiftRightUnsigned, numBits)
+    }
+
+    check(forAll(prop[Byte, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[BigDecimal, Int] _))
+  }
+
+  test("shiftRight") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]], numBits: Int)
+    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      propBitShift(typedDS)(shiftRight(typedDS('a), numBits), sparkFunctions.shiftRight, numBits)
+    }
+
+    check(forAll(prop[Byte, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[BigDecimal, Int] _))
+  }
+
+  test("shiftLeft") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]], numBits: Int)
+    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      propBitShift(typedDS)(shiftLeft(typedDS('a), numBits), sparkFunctions.shiftLeft, numBits)
+    }
+
+    check(forAll(prop[Byte, Int] _))
+    check(forAll(prop[Short, Int] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[BigDecimal, Int] _))
+  }
+
+  test("ceil") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]])(
+      implicit catalystAbsolute: CatalystRound[A, B], encX1: Encoder[X1[A]]
+    ) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.ceil(cDS("a")))
+        .map(_.getAs[B](0))
+        .collect()
+        .toList.map{
+          case bigDecimal : java.math.BigDecimal => bigDecimal.setScale(0)
+          case other => other
+        }.asInstanceOf[List[B]]
+
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(ceil(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Short, Long] _))
+    check(forAll(prop[Double, Long] _))
+    check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
   }
 
   test("sha2") {
@@ -89,80 +198,6 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop _))
-  }
-
-  def propBitShift[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
-    (typedCol: TypedColumn[X1[A], B], sparkFunc: (Column,Int) => Column, numBits: Int): Prop = {
-    val spark = session
-    import spark.implicits._
-
-    val resCompare = typedDS.dataset
-      .select(sparkFunc($"a", numBits))
-      .map(_.getAs[B](0))
-      .collect()
-      .toList
-
-    val res = typedDS
-      .select(typedCol)
-      .collect()
-      .run()
-      .toList
-
-    res ?= resCompare
-  }
-
-  test("shiftRightUnsigned") {
-    val spark = session
-    import spark.implicits._
-
-    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
-    (values: List[X1[A]], numBits: Int)
-    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
-      val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftRightUnsigned(typedDS('a), numBits), sparkFunctions.shiftRightUnsigned, numBits)
-    }
-
-    check(forAll(prop[Byte, Int] _))
-    check(forAll(prop[Short, Int] _))
-    check(forAll(prop[Int, Int] _))
-    check(forAll(prop[Long, Long] _))
-    check(forAll(prop[BigDecimal, Int] _))
-  }
-
-  test("shiftRight") {
-    val spark = session
-    import spark.implicits._
-
-    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
-    (values: List[X1[A]], numBits: Int)
-    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
-      val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftRight(typedDS('a), numBits), sparkFunctions.shiftRight, numBits)
-    }
-
-    check(forAll(prop[Byte, Int] _))
-    check(forAll(prop[Short, Int] _))
-    check(forAll(prop[Int, Int] _))
-    check(forAll(prop[Long, Long] _))
-    check(forAll(prop[BigDecimal, Int] _))
-  }
-
-  test("shiftLeft") {
-    val spark = session
-    import spark.implicits._
-
-    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
-    (values: List[X1[A]], numBits: Int)
-    (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
-      val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftLeft(typedDS('a), numBits), sparkFunctions.shiftLeft, numBits)
-    }
-
-    check(forAll(prop[Byte, Int] _))
-    check(forAll(prop[Short, Int] _))
-    check(forAll(prop[Int, Int] _))
-    check(forAll(prop[Long, Long] _))
-    check(forAll(prop[BigDecimal, Int] _))
   }
 
   test("abs big decimal") {
