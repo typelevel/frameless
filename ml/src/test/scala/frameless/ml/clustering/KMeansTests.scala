@@ -7,6 +7,7 @@ import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
 import org.scalatest.MustMatchers
 import frameless.ml._
+import frameless.ml.params.kmeans.KMeansAlgorithm
 
 
 class KMeansTests extends FramelessMlSuite with MustMatchers {
@@ -38,23 +39,18 @@ class KMeansTests extends FramelessMlSuite with MustMatchers {
   }
 
   test("param setting is retained") {
-    case class Data(featuresCol: Vector, predictionCol: Int)
-    case class Input(featuresCol: Vector)
-
-    val rf = TypedKMeans[Input]()
-      .setFeaturesCol("featuresCol")
-      .setPredictionCol("predictionCol")
-      .setInitMode("random")
+    val rf = TypedKMeans[X1[Vector]](2)
+      .setInitMode(KMeansAlgorithm.Random)
       .setInitSteps(2)
       .setK(10)
       .setMaxIter(15)
       .setSeed(123223L)
       .setTol(12D)
 
-    val ds = TypedDataset.create(Seq(Data(Vectors.dense(Array(0D)),0)))
+    val ds = TypedDataset.create(Seq(X2(Vectors.dense(Array(0D)),0)))
     val model = rf.fit(ds).run()
 
-    model.transformer.getInitMode == "random" &&
+    model.transformer.getInitMode == KMeansAlgorithm.Random.sparkValue &&
       model.transformer.getInitSteps == 2 &&
       model.transformer.getK == 10 &&
       model.transformer.getMaxIter == 15 &&

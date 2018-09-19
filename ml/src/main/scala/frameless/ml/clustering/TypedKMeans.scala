@@ -3,26 +3,28 @@ package ml
 package classification
 
 import frameless.ml.internals.VectorInputsChecker
+import frameless.ml.params.kmeans.KMeansAlgorithm
 import org.apache.spark.ml.clustering.{KMeans, KMeansModel}
 
+/**
+  * K-means clustering with support for k-means|| initialization proposed by Bahmani et al.
+  *
+  * @see <a href="http://dx.doi.org/10.14778/2180912.2180915">Bahmani et al., Scalable k-means++.</a>
+  */
 class TypedKMeans[Inputs] private[ml] (
   km: KMeans,
   featuresCol: String,
   k: Int
 ) extends TypedEstimator[Inputs,TypedKMeans.Output,KMeansModel] {
-  val estimator: KMeans=
+  val estimator: KMeans =
     km
       .setK(k)
       .setFeaturesCol(featuresCol)
       .setPredictionCol(AppendTransformer.tempColumnName)
 
-  def setFeaturesCol(value: String): TypedKMeans[Inputs] = copy(km.setFeaturesCol(value))
-
-  def setPredictionCol(value: String): TypedKMeans[Inputs] = copy(km.setPredictionCol(value))
-
   def setK(value: Int): TypedKMeans[Inputs] = copy(km.setK(value))
 
-  def setInitMode(value: String): TypedKMeans[Inputs] = copy(km.setInitMode(value))
+  def setInitMode(value: KMeansAlgorithm): TypedKMeans[Inputs] = copy(km.setInitMode(value.sparkValue))
 
   def setInitSteps(value: Int): TypedKMeans[Inputs] = copy(km.setInitSteps(value))
 
@@ -39,7 +41,7 @@ class TypedKMeans[Inputs] private[ml] (
 object TypedKMeans{
   case class Output(prediction: Int)
 
-  def apply[Inputs](k: Int = 20)(implicit inputsChecker: VectorInputsChecker[Inputs]): TypedKMeans[Inputs] = {
+  def apply[Inputs](k: Int)(implicit inputsChecker: VectorInputsChecker[Inputs]): TypedKMeans[Inputs] = {
     new TypedKMeans(new KMeans(), inputsChecker.featuresCol,k)
   }
 }
