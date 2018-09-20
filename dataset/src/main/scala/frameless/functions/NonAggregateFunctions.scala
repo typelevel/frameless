@@ -246,6 +246,127 @@ trait NonAggregateFunctions {
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.bround(column.untyped, scale))(i1)
 
+  /**
+    * Computes the natural logarithm of the given value.
+    *
+    * apache/spark
+    */
+  def log[A, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.log(column.untyped))
+
+  /**
+    * Returns the first argument-base logarithm of the second argument.
+    *
+    * apache/spark
+    */
+  def log[A, T](base: Double, column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.log(base, column.untyped))
+
+  /**
+    * Computes the logarithm of the given column in base 2.
+    *
+    * apache/spark
+    */
+  def log2[A, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.log2(column.untyped))
+
+  /**
+    * Computes the natural logarithm of the given value plus one.
+    *
+    * apache/spark
+    */
+  def log1p[A, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.log1p(column.untyped))
+
+  /**
+    * Computes the logarithm of the given column in base 10.
+    *
+    * apache/spark
+    */
+  def log10[A, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.log10(column.untyped))
+
+
+  /**
+    * Computes `sqrt(a^2^ + b^2^)` without intermediate overflow or underflow.
+    *
+    * apache/spark
+    */
+  def hypot[A, T](column: AbstractTypedColumn[T, A], column2: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.hypot(column.untyped, column2.untyped))
+
+  /**
+    * Computes `sqrt(a^2^ + b^2^)` without intermediate overflow or underflow.
+    *
+    * apache/spark
+    */
+  def hypot[A, T](column: AbstractTypedColumn[T, A], l: Double)(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.hypot(column.untyped, l))
+
+  /**
+    * Computes `sqrt(a^2^ + b^2^)` without intermediate overflow or underflow.
+    *
+    * apache/spark
+    */
+  def hypot[A, T](l: Double, column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.hypot(l, column.untyped))
+
+  /**
+    * Returns the value of the first argument raised to the power of the second argument.
+    *
+    * apache/spark
+    */
+  def pow[A, T](column: AbstractTypedColumn[T, A], column2: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.pow(column.untyped, column2.untyped))
+
+  /**
+    * Returns the value of the first argument raised to the power of the second argument.
+    *
+    * apache/spark
+    */
+  def pow[A, T](column: AbstractTypedColumn[T, A], l: Double)(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.pow(column.untyped, l))
+
+  /**
+    * Returns the value of the first argument raised to the power of the second argument.
+    *
+    * apache/spark
+    */
+  def pow[A, T](l: Double, column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystCast[A, Double]
+  ): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.pow(l, column.untyped))
+
+  /**
+    * Returns the positive value of dividend mod divisor.
+    *
+    * apache/spark
+    */
+  def pmod[A, T](column: AbstractTypedColumn[T, A], column2: AbstractTypedColumn[T, A])(
+    implicit i0: TypedEncoder[A]
+  ): column.ThisType[T, A] =
+    column.typed(sparkFunctions.pmod(column.untyped, column2.untyped))
+
 
   /** Non-Aggregate function: Returns the string representation of the binary value of the given long
     * column. For example, bin("12") returns "1100".
