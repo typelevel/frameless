@@ -16,4 +16,6 @@ object CatalystNumericWithJavaBigDecimal {
   implicit val framelessAbsoluteInt       : CatalystNumericWithJavaBigDecimal[Int, Int]                          = of[Int, Int]
   implicit val framelessAbsoluteLong      : CatalystNumericWithJavaBigDecimal[Long, Long]                        = of[Long, Long]
   implicit val framelessAbsoluteShort     : CatalystNumericWithJavaBigDecimal[Short, Short]                      = of[Short, Short]
+  implicit val framelessAbsoluteByte      : CatalystNumericWithJavaBigDecimal[Byte, Byte]                        = of[Byte, Byte]
+
 }
