@@ -34,8 +34,8 @@ final class TypedLinearRegression [Inputs] private[ml](
   def setLoss(value: LossStrategy):         TypedLinearRegression[Inputs] = copy(lr.setLoss(value.sparkValue))
   def setEpsilon(value: Double):            TypedLinearRegression[Inputs] = copy(lr.setEpsilon(value))
 
-  private def copy(newRf: LinearRegression): TypedLinearRegression[Inputs] =
-    new TypedLinearRegression[Inputs](newRf, labelCol, featuresCol, weightCol)
+  private def copy(newLr: LinearRegression): TypedLinearRegression[Inputs] =
+    new TypedLinearRegression[Inputs](newLr, labelCol, featuresCol, weightCol)
 
 }
 

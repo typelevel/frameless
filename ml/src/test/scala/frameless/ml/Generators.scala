@@ -43,10 +43,7 @@ object Generators {
   }
 
   implicit val arbLossStrategy: Arbitrary[LossStrategy] = Arbitrary {
-    Gen.oneOf(
-      Gen.const(LossStrategy.SquaredError),
       Gen.const(LossStrategy.SquaredError)
-    )
   }
 
   implicit val arbSolver: Arbitrary[Solver] = Arbitrary {

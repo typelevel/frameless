@@ -16,27 +16,27 @@ class TypedLinearRegressionTests extends FramelessMlSuite with MustMatchers {
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x2: X2[Double, Vector] =>
-      val rf = TypedLinearRegression[X2[Double, Vector]]
+      val lr = TypedLinearRegression[X2[Double, Vector]]
       val ds = TypedDataset.create(Seq(x2))
 
-      val model = rf.fit(ds).run()
+      val model = lr.fit(ds).run()
       val pDs = model.transform(ds).as[X3[Double, Vector, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq(x2.a -> x2.b)
     }
     val prop2 = forAll { x2: X2[Vector, Double] =>
-      val rf = TypedLinearRegression[X2[Vector, Double]]
+      val lr = TypedLinearRegression[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x2))
-      val model = rf.fit(ds).run()
+      val model = lr.fit(ds).run()
       val pDs = model.transform(ds).as[X3[Vector, Double, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq(x2.a -> x2.b)
     }
 
     def prop3[A: TypedEncoder: Arbitrary] = forAll { x3: X3[Vector, Double, A] =>
-      val rf = TypedLinearRegression[X2[Vector, Double]]
+      val lr = TypedLinearRegression[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x3))
-      val model = rf.fit(ds).run()
+      val model = lr.fit(ds).run()
       val pDs = model.transform(ds).as[X4[Vector, Double, A, Double]]
 
       pDs.select(pDs.col('a), pDs.col('b), pDs.col('c)).collect.run() == Seq((x3.a, x3.b, x3.c))
@@ -54,7 +54,6 @@ class TypedLinearRegressionTests extends FramelessMlSuite with MustMatchers {
     val prop = forAll { (lossStrategy: LossStrategy, solver: Solver) =>
       val lr = TypedLinearRegression[X2[Double, Vector]]
         .setAggregationDepth(10)
-        .setElasticNetParam(0.5)
         .setEpsilon(4)
         .setFitIntercept(true)
         .setLoss(lossStrategy)
@@ -68,13 +67,10 @@ class TypedLinearRegressionTests extends FramelessMlSuite with MustMatchers {
       val model = lr.fit(ds).run()
 
       model.transformer.getAggregationDepth == 10 &&
-        model.transformer.getElasticNetParam == 0.5 &&
         model.transformer.getEpsilon == 4.0 &&
-        model.transformer.getFitIntercept == true &&
         model.transformer.getLoss == lossStrategy.sparkValue &&
         model.transformer.getMaxIter == 23 &&
         model.transformer.getRegParam == 1.2 &&
-        model.transformer.getStandardization == true &&
         model.transformer.getTol == 2.3 &&
         model.transformer.getSolver == solver.sparkValue
     }
@@ -103,12 +99,12 @@ class TypedLinearRegressionTests extends FramelessMlSuite with MustMatchers {
     )
 
     val ds2 = Seq(
-      X3(new DenseVector(Array(1.0)): Vector,2: Float, 1.0),
-      X3(new DenseVector(Array(2.0)): Vector,2: Float, 2.0),
-      X3(new DenseVector(Array(3.0)): Vector,2: Float, 3.0),
-      X3(new DenseVector(Array(4.0)): Vector,2: Float, 4.0),
-      X3(new DenseVector(Array(5.0)): Vector,2: Float, 5.0),
-      X3(new DenseVector(Array(6.0)): Vector,2: Float, 6.0)
+      X3(new DenseVector(Array(1.0)): Vector,2F, 1.0),
+      X3(new DenseVector(Array(2.0)): Vector,2F, 2.0),
+      X3(new DenseVector(Array(3.0)): Vector,2F, 3.0),
+      X3(new DenseVector(Array(4.0)): Vector,2F, 4.0),
+      X3(new DenseVector(Array(5.0)): Vector,2F, 5.0),
+      X3(new DenseVector(Array(6.0)): Vector,2F, 6.0)
     )
 
     val tds = TypedDataset.create(ds)
