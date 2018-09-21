@@ -1,5 +1,7 @@
-package frameless.ml.params.trees
-
+package frameless
+package ml
+package params
+package trees
 /**
   * The number of features to consider for splits at each tree node.
   * Supported options:
@@ -20,7 +22,7 @@ package frameless.ml.params.trees
   *  - sqrt: recommended by Breiman manual for random forests
   *  - The defaults of sqrt (classification) and onethird (regression) match the R randomForest
   *    package.
- *
+  *
   * @see <a href="http://www.stat.berkeley.edu/~breiman/randomforest2001.pdf">Breiman (2001)</a>
   * @see <a href="http://www.stat.berkeley.edu/~breiman/Using_random_forests_V3.1.pdf">
   * Breiman manual for random forests</a>

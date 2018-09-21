@@ -9,8 +9,8 @@ import org.scalacheck.Prop._
 import frameless.ml._
 
 class BisectingKMeansTests extends FramelessMlSuite with MustMatchers {
-  implicit val arbVectorNonEmpty: Arbitrary[Vector] =
-    Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0))
+  implicit val arbVector: Arbitrary[Vector] =
+    Arbitrary(Generators.arbVector.arbitrary)
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x1: X1[Vector] =>
@@ -39,7 +39,7 @@ class BisectingKMeansTests extends FramelessMlSuite with MustMatchers {
   test("param setting is retained") {
     val rf = TypedBisectingKMeans[X1[Vector]]()
       .setK(10)
-      .setMaxIterations(10)
+      .setMaxIter(10)
       .setMinDivisibleClusterSize(1)
       .setSeed(123332)
 

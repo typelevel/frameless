@@ -8,9 +8,9 @@ package frameless.ml.params.kmeans
   * Default: k-means||.
   */
 
-sealed abstract class KMeansAlgorithm private[ml](val sparkValue: String)
+sealed abstract class KMeansInitMode private[ml](val sparkValue: String)
 
-object KMeansAlgorithm{
-  case object Random extends KMeansAlgorithm("random")
-  case object KMeansPlusPlus extends KMeansAlgorithm("k-means||")
+object KMeansInitMode{
+  case object Random extends KMeansInitMode("random")
+  case object KMeansPlusPlus extends KMeansInitMode("k-means||")
 }

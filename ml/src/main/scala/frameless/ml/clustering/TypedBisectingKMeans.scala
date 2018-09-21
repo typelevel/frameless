@@ -30,7 +30,7 @@ class TypedBisectingKMeans[Inputs] private[ml] (
   
   def setK(value: Int): TypedBisectingKMeans[Inputs] = copy(bkm.setK(value))
   
-  def setMaxIterations(value: Int): TypedBisectingKMeans[Inputs] = copy(bkm.setMaxIter(value))
+  def setMaxIter(value: Int): TypedBisectingKMeans[Inputs] = copy(bkm.setMaxIter(value))
 
   def setMinDivisibleClusterSize(value: Double): TypedBisectingKMeans[Inputs] =
     copy(bkm.setMinDivisibleClusterSize(value))

@@ -30,7 +30,7 @@ object VectorInputsChecker{
     i3: Witness.Aux[FeaturesK]
   ): VectorInputsChecker[Inputs] = {
     new VectorInputsChecker[Inputs] {
-      val featuresCol: String = implicitly[Witness.Aux[FeaturesK]].value.name
+      val featuresCol: String = i3.value.name
     }
   }
 }
