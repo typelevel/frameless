@@ -15,7 +15,123 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     FileUtils.deleteDirectory(new File(testTempFiles))
     super.afterAll()
   }
-  
+
+  test("negate") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder](values: List[X1[A]])(
+      implicit encX1:Encoder[X1[A]],
+      catalystAbsolute: CatalystNumericWithJavaBigDecimal[A, B]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.negate(cDS("a")))
+        .map(_.getAs[B](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(negate(col))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Byte, Byte] _))
+    check(forAll(prop[Short, Short] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Long, Long]  _))
+    check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
+  }
+
+  test("not") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[Boolean]], fromBase: Int, toBase: Int)(implicit encX1:Encoder[X1[Boolean]]) = {
+      val cDS = session.createDataset(values)
+
+      val resCompare = cDS
+        .select(sparkFunctions.not(cDS("a")))
+        .map(_.getAs[Boolean](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(not(col))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("conv") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[String]], fromBase: Int, toBase: Int)(implicit encX1:Encoder[X1[String]]) = {
+      val cDS = session.createDataset(values)
+
+      val resCompare = cDS
+        .select(sparkFunctions.conv(cDS("a"), fromBase, toBase))
+        .map(_.getAs[String](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(conv(col, fromBase, toBase))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("degrees") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.degrees(cDS("a")))
+        .map(_.getAs[Double](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(degrees(col))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long]  _))
+    check(forAll(prop[BigDecimal] _))
+  }
+
   def propBitShift[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder](typedDS: TypedDataset[X1[A]])
     (typedCol: TypedColumn[X1[A], B], sparkFunc: (Column,Int) => Column, numBits: Int): Prop = {
     val spark = session
