@@ -6,6 +6,21 @@ import org.apache.spark.sql.{Column, functions => sparkFunctions}
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
+  /**
+    * Non-Aggregate function: Convert a number in a string column from one base to another.
+    *
+    * apache/spark
+    */
+  def conv[A,T](column: AbstractTypedColumn[T,A], fromBase: Int, toBase: Int): column.ThisType[T,String] =
+    column.typed(sparkFunctions.conv(column.untyped,fromBase,toBase))
+
+  /** Non-Aggregate function: Converts an angle measured in radians to an approximately equivalent angle measured in degrees.
+    *
+    * apache/spark
+    */
+  def degrees[A,T](column: AbstractTypedColumn[T,A]): column.ThisType[T,Double] =
+    column.typed(sparkFunctions.degrees(column.untyped))
+
   /** Non-Aggregate function: returns the ceiling of a numeric column
     *
     * apache/spark
