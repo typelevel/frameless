@@ -71,6 +71,17 @@ trait NonAggregateFunctions {
     ): column.ThisType[T, B] =
       column.typed(sparkFunctions.ceil(column.untyped))(i1)
 
+  /** Non-Aggregate function: returns the floor of a numeric column
+    *
+    * apache/spark
+    */
+  def floor[A, B, T](column: AbstractTypedColumn[T, A])
+   (implicit
+    i0: CatalystRound[A, B],
+    i1: TypedEncoder[B]
+   ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.floor(column.untyped))(i1)
+
   /** Non-Aggregate function: unsigned shift the the given value numBits right. If given long, will return long else it will return an integer.
     *
     * apache/spark
@@ -308,6 +319,40 @@ trait NonAggregateFunctions {
     */
   def bin[T](column: AbstractTypedColumn[T, Long]): column.ThisType[T, String] =
     column.typed(sparkFunctions.bin(column.untyped))
+
+  /**
+    * Calculates the MD5 digest of a binary column and returns the value
+    * as a 32 character hex string.
+    *
+    * apache/spark
+    */
+  def md5[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, String] =
+    column.typed(sparkFunctions.md5(column.untyped))
+
+  /**
+    * Computes the factorial of the given value.
+    *
+    * apache/spark
+    */
+  def factorial[T](column: AbstractTypedColumn[T, Long])(implicit  i1: TypedEncoder[Long]): column.ThisType[T, Long] =
+    column.typed(sparkFunctions.factorial(column.untyped))
+
+
+  /**
+    * Return true iff the column is NaN.
+    *
+    * apache/spark
+    */
+  def isnan[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, Boolean] =
+    column.typed(sparkFunctions.isnan(column.untyped))
+
+  /**
+    * Return true iff the column is Null.
+    *
+    * apache/spark
+    */
+  def isnull[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, Boolean] =
+    column.typed(sparkFunctions.isnull(column.untyped))
 
   /** Non-Aggregate function: Computes bitwise NOT.
     *

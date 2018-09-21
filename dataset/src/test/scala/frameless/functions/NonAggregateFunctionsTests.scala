@@ -316,6 +316,42 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop _))
   }
 
+  test("floor") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
+    (values: List[X1[A]])(
+      implicit catalystAbsolute: CatalystRound[A, B], encX1: Encoder[X1[A]]
+    ) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.floor(cDS("a")))
+        .map(_.getAs[B](0))
+        .collect()
+        .toList.map{
+        case bigDecimal : java.math.BigDecimal => bigDecimal.setScale(0)
+        case other => other
+      }.asInstanceOf[List[B]]
+
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(floor(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[Long, Long] _))
+    check(forAll(prop[Short, Long] _))
+    check(forAll(prop[Double, Long] _))
+    check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
+  }
+
+
   test("abs big decimal") {
     val spark = session
     import spark.implicits._
@@ -889,6 +925,125 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal] _))
     check(forAll(prop[Byte] _))
     check(forAll(prop[Double] _))
+  }
+
+  test("md5") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder](values: List[X1[A]]): Prop = {
+      val spark = session
+      import spark.implicits._
+
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.md5($"a"))
+        .map(_.getAs[String](0))
+        .collect().toList
+
+      val res = typedDS
+        .select(md5(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[String] _))
+  }
+
+  test("factorial") {
+    val spark = session
+
+    def prop(values: List[X1[Long]]): Prop = {
+      val spark = session
+      import spark.implicits._
+
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.factorial($"a"))
+        .map(_.getAs[Long](0))
+        .collect().toList
+
+      val res = typedDS
+        .select(factorial(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("isnan") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder](values: List[X1[A]]): Prop = {
+      val spark = session
+      import spark.implicits._
+
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.isnan($"a"))
+        .map(_.getAs[Boolean](0))
+        .collect().toList
+
+      val res = typedDS
+        .select(isnan(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[String] _))
+  }
+
+  test("isnull") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder](values: List[X1[A]]): Prop = {
+      val spark = session
+      import spark.implicits._
+
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.isnull($"a"))
+        .map(_.getAs[Boolean](0))
+        .collect().toList
+
+      val res = typedDS
+        .select(isnull(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+    check(forAll(prop[String] _))
   }
 
   test("bround") {
