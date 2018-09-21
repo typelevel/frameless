@@ -7,6 +7,17 @@ import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
   /**
+    * Non-Aggregate function: returns the negated value of column.
+    *
+    * apache/spark
+    */
+  def negate[A, B, T](column: AbstractTypedColumn[T,A])(
+    implicit i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T,B] =
+    column.typed(sparkFunctions.negate(column.untyped))
+
+  /**
     * Non-Aggregate function: logical not.
     *
     * apache/spark

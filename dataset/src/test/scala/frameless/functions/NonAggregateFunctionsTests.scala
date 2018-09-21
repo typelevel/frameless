@@ -16,6 +16,38 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     super.afterAll()
   }
 
+  test("negate") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder](values: List[X1[A]])(
+      implicit encX1:Encoder[X1[A]],
+      catalystAbsolute: CatalystNumericWithJavaBigDecimal[A, B]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.negate(cDS("a")))
+        .map(_.getAs[B](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(negate(col))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Byte, Byte] _))
+    check(forAll(prop[Short, Short] _))
+    check(forAll(prop[Int, Int] _))
+    check(forAll(prop[Long, Long]  _))
+    check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
+  }
+
   test("not") {
     val spark = session
     import spark.implicits._
