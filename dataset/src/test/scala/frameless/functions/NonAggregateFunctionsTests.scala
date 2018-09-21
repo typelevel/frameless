@@ -16,12 +16,40 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     super.afterAll()
   }
 
+  test("not") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[Boolean]], fromBase: Int, toBase: Int)(implicit encX1:Encoder[X1[Boolean]]) = {
+      val cDS = session.createDataset(values)
+
+      val resCompare = cDS
+        .select(sparkFunctions.not(cDS("a")))
+        .map(_.getAs[Boolean](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val col = typedDS('a)
+      val res = typedDS
+        .select(not(col))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
+
   test("conv") {
     val spark = session
     import spark.implicits._
 
-    def prop[A: TypedEncoder : Encoder](values: List[X1[A]], fromBase: Int, toBase: Int)(implicit encX1:Encoder[X1[A]]) = {
+    def prop(values: List[X1[String]], fromBase: Int, toBase: Int)(implicit encX1:Encoder[X1[String]]) = {
       val cDS = session.createDataset(values)
+
       val resCompare = cDS
         .select(sparkFunctions.conv(cDS("a"), fromBase, toBase))
         .map(_.getAs[String](0))
@@ -39,11 +67,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       res ?= resCompare
     }
 
-    check(forAll(prop[Byte] _))
-    check(forAll(prop[Short] _))
-    check(forAll(prop[Int] _))
-    check(forAll(prop[Long]  _))
-    check(forAll(prop[BigDecimal] _))
+    check(forAll(prop _))
   }
 
   test("degrees") {
