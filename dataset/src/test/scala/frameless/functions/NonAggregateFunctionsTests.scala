@@ -242,6 +242,79 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal, java.math.BigDecimal] _))
   }
 
+  test("sha2") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[Array[Byte]]])(implicit encX1: Encoder[X1[Array[Byte]]]) = {
+      Seq(224, 256, 384, 512).map { numBits =>
+        val cDS = session.createDataset(values)
+        val resCompare = cDS
+          .select(sparkFunctions.sha2(cDS("a"), numBits))
+          .map(_.getAs[String](0))
+          .collect().toList
+
+        val typedDS = TypedDataset.create(values)
+        val res = typedDS
+          .select(sha2(typedDS('a), numBits))
+          .collect()
+          .run()
+          .toList
+        res ?= resCompare
+      }.reduce(_ && _)
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("sha1") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[Array[Byte]]])(implicit encX1: Encoder[X1[Array[Byte]]]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.sha1(cDS("a")))
+        .map(_.getAs[String](0))
+        .collect().toList
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(sha1(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
+
+  test("crc32") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(values: List[X1[Array[Byte]]])(implicit encX1: Encoder[X1[Array[Byte]]]) = {
+      val cDS = session.createDataset(values)
+      val resCompare = cDS
+        .select(sparkFunctions.crc32(cDS("a")))
+        .map(_.getAs[Long](0))
+        .collect()
+        .toList
+
+      val typedDS = TypedDataset.create(values)
+      val res = typedDS
+        .select(crc32(typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop _))
+  }
 
   test("abs big decimal") {
     val spark = session
