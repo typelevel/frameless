@@ -49,9 +49,9 @@ class TypedOneHotEncoderTests extends FramelessMlSuite {
     check(prop)
   }
 
-  test("create() compiles only with correct inputs") {
-    illTyped("TypedOneHotEncoder.create[Double]()")
-    illTyped("TypedOneHotEncoder.create[X1[Double]]()")
-    illTyped("TypedOneHotEncoder.create[X2[String, Long]]()")
+  test("apply() compiles only with correct inputs") {
+    illTyped("TypedOneHotEncoder.apply[Double]()")
+    illTyped("TypedOneHotEncoder.apply[X1[Double]]()")
+    illTyped("TypedOneHotEncoder.apply[X2[String, Long]]()")
   }
 }
