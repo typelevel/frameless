@@ -1,4 +1,7 @@
-package frameless.ml.params.linears
+package frameless
+package ml
+package params
+package linears
 
 /**
   * solver algorithm used for optimization.

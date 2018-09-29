@@ -1,4 +1,7 @@
-package frameless.ml.params.linears
+package frameless
+package ml
+package params
+package linears
 /**
   * <a href="https://en.wikipedia.org/wiki/Mean_squared_error">SquaredError</a>  measures the average of the squares of the errors—that is,
   * the average squared difference between the estimated values and what is estimated.

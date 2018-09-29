@@ -1,4 +1,6 @@
-package frameless.ml.internals
+package frameless
+package ml
+package internals
 
 import org.apache.spark.ml.linalg._
 import shapeless.ops.hlist.Length

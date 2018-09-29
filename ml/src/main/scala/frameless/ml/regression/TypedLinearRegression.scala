@@ -1,4 +1,6 @@
-package frameless.ml.regression
+package frameless
+package ml
+package regression
 
 import frameless.ml.internals.LinearInputsChecker
 import frameless.ml.params.linears.{LossStrategy, Solver}
