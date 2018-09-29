@@ -326,7 +326,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def md5[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, String] =
+  def md5[T, A](column: AbstractTypedColumn[T, A])(implicit  i0: TypedEncoder[A]): column.ThisType[T, String] =
     column.typed(sparkFunctions.md5(column.untyped))
 
   /**
@@ -334,25 +334,8 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def factorial[T](column: AbstractTypedColumn[T, Long])(implicit  i1: TypedEncoder[Long]): column.ThisType[T, Long] =
+  def factorial[T](column: AbstractTypedColumn[T, Long])(implicit  i0: TypedEncoder[Long]): column.ThisType[T, Long] =
     column.typed(sparkFunctions.factorial(column.untyped))
-
-
-  /**
-    * Return true iff the column is NaN.
-    *
-    * apache/spark
-    */
-  def isnan[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, Boolean] =
-    column.typed(sparkFunctions.isnan(column.untyped))
-
-  /**
-    * Return true iff the column is Null.
-    *
-    * apache/spark
-    */
-  def isnull[T, A](column: AbstractTypedColumn[T, A])(implicit  i1: TypedEncoder[A]): column.ThisType[T, Boolean] =
-    column.typed(sparkFunctions.isnull(column.untyped))
 
   /** Non-Aggregate function: Computes bitwise NOT.
     *
