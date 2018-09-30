@@ -1,4 +1,6 @@
-package frameless.ml.internals
+package frameless
+package ml
+package internals
 
 import shapeless.ops.hlist.Length
 import shapeless.{HList, LabelledGeneric, Nat, Witness}

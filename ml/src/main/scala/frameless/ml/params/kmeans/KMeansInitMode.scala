@@ -1,4 +1,7 @@
-package frameless.ml.params.kmeans
+package frameless
+package ml
+package params
+package kmeans
 
 /**
   * Param for the initialization algorithm.
@@ -10,7 +13,7 @@ package frameless.ml.params.kmeans
 
 sealed abstract class KMeansInitMode private[ml](val sparkValue: String)
 
-object KMeansInitMode{
+object KMeansInitMode {
   case object Random extends KMeansInitMode("random")
   case object KMeansPlusPlus extends KMeansInitMode("k-means||")
 }

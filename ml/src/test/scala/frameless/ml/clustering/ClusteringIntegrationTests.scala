@@ -1,4 +1,6 @@
-package frameless.ml.clustering
+package frameless
+package ml
+package clustering
 
 import frameless.ml.FramelessMlSuite
 import frameless.ml.classification.{TypedBisectingKMeans, TypedKMeans}
@@ -10,8 +12,8 @@ import frameless.ml.feature._
 
 class ClusteringIntegrationTests extends FramelessMlSuite with MustMatchers {
 
-  test("predict field2 from field1 using a K-means clustering") {// Training
-
+  test("predict field2 from field1 using a K-means clustering") {
+    // Training
     val trainingDataDs = TypedDataset.create(Seq.fill(5)(X2(10D, 0)) :+ X2(100D,0))
 
     val vectorAssembler = TypedVectorAssembler[X1[Double]]

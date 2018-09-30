@@ -1,4 +1,6 @@
-package frameless.ml.clustering
+package frameless
+package ml
+package clustering
 
 import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
 import frameless.ml.classification.TypedBisectingKMeans
@@ -20,7 +22,6 @@ class BisectingKMeansTests extends FramelessMlSuite with MustMatchers {
       val pDs = model.transform(ds).as[X2[Vector, Int]]
 
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
-
     }
 
     def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
@@ -50,6 +51,5 @@ class BisectingKMeansTests extends FramelessMlSuite with MustMatchers {
       model.transformer.getMaxIter  == 10 &&
       model.transformer.getMinDivisibleClusterSize  == 1 &&
       model.transformer.getSeed == 123332
-
   }
 }

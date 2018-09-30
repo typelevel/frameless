@@ -1,4 +1,6 @@
-package frameless.ml.clustering
+package frameless
+package ml
+package clustering
 
 import frameless.ml.classification.TypedKMeans
 import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
@@ -8,7 +10,6 @@ import org.scalacheck.Prop._
 import org.scalatest.MustMatchers
 import frameless.ml._
 import frameless.ml.params.kmeans.KMeansInitMode
-
 
 class KMeansTests extends FramelessMlSuite with MustMatchers {
   implicit val arbVector:  Arbitrary[Vector] =
@@ -29,7 +30,6 @@ class KMeansTests extends FramelessMlSuite with MustMatchers {
       val pDs = model.transform(ds).as[X2[Vector, Int]]
 
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
-
     }
 
     def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
