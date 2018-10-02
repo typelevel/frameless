@@ -72,3 +72,24 @@ object outer {
         }
     }
 }
+
+object jobber {
+  implicit def flatMapJob: FlatMap[Job] =
+    new FlatMap[Job] {
+
+      override def flatMap[A, B](j: Job[A])(f: A => Job[B]): Job[B] = j.flatMap(f)
+
+      override def tailRecM[A, B](a: A)(f: A => Job[Either[A, B]]): Job[B] = {
+        val j = f(a)
+        for {
+          either_ab <- j
+          b <- either_ab match {
+            case Left(la) => tailRecM(la)(f)
+            case Right(_) => j.map(_.right.get)
+          }
+        } yield b
+      }
+
+      override def map[A, B](fa: Job[A])(f: A => B): Job[B] = fa.map(f)
+    }
+}

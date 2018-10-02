@@ -2,6 +2,7 @@ package frameless
 
 import org.apache.spark.sql.SparkSession
 
+
 sealed abstract class Job[A](implicit spark: SparkSession) { self =>
   /** Runs a new Spark job. */
   def run(): A
@@ -30,10 +31,14 @@ sealed abstract class Job[A](implicit spark: SparkSession) { self =>
   def flatMap[B](fn: A => Job[B]): Job[B] = new Job[B]()(spark) {
     def run(): B = fn(Job.this.run()).run()
   }
+
+
 }
 
 
 object Job {
+
+
   def apply[A](a: => A)(implicit spark: SparkSession): Job[A] = new Job[A] {
     def run(): A = a
   }
