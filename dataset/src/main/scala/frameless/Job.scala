@@ -2,7 +2,6 @@ package frameless
 
 import org.apache.spark.sql.SparkSession
 
-
 sealed abstract class Job[A](implicit spark: SparkSession) { self =>
   /** Runs a new Spark job. */
   def run(): A
