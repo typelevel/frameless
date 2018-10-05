@@ -7,6 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.scalatest.prop.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+import scala.util.{Properties, Try}
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
@@ -40,9 +41,15 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 
 class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
   // Limit size of generated collections and number of checks to avoid OutOfMemoryError
-  implicit override val generatorDrivenConfig = {
-    val i: PosZInt = PosZInt(10)
-    PropertyCheckConfiguration(sizeRange = i, minSize = i)
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = {
+    def getPosZInt(name: String, default: PosZInt) = Properties.envOrNone(s"FRAMELESS_GEN_${name}")
+      .flatMap(s => Try(s.toInt).toOption)
+      .flatMap(PosZInt.from)
+      .getOrElse(default)
+    PropertyCheckConfiguration(
+      sizeRange = getPosZInt("SIZE_RANGE", PosZInt(20)),
+      minSize = getPosZInt("MIN_SIZE", PosZInt(0))
+    )
   }
 
   implicit val sparkDelay: SparkDelay[Job] = Job.framelessSparkDelayForJob
