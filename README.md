@@ -25,18 +25,18 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 The compatible versions of [Spark](http://spark.apache.org/) and 
 [cats](https://github.com/typelevel/cats) are as follows:   
 
-| Frameless  | Spark | Cats | 
-| --- | --- | --- |
-| 0.4.0  | 2.2.0  | 1.0.0-MF |
-| 0.4.1  | 2.2.0  | 1.0.1 | 
-| 0.5.2  | 2.2.1  | 1.0.1 |
-| 0.6.1  | 2.3.0  | 1.0.1 |
+| Frameless  | Spark | Cats | Cats-Effect
+| --- | --- | --- | --- |
+| 0.4.0  | 2.2.0  | 1.0.0-IF | 0.4
+| 0.4.1  | 2.2.0  | 1.x | 0.8
+| 0.5.2  | 2.2.1  | 1.x | 0.8
+| 0.6.1  | 2.3.0  | 1.x | 0.8
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
 
 The **only** dependency of the `frameless-dataset` module is on [shapeless](https://github.com/milessabin/shapeless) 2.3.2. 
 Therefore, depending on `frameless-dataset`, has a minimal overhead on your Spark's application jar. 
-Only the `frameless-cats` module depends on cats, so if you prefer to work just with `Datasets` and not with `RDD`s, 
+Only the `frameless-cats` module depends on cats and cats-effect, so if you prefer to work just with `Datasets` and not with `RDD`s, 
 you may choose not to depend on `frameless-cats`. 
 
 Frameless intentionally **does not** have a compile dependency on Spark. 
