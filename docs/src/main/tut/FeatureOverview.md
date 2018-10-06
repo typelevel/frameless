@@ -145,8 +145,8 @@ aptTypedDs.select(aptTypedDs('city), aptTypedDs('city)).as[UpdatedSurface]
 ### Projections
 
 We often want to work with a subset of the fields in a dataset.
-Projections allows to easily select the fields we are interested
-while preserving their initial name and types for extra safety.
+Projections allow us to easily select our fields of interest
+while preserving their initial names and types for extra safety.
 
 Here is an example using the `TypedDataset[Apartment]` with an additional column:
 
