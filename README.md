@@ -117,6 +117,17 @@ We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull req
 * [non](https://github.com/non)
 * [OlivierBlanvillain](https://github.com/OlivierBlanvillain/)
 
+### Testing
+
+Frameless contains several property tests.  To avoid `OutOfMemoryError`s, we
+tune the default generator sizes.  The following environment variables may
+be set to adjust the size of generated collections in the `TypedDataSet` suite:
+
+| Property                    | Default |
+|-----------------------------|--------:|
+| FRAMELESS_GEN_MIN_SIZE      |       0 |
+| FRAMELESS_GEN_SIZE_RANGE    |      20 |
+
 ## License
 Code is provided under the Apache 2.0 license available at http://opensource.org/licenses/Apache-2.0,
 as well as in the LICENSE file. This is the same license used as Spark.
