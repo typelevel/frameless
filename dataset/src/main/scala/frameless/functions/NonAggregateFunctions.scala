@@ -146,6 +146,16 @@ trait NonAggregateFunctions {
     (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
       column.typed(sparkFunctions.cosh(column.cast[Double].untyped))
 
+  /** Non-Aggregate function: Computes the signum of the given value.
+    *
+    * Spark will expect a Double value for this expression. See:
+    *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+    * apache/spark
+    */
+  def signum[A, T](column: AbstractTypedColumn[T, A])
+                  (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.signum(column.cast[Double].untyped))
+
   /** Non-Aggregate function: Computes the sine of the given value.
     *
     * Spark will expect a Double value for this expression. See:
@@ -290,6 +300,25 @@ trait NonAggregateFunctions {
   def exp[A, T](column: AbstractTypedColumn[T, A])
                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.exp(column.cast[Double].untyped))
+
+  /** Non-Aggregate function: Returns the value of the column `e` rounded to 0 decimal places with HALF_UP round mode.
+    *
+    * apache/spark
+    */
+  def round[A, B, T](column: AbstractTypedColumn[T, A])(
+    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.round(column.untyped))(i1)
+
+  /** Non-Aggregate function: Round the value of `e` to `scale` decimal places with HALF_UP round mode
+    * if `scale` is greater than or equal to 0 or at integral part when `scale` is less than 0.
+    *
+    * apache/spark
+    */
+  def round[A, B, T](column: AbstractTypedColumn[T, A], scale: Int)(
+    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.round(column.untyped, scale))(i1)
 
   /** Non-Aggregate function: Bankers Rounding - returns the rounded to 0 decimal places value with HALF_EVEN round mode
     *  of a numeric column.
