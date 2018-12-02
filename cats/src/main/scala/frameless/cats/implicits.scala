@@ -94,7 +94,8 @@ object jobber {
 
       override def map[A, B](fa: Job[A])(f: A => B): Job[B] = fa.map(f)
     }
-  implicit def eqJob[A: Eq]: Eq[Job[A]] = Eq.fromUniversalEquals
+  implicit def eqJob[A: Eq]: Eq[Job[A]] = Eq.allEqual
+
   implicit def monadJob(implicit spark: SparkSession): Monad[Job] = new Monad[Job]{
 
     override def pure[A](x: A): Job[A] =  Job(x)
