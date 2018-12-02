@@ -7,6 +7,8 @@ val scalatest = "3.0.3"
 val shapeless = "2.3.2"
 val scalacheck = "1.13.5"
 val scalacheckShaplessVersion = "1.1.6"
+val magnoliaVersion = "0.6.1"
+val catsTestkitVersion = "1.1.0"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
@@ -34,7 +36,8 @@ lazy val cats = project
     "org.typelevel"    %% "cats-effect"    % catsEffectVersion,
     "org.typelevel"    %% "cats-mtl-core"  % catsMtlVersion,
     "org.typelevel"    %% "alleycats-core" % catsCoreVersion,
-    "org.typelevel"    %% "cats-testkit"      % "1.1.0" % Test, //or `cats-testkit` if you are using ScalaTest
+    "com.propensive"   %% "magnolia"       % magnoliaVersion    % Test,
+    "org.typelevel"    %% "cats-testkit"   % catsTestkitVersion % Test, //or `cats-testkit` if you are using ScalaTest
     "com.github.alexarchambault"           %% "scalacheck-shapeless_1.13" % scalacheckShaplessVersion % Test,
     "org.apache.spark" %% "spark-core"     % sparkVersion % "provided",
     "org.apache.spark" %% "spark-sql"      % sparkVersion % "provided"))
