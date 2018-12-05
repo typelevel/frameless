@@ -2,14 +2,38 @@ package frameless
 package functions
 
 import java.io.File
+
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => sparkFunctions}
 import org.scalacheck.Prop._
-import org.scalacheck.{Gen, Prop}
+import org.scalacheck.{Arbitrary, Gen, Prop}
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
   val testTempFiles = "target/testoutput"
+
+
+  object NonNegativeGenerators {
+    val doubleGen = for {
+      s <-  Gen.chooseNum(1, Int.MaxValue)
+      e <-  Gen.chooseNum(1, Int.MaxValue)
+      res: Double = s.toDouble / e.toDouble
+    } yield res
+
+    val intGen:   Gen[Int]   = Gen.chooseNum(1, Int.MaxValue)
+    val shortGen: Gen[Short] = Gen.chooseNum(1, Short.MaxValue)
+    val longGen:  Gen[Long]  = Gen.chooseNum(1, Long.MaxValue)
+    val byteGen:  Gen[Byte]  = Gen.chooseNum(1, Byte.MaxValue)
+  }
+
+  object NonNegativeArbitraryNumericValues {
+    import NonNegativeGenerators._
+    implicit val arbInt:        Arbitrary[Int]        = Arbitrary(intGen)
+    implicit val arbDouble:     Arbitrary[Double]     = Arbitrary(doubleGen)
+    implicit val arbLong:       Arbitrary[Long]       = Arbitrary(longGen)
+    implicit val arbShort:      Arbitrary[Short]      = Arbitrary(shortGen)
+    implicit val arbByte:       Arbitrary[Byte]       = Arbitrary(byteGen)
+  }
 
   override def afterAll(): Unit = {
     FileUtils.deleteDirectory(new File(testTempFiles))
@@ -1244,6 +1268,111 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal] _))
   }
 
+  test("log with base") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X1[A]],
+      base: Double
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.log(base, $"a"))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res = typedDS
+        .select(log(base, typedDS('a)))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("log") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      mathProp(typedDS)(log(typedDS('a)), sparkFunctions.log)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("log2") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      mathProp(typedDS)(log2(typedDS('a)), sparkFunctions.log2)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("log1p") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      mathProp(typedDS)(log1p(typedDS('a)), sparkFunctions.log1p)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("log10") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric : TypedEncoder : Encoder](values: List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
+      val typedDS = TypedDataset.create(values)
+      mathProp(typedDS)(log10(typedDS('a)), sparkFunctions.log10)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
   test("base64") {
     val spark = session
     import spark.implicits._
@@ -1272,6 +1401,203 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     }
 
     check(forAll(prop _))
+  }
+
+  test("hypot with double") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X1[A]],
+      base: Double
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.hypot(base, $"a"))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res2 = typedDS
+        .select(hypot(typedDS('a), base))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      val res = typedDS
+        .select(hypot(base, typedDS('a)))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      (res ?= resCompare) && (res2 ?= resCompare)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("hypot with two columns") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X2[A, A]]
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.hypot($"b", $"a"))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res = typedDS
+        .select(hypot(typedDS('b), typedDS('a)))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("pow with double") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X1[A]],
+      base: Double
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.pow(base, $"a"))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res = typedDS
+        .select(pow(base, typedDS('a)))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      val resCompare2 = typedDS.dataset
+        .select(sparkFunctions.pow($"a", base))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res2 = typedDS
+        .select(pow(typedDS('a), base))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      (res ?= resCompare) &&  (res2 ?= resCompare2)
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("pow with two columns") {
+    val spark = session
+    import spark.implicits._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X2[A, A]]
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.pow($"b", $"a"))
+        .map(_.getAs[Double](0))
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect().toList
+
+      val res = typedDS
+        .select(pow(typedDS('b), typedDS('a)))
+        .deserialized
+        .map(DoubleBehaviourUtils.nanNullHandler)
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
+  }
+
+  test("pmod") {
+    val spark = session
+    import spark.implicits._
+    import NonNegativeArbitraryNumericValues._
+
+    def prop[A: CatalystNumeric: TypedEncoder : Encoder](
+      values: List[X2[A, A]]
+    ): Prop = {
+      val spark = session
+      import spark.implicits._
+      val typedDS = TypedDataset.create(values)
+
+      val resCompare = typedDS.dataset
+        .select(sparkFunctions.pmod($"b", $"a"))
+        .map(_.getAs[A](0))
+        .collect().toList
+
+      val res = typedDS
+        .select(pmod(typedDS('b), typedDS('a)))
+        .collect()
+        .run()
+        .toList
+
+      res ?= resCompare
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Short] _))
+    check(forAll(prop[Byte] _))
+    check(forAll(prop[Double] _))
   }
 
   test("unbase64") {
