@@ -110,7 +110,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         (c, i) <- columns.toList[UntypedExpression[T]].zipWithIndex
       } yield new Column(c.expr).as(s"_${i+1}")
 
-      // Workaround to SPARK-20346. The alternative is to allow the result to be Vector(null) for empty DataFrames.
+      // Workaround to SPARK-20346. One alternative is to allow the result to be Vector(null) for empty DataFrames.
+      // Another one would be to return an Option.
       val filterStr = (
         for {
           (c, i) <- underlyingColumns.zipWithIndex
