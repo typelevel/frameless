@@ -8,6 +8,7 @@ import alleycats.Empty
 
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 
 object implicits extends FramelessSyntax with SparkDelayInstances {
   implicit class rddOps[A: ClassTag](lhs: RDD[A]) {
@@ -71,4 +72,36 @@ object outer {
           case (None, None) => m.empty
         }
     }
+}
+
+object jobber {
+
+  implicit def flatMapJob: FlatMap[Job] =
+    new FlatMap[Job] {
+
+      override def flatMap[A, B](j: Job[A])(f: A => Job[B]): Job[B] = j.flatMap(f)
+
+      override def tailRecM[A, B](a: A)(f: A => Job[Either[A, B]]): Job[B] = {
+        val j = f(a)
+        for {
+          either_ab <- j
+          b <- either_ab match {
+            case Left(la) => tailRecM(la)(f)
+            case Right(_) => j.map(_.right.get)
+          }
+        } yield b
+      }
+
+      override def map[A, B](fa: Job[A])(f: A => B): Job[B] = fa.map(f)
+    }
+  implicit def eqJob[A: Eq]: Eq[Job[A]] = Eq.fromUniversalEquals
+
+  implicit def monadJob(implicit spark: SparkSession): Monad[Job] = new Monad[Job]{
+
+    override def pure[A](x: A): Job[A] =  Job(x)
+
+    override def flatMap[A, B](fa: Job[A])(f: A => Job[B]): Job[B] = flatMapJob.flatMap(fa)(f)
+
+    override def tailRecM[A, B](a: A)(f: A => Job[Either[A, B]]): Job[B] = flatMapJob.tailRecM(a)(f)
+  }
 }
