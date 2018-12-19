@@ -6,7 +6,7 @@ import org.apache.spark.util.CollectionAccumulator
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 class ForeachTests extends TypedDatasetSuite {
   test("foreach") {
@@ -16,7 +16,7 @@ class ForeachTests extends TypedDatasetSuite {
 
       TypedDataset.create(data).foreach(accu.add).run()
 
-      accu.value.toVector.sorted ?= data.sorted
+      accu.value.asScala.toVector.sorted ?= data.sorted
     }
 
     check(forAll(prop[Int] _))
@@ -30,7 +30,7 @@ class ForeachTests extends TypedDatasetSuite {
 
       TypedDataset.create(data).foreachPartition(_.foreach(accu.add)).run()
 
-      accu.value.toVector.sorted ?= data.sorted
+      accu.value.asScala.toVector.sorted ?= data.sorted
     }
 
     check(forAll(prop[Int] _))

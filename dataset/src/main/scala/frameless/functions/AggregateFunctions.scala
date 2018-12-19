@@ -129,8 +129,6 @@ trait AggregateFunctions {
     *       apache/spark
     */
   def stddevPop[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column.uencoder
-
     new TypedAggregate[T, Option[Double]](
       sparkFunctions.stddev_pop(column.cast[Double].untyped)
     )
@@ -145,8 +143,6 @@ trait AggregateFunctions {
     *       apache/spark
     */
   def stddevSamp[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double] ): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column.uencoder
-
     new TypedAggregate[T, Option[Double]](
       sparkFunctions.stddev_samp(column.cast[Double].untyped)
     )
@@ -178,7 +174,6 @@ trait AggregateFunctions {
     * apache/spark
     */
   def first[A, T](column: TypedColumn[T, A]): TypedAggregate[T, A] = {
-    implicit val c = column.uencoder
     sparkFunctions.first(column.untyped).typedAggregate(column.uencoder)
   }
 
@@ -208,8 +203,6 @@ trait AggregateFunctions {
       i0: CatalystCast[A, Double],
       i1: CatalystCast[B, Double]
     ): TypedAggregate[T, Option[Double]] = {
-      implicit val c1 = column1.uencoder
-      implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
         sparkFunctions.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
@@ -228,8 +221,6 @@ trait AggregateFunctions {
       i0: CatalystCast[A, Double],
       i1: CatalystCast[B, Double]
     ): TypedAggregate[T, Option[Double]] = {
-      implicit val c1 = column1.uencoder
-      implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
         sparkFunctions.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
@@ -248,8 +239,6 @@ trait AggregateFunctions {
       i0: CatalystCast[A, Double],
       i1: CatalystCast[B, Double]
     ): TypedAggregate[T, Option[Double]] = {
-      implicit val c1 = column1.uencoder
-      implicit val c2 = column2.uencoder
       new TypedAggregate[T, Option[Double]](
         sparkFunctions.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
       )
@@ -265,7 +254,6 @@ trait AggregateFunctions {
     *       apache/spark
     */
   def kurtosis[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column.uencoder
     new TypedAggregate[T, Option[Double]](
       sparkFunctions.kurtosis(column.cast[Double].untyped)
     )
@@ -280,7 +268,6 @@ trait AggregateFunctions {
     *       apache/spark
     */
   def skewness[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
-    implicit val c1 = column.uencoder
     new TypedAggregate[T, Option[Double]](
       sparkFunctions.skewness(column.cast[Double].untyped)
     )

@@ -1,10 +1,10 @@
-val sparkVersion = "2.3.1"
+val sparkVersion = "2.4.0"
 val catsCoreVersion = "1.4.0"
 val catsEffectVersion = "1.0.0"
 val catsMtlVersion = "0.3.0"
 val scalatest = "3.0.3"
 val shapeless = "2.3.2"
-val scalacheck = "1.13.5"
+val scalacheck = "1.14.0"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
@@ -14,14 +14,12 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
 lazy val core = project
   .settings(name := "frameless-core")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
 
 
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
@@ -39,7 +37,6 @@ lazy val cats = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
@@ -51,7 +48,6 @@ lazy val dataset = project
 lazy val ml = project
   .settings(name := "frameless-ml")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
@@ -76,14 +72,16 @@ lazy val docs = project
   ))
   .settings(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
-    scalacOptions += "-Ypartial-unification"
+    scalacOptions ++= Seq(
+      "-Ypartial-unification",
+      "-Ydelambdafy:inline"
+    )
   )
   .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  scalaVersion := "2.11.12",
-  scalacOptions ++= commonScalacOptions,
+  scalacOptions ++= commonScalacOptions(scalaVersion.value),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
@@ -93,36 +91,37 @@ lazy val framelessSettings = Seq(
   javaOptions in Test ++= Seq("-Xmx1G", "-ea"),
   fork in Test := true,
   parallelExecution in Test := false
-)
+) ++ consoleSettings
 
-lazy val commonScalacOptions = Seq(
-  "-target:jvm-1.8", 
-  "-deprecation",
-  "-encoding", "UTF-8",
-  "-feature",
-  "-unchecked",
-  "-Xfatal-warnings",
-  "-Xlint:-missing-interpolator,_",
-  "-Yinline-warnings",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard",
-  "-language:existentials",
-  "-language:experimental.macros",
-  "-language:implicitConversions",
-  "-language:higherKinds",
-  "-Xfuture")
+def commonScalacOptions(scalaVersion: String): Seq[String] = {
 
-lazy val warnUnusedImport = Seq(
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 10)) =>
-        Seq()
-      case Some((2, n)) if n >= 11 =>
-        Seq("-Ywarn-unused-import")
-    }
-  },
+  val versionSpecific = CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, 11)) =>
+      Seq("-Xlint:-missing-interpolator,_", "-Yinline-warnings")
+    case Some((2, n)) if n >= 12 =>
+      Seq("-Xlint:-missing-interpolator,-unused,_")
+  }
+
+  Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import",
+    "-Ywarn-value-discard",
+    "-language:existentials",
+    "-language:experimental.macros",
+    "-language:implicitConversions",
+    "-language:higherKinds",
+    "-Xfuture") ++ versionSpecific
+}
+
+lazy val consoleSettings = Seq(
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
   scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 )

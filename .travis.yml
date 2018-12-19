@@ -1,6 +1,7 @@
 language: scala
 sudo: false
 scala:
+  - 2.12.8
   - 2.11.12
 
 sbt_args: "-J-Xmx2G"

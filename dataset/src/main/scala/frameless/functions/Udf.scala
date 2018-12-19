@@ -3,7 +3,7 @@ package functions
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression}
-import org.apache.spark.sql.catalyst.expressions.codegen._
+import org.apache.spark.sql.catalyst.expressions.codegen._, Block._
 import org.apache.spark.sql.catalyst.expressions.objects.LambdaVariable
 import org.apache.spark.sql.types.DataType
 import shapeless.syntax.std.tuple._
@@ -142,21 +142,21 @@ case class FramelessUdf[T, R](
     val (argsCode, funcArguments) = encoders.zip(children).map {
       case (encoder, child) =>
         val eval = child.genCode(ctx)
-        val codeTpe = ctx.boxedType(encoder.jvmRepr)
+        val codeTpe = CodeGenerator.boxedType(encoder.jvmRepr)
         val argTerm = ctx.freshName("arg")
         val convert = s"${eval.code}\n$codeTpe $argTerm = ${eval.isNull} ? (($codeTpe)null) : (($codeTpe)(${eval.value}));"
 
         (convert, argTerm)
     }.unzip
 
-    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
+    val internalTpe = CodeGenerator.boxedType(rencoder.jvmRepr)
     val internalTerm = ctx.addMutableState(internalTpe, ctx.freshName("internal"))
     val internalNullTerm = ctx.addMutableState("boolean", ctx.freshName("internalNull"))
     val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
 
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
-    ev.copy(code = s"""
+    ev.copy(code = code"""
       ${argsCode.mkString("\n")}
 
       $internalTerm =
