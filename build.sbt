@@ -81,6 +81,8 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
+  crossScalaVersions := Seq("2.11.12", "2.12.8"),
+  scalaVersion := crossScalaVersions.value.last,
   scalacOptions ++= commonScalacOptions(scalaVersion.value),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
