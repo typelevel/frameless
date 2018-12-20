@@ -231,7 +231,7 @@ object TypedEncoder {
 
           case ByteType => path
 
-          case otherwise => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+          case _ => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
         }
 
       def fromCatalyst(path: Expression): Expression =
@@ -245,7 +245,7 @@ object TypedEncoder {
 
           case ByteType => path
 
-          case otherwise =>
+          case _ =>
             Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
         }
     }
@@ -374,7 +374,7 @@ object TypedEncoder {
               "booleanValue",
               BooleanType)
 
-          case other => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
+          case _ => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
         }
       }
 

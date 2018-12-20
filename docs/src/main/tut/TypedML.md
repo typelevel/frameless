@@ -197,6 +197,7 @@ val dataWithFeatures = vectorAssembler.transform(trainingData).as[HouseDataWithF
 
 case class StringIndexerInput(city: String)
 val indexer = TypedStringIndexer[StringIndexerInput]
+indexer.estimator.setHandleInvalid("keep")
 val indexerModel = indexer.fit(dataWithFeatures).run()
 
 case class HouseDataWithFeaturesAndIndex(
