@@ -5,7 +5,7 @@ import java.io.File
 
 import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Column, Encoder, Row, SaveMode, functions => sparkFunctions}
+import org.apache.spark.sql.{Column, Encoder, SaveMode, functions => sparkFunctions}
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}
 
@@ -2206,32 +2206,151 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[Option[Boolean], Long] _))
   }
 
+  def dateTimeStringProp(typedDS: TypedDataset[X1[String]])
+                        (typedCol: TypedColumn[X1[String], Option[Int]], sparkFunc: Column => Column): Prop = {
+    val spark = session
+    import spark.implicits._
+
+    val sparkResult = typedDS.dataset
+      .select(sparkFunc($"a"))
+      .map(DateTimeStringBehaviourUtils.nullHandler)
+      .collect()
+      .toList
+
+    val typed = typedDS
+      .select(typedCol)
+      .collect()
+      .run()
+      .toList
+
+    typed ?= sparkResult
+  }
+
   test("year") {
     val spark = session
     import spark.implicits._
 
-    val nullHandler: Row => Option[Int] = _.get(0) match {
-      case i: Int => Some(i)
-      case _ => None
-    }
-
     def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
         val ds = TypedDataset.create(data)
-
-        val sparkResult = ds.toDF()
-          .select(sparkFunctions.year($"a"))
-          .map(nullHandler)
-          .collect()
-          .toList
-
-        val typed = ds
-          .select(year(ds[String]('a)))
-          .collect()
-          .run()
-          .toList
-
-        typed ?= sparkResult
+        dateTimeStringProp(ds)(year(ds[String]('a)), sparkFunctions.year)
       }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("quarter") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(quarter(ds[String]('a)), sparkFunctions.quarter)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("month") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(month(ds[String]('a)), sparkFunctions.month)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("dayofweek") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(dayofweek(ds[String]('a)), sparkFunctions.dayofweek)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("dayofmonth") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(dayofmonth(ds[String]('a)), sparkFunctions.dayofmonth)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("dayofyear") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(dayofyear(ds[String]('a)), sparkFunctions.dayofyear)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("hour") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(hour(ds[String]('a)), sparkFunctions.hour)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("minute") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(minute(ds[String]('a)), sparkFunctions.minute)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("second") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(second(ds[String]('a)), sparkFunctions.second)
+    }
+
+    check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
+    check(forAll(prop _))
+  }
+
+  test("weekofyear") {
+    val spark = session
+    import spark.implicits._
+
+    def prop(data: List[X1[String]])(implicit E: Encoder[Option[Int]]): Prop = {
+      val ds = TypedDataset.create(data)
+      dateTimeStringProp(ds)(weekofyear(ds[String]('a)), sparkFunctions.weekofyear)
+    }
 
     check(forAll(dateTimeStringGen)(data => prop(data.map(X1.apply))))
     check(forAll(prop _))
