@@ -42,7 +42,7 @@ object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
   implicit val stringEncoder: TypedEncoder[String] = new TypedEncoder[String] {
-    def nullable: Boolean = true
+    def nullable: Boolean = false
 
     def jvmRepr: DataType = FramelessInternals.objectTypeFor[String]
     def catalystRepr: DataType = StringType
