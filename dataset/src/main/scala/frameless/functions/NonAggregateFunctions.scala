@@ -707,6 +707,10 @@ trait NonAggregateFunctions {
   def upper[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, String] =
     str.typed(sparkFunctions.upper(str.untyped))
 
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  // DateTime functions
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
   /** Non-Aggregate function: Extracts the year as an integer from a given date/timestamp/string.
     *
     * Differs from `Column#year` by wrapping it's result into an `Option`.
@@ -715,4 +719,85 @@ trait NonAggregateFunctions {
     */
   def year[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
     str.typed(sparkFunctions.year(str.untyped))
+
+  /** Non-Aggregate function: Extracts the quarter as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#quarter` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def quarter[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.quarter(str.untyped))
+
+  /** Non-Aggregate function Extracts the month as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#month` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def month[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.month(str.untyped))
+
+  /** Non-Aggregate function: Extracts the day of the week as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#dayofweek` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def dayofweek[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.dayofweek(str.untyped))
+
+  /** Non-Aggregate function: Extracts the day of the month as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#dayofmonth` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def dayofmonth[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.dayofmonth(str.untyped))
+
+  /** Non-Aggregate function: Extracts the day of the year as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#dayofyear` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def dayofyear[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.dayofyear(str.untyped))
+
+  /** Non-Aggregate function: Extracts the hours as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#hour` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def hour[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.hour(str.untyped))
+
+  /** Non-Aggregate function: Extracts the minutes as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#minute` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def minute[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.minute(str.untyped))
+
+  /** Non-Aggregate function: Extracts the seconds as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#second` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def second[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.second(str.untyped))
+
+  /** Non-Aggregate function: Extracts the week number as an integer from a given date/timestamp/string.
+    *
+    * Differs from `Column#weekofyear` by wrapping it's result into an `Option`.
+    *
+    * apache/spark
+    */
+  def weekofyear[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Option[Int]] =
+    str.typed(sparkFunctions.weekofyear(str.untyped))
 }
