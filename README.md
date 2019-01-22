@@ -74,7 +74,7 @@ detailed comparison of `TypedDataset` with Spark's `Dataset` API.
 * [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Quick Start
-Frameless is compiled against Scala 2.11.x.
+Frameless is compiled against Scala 2.11.x (and Scala 2.12.x since Frameless 0.8.0)
 
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
