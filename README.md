@@ -25,13 +25,16 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 The compatible versions of [Spark](http://spark.apache.org/) and 
 [cats](https://github.com/typelevel/cats) are as follows:   
 
-| Frameless  | Spark | Cats | Cats-Effect
-| --- | --- | --- | --- |
-| 0.4.0  | 2.2.0  | 1.0.0-IF | 0.4
-| 0.4.1  | 2.2.0  | 1.x | 0.8
-| 0.5.2  | 2.2.1  | 1.x | 0.8
-| 0.6.1  | 2.3.0  | 1.x | 0.8
-| 0.7.0  | 2.3.1  | 1.x | 1.x
+| Frameless  | Spark | Cats | Cats-Effect | Scala | 
+| --- | --- | --- | --- | --- |
+| 0.4.0  | 2.2.0  | 1.0.0-IF | 0.4 | 2.11
+| 0.4.1  | 2.2.0  | 1.x | 0.8 | 2.11
+| 0.5.2  | 2.2.1  | 1.x | 0.8 | 2.11
+| 0.6.1  | 2.3.0  | 1.x | 0.8 | 2.11
+| 0.7.0  | 2.3.1  | 1.x | 1.x | 2.11
+| 0.8.0  | 2.4.0  | 1.x | 1.x | 2.11/2.12
+
+
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
 
@@ -76,7 +79,7 @@ Frameless is compiled against Scala 2.11.x.
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
-val framelessVersion = "0.6.1" // for Spark 2.3.0 or use 0.5.2 for Spark 2.2.1
+val framelessVersion = "0.8.0" // for Spark 2.4.0
 
 libraryDependencies ++= List(
   "org.typelevel" %% "frameless-dataset" % framelessVersion,
