@@ -15,7 +15,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinCross(rightDs)
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val joined = {
         for {
@@ -24,7 +25,11 @@ class JoinTests extends TypedDatasetSuite {
         } yield (ab, ac)
       }.toVector
 
-      (joined.sorted ?= joinedDs)
+      val equalSchemas = joinedDs.schema ?= StructType(Seq(
+        StructField("_1", leftDs.schema, nullable = true),
+        StructField("_2", rightDs.schema, nullable = true)))
+
+      (joined.sorted ?= joinedData) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
@@ -40,7 +45,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinFull(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
       val leftKeys  = left.map(_.a).toSet
@@ -59,7 +65,11 @@ class JoinTests extends TypedDatasetSuite {
         } yield (None, Some(ac))
       }.toVector
 
-      (joined.sorted ?= joinedDs)
+      val equalSchemas = joinedDs.schema ?= StructType(Seq(
+        StructField("_1", leftDs.schema, nullable = true),
+        StructField("_2", rightDs.schema, nullable = true)))
+
+      (joined.sorted ?= joinedData) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
@@ -75,7 +85,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinInner(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val joined = {
         for {
@@ -84,7 +95,11 @@ class JoinTests extends TypedDatasetSuite {
         } yield (ab, ac)
       }.toVector
 
-      joined.sorted ?= joinedDs
+      val equalSchemas = joinedDs.schema ?= StructType(Seq(
+        StructField("_1", leftDs.schema, nullable = false),
+        StructField("_2", rightDs.schema, nullable = false)))
+
+      (joined.sorted ?= joinedData) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
@@ -136,7 +151,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
         .joinLeftAnti(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val joined = {
         for {
@@ -144,7 +160,9 @@ class JoinTests extends TypedDatasetSuite {
         } yield ab
       }.toVector
 
-      joined.sorted ?= joinedDs
+      val equalSchemas = joinedDs.schema ?= leftDs.schema
+
+      (joined.sorted ?= joinedData) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
@@ -161,7 +179,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
         .joinLeftSemi(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val joined = {
         for {
@@ -169,7 +188,9 @@ class JoinTests extends TypedDatasetSuite {
         } yield ab
       }.toVector
 
-      joined.sorted ?= joinedDs
+      val equalSchemas = joinedDs.schema ?= leftDs.schema
+
+      (joined.sorted ?= joinedData) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
@@ -185,7 +206,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinRight(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val leftKeys = left.map(_.a).toSet
       val joined = {
@@ -199,7 +221,11 @@ class JoinTests extends TypedDatasetSuite {
         } yield (None, ac)
       }.toVector
 
-      (joined.sorted ?= joinedDs) && (joinedDs.map(_._2).toSet ?= right.toSet)
+      val equalSchemas = joinedDs.schema ?= StructType(Seq(
+        StructField("_1", leftDs.schema, nullable = true),
+        StructField("_2", rightDs.schema, nullable = false)))
+
+      (joined.sorted ?= joinedData) && (joinedData.map(_._2).toSet ?= right.toSet) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
