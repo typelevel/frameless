@@ -1,5 +1,6 @@
 package frameless
 
+import org.apache.spark.sql.types.{StructField, StructType}
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
@@ -99,7 +100,8 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
         .joinLeft(rightDs)(leftDs.col('a) === rightDs.col('a))
-        .collect().run().toVector.sorted
+
+      val joinedData = joinedDs.collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
       val joined = {
@@ -113,7 +115,11 @@ class JoinTests extends TypedDatasetSuite {
         } yield (ab, None)
       }.toVector
 
-      (joined.sorted ?= joinedDs) && (joinedDs.map(_._1).toSet ?= left.toSet)
+      val equalSchemas = joinedDs.schema ?= StructType(Seq(
+        StructField("_1", leftDs.schema, nullable = false),
+        StructField("_2", rightDs.schema, nullable = true)))
+
+      (joined.sorted ?= joinedData) && (joinedData.map(_._1).toSet ?= left.toSet) && equalSchemas
     }
 
     check(forAll(prop[Int, Long, String] _))
