@@ -26,8 +26,8 @@ class JoinTests extends TypedDatasetSuite {
       }.toVector
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
-        StructField("_1", leftDs.schema, nullable = true),
-        StructField("_2", rightDs.schema, nullable = true)))
+        StructField("_1", leftDs.schema, nullable = false),
+        StructField("_2", rightDs.schema, nullable = false)))
 
       (joined.sorted ?= joinedData) && equalSchemas
     }
