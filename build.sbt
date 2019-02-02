@@ -5,6 +5,7 @@ val catsMtlVersion = "0.3.0"
 val scalatest = "3.0.3"
 val shapeless = "2.3.2"
 val scalacheck = "1.14.0"
+val irrecVersion = "0.2.0"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
@@ -40,8 +41,9 @@ lazy val dataset = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-core"      % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"       % sparkVersion % "provided",
+    "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
   ))
   .dependsOn(core % "test->test;compile->compile")
 
