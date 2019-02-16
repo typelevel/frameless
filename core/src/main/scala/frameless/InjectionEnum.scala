@@ -1,7 +1,6 @@
 package frameless
 
 import scala.reflect.{ClassTag, classTag}
-
 import shapeless._
 
 object InjectionEnum {
@@ -9,15 +8,15 @@ object InjectionEnum {
 
   def apply[A: InjectionEnum]: InjectionEnum[A] = implicitly[InjectionEnum[A]]
 
-  def instance[A](f: A => String, g: String => A): Injection[A, String] =
+  def instance[A](f: A => String, g: String => A): InjectionEnum[A] =
     Injection(f, g)
 
-  implicit val cnilInjectionEnum: Injection[CNil, String] =
+  implicit val cnilInjectionEnum: InjectionEnum[CNil] =
     instance(
       _ => throw new Exception("Impossible"),
       name =>
-        throw new Exception(
-          s"Cannot construct a value CNil: $name did not match data constructor names"
+        throw new IllegalArgumentException(
+          s"Cannot construct a value of type CNil: $name did not match data constructor names"
         )
     )
 

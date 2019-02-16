@@ -90,6 +90,10 @@ object Employee {
     Arbitrary(Gen.oneOf(Casual, PartTime, FullTime))
 }
 
+sealed trait Maybe
+case object Nothing extends Maybe
+case class Just(get: Int) extends Maybe
+
 class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
@@ -160,5 +164,14 @@ class InjectionTests extends TypedDatasetSuite {
     check(forAll(prop[Employee] _))
 
     assert(TypedEncoder[Employee].catalystRepr == TypedEncoder[String].catalystRepr)
+  }
+
+  test("TypedEncoder[Maybe] cannot be derived") {
+    import InjectionEnum._
+
+    illTyped(
+      "implicitly[TypedEncoder[Maybe]]",
+      "could not find implicit value for parameter e.*"
+    )
   }
 }
