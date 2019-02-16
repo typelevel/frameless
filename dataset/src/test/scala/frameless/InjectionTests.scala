@@ -72,13 +72,22 @@ object Person {
     Injection(p => unapply(p).get, tupled)
 }
 
-
 case class I[A](value: A)
 
 object I {
   implicit def injection[A]: Injection[I[A], A] = Injection(_.value, I(_))
   implicit def typedEncoder[A: TypedEncoder]: TypedEncoder[I[A]] = TypedEncoder.usingInjection[I[A], A]
   implicit def arbitrary[A: Arbitrary]: Arbitrary[I[A]] = Arbitrary(Arbitrary.arbitrary[A].map(I(_)))
+}
+
+sealed trait Employee
+case object Casual extends Employee
+case object PartTime extends Employee
+case object FullTime extends Employee
+
+object Employee {
+  implicit val arbitrary: Arbitrary[Employee] =
+    Arbitrary(Gen.oneOf(Casual, PartTime, FullTime))
 }
 
 class InjectionTests extends TypedDatasetSuite {
@@ -133,5 +142,23 @@ class InjectionTests extends TypedDatasetSuite {
     import TypedEncoder.usingDerivation
     assert(implicitly[TypedEncoder[Person]].isInstanceOf[RecordEncoder[Person, _, _]])
     check(forAll(prop[Person] _))
+  }
+
+  test("TypedEncoder[Employee] implicit is missing") {
+    illTyped(
+      "implicitly[TypedEncoder[Employee]]",
+      "could not find implicit value for parameter e.*"
+    )
+  }
+
+  test("Resolve missing implicit by deriving Injection instance") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Employee]] _))
+    check(forAll(prop[X1[X1[Employee]]] _))
+    check(forAll(prop[X2[Employee, Employee]] _))
+    check(forAll(prop[Employee] _))
+
+    assert(TypedEncoder[Employee].catalystRepr == TypedEncoder[String].catalystRepr)
   }
 }
