@@ -6,13 +6,8 @@ import shapeless._
 object InjectionEnum {
   type InjectionEnum[A] = Injection[A, String]
 
-  def apply[A: InjectionEnum]: InjectionEnum[A] = implicitly[InjectionEnum[A]]
-
-  def instance[A](f: A => String, g: String => A): InjectionEnum[A] =
-    Injection(f, g)
-
   implicit val cnilInjectionEnum: InjectionEnum[CNil] =
-    instance(
+    Injection(
       _ => throw new Exception("Impossible"),
       name =>
         throw new IllegalArgumentException(
@@ -27,7 +22,7 @@ object InjectionEnum {
     ): InjectionEnum[H :+: T] = {
     val canonicalName = classTag[H].runtimeClass.getCanonicalName
 
-    instance(
+    Injection(
       {
         case Inl(_) => canonicalName
         case Inr(t) => tInjectionEnum.apply(t)
@@ -45,7 +40,7 @@ object InjectionEnum {
     gen: Generic.Aux[A, R],
     rInjectionEnum: InjectionEnum[R]
     ): InjectionEnum[A] =
-    instance(
+    Injection(
       value =>
         rInjectionEnum.apply(gen.to(value)),
       name =>

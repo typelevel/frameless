@@ -94,6 +94,43 @@ sealed trait Maybe
 case object Nothing extends Maybe
 case class Just(get: Int) extends Maybe
 
+sealed trait Switch
+object Switch {
+  case object Off extends Switch
+  case object On extends Switch
+
+  implicit val arbitrary: Arbitrary[Switch] =
+    Arbitrary(Gen.oneOf(Off, On))
+}
+
+sealed trait Pixel
+case class Red() extends Pixel
+case class Green() extends Pixel
+case class Blue() extends Pixel
+
+object Pixel {
+  implicit val arbitrary: Arbitrary[Pixel] =
+    Arbitrary(Gen.oneOf(Red(), Green(), Blue()))
+}
+
+sealed trait Connection[+A]
+case object Closed extends Connection[Nothing]
+case object Open extends Connection[Nothing]
+
+object Connection {
+  implicit def arbitrary[A]: Arbitrary[Connection[A]] =
+    Arbitrary(Gen.oneOf(Closed, Open))
+}
+
+sealed abstract class Vehicle(colour: String)
+case object Car extends Vehicle("red")
+case object Bike extends Vehicle("blue")
+
+object Vehicle {
+  implicit val arbitrary: Arbitrary[Vehicle] =
+    Arbitrary(Gen.oneOf(Car, Bike))
+}
+
 class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
@@ -173,5 +210,49 @@ class InjectionTests extends TypedDatasetSuite {
       "implicitly[TypedEncoder[Maybe]]",
       "could not find implicit value for parameter e.*"
     )
+  }
+
+  test("Derive encoder for type with data constructors defined in the companion object") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Switch]] _))
+    check(forAll(prop[X1[X1[Switch]]] _))
+    check(forAll(prop[X2[Switch, Switch]] _))
+    check(forAll(prop[Switch] _))
+
+    assert(TypedEncoder[Switch].catalystRepr == TypedEncoder[String].catalystRepr)
+  }
+
+  test("Derive encoder for type with data constructors defined as parameterless case classes") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Pixel]] _))
+    check(forAll(prop[X1[X1[Pixel]]] _))
+    check(forAll(prop[X2[Pixel, Pixel]] _))
+    check(forAll(prop[Pixel] _))
+
+    assert(TypedEncoder[Pixel].catalystRepr == TypedEncoder[String].catalystRepr)
+  }
+
+  test("Derive encoder for phantom type") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Connection[Int]]] _))
+    check(forAll(prop[X1[X1[Connection[Int]]]] _))
+    check(forAll(prop[X2[Connection[Int], Connection[Int]]] _))
+    check(forAll(prop[Connection[Int]] _))
+
+    assert(TypedEncoder[Connection[Int]].catalystRepr == TypedEncoder[String].catalystRepr)
+  }
+
+  test("Derive encoder for ADT with abstract class as the base type") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Vehicle]] _))
+    check(forAll(prop[X1[X1[Vehicle]]] _))
+    check(forAll(prop[X2[Vehicle, Vehicle]] _))
+    check(forAll(prop[Vehicle] _))
+
+    assert(TypedEncoder[Vehicle].catalystRepr == TypedEncoder[String].catalystRepr)
   }
 }
