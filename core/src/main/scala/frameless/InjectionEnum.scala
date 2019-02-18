@@ -1,12 +1,9 @@
 package frameless
 
-import scala.reflect.{ClassTag, classTag}
 import shapeless._
 
 object InjectionEnum {
-  type InjectionEnum[A] = Injection[A, String]
-
-  implicit val cnilInjectionEnum: InjectionEnum[CNil] =
+  implicit val cnilInjectionEnum: Injection[CNil, String] =
     Injection(
       _ => throw new Exception("Impossible"),
       name =>
@@ -15,20 +12,21 @@ object InjectionEnum {
         )
     )
 
-  implicit def coproductInjectionEnum[H: ClassTag, T <: Coproduct](
+  implicit def coproductInjectionEnum[H, T <: Coproduct](
     implicit
+    typeable: Typeable[H] ,
     gen: Generic.Aux[H, HNil],
-    tInjectionEnum: InjectionEnum[T]
-    ): InjectionEnum[H :+: T] = {
-    val canonicalName = classTag[H].runtimeClass.getCanonicalName
+    tInjectionEnum: Injection[T, String]
+    ): Injection[H :+: T, String] = {
+    val dataConstructorName = typeable.describe.takeWhile(_ != '.')
 
     Injection(
       {
-        case Inl(_) => canonicalName
+        case Inl(_) => dataConstructorName
         case Inr(t) => tInjectionEnum.apply(t)
       },
       name =>
-        if (name == canonicalName)
+        if (name == dataConstructorName)
           Inl(gen.from(HNil))
         else
           Inr(tInjectionEnum.invert(name))
@@ -38,8 +36,8 @@ object InjectionEnum {
   implicit def genericInjectionEnum[A, R](
     implicit
     gen: Generic.Aux[A, R],
-    rInjectionEnum: InjectionEnum[R]
-    ): InjectionEnum[A] =
+    rInjectionEnum: Injection[R, String]
+    ): Injection[A, String] =
     Injection(
       value =>
         rInjectionEnum.apply(gen.to(value)),

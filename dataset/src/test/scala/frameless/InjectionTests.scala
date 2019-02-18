@@ -255,4 +255,14 @@ class InjectionTests extends TypedDatasetSuite {
 
     assert(TypedEncoder[Vehicle].catalystRepr == TypedEncoder[String].catalystRepr)
   }
+
+  test("apply method of derived Injection instance produces the correct string") {
+    import InjectionEnum._
+
+    assert(implicitly[Injection[Employee, String]].apply(Casual) === "Casual")
+    assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "On")
+    assert(implicitly[Injection[Pixel, String]].apply(Blue()) === "Blue")
+    assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
+    assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
+  }
 }
