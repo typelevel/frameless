@@ -306,7 +306,7 @@ aptTypedDs2.withColumnTupled(
    otherwise(lit(0.0))).show(8).run()
 ```
 
-A simple way to add a column without loosing important schema information is
+A simple way to add a column without losing important schema information is
 to project the entire source schema into a single column using the `asCol()` method.
 
 ```tut:book
