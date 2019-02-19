@@ -265,4 +265,29 @@ class InjectionTests extends TypedDatasetSuite {
     assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
     assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
   }
+
+  test("invert method of derived Injection instance produces the correct value") {
+    import InjectionEnum._
+
+    assert(implicitly[Injection[Employee, String]].invert("Casual") === Casual)
+    assert(implicitly[Injection[Switch, String]].invert("On") === Switch.On)
+    assert(implicitly[Injection[Pixel, String]].invert("Blue") === Blue())
+    assert(implicitly[Injection[Connection[Int], String]].invert("Open") === Open)
+    assert(implicitly[Injection[Vehicle, String]].invert("Bike") === Bike)
+  }
+
+  test(
+    "invert method of derived Injection instance should throw exception if string does not match data constructor names"
+  ) {
+    import InjectionEnum._
+
+    val caught = intercept[IllegalArgumentException] {
+      implicitly[Injection[Employee, String]].invert("cassual")
+    }
+
+    assert(
+      caught.getMessage ===
+        "Cannot construct a value of type CNil: cassual did not match data constructor names"
+    )
+  }
 }
