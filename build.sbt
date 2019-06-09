@@ -5,7 +5,7 @@ val catsMtlVersion = "0.3.0"
 val scalatest = "3.0.3"
 val shapeless = "2.3.2"
 val scalacheck = "1.14.0"
-val irrecVersion = "0.2.0"
+val irrecVersion = "0.2.1"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
