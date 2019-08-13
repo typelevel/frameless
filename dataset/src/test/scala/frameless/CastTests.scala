@@ -10,7 +10,7 @@ class CastTests extends TypedDatasetSuite {
     cast: CatalystCast[A, B]
   ): Prop = {
     val df = TypedDataset.create(X1(a) :: Nil)
-    val got = df.select(df.col('a).cast[B]).collect().run()
+    val got = df.select(df.col(Symbol("a")).cast[B]).collect().run()
 
     got ?= (f(a) :: Nil)
   }

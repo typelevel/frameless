@@ -32,7 +32,7 @@ class SelfJoinTests extends TypedDatasetSuite {
         sparkFunctions.col("df1.a") === sparkFunctions.col("df2.a")).count()
 
       val typed = ds.joinInner(ds)(
-        ds.colLeft('a) === ds.colRight('a)
+        ds.colLeft(Symbol("a")) === ds.colRight(Symbol("a"))
       ).count().run()
 
       vanilla ?= typed
@@ -58,7 +58,7 @@ class SelfJoinTests extends TypedDatasetSuite {
         val trivial = sparkFunctions.lit(true)
         val vanilla = untyped.as("df1").join(untyped.as("df2"), trivial).count()
 
-        val typed = ds.joinInner(ds)(ds.colLeft('a) === ds.colLeft('a)).count().run
+        val typed = ds.joinInner(ds)(ds.colLeft(Symbol("a")) === ds.colLeft(Symbol("a"))).count().run
         vanilla ?= typed
       }
 
@@ -80,7 +80,7 @@ class SelfJoinTests extends TypedDatasetSuite {
         (sparkFunctions.col("df2.a") + sparkFunctions.col("df2.b"))).count()
 
       val typed = ds.joinInner(ds)(
-        (ds.colLeft('a) + ds.colLeft('b)) === (ds.colRight('a) + ds.colRight('b))
+        (ds.colLeft(Symbol("a")) + ds.colLeft(Symbol("b"))) === (ds.colRight(Symbol("a")) + ds.colRight(Symbol("b")))
       ).count().run()
 
       vanilla ?= typed
@@ -105,7 +105,7 @@ class SelfJoinTests extends TypedDatasetSuite {
           (ds.dataset("a") + ds.dataset("b"))).count()
 
         val typed = ds.joinInner(ds)(
-          (ds.col('a) + ds.col('b)) === (ds.col('a) + ds.col('b))
+          (ds.col(Symbol("a")) + ds.col(Symbol("b"))) === (ds.col(Symbol("a")) + ds.col(Symbol("b")))
         ).count().run()
 
         vanilla ?= typed
@@ -121,9 +121,9 @@ class SelfJoinTests extends TypedDatasetSuite {
       ex4: TypedEncoder[X4[A, B, C, D]]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val selectedCol      = dataset.select(dataset.col     [A]('a)).collect().run().toVector
-      val selectedColLeft  = dataset.select(dataset.colLeft [A]('a)).collect().run().toVector
-      val selectedColRight = dataset.select(dataset.colRight[A]('a)).collect().run().toVector
+      val selectedCol      = dataset.select(dataset.col     [A](Symbol("a"))).collect().run().toVector
+      val selectedColLeft  = dataset.select(dataset.colLeft [A](Symbol("a"))).collect().run().toVector
+      val selectedColRight = dataset.select(dataset.colRight[A](Symbol("a"))).collect().run().toVector
 
       (selectedCol ?= selectedColLeft) && (selectedCol ?= selectedColRight)
     }

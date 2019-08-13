@@ -66,7 +66,7 @@ class ClassificationIntegrationTests extends FramelessMlSuite with MustMatchers 
     )
     val stringPredictionDs = indexToString.transform(predictionDs).as[PredictionResult]
 
-    val prediction = stringPredictionDs.select(stringPredictionDs.col('predictedField3)).collect.run().toList
+    val prediction = stringPredictionDs.select(stringPredictionDs.col(Symbol("predictedField3"))).collect.run().toList
 
     prediction mustEqual List("foo")
   }

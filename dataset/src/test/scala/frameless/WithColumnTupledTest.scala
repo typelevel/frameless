@@ -7,11 +7,11 @@ class WithColumnTupledTest extends TypedDatasetSuite {
   test("append five columns") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d = TypedDataset.create(X1(value) :: Nil)
-      val d1 = d.withColumnTupled(d('a))
-      val d2 = d1.withColumnTupled(d1('_1))
-      val d3 = d2.withColumnTupled(d2('_2))
-      val d4 = d3.withColumnTupled(d3('_3))
-      val d5 = d4.withColumnTupled(d4('_4))
+      val d1 = d.withColumnTupled(d(Symbol("a")))
+      val d2 = d1.withColumnTupled(d1(Symbol("_1")))
+      val d3 = d2.withColumnTupled(d2(Symbol("_2")))
+      val d4 = d3.withColumnTupled(d3(Symbol("_3")))
+      val d5 = d4.withColumnTupled(d4(Symbol("_4")))
 
       (value, value, value, value, value, value) ?= d5.collect().run().head
     }

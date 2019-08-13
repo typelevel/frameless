@@ -58,7 +58,7 @@ class LitTests extends TypedDatasetSuite {
     val data = Vector(P(42, today))
     val tds = TypedDataset.create(data)
 
-    tds.filter(tds('d) === today).collect().run()
+    tds.filter(tds(Symbol("d")) === today).collect().run()
   }
 }
 

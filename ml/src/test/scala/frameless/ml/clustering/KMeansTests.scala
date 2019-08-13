@@ -29,7 +29,7 @@ class KMeansTests extends FramelessMlSuite with MustMatchers {
       val model = km.fit(ds).run()
       val pDs = model.transform(ds).as[X2[Vector, Int]]
 
-      pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
+      pDs.select(pDs.col(Symbol("a"))).collect().run().toList == Seq(x1.a)
     }
 
     def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
@@ -38,7 +38,7 @@ class KMeansTests extends FramelessMlSuite with MustMatchers {
       val model = km.fit(ds).run()
       val pDs = model.transform(ds).as[X3[Vector, A, Int]]
 
-      pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq((x2.a, x2.b))
+      pDs.select(pDs.col(Symbol("a")), pDs.col(Symbol("b"))).collect.run() == Seq((x2.a, x2.b))
     }
 
     check(prop)

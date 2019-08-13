@@ -19,8 +19,8 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
 
   test("schema of groupBy('a).agg(sum('b))") {
     val df0 = TypedDataset.create(X2(1L, 1L) :: Nil)
-    val _a = df0.col('a)
-    val _b = df0.col('b)
+    val _a = df0.col(Symbol("a"))
+    val _b = df0.col(Symbol("b"))
 
     val df = df0.groupBy(_a).agg(sum(_b))
 

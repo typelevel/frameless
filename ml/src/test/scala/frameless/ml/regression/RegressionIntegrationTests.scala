@@ -36,7 +36,7 @@ class RegressionIntegrationTests extends FramelessMlSuite with MustMatchers {
     case class PredictionResult(field1: Double, field2: Int, field3: Double, features: Vector, predictedField3: Double)
     val predictionDs = model.transform(testDataWithFeatures).as[PredictionResult]
 
-    val prediction = predictionDs.select(predictionDs.col('predictedField3)).collect.run().toList
+    val prediction = predictionDs.select(predictionDs.col(Symbol("predictedField3"))).collect.run().toList
 
     prediction mustEqual List(0D)
   }

@@ -19,7 +19,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
         ds.dataset.orderBy(untyp(ds.dataset.col("a"))).collect().toVector.?=(
-          ds.orderBy(typ(ds('a))).collect().run().toVector)
+          ds.orderBy(typ(ds(Symbol("a")))).collect().run().toVector)
       }.reduce(_ && _)
     }
 
@@ -41,7 +41,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
         ds.dataset.sortWithinPartitions(untyp(ds.dataset.col("a"))).collect().toVector.?=(
-          ds.sortWithinPartitions(typ(ds('a))).collect().run().toVector)
+          ds.sortWithinPartitions(typ(ds(Symbol("a")))).collect().run().toVector)
       }.reduce(_ && _)
     }
 
@@ -63,8 +63,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[A, X2[A, B]].reverse.zip(sortings[B, X2[A, B]]).map { case ((typA, untypA), (typB, untypB)) =>
         val vanillaSpark = ds.dataset.orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b"))).collect().toVector
-        vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b))).collect().run().toVector).&&(
-          vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b))).collect().run().toVector
+        vanillaSpark.?=(ds.orderBy(typA(ds(Symbol("a"))), typB(ds(Symbol("b")))).collect().run().toVector).&&(
+          vanillaSpark ?= ds.orderByMany(typA(ds(Symbol("a"))), typB(ds(Symbol("b")))).collect().run().toVector
         )
       }.reduce(_ && _)
     }
@@ -80,8 +80,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[A, X2[A, B]].reverse.zip(sortings[B, X2[A, B]]).map { case ((typA, untypA), (typB, untypB)) =>
         val vanillaSpark = ds.dataset.sortWithinPartitions(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b"))).collect().toVector
-        vanillaSpark.?=(ds.sortWithinPartitions(typA(ds('a)), typB(ds('b))).collect().run().toVector).&&(
-          vanillaSpark ?= ds.sortWithinPartitionsMany(typA(ds('a)), typB(ds('b))).collect().run().toVector
+        vanillaSpark.?=(ds.sortWithinPartitions(typA(ds(Symbol("a"))), typB(ds(Symbol("b")))).collect().run().toVector).&&(
+          vanillaSpark ?= ds.sortWithinPartitionsMany(typA(ds(Symbol("a"))), typB(ds(Symbol("b")))).collect().run().toVector
         )
       }.reduce(_ && _)
     }
@@ -103,8 +103,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
             .orderBy(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b")), untypA2(ds.dataset.col("c")))
             .collect().toVector
 
-          vanillaSpark.?=(ds.orderBy(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector).&&(
-            vanillaSpark ?= ds.orderByMany(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector
+          vanillaSpark.?=(ds.orderBy(typA(ds(Symbol("a"))), typB(ds(Symbol("b"))), typA2(ds(Symbol("c")))).collect().run().toVector).&&(
+            vanillaSpark ?= ds.orderByMany(typA(ds(Symbol("a"))), typB(ds(Symbol("b"))), typA2(ds(Symbol("c")))).collect().run().toVector
           )
         }.reduce(_ && _)
     }
@@ -126,8 +126,8 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
             .sortWithinPartitions(untypA(ds.dataset.col("a")), untypB(ds.dataset.col("b")), untypA2(ds.dataset.col("c")))
             .collect().toVector
 
-          vanillaSpark.?=(ds.sortWithinPartitions(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector).&&(
-            vanillaSpark ?= ds.sortWithinPartitionsMany(typA(ds('a)), typB(ds('b)), typA2(ds('c))).collect().run().toVector
+          vanillaSpark.?=(ds.sortWithinPartitions(typA(ds(Symbol("a"))), typB(ds(Symbol("b"))), typA2(ds(Symbol("c")))).collect().run().toVector).&&(
+            vanillaSpark ?= ds.sortWithinPartitionsMany(typA(ds(Symbol("a"))), typB(ds(Symbol("b"))), typA2(ds(Symbol("c")))).collect().run().toVector
           )
         }.reduce(_ && _)
     }
@@ -142,9 +142,9 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
       val ds = TypedDataset.create(data)
 
       ds.dataset.orderBy(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
-        ds.orderByMany(ds('a), ds('b).desc).collect().run().toVector) &&
+        ds.orderByMany(ds(Symbol("a")), ds(Symbol("b")).desc).collect().run().toVector) &&
       ds.dataset.sortWithinPartitions(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
-        ds.sortWithinPartitionsMany(ds('a), ds('b).desc).collect().run().toVector)
+        ds.sortWithinPartitionsMany(ds(Symbol("a")), ds(Symbol("b")).desc).collect().run().toVector)
     }
 
     check(forAll(prop[SQLDate, Long] _))
@@ -154,7 +154,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
   test("fail when selected column is not sortable") {
     val d = TypedDataset.create(X2(1, Map(1 -> 2)) :: X2(2, Map(2 -> 2)) :: Nil)
-    d.orderBy(d('a).desc)
+    d.orderBy(d(Symbol("a")).desc)
     illTyped("""d.orderBy(d('b).desc)""")
     illTyped("""d.sortWithinPartitions(d('b).desc)""")
   }
@@ -169,7 +169,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[X2[A, B], T[A, B]].map { case (typX2, untypX2) =>
         val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("c"))).collect().toVector
-        val frameless = ds.orderBy(typX2(ds('c))).collect().run.toVector
+        val frameless = ds.orderBy(typX2(ds(Symbol("c")))).collect().run.toVector
         vanilla ?= frameless
       }.reduce(_ && _)
     }
@@ -190,7 +190,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
 
       sortings[(A, B), T[A, B]].map { case (typX2, untypX2) =>
         val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("b"))).collect().toVector
-        val frameless = ds.orderBy(typX2(ds('b))).collect().run.toVector
+        val frameless = ds.orderBy(typX2(ds(Symbol("b")))).collect().run.toVector
         vanilla ?= frameless
       }.reduce(_ && _)
     }

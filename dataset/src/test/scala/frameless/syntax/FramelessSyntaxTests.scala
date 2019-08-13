@@ -38,8 +38,8 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
   test("frameless typed column and aggregate") {
     def prop[A: TypedEncoder](a: A, b: A): Prop = {
       val d = TypedDataset.create((a, b) :: Nil)
-      (d.select(d('_1).untyped.typedColumn).collect().run ?= d.select(d('_1)).collect().run).&&(
-        d.agg(first(d('_1))).collect().run() ?= d.agg(first(d('_1)).untyped.typedAggregate).collect().run()
+      (d.select(d(Symbol("_1")).untyped.typedColumn).collect().run ?= d.select(d(Symbol("_1"))).collect().run).&&(
+        d.agg(first(d(Symbol("_1")))).collect().run() ?= d.agg(first(d(Symbol("_1"))).untyped.typedAggregate).collect().run()
       )
     }
 

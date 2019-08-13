@@ -14,7 +14,7 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
+      val A = dataset.col[A](Symbol("a"))
 
       val dataset2 = dataset.select(A).collect().run().toVector
       val data2 = data.map { case X4(a, _, _, _) => a }
@@ -38,8 +38,8 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
-      val B = dataset.col[B]('b)
+      val A = dataset.col[A](Symbol("a"))
+      val B = dataset.col[B](Symbol("b"))
 
       val dataset2 = dataset.select(A, B).collect().run().toVector
       val data2 = data.map { case X4(a, b, _, _) => (a, b) }
@@ -63,9 +63,9 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val A = dataset.col[A]('a)
-      val B = dataset.col[B]('b)
-      val C = dataset.col[C]('c)
+      val A = dataset.col[A](Symbol("a"))
+      val B = dataset.col[B](Symbol("b"))
+      val C = dataset.col[C](Symbol("c"))
 
       val dataset2 = dataset.select(A, B, C).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, _) => (a, b, c) }
@@ -89,10 +89,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d) }
@@ -116,10 +116,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a) }
@@ -143,10 +143,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c) }
@@ -170,10 +170,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b) }
@@ -197,10 +197,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a) }
@@ -224,10 +224,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1, a3).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a, c) }
@@ -251,10 +251,10 @@ class SelectTests extends TypedDatasetSuite {
       ca: ClassTag[A]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val a1 = dataset.col[A]('a)
-      val a2 = dataset.col[B]('b)
-      val a3 = dataset.col[C]('c)
-      val a4 = dataset.col[D]('d)
+      val a1 = dataset.col[A](Symbol("a"))
+      val a2 = dataset.col[B](Symbol("b"))
+      val a3 = dataset.col[C](Symbol("c"))
+      val a4 = dataset.col[D](Symbol("d"))
 
       val dataset2 = dataset.select(a1, a2, a3, a4, a1, a3, a2, a1, a3, a4).collect().run().toVector
       val data2 = data.map { case X4(a, b, c, d) => (a, b, c, d, a, c, b, a, c, d) }
@@ -275,7 +275,7 @@ class SelectTests extends TypedDatasetSuite {
       cb: ClassTag[B]
     ): Prop = {
       val dataset = TypedDataset.create(data)
-      val AB = dataset.colMany('a, 'b)
+      val AB = dataset.colMany(Symbol("a"), Symbol("b"))
 
       val dataset2 = dataset.select(AB).collect().run().toVector
       val data2 = data.map { case X2(X2(_, b), _) => b }
@@ -296,7 +296,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) + const).collect().run().toVector
+      val dataset2 = ds.select(ds(Symbol("a")) + const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.plus(a, const) }
 
       dataset2 ?= data2
@@ -318,7 +318,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) * const).collect().run().toVector
+      val dataset2 = ds.select(ds(Symbol("a")) * const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.times(a, const) }
 
       dataset2 ?= data2
@@ -340,7 +340,7 @@ class SelectTests extends TypedDatasetSuite {
     ): Prop = {
       val ds = TypedDataset.create(data)
 
-      val dataset2 = ds.select(ds('a) - const).collect().run().toVector
+      val dataset2 = ds.select(ds(Symbol("a")) - const).collect().run().toVector
       val data2 = data.map { case X1(a) => num.minus(a, const) }
 
       dataset2 ?= data2
@@ -362,7 +362,7 @@ class SelectTests extends TypedDatasetSuite {
       val ds = TypedDataset.create(data)
 
       if (const != 0) {
-        val dataset2 = ds.select(ds('a) / const).collect().run().toVector.asInstanceOf[Vector[A]]
+        val dataset2 = ds.select(ds(Symbol("a")) / const).collect().run().toVector.asInstanceOf[Vector[A]]
         val data2 = data.map { case X1(a) => frac.div(a, const) }
         dataset2 ?= data2
       } else 0 ?= 0
@@ -374,17 +374,17 @@ class SelectTests extends TypedDatasetSuite {
   test("tests to cover problematic dataframe column names during projections") {
     case class Foo(i: Int)
     val e = TypedDataset.create[Foo](Foo(1) :: Nil)
-    val t: TypedDataset[(Int, Int)] = e.select(e.col('i) * 2, e.col('i))
-    assert(t.select(t.col('_1)).collect().run().toList === List(2))
+    val t: TypedDataset[(Int, Int)] = e.select(e.col(Symbol("i")) * 2, e.col(Symbol("i")))
+    assert(t.select(t.col(Symbol("_1"))).collect().run().toList === List(2))
     // Issue #54
-    val fooT = t.select(t.col('_1)).deserialized.map(x => Tuple1.apply(x)).as[Foo]
-    assert(fooT.select(fooT('i)).collect().run().toList === List(2))
+    val fooT = t.select(t.col(Symbol("_1"))).deserialized.map(x => Tuple1.apply(x)).as[Foo]
+    assert(fooT.select(fooT(Symbol("i"))).collect().run().toList === List(2))
   }
 
   test("unary - on arithmetic") {
     val e = TypedDataset.create[(Int, String, Int)]((1, "a", 2) :: (2, "b", 4) :: (2, "b", 1) :: Nil)
-    assert(e.select(-e('_1)).collect().run().toVector === Vector(-1, -2, -2))
-    assert(e.select(-(e('_1) + e('_3))).collect().run().toVector === Vector(-3, -6, -3))
+    assert(e.select(-e(Symbol("_1"))).collect().run().toVector === Vector(-1, -2, -2))
+    assert(e.select(-(e(Symbol("_1")) + e(Symbol("_3")))).collect().run().toVector === Vector(-3, -6, -3))
   }
 
   test("unary - on strings should not type check") {

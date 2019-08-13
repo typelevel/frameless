@@ -44,7 +44,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinFull(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinFull(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 
@@ -84,7 +84,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinInner(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinInner(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 
@@ -114,7 +114,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinLeft(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeft(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 
@@ -150,7 +150,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
-        .joinLeftAnti(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeftAnti(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 
@@ -178,7 +178,7 @@ class JoinTests extends TypedDatasetSuite {
       val rightDs = TypedDataset.create(right)
       val rightKeys = right.map(_.a).toSet
       val joinedDs = leftDs
-        .joinLeftSemi(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinLeftSemi(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 
@@ -205,7 +205,7 @@ class JoinTests extends TypedDatasetSuite {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
       val joinedDs = leftDs
-        .joinRight(rightDs)(leftDs.col('a) === rightDs.col('a))
+        .joinRight(rightDs)(leftDs.col(Symbol("a")) === rightDs.col(Symbol("a")))
 
       val joinedData = joinedDs.collect().run().toVector.sorted
 

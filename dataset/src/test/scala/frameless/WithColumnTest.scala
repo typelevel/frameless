@@ -38,10 +38,10 @@ class WithColumnTest extends TypedDatasetSuite {
   test("append four columns") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d = TypedDataset.create(X1(value) :: Nil)
-      val d1 = d.withColumn[X2[A, A]](d('a))
-      val d2 = d1.withColumn[X3[A, A, A]](d1('b))
-      val d3 = d2.withColumn[X4[A, A, A, A]](d2('c))
-      val d4 = d3.withColumn[X5[A, A, A, A, A]](d3('d))
+      val d1 = d.withColumn[X2[A, A]](d(Symbol("a")))
+      val d2 = d1.withColumn[X3[A, A, A]](d1(Symbol("b")))
+      val d3 = d2.withColumn[X4[A, A, A, A]](d2(Symbol("c")))
+      val d4 = d3.withColumn[X5[A, A, A, A, A]](d3(Symbol("d")))
 
       X5(value, value, value, value, value) ?= d4.collect().run().head
     }
@@ -57,7 +57,7 @@ class WithColumnTest extends TypedDatasetSuite {
     def prop[A : TypedEncoder](startValue: A, replaceValue: A): Prop = {
       val d = TypedDataset.create(X2(startValue, replaceValue) :: Nil)
 
-      val X2(a, b) = d.withColumnReplaced('a, d('b))
+      val X2(a, b) = d.withColumnReplaced(Symbol("a"), d(Symbol("b")))
         .collect()
         .run()
         .head

@@ -7,10 +7,10 @@ class DropTupledTest extends TypedDatasetSuite {
   test("drop five columns") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d5 = TypedDataset.create(X5(value, value, value, value, value) :: Nil)
-      val d4 = d5.dropTupled('a) //drops first column
-      val d3 = d4.dropTupled('_4) //drops last column
-      val d2 = d3.dropTupled('_2) //drops middle column
-      val d1 = d2.dropTupled('_2)
+      val d4 = d5.dropTupled(Symbol("a")) //drops first column
+      val d3 = d4.dropTupled(Symbol("_4")) //drops last column
+      val d2 = d3.dropTupled(Symbol("_2")) //drops middle column
+      val d1 = d2.dropTupled(Symbol("_2"))
 
       Tuple1(value) ?= d1.collect().run().head
     }
@@ -25,7 +25,7 @@ class DropTupledTest extends TypedDatasetSuite {
   test("drop first column") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d3 = TypedDataset.create(X3(value, value, value) :: Nil)
-      val d2 = d3.dropTupled('a)
+      val d2 = d3.dropTupled(Symbol("a"))
 
       (value, value) ?= d2.collect().run().head
     }
@@ -40,7 +40,7 @@ class DropTupledTest extends TypedDatasetSuite {
   test("drop middle column") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d3 = TypedDataset.create(X3(value, value, value) :: Nil)
-      val d2 = d3.dropTupled('b)
+      val d2 = d3.dropTupled(Symbol("b"))
 
       (value, value) ?= d2.collect().run().head
     }
@@ -55,7 +55,7 @@ class DropTupledTest extends TypedDatasetSuite {
   test("drop last column") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d3 = TypedDataset.create(X3(value, value, value) :: Nil)
-      val d2 = d3.dropTupled('c)
+      val d2 = d3.dropTupled(Symbol("c"))
 
       (value, value) ?= d2.collect().run().head
     }
