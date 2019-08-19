@@ -119,7 +119,6 @@ def commonScalacOptions(scalaVersion: String): Seq[String] = {
     "-Ywarn-unused-import",
     "-Ywarn-value-discard",
     "-language:existentials",
-    "-language:experimental.macros",
     "-language:implicitConversions",
     "-language:higherKinds",
     "-Xfuture") ++ versionSpecific
