@@ -3,7 +3,7 @@ val catsCoreVersion = "1.6.1"
 val catsEffectVersion = "1.0.0"
 val catsMtlVersion = "0.7.0"
 val scalatest = "3.0.5"
-val shapeless = "2.3.2"
+val shapeless = "2.3.3"
 val scalacheck = "1.14.1"
 val irrecVersion = "0.2.0"
 
