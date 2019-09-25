@@ -1,6 +1,6 @@
 language: scala
 sudo: false
-
+jdk: openjdk8
 sbt_args: "-J-Xmx2G"
 
 jobs:
