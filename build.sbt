@@ -1,10 +1,10 @@
-val sparkVersion = "2.4.0"
+val sparkVersion = "2.4.4"
 val catsCoreVersion = "1.4.0"
 val catsEffectVersion = "1.0.0"
 val catsMtlVersion = "0.3.0"
-val scalatest = "3.0.8"
+val scalatest = "3.0.5"
 val shapeless = "2.3.2"
-val scalacheck = "1.14.0"
+val scalacheck = "1.14.1"
 val irrecVersion = "0.2.0"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
@@ -23,7 +23,7 @@ lazy val cats = project
   .settings(framelessSettings: _*)
   .settings(publishSettings: _*)
   .settings(
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
@@ -73,7 +73,7 @@ lazy val docs = project
     "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
   .settings(
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
     scalacOptions ++= Seq(
       "-Ypartial-unification",
       "-Ydelambdafy:inline"
@@ -119,7 +119,6 @@ def commonScalacOptions(scalaVersion: String): Seq[String] = {
     "-Ywarn-unused-import",
     "-Ywarn-value-discard",
     "-language:existentials",
-    "-language:experimental.macros",
     "-language:implicitConversions",
     "-language:higherKinds",
     "-Xfuture") ++ versionSpecific
