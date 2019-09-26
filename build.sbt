@@ -1,10 +1,10 @@
 val sparkVersion = "2.4.4"
-val catsCoreVersion = "2.0.0"
-val catsEffectVersion = "1.0.0"
+val catsCoreVersion = "1.6.1"
+val catsEffectVersion = "1.4.0"
 val catsMtlVersion = "0.7.0"
 val scalatest = "3.0.5"
 val shapeless = "2.3.3"
-val scalacheck = "1.14.1"
+val scalacheck = "1.14.2"
 val irrecVersion = "0.2.1"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
