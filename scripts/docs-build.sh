@@ -2,7 +2,7 @@
 
 set -eux
 
-sbt copyReadme tut
+sbt "copyReadme; docs/mdoc"
 
 gitbook="node_modules/gitbook-cli/bin/gitbook.js"
 
