@@ -2,7 +2,7 @@ val sparkVersion = "2.4.4"
 val catsCoreVersion = "2.0.0"
 val catsEffectVersion = "2.0.0"
 val catsMtlVersion = "0.7.0"
-val scalatest = "3.0.5"
+val scalatest = "3.0.8"
 val shapeless = "2.3.3"
 val scalacheck = "1.14.2"
 val irrecVersion = "0.2.1"
@@ -65,7 +65,7 @@ lazy val ml = project
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(tutSettings: _*)
+  //.settings(tutSettings: _*)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -157,7 +157,6 @@ lazy val framelessTypedDatasetREPL = Seq(
 )
 
 lazy val publishSettings = Seq(
-  useGpg := true,
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
@@ -210,8 +209,8 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
+  publish := (()),
+  publishLocal := (()),
   publishArtifact := false
 )
 
@@ -228,5 +227,5 @@ lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
   val from = baseDirectory.value / "README.md"
   val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
-  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true)
+  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
 }
