@@ -65,7 +65,6 @@ lazy val ml = project
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  //.settings(tutSettings: _*)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
