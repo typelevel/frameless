@@ -11,7 +11,7 @@ if ! test -e $gitbook; then
   npm install gitbook-cli
 fi
 
-$gitbook build docs/target/tut docs/book
+$gitbook build docs/target docs/book
 
 mv docs/book/* .
 
