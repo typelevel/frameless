@@ -63,10 +63,12 @@ lazy val ml = project
   )
 
 lazy val docs = project
+  .in(file("docs-src"))
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  .enablePlugins(TutPlugin)
-  .settings(crossTarget := file(".") / "docs" / "target")
+  .enablePlugins(MdocPlugin)
+  .settings(mdocIn := file(".") / "docs" / "src" / "main" / "tut")
+  .settings(mdocOut := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
     "org.apache.spark" %% "spark-sql"  % sparkVersion,

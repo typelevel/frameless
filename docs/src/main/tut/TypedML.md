@@ -48,7 +48,7 @@ import frameless.ml.regression._
 import org.apache.spark.ml.linalg.Vector
 ```
 
-```tut:book
+```tut
 case class HouseData(squareFeet: Double, hasGarden: Boolean, price: Double)
 
 val trainingData = TypedDataset.create(Seq(
@@ -77,7 +77,7 @@ case class WrongHouseFeatures(
 )
 ```
 
-```tut:book:fail
+```tut:fail
 assembler.transform(trainingData).as[WrongHouseFeatures]
 ```
 
@@ -87,26 +87,26 @@ Moreover, `TypedVectorAssembler[Features]` will compile only if `Features` conta
 case class WrongFeatures(squareFeet: Double, hasGarden: Boolean, city: String)
 ```
 
-```tut:book:fail
+```tut:fail
 TypedVectorAssembler[WrongFeatures]
 ```
 
 The subsequent call `assembler.transform(trainingData)` compiles only if `trainingData` contains all fields (names and types)
 of `Features`:
 
-```tut:book
+```tut
 case class WrongHouseData(squareFeet: Double, price: Double) // hasGarden is missing
 val wrongTrainingData = TypedDataset.create(Seq(WrongHouseData(20, 100000)))
 ```
 
-```tut:book:fail
+```tut:fail
 assembler.transform(wrongTrainingData)
 ```
 
 Then, we train the model. To train a Random Forest, one needs to feed it with features (what we predict from) and
 with a label (what we predict). In our example, `price` is the label, `features` are the features:
 
-```tut:book
+```tut
 case class RFInputs(price: Double, features: Vector)
 val rf = TypedRandomForestRegressor[RFInputs]
 
@@ -120,18 +120,18 @@ contains only one field of type Double (the label) and one field of type Vector 
 case class WrongRFInputs(labelOfWrongType: String, features: Vector)
 ```
 
-```tut:book:fail
+```tut:fail
 TypedRandomForestRegressor[WrongRFInputs]
 ```
 
 The subsequent `rf.fit(trainingDataWithFeatures)` call compiles only if `trainingDataWithFeatures` contains the same fields
 (names and types) as RFInputs.
 
-```tut:book
+```tut
 val wrongTrainingDataWithFeatures = TypedDataset.create(Seq(HouseData(20, false, 100000))) // features are missing
 ```
 
-```tut:book:fail
+```tut:fail
 rf.fit(wrongTrainingDataWithFeatures) 
 ```
 
@@ -141,7 +141,7 @@ We now want to predict `price` for `testData` using the previously trained model
 `testData` has a default value for `price` (`0` in our case) that will be ignored at prediction time. We reuse
 our `assembler` to compute the feature vector of `testData`.
 
-```tut:book
+```tut
 val testData = TypedDataset.create(Seq(HouseData(70, true, 0)))
 val testDataWithFeatures = assembler.transform(testData).as[HouseDataWithFeatures]
 
@@ -160,7 +160,7 @@ predictions.select(predictions.col('predictedPrice)).collect.run()
 `model.transform(testDataWithFeatures)` will only compile if `testDataWithFeatures` contains a field `price` of type Double
 and a field `features` of type Vector:
 
-```tut:book:fail
+```tut:fail
 model.transform(testData)
 ```
 
@@ -179,7 +179,7 @@ to index `city` values in order to be able to pass them to a `TypedRandomForestC
 import frameless.ml.classification._
 ```
 
-```tut:book
+```tut
 case class HouseData(squareFeet: Double, city: String, price: Double)
 
 val trainingData = TypedDataset.create(Seq(
@@ -212,7 +212,7 @@ val indexedData = indexerModel.transform(dataWithFeatures).as[HouseDataWithFeatu
 
 Then, we train the model:
 
-```tut:book
+```tut
 case class RFInputs(cityIndexed: Double, features: Vector)
 val rf = TypedRandomForestClassifier[RFInputs]
 
@@ -225,7 +225,7 @@ We now want to predict `city` for `testData` using the previously trained model.
 `testData` has a default value for `city` (empty string in our case) that will be ignored at prediction time. We reuse
 our `vectorAssembler` to compute the feature vector of `testData` and our `indexerModel` to index `city`.
 
-```tut:book
+```tut
 val testData = TypedDataset.create(Seq(HouseData(120, "", 800000)))
 
 val testDataWithFeatures = vectorAssembler.transform(testData).as[HouseDataWithFeatures]
@@ -247,7 +247,7 @@ val indexedPredictions = model.transform(testInput).as[HouseCityPredictionIndexe
 Then, we use a `TypedIndexToString` to get back a String value from `predictedCityIndexed`. `TypedIndexToString` takes
 as input the label array computed by our previous `indexerModel`:
 
-```tut:book
+```tut
 case class IndexToStringInput(predictedCityIndexed: Double)
 val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)
 
@@ -288,7 +288,7 @@ import frameless.ml._
 import org.apache.spark.ml.linalg._
 ```
 
-```tut:book
+```tut
 val vector = Vectors.dense(1, 2, 3)
 val vectorDs = TypedDataset.create(Seq("label" -> vector))
 

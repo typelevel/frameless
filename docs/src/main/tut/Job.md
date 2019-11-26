@@ -32,7 +32,7 @@ spark.sparkContext.setLogLevel("WARN")
 import spark.implicits._
 ```
 
-```tut:book
+```tut
 import frameless.syntax._
 
 val ds = TypedDataset.create(1 to 20)
@@ -50,7 +50,7 @@ The `countAndTakeJob` can either be executed using `run()` (as we show above) or
 be passed along to other parts of the program to be further composed into more complex sequences
 of Spark jobs.
 
-```tut:book
+```tut
 import frameless.Job
 def computeMinOfSample(sample: Job[Seq[Int]]): Job[Int] = sample.map(_.min)
 
@@ -61,7 +61,7 @@ Now we can execute this new job by specifying a [group-id][group-id] and a descr
 This allows the programmer to see this information on the Spark UI and help track, say,
 performance issues.
 
-```tut:book
+```tut
 finalJob.
   withGroupId("samplingJob").
   withDescription("Samples 20% of elements and computes the min").

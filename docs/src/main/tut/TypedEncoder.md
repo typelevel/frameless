@@ -31,13 +31,13 @@ import frameless.TypedDataset
 import frameless.syntax._
 ```
 
-```tut:book:fail
+```tut:fail
 val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
 ```
 
 Type class derivation takes care of recursively constructing (and proving the existence of) `TypeEncoder`s for case classes. The following works as expected:
 
-```tut:book
+```tut
 case class Bar(d: Double, s: String)
 case class Foo(i: Int, b: Bar)
 val ds: TypedDataset[Foo] = TypedDataset.create(Seq(Foo(1, Bar(1.1, "s"))))
@@ -51,7 +51,7 @@ case class BarDate(d: Double, s: String, t: java.util.Date)
 case class FooDate(i: Int, b: BarDate)
 ```
 
-```tut:book:fail
+```tut:fail
 val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, "s", new java.util.Date))))
 ```
 
