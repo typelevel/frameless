@@ -63,7 +63,6 @@ lazy val ml = project
   )
 
 lazy val docs = project
-  .in(file("docs-src"))
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
   .enablePlugins(MdocPlugin)
