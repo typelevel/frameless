@@ -3,8 +3,8 @@
 This tutorial introduces `TypedDataset` using a simple example.
 The following imports are needed to make all code examples compile.
 
-```tut:silent
-import org.apache.spark.{SparkConf, SparkContext}
+```scala mdoc:silent
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
 import frameless.TypedDataset
@@ -20,14 +20,14 @@ import spark.implicits._
 
 We start by defining a case class:
 
-```tut:silent
+```scala mdoc:silent
 case class Apartment(city: String, surface: Int, price: Double, bedrooms: Int)
 ```
 
 And few `Apartment` instances:
 
-```tut:silent
-val apartments = Seq(
+```scala mdoc
+val apartments: Seq[Apartment] = Seq(
   Apartment("Paris", 50,  300000.0, 2),
   Apartment("Paris", 100, 450000.0, 3),
   Apartment("Paris", 25,  250000.0, 1),
@@ -39,47 +39,47 @@ val apartments = Seq(
 
 We are now ready to instantiate a `TypedDataset[Apartment]`:
 
-```tut
-val aptTypedDs = TypedDataset.create(apartments)
+```scala mdoc
+val aptTypedDs0 = TypedDataset.create(apartments)
 ```
 
 We can also create one from an existing Spark `Dataset`:
 
-```tut
+```scala mdoc
 val aptDs = spark.createDataset(apartments)
-val aptTypedDs = TypedDataset.create(aptDs)
+val aptTypedDs1 = TypedDataset.create(aptDs)
 ```
 
 Or use the Frameless syntax:
 
-```tut
+```scala mdoc
 import frameless.syntax._
 
-val aptTypedDs2 = aptDs.typed
+val aptTypedDs = aptDs.typed
 ```
 
 ## Typesafe column referencing
 This is how we select a particular column from a `TypedDataset`:
 
-```tut
+```scala mdoc
 val cities: TypedDataset[String] = aptTypedDs.select(aptTypedDs('city))
 ```
 
 This is completely type-safe, for instance suppose we misspell `city` as `citi`:
 
-```tut:fail
+```scala mdoc:fail
 aptTypedDs.select(aptTypedDs('citi))
 ```
 
 This gets raised at compile time, whereas with the standard `Dataset` API the error appears at runtime (enjoy the stack trace):
 
-```tut:fail
+```scala mdoc:fail
 aptDs.select('citi)
 ```
 
 `select()` supports arbitrary column operations:
 
-```tut
+```scala mdoc
 aptTypedDs.select(aptTypedDs('surface) * 10, aptTypedDs('surface) + 2).show().run()
 ```
 
@@ -89,14 +89,14 @@ A more detailed explanation of `Job` is given [here](Job.md).
 
 Next we compute the price by surface unit:
 
-```tut:fail
+```scala mdoc:fail
 val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs('price) / aptTypedDs('surface))
 ```
 
 As the error suggests, we can't divide a `TypedColumn` of `Double` by `Int.`
 For safety, in Frameless only math operations between same types is allowed:
 
-```tut
+```scala mdoc
 val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs('price) / aptTypedDs('surface).cast[Double])
 priceBySurfaceUnit.collect().run()
 ```
@@ -104,7 +104,7 @@ priceBySurfaceUnit.collect().run()
 Looks like it worked, but that `cast` seems unsafe right? Actually it is safe.
 Let's try to cast a `TypedColumn` of `String` to `Double`:
 
-```tut:fail
+```scala mdoc:fail
 aptTypedDs('city).cast[Double]
 ```
 
@@ -129,7 +129,7 @@ as the types in `U` and `T` align.
 
 When the cast is valid the expression compiles:
 
-```tut
+```scala mdoc
 case class UpdatedSurface(city: String, surface: Int)
 val updated = aptTypedDs.select(aptTypedDs('city), aptTypedDs('surface) + 2).as[UpdatedSurface]
 updated.show(2).run()
@@ -138,7 +138,7 @@ updated.show(2).run()
 Next we try to cast a `(String, String)` to an `UpdatedSurface` (which has types `String`, `Int`).
 The cast is not valid and the expression does not compile:
 
-```tut:fail
+```scala mdoc:fail
 aptTypedDs.select(aptTypedDs('city), aptTypedDs('city)).as[UpdatedSurface]
 ```
 
@@ -150,7 +150,7 @@ while preserving their initial names and types for extra safety.
 
 Here is an example using the `TypedDataset[Apartment]` with an additional column:
 
-```tut
+```scala mdoc
 val aptds = aptTypedDs // For shorter expressions
 
 case class ApartmentDetails(city: String, price: Double, surface: Int, ratio: Double)
@@ -165,7 +165,7 @@ val aptWithRatio =
 
 Suppose we only want to work with `city` and `ratio`:
 
-```tut
+```scala mdoc
 case class CityInfo(city: String, ratio: Double)
 
 val cityRatio = aptWithRatio.project[CityInfo]
@@ -175,7 +175,7 @@ cityRatio.show(2).run()
 
 Suppose we only want to work with `price` and `ratio`:
 
-```tut
+```scala mdoc
 case class PriceInfo(ratio: Double, price: Double)
 
 val priceInfo = aptWithRatio.project[PriceInfo]
@@ -189,21 +189,21 @@ any of the names and/or their types, then we get a compilation error.
 
 Say we make a typo in a field name:
 
-```tut:silent
+```scala mdoc:silent
 case class PriceInfo2(ratio: Double, pricEE: Double)
 ```
 
-```tut:fail
+```scala mdoc:fail
 aptWithRatio.project[PriceInfo2]
 ```
 
 Say we make a mistake in the corresponding type:
 
-```tut:silent
+```scala mdoc:silent
 case class PriceInfo3(ratio: Int, price: Double) // ratio should be Double
 ```
 
-```tut:fail
+```scala mdoc:fail
 aptWithRatio.project[PriceInfo3]
 ```
 
@@ -211,7 +211,7 @@ aptWithRatio.project[PriceInfo3]
 
 Lets create a projection of our original dataset with a subset of the fields.
 
-```tut:silent
+```scala mdoc:silent
 case class ApartmentShortInfo(city: String, price: Double, bedrooms: Int)
 
 val aptTypedDs2: TypedDataset[ApartmentShortInfo] = aptTypedDs.project[ApartmentShortInfo]
@@ -221,13 +221,13 @@ The union of `aptTypedDs2` with `aptTypedDs` uses all the fields of the caller (
 and expects the other dataset (`aptTypedDs`) to include all those fields. 
 If field names/types do not match you get a compilation error. 
 
-```tut
+```scala mdoc
 aptTypedDs2.union(aptTypedDs).show().run
 ```
 
 The other way around will not compile, since `aptTypedDs2` has only a subset of the fields. 
 
-```tut:fail
+```scala mdoc:fail
 aptTypedDs.union(aptTypedDs2).show().run
 ```
 
@@ -254,20 +254,20 @@ import frameless.functions.aggregate._      // e.g., count, sum, avg
 
 `dropTupled()` drops a single column and results in a tuple-based schema.
 
-```tut
+```scala mdoc
 aptTypedDs2.dropTupled('price): TypedDataset[(String,Int)]
 ```
 
 To drop a column and specify a new schema use `drop()`.
 
-```tut
+```scala mdoc
 case class CityBeds(city: String, bedrooms: Int)
 val cityBeds: TypedDataset[CityBeds] = aptTypedDs2.drop[CityBeds] 
 ```
 
 Often, you want to replace an existing column with a new value.
  
-```tut
+```scala mdoc
 val inflation = aptTypedDs2.withColumnReplaced('price, aptTypedDs2('price) * 2)
  
 inflation.show(2).run()
@@ -275,20 +275,20 @@ inflation.show(2).run()
 
 Or use a literal instead.
 
-```tut
+```scala mdoc
 import frameless.functions.lit
 aptTypedDs2.withColumnReplaced('price, lit(0.001)) 
 ```
 
 Adding a column using `withColumnTupled()` results in a tupled-based schema.
 
-```tut
+```scala mdoc
 aptTypedDs2.withColumnTupled(lit(Array("a","b","c"))).show(2).run()
 ```
 
 Similarly, `withColumn()` adds a column and explicitly expects a schema for the result.
 
-```tut
+```scala mdoc
 case class CityBedsOther(city: String, bedrooms: Int, other: List[String])
 
 cityBeds.
@@ -298,7 +298,7 @@ cityBeds.
 
 To conditionally change a column use the `when/otherwise` operation. 
 
-```tut
+```scala mdoc
 import frameless.functions.nonAggregate.when
 aptTypedDs2.withColumnTupled(
    when(aptTypedDs2('city) === "Paris", aptTypedDs2('price)).
@@ -309,7 +309,7 @@ aptTypedDs2.withColumnTupled(
 A simple way to add a column without losing important schema information is
 to project the entire source schema into a single column using the `asCol()` method.
 
-```tut
+```scala mdoc
 val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
 c.show(1).run()
 ```
@@ -323,7 +323,7 @@ need of an extra `case class` to define the result schema.
 
 To access nested columns, use the `colMany()` method. 
 
-```tut
+```scala mdoc
 c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
 ```
 
@@ -331,12 +331,12 @@ c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
 ### Working with collections
 
 
-```tut
+```scala mdoc
 import frameless.functions._
 import frameless.functions.nonAggregate._
 ```
 
-```tut
+```scala mdoc
 val t = cityRatio.select(cityRatio('city), lit(List("abc","c","d")))
 t.withColumnTupled(
    arrayContains(t('_2), "abc")
@@ -346,7 +346,7 @@ t.withColumnTupled(
 If accidentally you apply a collection function on a column that is not a collection,
 you get a compilation error.
 
-```tut:fail
+```scala mdoc:fail
 t.withColumnTupled(
    arrayContains(t('_1), "abc")
 )
@@ -358,7 +358,7 @@ This provides additional safety since more than one `explode()` applied in a sin
 statement results in runtime error in vanilla Spark.   
 
 
-```tut
+```scala mdoc
 val t2 = cityRatio.select(cityRatio('city), lit(List(1,2,3,4)))
 val flattened = t2.explode('_2): TypedDataset[(String, Int)]
 flattened.show(4).run()
@@ -368,7 +368,7 @@ Here is an example of how `explode()` may fail in vanilla Spark. The Frameless
 implementation does not suffer from this problem since, by design, it can only be applied
 to a single column at a time. 
 
-```tut:fail
+```scala mdoc:fail
 {
   import org.apache.spark.sql.functions.{explode => sparkExplode}
   t2.dataset.toDF().select(sparkExplode($"_2"), sparkExplode($"_2"))
@@ -383,21 +383,21 @@ In Frameless all Spark actions (such as `collect()`) are safe.
 
 Take the first element from a dataset (if the dataset is empty return `None`).
 
-```tut
+```scala mdoc
 cityBeds.headOption.run()
 ```
 
 Take the first `n` elements.
 
-```tut
+```scala mdoc
 cityBeds.take(2).run()
 ```
 
-```tut
+```scala mdoc
 cityBeds.head(3).run()
 ```
 
-```tut
+```scala mdoc
 cityBeds.limit(4).collect().run()
 ```
 
@@ -406,13 +406,13 @@ cityBeds.limit(4).collect().run()
 
 Only column types that can be sorted are allowed to be selected for sorting. 
 
-```tut
+```scala mdoc
 aptTypedDs.orderBy(aptTypedDs('city).asc).show(2).run()
 ```
 
 The ordering can be changed by selecting `.acs` or `.desc`. 
 
-```tut
+```scala mdoc
 aptTypedDs.orderBy(
    aptTypedDs('city).asc, 
    aptTypedDs('price).desc
@@ -425,14 +425,12 @@ aptTypedDs.orderBy(
 Frameless supports lifting any Scala function (up to five arguments) to the
 context of a particular `TypedDataset`:
 
-```tut
+```scala mdoc
 // The function we want to use as UDF
 val priceModifier =
     (name: String, price:Double) => if(name == "Paris") price * 2.0 else price
 
 val udf = aptTypedDs.makeUDF(priceModifier)
-
-val aptds = aptTypedDs // For shorter expressions
 
 val adjustedPrice = aptds.select(aptds('city), udf(aptds('city), aptds('price)))
 
@@ -441,20 +439,18 @@ adjustedPrice.show().run()
 
 ## GroupBy and Aggregations
 Let's suppose we wanted to retrieve the average apartment price in each city
-```tut
+```scala mdoc
 val priceByCity = aptTypedDs.groupBy(aptTypedDs('city)).agg(avg(aptTypedDs('price)))
 priceByCity.collect().run()
 ```
 Again if we try to aggregate a column that can't be aggregated, we get a compilation error
-```tut:fail
+```scala mdoc:fail
 aptTypedDs.groupBy(aptTypedDs('city)).agg(avg(aptTypedDs('city)))
 ```
 
 Next, we combine `select` and `groupBy` to calculate the average price/surface ratio per city:
 
-```tut
-val aptds = aptTypedDs // For shorter expressions
-
+```scala mdoc
 val cityPriceRatio =  aptds.select(aptds('city), aptds('price) / aptds('surface).cast[Double])
 
 cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show().run()
@@ -463,7 +459,7 @@ cityPriceRatio.groupBy(cityPriceRatio('_1)).agg(avg(cityPriceRatio('_2))).show()
 We can also use `pivot` to further group data on a secondary column.
 For example, we can compare the average price across cities by number of bedrooms.
 
-```tut
+```scala mdoc
 case class BedroomStats(
    city: String,
    AvgPriceBeds1: Option[Double], // Pivot values may be missing, so we encode them using Options
@@ -484,7 +480,7 @@ bedroomStats.show().run()
 With pivot, collecting data preserves typesafety by
 encoding potentially missing columns with `Option`.
 
-```tut
+```scala mdoc
 bedroomStats.collect().run().foreach(println)
 ```
 
@@ -492,7 +488,7 @@ bedroomStats.collect().run().foreach(println)
 
 Optional fields can be converted to non-optional using `getOrElse()`. 
 
-```tut
+```scala mdoc
 val sampleStats = bedroomStats.select(
    bedroomStats('AvgPriceBeds2).getOrElse(0.0),
    bedroomStats('AvgPriceBeds3).getOrElse(0.0))
@@ -504,7 +500,7 @@ In addition, optional columns can be flatten using the `.flattenOption` method o
 The result contains the rows for which the flattened column is not None (or null). The schema
 is automatically adapted to reflect this change.
 
-```tut
+```scala mdoc
 val flattenStats = bedroomStats.flattenOption('AvgPriceBeds2)
 
 
@@ -514,7 +510,7 @@ flattenStats: TypedDataset[(String, Option[Double], Double, Option[Double], Opti
 
 In a DataFrame, if you just ignore types, this would equivelantly be written as:
 
-```tut
+```scala mdoc
 bedroomStats.dataset.toDF().filter($"AvgPriceBeds2".isNotNull)
 ```
 
@@ -526,7 +522,7 @@ In Frameless you can do this using the `agg()` operator directly on the `TypedDa
 In the following example, we compute the average price, the average surface,
 the minimum surface, and the set of cities for the entire dataset.
 
-```tut
+```scala mdoc
 case class Stats(
    avgPrice: Double,
    avgSurface: Double,
@@ -543,7 +539,7 @@ aptds.agg(
 
 You may apply any `TypedColumn` operation to a `TypedAggregate` column as well.
 
-```tut
+```scala mdoc
 import frameless.functions._
 aptds.agg(
    avg(aptds('price)) * min(aptds('surface)).cast[Double], 
@@ -555,7 +551,7 @@ aptds.agg(
 
 ## Joins
 
-```tut:silent
+```scala mdoc:silent
 case class CityPopulationInfo(name: String, population: Int)
 
 val cityInfo = Seq(
@@ -569,7 +565,7 @@ val citiInfoTypedDS = TypedDataset.create(cityInfo)
 
 Here is how to join the population information to the apartment's dataset:
 
-```tut
+```scala mdoc
 val withCityInfo = aptTypedDs.joinInner(citiInfoTypedDS) { aptTypedDs('city) === citiInfoTypedDS('name) }
 
 withCityInfo.show().run()
@@ -579,7 +575,7 @@ The joined TypedDataset has type `TypedDataset[(Apartment, CityPopulationInfo)]`
 
 We can then select which information we want to continue to work with:
 
-```tut
+```scala mdoc
 case class AptPriceCity(city: String, aptPrice: Double, cityPopulation: Int)
 
 withCityInfo.select(
@@ -587,6 +583,6 @@ withCityInfo.select(
 ).as[AptPriceCity].show().run
 ```
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```
