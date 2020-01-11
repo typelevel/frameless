@@ -4,7 +4,7 @@ val catsEffectVersion = "2.0.0"
 val catsMtlVersion = "0.7.0"
 val scalatest = "3.0.5"
 val shapeless = "2.3.3"
-val scalacheck = "1.14.2"
+val scalacheck = "1.14.3"
 val irrecVersion = "0.2.1"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
