@@ -23,7 +23,7 @@ lazy val cats = project
   .settings(framelessSettings: _*)
   .settings(publishSettings: _*)
   .settings(
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
@@ -73,7 +73,7 @@ lazy val docs = project
     "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
   .settings(
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.0"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     scalacOptions ++= Seq(
       "-Ypartial-unification",
       "-Ydelambdafy:inline"
