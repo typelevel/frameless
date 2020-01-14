@@ -4,9 +4,9 @@ import frameless.{TypedDataset, TypedDatasetSuite, TypedEncoder, TypedExpression
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
 
 import scala.reflect.ClassTag
+import org.scalatest.matchers.should.Matchers
 
 class HeadTests extends TypedDatasetSuite with Matchers {
   def propArray[A: TypedEncoder : ClassTag : Ordering](data: Vector[X1[A]])(implicit c: SparkSession): Prop = {

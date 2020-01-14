@@ -7,11 +7,11 @@ import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
 import org.apache.spark.ml.linalg._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import org.scalatest.MustMatchers
 import frameless.ml._
 import frameless.ml.params.kmeans.KMeansInitMode
+import org.scalatest.matchers.must.Matchers
 
-class KMeansTests extends FramelessMlSuite with MustMatchers {
+class KMeansTests extends FramelessMlSuite with Matchers {
   implicit val arbVector:  Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary)
   implicit val arbKMeansInitMode: Arbitrary[KMeansInitMode] =

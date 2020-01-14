@@ -7,9 +7,9 @@ import org.apache.spark.ml.linalg._
 import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import org.scalatest.MustMatchers
+import org.scalatest.matchers.must.Matchers
 
-class TypedRandomForestClassifierTests extends FramelessMlSuite with MustMatchers {
+class TypedRandomForestClassifierTests extends FramelessMlSuite with Matchers {
   implicit val arbDouble: Arbitrary[Double] =
     Arbitrary(Gen.choose(1, 99).map(_.toDouble)) // num classes must be between 0 and 100 for the test
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =

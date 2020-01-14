@@ -5,10 +5,10 @@ package feature
 import frameless.ml.feature.TypedStringIndexer.HandleInvalid
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import org.scalatest.MustMatchers
 import shapeless.test.illTyped
+import org.scalatest.matchers.must.Matchers
 
-class TypedStringIndexerTests extends FramelessMlSuite with MustMatchers {
+class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
 
   test(".fit() returns a correct TypedTransformer") {
     def prop[A: TypedEncoder : Arbitrary] = forAll { x2: X2[String, A] =>

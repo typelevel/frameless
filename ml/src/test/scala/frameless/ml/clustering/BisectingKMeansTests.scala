@@ -5,12 +5,12 @@ package clustering
 import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
 import frameless.ml.classification.TypedBisectingKMeans
 import org.scalacheck.Arbitrary
-import org.scalatest.MustMatchers
 import org.apache.spark.ml.linalg._
 import org.scalacheck.Prop._
 import frameless.ml._
+import org.scalatest.matchers.must.Matchers
 
-class BisectingKMeansTests extends FramelessMlSuite with MustMatchers {
+class BisectingKMeansTests extends FramelessMlSuite with Matchers {
   implicit val arbVector: Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary)
 

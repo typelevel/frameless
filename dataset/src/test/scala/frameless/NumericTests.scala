@@ -3,9 +3,10 @@ package frameless
 import org.apache.spark.sql.Encoder
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop._
-import org.scalatest.Matchers._
+import matchers.should.Matchers._
 
 import scala.reflect.ClassTag
+import org.scalatest.matchers
 
 class NumericTests extends TypedDatasetSuite {
   test("plus") {

@@ -2,9 +2,9 @@ package frameless
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.StructType
-import org.scalatest.Matchers
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
+import org.scalatest.matchers.should.Matchers
 
 case class UnitsOnly(a: Unit, b: Unit)
 

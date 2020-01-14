@@ -6,11 +6,12 @@ import frameless.ml.params.linears.{LossStrategy, Solver}
 import org.apache.spark.ml.linalg._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
-import org.scalatest.Matchers._
-import org.scalatest.{MustMatchers}
+import matchers.should.Matchers._
 import shapeless.test.illTyped
+import org.scalatest.matchers
+import org.scalatest.matchers.must.Matchers
 
-class TypedLinearRegressionTests extends FramelessMlSuite with MustMatchers {
+class TypedLinearRegressionTests extends FramelessMlSuite with Matchers {
 
   implicit val arbVectorNonEmpty: Arbitrary[Vector] = Arbitrary(Generators.arbVector.arbitrary)
 

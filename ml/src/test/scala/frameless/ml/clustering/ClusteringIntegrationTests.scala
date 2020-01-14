@@ -5,12 +5,12 @@ package clustering
 import frameless.ml.FramelessMlSuite
 import frameless.ml.classification.{TypedBisectingKMeans, TypedKMeans}
 import org.apache.spark.ml.linalg.Vector
-import org.scalatest.MustMatchers
 import frameless._
 import frameless.ml._
 import frameless.ml.feature._
+import org.scalatest.matchers.must.Matchers
 
-class ClusteringIntegrationTests extends FramelessMlSuite with MustMatchers {
+class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {
 
   test("predict field2 from field1 using a K-means clustering") {
     // Training

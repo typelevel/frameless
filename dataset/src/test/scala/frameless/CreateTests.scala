@@ -2,10 +2,10 @@ package frameless
 
 import org.scalacheck.{Arbitrary, Prop}
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
 
 import scala.reflect.ClassTag
 import shapeless.test.illTyped
+import org.scalatest.matchers.should.Matchers
 
 class CreateTests extends TypedDatasetSuite with Matchers {
 

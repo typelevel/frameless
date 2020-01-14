@@ -1,6 +1,6 @@
 package frameless
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 object EncoderTests {
   case class Foo(s: Seq[(Int, Int)])
