@@ -4,7 +4,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import scala.util.{Properties, Try}

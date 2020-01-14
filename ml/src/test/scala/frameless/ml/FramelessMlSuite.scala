@@ -3,7 +3,7 @@ package ml
 
 import org.scalactic.anyvals.PosZInt
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import org.scalatest.prop.Checkers
+import org.scalatestplus.scalacheck.Checkers
 
 class FramelessMlSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
   // Limit size of generated collections and number of checks because Travis
