@@ -6,10 +6,8 @@ import frameless.ml.params.linears.{LossStrategy, Solver}
 import org.apache.spark.ml.linalg._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
-import matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
-import org.scalatest.matchers
-import org.scalatest.matchers.must.Matchers
 
 class TypedLinearRegressionTests extends FramelessMlSuite with Matchers {
 

@@ -4,15 +4,14 @@ import java.time.Instant
 
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
-import matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 import ceedubs.irrec.regex._
 import ceedubs.irrec.regex.CharRegexGen.genCharRegexAndCandidate
 
 import scala.math.Ordering.Implicits._
-import org.scalatest.matchers
 
-class ColumnTests extends TypedDatasetSuite {
+class ColumnTests extends TypedDatasetSuite with Matchers {
 
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
