@@ -7,9 +7,9 @@ import shapeless.test.illTyped
 import org.apache.spark.ml.linalg._
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
-import org.scalatest.MustMatchers
+import org.scalatest.matchers.must.Matchers
 
-class TypedRandomForestRegressorTests extends FramelessMlSuite with MustMatchers {
+class TypedRandomForestRegressorTests extends FramelessMlSuite with Matchers {
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0)) // vector must not be empty for RandomForestRegressor
   import Generators.arbTreesFeaturesSubsetStrategy

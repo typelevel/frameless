@@ -3,11 +3,11 @@ package frameless
 import org.apache.spark.sql.Encoder
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Prop._
-import org.scalatest.Matchers._
+import org.scalatest.matchers.should.Matchers
 
 import scala.reflect.ClassTag
 
-class NumericTests extends TypedDatasetSuite {
+class NumericTests extends TypedDatasetSuite with Matchers {
   test("plus") {
     def prop[A: TypedEncoder: CatalystNumeric: Numeric](a: A, b: A): Prop = {
       val df = TypedDataset.create(X2(a, b) :: Nil)

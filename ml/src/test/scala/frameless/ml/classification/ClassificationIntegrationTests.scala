@@ -4,9 +4,9 @@ package classification
 
 import frameless.ml.feature.{TypedIndexToString, TypedStringIndexer, TypedVectorAssembler}
 import org.apache.spark.ml.linalg.Vector
-import org.scalatest.MustMatchers
+import org.scalatest.matchers.must.Matchers
 
-class ClassificationIntegrationTests extends FramelessMlSuite with MustMatchers {
+class ClassificationIntegrationTests extends FramelessMlSuite with Matchers {
 
   test("predict field3 from field1 and field2 using a RandomForestClassifier") {
     case class Data(field1: Double, field2: Int, field3: String)

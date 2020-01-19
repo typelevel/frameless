@@ -3,9 +3,9 @@ package frameless
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.Matchers
 
 import scala.collection.JavaConverters._
+import org.scalatest.matchers.should.Matchers
 
 class RandomSplitTests extends TypedDatasetSuite with Matchers {
 

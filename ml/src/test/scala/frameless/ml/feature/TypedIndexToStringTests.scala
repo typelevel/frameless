@@ -3,11 +3,11 @@ package ml
 package feature
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.MustMatchers
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
+import org.scalatest.matchers.must.Matchers
 
-class TypedIndexToStringTests extends FramelessMlSuite with MustMatchers {
+class TypedIndexToStringTests extends FramelessMlSuite with Matchers {
 
   test(".transform() correctly transform an input dataset") {
     implicit val arbDouble = Arbitrary(Gen.choose(0, 99).map(_.toDouble))

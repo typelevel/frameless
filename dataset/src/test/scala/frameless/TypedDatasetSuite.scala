@@ -3,11 +3,12 @@ package frameless
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
 import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import scala.util.{Properties, Try}
+import org.scalatest.funsuite.AnyFunSuite
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
@@ -39,7 +40,7 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 }
 
 
-class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
+class TypedDatasetSuite extends AnyFunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
   // Limit size of generated collections and number of checks to avoid OutOfMemoryError
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration = {
     def getPosZInt(name: String, default: PosZInt) = Properties.envOrNone(s"FRAMELESS_GEN_${name}")

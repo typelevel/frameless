@@ -2,7 +2,8 @@ val sparkVersion = "2.4.4"
 val catsCoreVersion = "2.0.0"
 val catsEffectVersion = "2.0.0"
 val catsMtlVersion = "0.7.0"
-val scalatest = "3.0.8"
+val scalatest = "3.1.0"
+val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.3"
 val scalacheck = "1.14.3"
 val irrecVersion = "0.2.1"
@@ -92,6 +93,7 @@ lazy val framelessSettings = Seq(
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
+    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
   javaOptions in Test ++= Seq("-Xmx1G", "-ea"),
   fork in Test := true,
