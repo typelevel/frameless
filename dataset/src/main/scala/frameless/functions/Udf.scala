@@ -90,7 +90,7 @@ case class FramelessUdf[T, R](
   override def nullable: Boolean = rencoder.nullable
   override def toString: String = s"FramelessUdf(${children.mkString(", ")})"
 
-  def eval(input: InternalRow): Any = {
+  lazy val evalCode = {
     val ctx = new CodegenContext()
     val eval = genCode(ctx)
 
@@ -123,7 +123,11 @@ case class FramelessUdf[T, R](
     val (clazz, _) = CodeGenerator.compile(code)
     val codegen = clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
-    codegen(input)
+    codegen
+  }
+
+  def eval(input: InternalRow): Any = {
+    evalCode(input)
   }
 
   def dataType: DataType = rencoder.catalystRepr
@@ -152,7 +156,8 @@ case class FramelessUdf[T, R](
     val internalTpe = CodeGenerator.boxedType(rencoder.jvmRepr)
     val internalTerm = ctx.addMutableState(internalTpe, ctx.freshName("internal"))
     val internalNullTerm = ctx.addMutableState("boolean", ctx.freshName("internalNull"))
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
+    // CTw - can't inject the term, may have to duplicate old code for parity
+    val internalExpr = LambdaVariable(internalTerm, rencoder.jvmRepr, true)
 
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 

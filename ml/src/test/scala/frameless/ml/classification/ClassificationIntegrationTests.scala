@@ -54,7 +54,7 @@ class ClassificationIntegrationTests extends FramelessMlSuite with Matchers {
     val predictionDs = model.transform(testInput).as[PredictionResultIndexed]
 
     case class IndexToStringInput(predictedField3Indexed: Double)
-    val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)
+    val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labelsArray.flatten)
 
     case class PredictionResult(
       features: Vector,

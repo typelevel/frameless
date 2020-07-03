@@ -22,7 +22,7 @@ object TypedExpressionEncoder {
 
   def apply[T: TypedEncoder]: ExpressionEncoder[T] = {
     val encoder = TypedEncoder[T]
-    val schema = targetStructType(encoder)
+    val targetSchema = targetStructType(encoder)
 
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
@@ -38,10 +38,8 @@ object TypedExpressionEncoder {
     }
 
     new ExpressionEncoder[T](
-      schema = schema,
-      flat = false,
-      serializer = toRowExpressions,
-      deserializer = encoder.fromCatalyst(out),
+      objSerializer = encoder.toCatalyst(in),
+      objDeserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
   }
