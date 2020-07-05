@@ -29,6 +29,7 @@ trait SparkTesting { self: BeforeAndAfterAll =>
   override def beforeAll(): Unit = {
     assert(s == null)
     s = SparkSession.builder().config(conf).getOrCreate()
+    s.sparkContext.setLogLevel("DEBUG")
   }
 
   override def afterAll(): Unit = {

@@ -26,12 +26,11 @@ object TypedExpressionEncoder {
 
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
-    val (out, toRowExpressions) = encoder.toCatalyst(in) match {
-      case a@ If(_, _, x: CreateNamedStruct) =>
+    val (out, serializer) = encoder.toCatalyst(in) match {
+      case a @If(_, _, x: CreateNamedStruct) =>
         val out = BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
-        //(out, x.flatten)
-        (out, a) // will fail in ExpressionEncoder if the If doesn't have the first param : IsNull
+        (out, a)
       case other =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
@@ -39,7 +38,7 @@ object TypedExpressionEncoder {
     }
 
     new ExpressionEncoder[T](
-      objSerializer = toRowExpressions,//encoder.toCatalyst(in), // toRowExpressions, //
+      objSerializer = serializer,
       objDeserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
