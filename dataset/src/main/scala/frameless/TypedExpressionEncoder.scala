@@ -2,7 +2,7 @@ package frameless
 
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
-import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If, Literal}
+import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If}
 import org.apache.spark.sql.types.StructType
 
 object TypedExpressionEncoder {
@@ -27,18 +27,19 @@ object TypedExpressionEncoder {
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
     val (out, toRowExpressions) = encoder.toCatalyst(in) match {
-      case If(_, _, x: CreateNamedStruct) =>
+      case a@ If(_, _, x: CreateNamedStruct) =>
         val out = BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
-        (out, x.flatten)
+        //(out, x.flatten)
+        (out, a) // will fail in ExpressionEncoder if the If doesn't have the first param : IsNull
       case other =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
-        (out, CreateNamedStruct(Literal("_1") :: other :: Nil).flatten)
+        (out, other)
     }
 
     new ExpressionEncoder[T](
-      objSerializer = encoder.toCatalyst(in),
+      objSerializer = toRowExpressions,//encoder.toCatalyst(in), // toRowExpressions, //
       objDeserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
