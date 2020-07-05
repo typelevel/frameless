@@ -1252,7 +1252,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
             .select(sparkFunctions.bround(cDS("a"), 0))
             .map(_.getAs[java.math.BigDecimal](0))
             .collect()
-            .toList.map(_.setScale(-1))
+            .toList.map(_.setScale(0))
 
           val typedDS = TypedDataset.create(values)
           val col = typedDS('a)
