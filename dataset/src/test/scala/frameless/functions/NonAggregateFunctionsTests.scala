@@ -1127,15 +1127,15 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
       val cDS = session.createDataset(values)
 
       val resCompare = cDS
-        .select(sparkFunctions.round(cDS("a"), -1))
+        .select(sparkFunctions.round(cDS("a"), 0))
         .map(_.getAs[java.math.BigDecimal](0))
         .collect()
-        .toList.map(_.setScale(-1))
+        .toList.map(_.setScale(0))
 
       val typedDS = TypedDataset.create(values)
       val col = typedDS('a)
       val res = typedDS
-        .select(round(col, -1))
+        .select(round(col, 0))
         .collect()
         .run()
         .toList
@@ -1249,7 +1249,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
           val cDS = session.createDataset(values)
 
           val resCompare = cDS
-            .select(sparkFunctions.bround(cDS("a"), -1))
+            .select(sparkFunctions.bround(cDS("a"), 0))
             .map(_.getAs[java.math.BigDecimal](0))
             .collect()
             .toList.map(_.setScale(-1))
@@ -1257,7 +1257,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
           val typedDS = TypedDataset.create(values)
           val col = typedDS('a)
           val res = typedDS
-            .select(bround(col, -1))
+            .select(bround(col, 0))
             .collect()
             .run()
             .toList
