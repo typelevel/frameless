@@ -902,11 +902,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i2: Tupler.Aux[Out0, Out],
         i3: TypedEncoder[Out]
       ): TypedDataset[Out] = {
-        val selected = dataset.toDF()
+        val base = dataset.toDF()
           .select(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
-          .as[Out](TypedExpressionEncoder[Out])
+        val selected = base.as[Out](TypedExpressionEncoder[Out])
 
-          TypedDataset.create[Out](selected)
+        TypedDataset.create[Out](selected)
       }
   }
 

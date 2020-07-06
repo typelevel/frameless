@@ -26,10 +26,10 @@ object TypedExpressionEncoder {
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
     val (out, serializer) = encoder.toCatalyst(in) match {
-      case a @If(_, _, x: CreateNamedStruct) =>
+      case it @ If(a, b, x: CreateNamedStruct) =>
         val out = BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
-        (out, a)
+        (out, it)
       case other =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
@@ -43,3 +43,4 @@ object TypedExpressionEncoder {
     )
   }
 }
+

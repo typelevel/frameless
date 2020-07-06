@@ -162,15 +162,18 @@ class RecordEncoder[F, G <: HList, H <: HList]
 
     def fromCatalyst(path: Expression): Expression = {
       val exprs = fields.value.value.map { field =>
-        val fieldPath = path match {
-          case BoundReference(ordinal, dataType, nullable) =>
+        val fieldPath = (field, path) match {
+          case (RecordEncoderField(_, _, r), BoundReference(ordinal, dataType, nullable) )
+            if r.getClass.getName == "frameless.RecordEncoder" && fields.value.value.size == 1 =>
+            GetStructField(path, field.ordinal, Some(field.name))
+          case (_, BoundReference(ordinal, dataType, nullable) ) =>
             GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
-          case other =>
+          case (_, other) =>
             GetStructField(path, field.ordinal, Some(field.name))
         }
         field.encoder.fromCatalyst(fieldPath)
       }
-
+      // UnresolvedExtractValue( UnresolvedAttribute(Seq(field.name)), Literal(field.name))
       val newArgs = newInstanceExprs.value.from(exprs)
       val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
       path match {
