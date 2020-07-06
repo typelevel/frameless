@@ -164,10 +164,16 @@ class RecordEncoder[F, G <: HList, H <: HList]
       val exprs = fields.value.value.map { field =>
         val fieldPath = (field, path) match {
           case (RecordEncoderField(_, _, r), BoundReference(ordinal, dataType, nullable) )
-            if r.getClass.getName == "frameless.RecordEncoder" && fields.value.value.size == 1 =>
+            if (r.getClass.getName == "frameless.RecordEncoder"
+              || r.getClass.getName == "frameless.InjectEncoder"
+              ) && fields.value.value.size == 1 =>
             GetStructField(path, field.ordinal, Some(field.name))
           case (_, BoundReference(ordinal, dataType, nullable) ) =>
             GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
+          case (RecordEncoderField(_, _, r), other)
+            if r.getClass.getName == "frameless.OptionEncoder" =>
+            //UnresolvedAttribute("a.a.a")
+            GetStructField(path, field.ordinal, Some(field.name))
           case (_, other) =>
             GetStructField(path, field.ordinal, Some(field.name))
         }
