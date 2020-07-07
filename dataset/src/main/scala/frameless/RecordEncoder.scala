@@ -163,31 +163,35 @@ class RecordEncoder[F, G <: HList, H <: HList]
     def fromCatalyst(path: Expression): Expression = {
       val exprs = fields.value.value.map { field =>
         val fieldPath = (field, path) match {
-          case (RecordEncoderField(_, _, r), BoundReference(ordinal, dataType, nullable) )
+          /*case (RecordEncoderField(_, _, r), BoundReference(ordinal, dataType, nullable) )
             if (r.getClass.getName == "frameless.RecordEncoder"
               || r.getClass.getName == "frameless.InjectEncoder"
               ) && fields.value.value.size == 1 =>
-            GetStructField(path, field.ordinal, Some(field.name))
+            GetStructField(path, field.ordinal, Some(field.name))*/
           case (_, BoundReference(ordinal, dataType, nullable) ) =>
             GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
-          case (RecordEncoderField(_, _, r), other)
+          /*case (RecordEncoderField(_, _, r), other)
             if r.getClass.getName == "frameless.OptionEncoder" =>
             //UnresolvedAttribute("a.a.a")
-            GetStructField(path, field.ordinal, Some(field.name))
+            GetStructField(path, field.ordinal, Some(field.name))*/
           case (_, other) =>
             GetStructField(path, field.ordinal, Some(field.name))
         }
         field.encoder.fromCatalyst(fieldPath)
       }
+      val nullExpr = Literal.create(null, jvmRepr)
+
       // UnresolvedExtractValue( UnresolvedAttribute(Seq(field.name)), Literal(field.name))
       val newArgs = newInstanceExprs.value.from(exprs)
       val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
-      path match {
-        case BoundReference(0, _, _) => newExpr
+      If(IsNull(path), nullExpr, newExpr)
+
+/*      path match {
+        case BoundReference(0, _, _) =>
+          newExpr
         case _ => {
-          val nullExpr = Literal.create(null, jvmRepr)
           If(IsNull(path), nullExpr, newExpr)
         }
-      }
+      } */
     }
 }
