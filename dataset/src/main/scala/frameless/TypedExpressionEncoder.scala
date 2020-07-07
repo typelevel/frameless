@@ -3,7 +3,7 @@ package frameless
 import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
-import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If, IsNull, Literal}
+import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If}
 import org.apache.spark.sql.types.StructType
 
 object TypedExpressionEncoder {
@@ -25,27 +25,20 @@ object TypedExpressionEncoder {
     val encoder = TypedEncoder[T]
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
-    val (objectDeserializer, serializer) = encoder.toCatalyst(in) match {
-      case it @ If(a, b, x: CreateNamedStruct) =>
-       //
+    val (out, serializer) = encoder.toCatalyst(in) match {
+      case it @ If(_, _, _: CreateNamedStruct) =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
-          // 48
-          BoundReference(0, encoder.catalystRepr, encoder.nullable)
 
-        // will be newInstance
-// 48
-        (If(IsNull(GetColumnByOrdinal(0, encoder.catalystRepr)), Literal.create(null, encoder.catalystRepr), encoder.fromCatalyst(out)), it)
-        // 48, so no difference
-        (encoder.fromCatalyst(out), it)
+        (out, it)
       case other =>
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
-       ( encoder.fromCatalyst(out), other)
+       (out, other)
     }
 
     new ExpressionEncoder[T](
       objSerializer = serializer,
-      objDeserializer = objectDeserializer,
+      objDeserializer = encoder.fromCatalyst(out),
       clsTag = encoder.classTag
     )
   }

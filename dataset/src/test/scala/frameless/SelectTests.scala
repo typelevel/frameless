@@ -6,7 +6,6 @@ import shapeless.test.illTyped
 import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
-
   test("select('a) FROM abcd") {
     def prop[A, B, C, D](data: Vector[X4[A, B, C, D]])(
       implicit

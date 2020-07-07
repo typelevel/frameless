@@ -291,8 +291,8 @@ class CubeTests extends TypedDatasetSuite {
       datasetGrouped ?= dataGrouped
     }
 
- //   check(forAll(prop[Short, Option[Short]] _))
- //   check(forAll(prop[Option[Short], Short] _))
+    check(forAll(prop[Short, Option[Short]] _))
+    check(forAll(prop[Option[Short], Short] _))
     check(forAll(prop[X1[Option[Short]], Short] _))
   }
 

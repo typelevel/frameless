@@ -83,11 +83,7 @@ object I {
 
 class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
-   /*
-     causes an eav in the jvm
-     J 27604 C2 org.apache.spark.sql.catalyst.expressions.UnsafeRow.getLong(I)J (18 bytes)
-
-   check(forAll(prop[Country] _))
+    check(forAll(prop[Country] _))
     check(forAll(prop[LocalDateTime] _))
     check(forAll(prop[Food] _))
     check(forAll(prop[X1[Country]] _))
@@ -115,7 +111,7 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[I[Int]].catalystRepr == TypedEncoder[Int].catalystRepr)
     assert(TypedEncoder[I[I[Int]]].catalystRepr == TypedEncoder[Int].catalystRepr)
 
-    assert(TypedEncoder[I[Option[Int]]].nullable)  */
+    assert(TypedEncoder[I[Option[Int]]].nullable)
   }
 
   test("TypedEncoder[Person] is ambiguous") {

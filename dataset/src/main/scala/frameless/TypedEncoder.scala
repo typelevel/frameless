@@ -328,11 +328,78 @@ object TypedEncoder {
         encodeB.nullable)
     }
 
-  implicit def optionEncoder[A](implicit underlying: TypedEncoder[A]): TypedEncoder[Option[A]] = OptionEncoder()
+  implicit def optionEncoder[A](implicit underlying: TypedEncoder[A]): TypedEncoder[Option[A]] =
+    new TypedEncoder[Option[A]] {
+      def nullable: Boolean = true
+
+      def jvmRepr: DataType = FramelessInternals.objectTypeFor[Option[A]](classTag)
+      def catalystRepr: DataType = underlying.catalystRepr
+
+      def toCatalyst(path: Expression): Expression = {
+        // for primitive types we must manually unbox the value of the object
+        underlying.jvmRepr match {
+          case IntegerType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Integer], path),
+              "intValue",
+              IntegerType)
+          case LongType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Long], path),
+              "longValue",
+              LongType)
+          case DoubleType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Double], path),
+              "doubleValue",
+              DoubleType)
+          case FloatType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Float], path),
+              "floatValue",
+              FloatType)
+          case ShortType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Short], path),
+              "shortValue",
+              ShortType)
+          case ByteType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Byte], path),
+              "byteValue",
+              ByteType)
+          case BooleanType =>
+            Invoke(
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Boolean], path),
+              "booleanValue",
+              BooleanType)
+
+          case _ => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
+        }
+      }
+
+    def fromCatalyst(path: Expression): Expression =
+      WrapOption(underlying.fromCatalyst(path), underlying.jvmRepr)
+  }
 
   /** Encodes things using injection if there is one defined */
   implicit def usingInjection[A: ClassTag, B]
-    (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] = InjectEncoder()
+    (implicit inj: Injection[A, B], trb: TypedEncoder[B]): TypedEncoder[A] =
+      new TypedEncoder[A] {
+        def nullable: Boolean = trb.nullable
+        def jvmRepr: DataType = FramelessInternals.objectTypeFor[A](classTag)
+        def catalystRepr: DataType = trb.catalystRepr
+
+        def fromCatalyst(path: Expression): Expression = {
+          val bexpr = trb.fromCatalyst(path)
+          Invoke(Literal.fromObject(inj), "invert", jvmRepr, Seq(bexpr))
+        }
+
+        def toCatalyst(path: Expression): Expression = {
+          val invoke = Invoke(Literal.fromObject(inj), "apply", trb.jvmRepr, Seq(path))
+          trb.toCatalyst(invoke)
+        }
+      }
 
   /** Encodes things as records if there is no Injection defined */
   implicit def usingDerivation[F, G <: HList, H <: HList]
