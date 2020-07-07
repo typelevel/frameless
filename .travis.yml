@@ -7,22 +7,13 @@ jobs:
   include:
     - stage: Documentation 2.12
       env: PHASE=A
-      scala: 2.12.8
-    - stage: Documentation 2.11
-      env: PHASE=A
-      scala: 2.11.12
+      scala: 2.12.10
     - stage: Unit Tests 2.12
       env: PHASE=B
-      scala: 2.12.8
-    - stage: Unit Tests 2.11
-      env: PHASE=B
-      scala: 2.11.12
-    - stage: Publish 2.11
-      env: PHASE=C
-      scala: 2.11.12
+      scala: 2.12.10
     - stage: Publish 2.12
       env: PHASE=C
-      scala: 2.12.8
+      scala: 2.12.10
 
 script:
   - scripts/travis-publish.sh
