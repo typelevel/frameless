@@ -22,8 +22,6 @@ object FramelessInternals {
     }
   }
 
-  def asNullable(dt: DataType): DataType = dt.asNullable
-
   def expr(column: Column): Expression = column.expr
 
   def column(column: Column): Expression = column.expr

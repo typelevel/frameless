@@ -1,7 +1,6 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{Invoke, NewInstance}
 import org.apache.spark.sql.types._
@@ -162,13 +161,7 @@ class RecordEncoder[F, G <: HList, H <: HList]
 
     def fromCatalyst(path: Expression): Expression = {
       val exprs = fields.value.value.map { field =>
-        val fieldPath = (field, path) match {
-          case (_, BoundReference(ordinal, dataType, nullable) ) =>
-            GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
-          case (_, other) =>
-            GetStructField(path, field.ordinal, Some(field.name))
-        }
-        field.encoder.fromCatalyst(fieldPath)
+        field.encoder.fromCatalyst( GetStructField(path, field.ordinal, Some(field.name)) )
       }
 
       val newArgs = newInstanceExprs.value.from(exprs)
