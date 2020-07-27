@@ -8,11 +8,11 @@ import org.scalacheck.Prop._
 import org.scalacheck.{Gen, Prop}
 
 class PivotTest extends TypedDatasetSuite {
-  def withCustomGenX4: Gen[Vector[X4[String, String, Long, Boolean]]] = {
-    val kvPairGen: Gen[X4[String, String, Long, Boolean]] = for {
+  def withCustomGenX4: Gen[Vector[X4[String, String, Int, Boolean]]] = {
+    val kvPairGen: Gen[X4[String, String, Int, Boolean]] = for {
       a <- Gen.oneOf(Seq("1", "2", "3", "4"))
       b <- Gen.oneOf(Seq("a", "b", "c"))
-      c <- arbitrary[Long]
+      c <- arbitrary[Int]
       d <- arbitrary[Boolean]
     } yield X4(a, b, c, d)
 
@@ -20,7 +20,7 @@ class PivotTest extends TypedDatasetSuite {
   }
 
   test("X4[Boolean, String, Int, Boolean] pivot on String") {
-    def prop(data: Vector[X4[String, String, Long, Boolean]]): Prop = {
+    def prop(data: Vector[X4[String, String, Int, Boolean]]): Prop = {
       val d = TypedDataset.create(data)
       val frameless = d.groupBy(d('a)).
         pivot(d('b)).on("a", "b", "c").

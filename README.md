@@ -48,6 +48,10 @@ This essentially allows you to use any version of Frameless with any version of 
 The aforementioned table simply provides the versions of Spark we officially compile 
 and test Frameless with, but other versions may probably work as well. 
 
+### Breaking changes in 0.9 
+
+* Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame's is now ["value"](https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270) not "_1".  
+
 ## Why?
 
 Frameless introduces a new Spark API, called `TypedDataset`. 
@@ -74,7 +78,7 @@ detailed comparison of `TypedDataset` with Spark's `Dataset` API.
 * [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Quick Start
-Frameless is compiled against Scala 2.12.x
+Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.
 
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
