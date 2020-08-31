@@ -63,9 +63,10 @@ trait AggregateFunctions {
   def sum[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
-    oencoder: TypedEncoder[Out]
+    oencoder: TypedEncoder[Out],
+    aencoder: TypedEncoder[A]
   ): TypedAggregate[T, Out] = {
-    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
+    val zeroExpr = Literal.create(summable.zero, TypedEncoder[A].catalystRepr)
     val sumExpr = expr(sparkFunctions.sum(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
@@ -79,9 +80,10 @@ trait AggregateFunctions {
   def sumDistinct[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
-    oencoder: TypedEncoder[Out]
+    oencoder: TypedEncoder[Out],
+    aencoder: TypedEncoder[A]
   ): TypedAggregate[T, Out] = {
-    val zeroExpr = Literal.create(summable.zero, TypedEncoder[Out].catalystRepr)
+    val zeroExpr = Literal.create(summable.zero, TypedEncoder[A].catalystRepr)
     val sumExpr = expr(sparkFunctions.sumDistinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 

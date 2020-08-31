@@ -1,4 +1,4 @@
-val sparkVersion = "2.4.6"
+val sparkVersion = "3.0.0"
 val catsCoreVersion = "2.0.0"
 val catsEffectVersion = "2.0.0"
 val catsMtlVersion = "0.7.0"
@@ -85,7 +85,7 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  crossScalaVersions := Seq("2.11.12", "2.12.10"),
+  crossScalaVersions := Seq("2.12.10"),
   scalaVersion := crossScalaVersions.value.last,
   scalacOptions ++= commonScalacOptions(scalaVersion.value),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),

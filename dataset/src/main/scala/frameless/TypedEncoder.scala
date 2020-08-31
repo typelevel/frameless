@@ -231,7 +231,7 @@ object TypedEncoder {
 
           case ByteType => path
 
-          case _ => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+          case _ => MapObjects(encodeT.toCatalyst _, path, encodeT.jvmRepr, encodeT.nullable)
         }
 
       def fromCatalyst(path: Expression): Expression =
@@ -246,7 +246,7 @@ object TypedEncoder {
           case ByteType => path
 
           case _ =>
-            Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
+            Invoke(MapObjects(encodeT.fromCatalyst _, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
         }
     }
 
@@ -265,7 +265,7 @@ object TypedEncoder {
         def toCatalyst(path: Expression): Expression =
           if (ScalaReflection.isNativeType(encodeT.value.jvmRepr))
             NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
-          else MapObjects(encodeT.value.toCatalyst, path, encodeT.value.jvmRepr, encodeT.value.nullable)
+          else MapObjects(encodeT.value.toCatalyst _, path, encodeT.value.jvmRepr, encodeT.value.nullable)
 
         def fromCatalyst(path: Expression): Expression =
           MapObjects(

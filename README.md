@@ -33,7 +33,7 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | 0.6.1  | 2.3.0  | 1.x | 0.8 | 2.11
 | 0.7.0  | 2.3.1  | 1.x | 1.x | 2.11
 | 0.8.0  | 2.4.0  | 1.x | 1.x | 2.11/2.12
-
+| 0.9.0  | 3.0.0  | 1.x | 1.x | 2.12
 
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
@@ -47,6 +47,10 @@ Frameless intentionally **does not** have a compile dependency on Spark.
 This essentially allows you to use any version of Frameless with any version of Spark. 
 The aforementioned table simply provides the versions of Spark we officially compile 
 and test Frameless with, but other versions may probably work as well. 
+
+### Breaking changes in 0.9 
+
+* Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame's is now ["value"](https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270) not "_1".  
 
 ## Why?
 
@@ -74,12 +78,12 @@ detailed comparison of `TypedDataset` with Spark's `Dataset` API.
 * [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Quick Start
-Frameless is compiled against Scala 2.11.x (and Scala 2.12.x since Frameless 0.8.0)
+Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.
 
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
-val framelessVersion = "0.8.0" // for Spark 2.4.0
+val framelessVersion = "0.9.0" // for Spark 3.0.0
 
 libraryDependencies ++= List(
   "org.typelevel" %% "frameless-dataset" % framelessVersion,
