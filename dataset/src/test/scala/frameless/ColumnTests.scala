@@ -451,5 +451,10 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     assert(ds.col(_.c.d).isInstanceOf[TypedColumn[MyClass1, Long]])
 
     "ds.col(_.c.toString)" shouldNot typeCheck
+    "ds.col(_.c.toInt)" shouldNot typeCheck
+    "ds.col(x => java.lang.Math.abs(x.a))" shouldNot typeCheck
+
+    // we should be able to block the following as well...
+    //"ds.col(_.a.toInt)" shouldNot typeCheck
   }
 }
