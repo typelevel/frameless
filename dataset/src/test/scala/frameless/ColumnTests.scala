@@ -449,5 +449,7 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
     assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])
     assert(ds.col(_.c.d).isInstanceOf[TypedColumn[MyClass1, Long]])
+
+    "ds.col(_.c.toString)" shouldNot typeCheck
   }
 }
