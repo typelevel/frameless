@@ -438,4 +438,21 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
 
     "ds.select(ds('_2).field('_3))" shouldNot typeCheck
   }
+
+  test("col through lambda") {
+
+    case class MyClass1(a: Int, b: String, c: MyClass2)
+    case class MyClass2(d: Long)
+
+    val ds = TypedDataset.create(Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L))))
+
+    assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
+    assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])
+    assert(ds.col(_.c.d).isInstanceOf[TypedColumn[MyClass1, Long]])
+
+    val actual = ds.filter(_.c.d > 4).count().run()
+    val expected = 1
+
+    actual shouldEqual expected
+  }
 }
