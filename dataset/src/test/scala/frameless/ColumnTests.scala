@@ -449,10 +449,5 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
     assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])
     assert(ds.col(_.c.d).isInstanceOf[TypedColumn[MyClass1, Long]])
-
-    val actual = ds.filter(_.c.d > 4).count().run()
-    val expected = 1
-
-    actual shouldEqual expected
   }
 }
