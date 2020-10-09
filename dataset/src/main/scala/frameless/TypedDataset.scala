@@ -15,6 +15,8 @@ import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
 import shapeless.ops.record.{Keys, Modifier, Remover, Values}
 
+import scala.language.experimental.macros
+
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
   * NOTE: Prefer `TypedDataset.create` over `new TypedDataset` unless you
@@ -237,6 +239,17 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       i1: TypedEncoder[A]
     ): TypedColumn[T, A] =
       new TypedColumn[T, A](dataset(column.value.name).as[A](TypedExpressionEncoder[A]))
+
+  /** Returns `TypedColumn` of type `A` given a lambda indicating the field.
+   *
+   * {{{
+   *   td.col(_.id)
+   * }}}
+   *
+   * It is statically checked that column with such name exists and has type `A`.
+   */
+  def col[A](x: Function1[T, A]): TypedColumn[T, A] = macro TypedColumn.macroImpl[T, A]
+
 
   /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
     * {{{

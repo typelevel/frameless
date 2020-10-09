@@ -10,6 +10,8 @@ import shapeless.ops.record.Selector
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
+import scala.reflect.macros.whitebox
+import scala.language.experimental.macros
 
 sealed trait UntypedExpression[T] {
   def expr: Expression
@@ -895,6 +897,40 @@ object TypedColumn {
         i0: LabelledGeneric.Aux[T, H],
         i1: Selector.Aux[H, K, V]
       ): Exists[T, K, V] = new Exists[T, K, V] {}
+  }
+
+  def apply[T, A](x: Function1[T, A]): TypedColumn[T, A] = macro macroImpl[T, A]
+
+  def macroImpl[T: c.WeakTypeTag, A: c.WeakTypeTag](c: whitebox.Context)(
+    x: c.Tree) = {
+
+    import c.universe._
+
+    val t = c.weakTypeOf[T]
+    val a = c.weakTypeOf[A]
+    val ds = reify {
+      c.prefix.splice.asInstanceOf[TypedDataset[T]].dataset
+    }
+
+    def buildExpression(columnName: String) = c.Expr[TypedColumn[T, A]](
+      q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.functions.col($columnName)).expr)")
+
+    def buildExpressions(columnNames: List[String]) = c.Expr[TypedColumn[T, A]](
+      q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.FramelessInternals.resolveExpr(${ds},${columnNames})))")
+
+    x match {
+      case q"((${_: TermName}:${_: Type}) => ${_: TermName}.${p: TermName})" =>
+        buildExpression(p.toString())
+      case q"(_.${p: TermName})" => buildExpression(p.toString())
+      case q"(_.${p: TermName}.${x: TermName})" =>
+        buildExpressions(List(p.toString(), x.toString()))
+      case q"(_.${p: TermName}.${x: TermName}.${y: TermName})" =>
+        buildExpressions(List(p.toString(), x.toString(), y.toString()))
+      case q"(_.${p: TermName}.${x: TermName}.${y: TermName}.${z: TermName})" =>
+        buildExpressions(
+          List(p.toString(), x.toString(), y.toString(), z.toString()))
+      case x => throw new IllegalArgumentException(s"$x is not supported")
+    }
   }
 }
 
