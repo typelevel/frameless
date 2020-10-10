@@ -901,34 +901,24 @@ object TypedColumn {
 
   def apply[T, A](x: Function1[T, A]): TypedColumn[T, A] = macro macroImpl[T, A]
 
-  def macroImpl[T: c.WeakTypeTag, A: c.WeakTypeTag](c: whitebox.Context)(
-    x: c.Tree) = {
+  def macroImpl[T: c.WeakTypeTag, A: c.WeakTypeTag](c: whitebox.Context)(x: c.Tree) = {
 
     import c.universe._
 
     val t = c.weakTypeOf[T]
     val a = c.weakTypeOf[A]
-    val ds = reify {
-      c.prefix.splice.asInstanceOf[TypedDataset[T]].dataset
+
+    def buildExpression(columnNames: List[String]) = {
+      val columnName = columnNames.mkString(".")
+      c.Expr[TypedColumn[T, A]](q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.functions.col($columnName)).expr)")
     }
 
-    def buildExpression(columnName: String) = c.Expr[TypedColumn[T, A]](
-      q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.functions.col($columnName)).expr)")
-
-    def buildExpressions(columnNames: List[String]) = c.Expr[TypedColumn[T, A]](
-      q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.FramelessInternals.resolveExpr(${ds},${columnNames})))")
-
     x match {
-      case q"((${_: TermName}:${_: Type}) => ${_: TermName}.${p: TermName})" =>
-        buildExpression(p.toString())
-      case q"(_.${p: TermName})" => buildExpression(p.toString())
-      case q"(_.${p: TermName}.${x: TermName})" =>
-        buildExpressions(List(p.toString(), x.toString()))
-      case q"(_.${p: TermName}.${x: TermName}.${y: TermName})" =>
-        buildExpressions(List(p.toString(), x.toString(), y.toString()))
-      case q"(_.${p: TermName}.${x: TermName}.${y: TermName}.${z: TermName})" =>
-        buildExpressions(
-          List(p.toString(), x.toString(), y.toString(), z.toString()))
+      case q"((${_: TermName}:${_: Type}) => ${_: TermName}.${p: TermName})" => buildExpression(List(p.toString()))
+      case q"(_.${p: TermName})" => buildExpression(List(p.toString()))
+      case q"(_.${p: TermName}.${x: TermName})" => buildExpression(List(p.toString(), x.toString()))
+      case q"(_.${p: TermName}.${x: TermName}.${y: TermName})" => buildExpression(List(p.toString(), x.toString(), y.toString()))
+      case q"(_.${p: TermName}.${x: TermName}.${y: TermName}.${z: TermName})" => buildExpression(List(p.toString(), x.toString(), y.toString(), z.toString()))
       case x => throw new IllegalArgumentException(s"$x is not supported")
     }
   }
