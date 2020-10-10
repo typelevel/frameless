@@ -3,8 +3,7 @@ package frameless
 import java.time.Instant
 
 import org.scalacheck.Prop._
-import org.scalacheck.{Arbitrary, Gen, Prop}
-import Arbitrary.arbitrary
+import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 import ceedubs.irrec.regex.gen.CharRegexGen.genCharRegexAndCandidate
