@@ -5,7 +5,7 @@ val catsMtlVersion = "0.7.1"
 val scalatest = "3.2.2"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.3"
-val scalacheck = "1.14.3"
+val scalacheck = "1.15.0"
 val irrecVersion = "0.4.0"
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
