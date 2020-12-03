@@ -225,10 +225,11 @@ lazy val credentialSettings = Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
 
-copyReadme := copyReadmeImpl.value
+
 lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
   val from = baseDirectory.value / "README.md"
   val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
   sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
 }
+copyReadme := copyReadmeImpl.value
