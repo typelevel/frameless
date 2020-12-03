@@ -59,9 +59,6 @@ jobs:
       - name: Setup codecov
         run: pip install codecov
 
-      - name: Documentation
-        run: 'sbt ++${{ matrix.scala }} -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M doc tut'
-
       - name: Test & Compute Coverage
         env:
           SBT_OPTS: '-Xmx2G'
@@ -69,3 +66,37 @@ jobs:
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
+
+  docs:
+    name: Documentation
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        scala: [2.12.12]
+        java: [adopt@1.8]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout current branch (full)
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{ matrix.java }}
+
+      - name: Cache sbt
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.sbt
+            ~/.ivy2/cache
+            ~/.coursier/cache/v1
+            ~/.cache/coursier/v1
+            ~/AppData/Local/Coursier/Cache/v1
+            ~/Library/Caches/Coursier/v1
+          key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Documentation
+        run: 'sbt ++${{ matrix.scala }} -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M doc tut'
