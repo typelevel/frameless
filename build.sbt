@@ -66,7 +66,7 @@ lazy val ml = project
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(scalacOptions --= Seq("-Xfatal-warnings"))
+  .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(TutPlugin)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
