@@ -118,10 +118,22 @@ for the set of available `CatalystCast.`
 
 ## Casting and projections
 
-With `select()` the resulting TypedDataset is of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
+In the general case, `select()` returns a TypedDataset of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
-`TypedDataset[(String, Int, Boolean)]`. To select more than ten columns use the `selectMany()` method.
-Select has better IDE support than the macro based selectMany, so prefer `select()` for the general case.
+`TypedDataset[(String, Int, Boolean)]`. 
+
+**Advanced topics with `select()`:** When you `select()` a single column that has type `A`, 
+the resulting type is `TypedDataset[A]` and not `TypedDataset[Tuple1[A]]`. 
+This behavior makes working with nested schema easier (i.e., in the case where `A` is a complex data type)
+and simplifies type-checking column operations (e.g., verify that two columns can be added, divided, etc.). 
+However, when `A` is scalar, say a `Long`, it makes it harder to select and work with the resulting 
+`TypedDataset[Long]`. For instance, it's harder to reference this single scalar column using `select()`. 
+If this becomes an issue, you can bypass this behavior by using the 
+`selectMany()` method instead of `select()`. In the previous example, `selectMany()` will return
+`TypedDataset[Tuple1[Long]]` and you can reference its single column using the name `_1`. 
+`selectMany()` should also be used when you need to select more than 10 columns. 
+`select()` has better IDE support and compiles faster than the macro based `selectMany()`, 
+so prefer `select()` for the most common use cases.
 
 We often want to give more expressive types to the result of our computations.
 `as[T]` allows us to safely cast a `TypedDataset[U]` to another of type `TypedDataset[T]` as long
