@@ -28,8 +28,7 @@ ThisBuild / githubWorkflowBuild := Seq(
                    name = Some("Setup codecov")
   ),
   WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "coverage", "test", "coverageReport"),
-                   name = Some("Test & Compute Coverage"),
-                   env = Map("SBT_OPTS" -> "-Xmx2G")
+                   name = Some("Test & Compute Coverage")
   ),
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
                    name = Some("Upload Codecov Results")
