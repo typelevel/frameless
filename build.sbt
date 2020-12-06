@@ -8,6 +8,46 @@ val shapeless = "2.3.3"
 val scalacheck = "1.15.1"
 val irrecVersion = "0.4.0"
 
+val Scala212 = "2.12.12"
+
+ThisBuild / crossScalaVersions := Seq(Scala212)
+ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+
+ThisBuild / githubWorkflowArtifactUpload := false
+
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Use("actions",
+                   "setup-python",
+                   "v2",
+                   name = Some("Setup Python"),
+                   params = Map("python-version" -> "3.x")
+  ),
+  WorkflowStep.Run(List("pip install codecov"),
+                   name = Some("Setup codecov")
+  ),
+  WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "coverage", "test", "coverageReport"),
+                   name = Some("Test & Compute Coverage")
+  ),
+  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
+                   name = Some("Upload Codecov Results")
+  )
+)
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "docs",
+    "Documentation",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "doc", "tut"),
+                       name = Some("Documentation")
+      )
+    ),
+    scalas = List(Scala212)
+  )
+)
+
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
@@ -85,8 +125,6 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  crossScalaVersions := Seq("2.12.10"),
-  scalaVersion := crossScalaVersions.value.last,
   scalacOptions ++= commonScalacOptions(scalaVersion.value),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
