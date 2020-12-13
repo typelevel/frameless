@@ -36,13 +36,13 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
     check {
       forAll { (k:String, v: String) =>
         val scopedKey = "frameless.tests." + k
-        1.pure[ReaderT[IO, SparkSession, ?]].withLocalProperty(scopedKey,v).run(session).unsafeRunSync()
+        1.pure[ReaderT[IO, SparkSession, *]].withLocalProperty(scopedKey,v).run(session).unsafeRunSync()
         sc.getLocalProperty(scopedKey) ?= v
 
-        1.pure[ReaderT[IO, SparkSession, ?]].withGroupId(v).run(session).unsafeRunSync()
+        1.pure[ReaderT[IO, SparkSession, *]].withGroupId(v).run(session).unsafeRunSync()
         sc.getLocalProperty("spark.jobGroup.id") ?= v
 
-        1.pure[ReaderT[IO, SparkSession, ?]].withDescription(v).run(session).unsafeRunSync()
+        1.pure[ReaderT[IO, SparkSession, *]].withDescription(v).run(session).unsafeRunSync()
         sc.getLocalProperty("spark.job.description") ?= v
       }
     }
