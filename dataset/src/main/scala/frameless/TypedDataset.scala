@@ -245,8 +245,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * }}}
     */
   def asCol: TypedColumn[T, T] = {
-    val allColumns: Array[Column] = dataset.columns.map(dataset.col)
-    val projectedColumn: Column = org.apache.spark.sql.functions.struct(allColumns: _*)
+    val projectedColumn: Column = encoder.catalystRepr match {
+      case StructType(_) =>
+        val allColumns: Array[Column] = dataset.columns.map(dataset.col)
+        org.apache.spark.sql.functions.struct(allColumns: _*)
+      case _ =>
+        dataset.col(dataset.columns.head)
+    }
     new TypedColumn[T,T](projectedColumn)
   }
 

@@ -360,6 +360,41 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[Vector[Vector[String]], Vector[Vector[BigDecimal]]] _))
   }
 
+  test("asCol single column TypedDatasets") {
+    def prop[A: TypedEncoder](a: Seq[A]) = {
+      val ds: TypedDataset[A] = TypedDataset.create(a)
+
+      val frameless: Seq[(A, A, A)] =
+        ds.select(ds.asCol, ds.asCol, ds.asCol).collect().run()
+
+      val scala: Seq[(A, A, A)] =
+        a.map(x => (x, x, x))
+
+      scala ?= frameless
+    }
+
+    check(forAll(prop[Int] _))
+    check(forAll(prop[String] _))
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Vector[Vector[String]]] _))
+  }
+
+  test("asCol with numeric operators") {
+    def prop(a: Seq[Long]) = {
+      val ds: TypedDataset[Long] = TypedDataset.create(a)
+      val (first,second) = (2L,5L)
+      val frameless: Seq[(Long, Long, Long)] =
+        ds.select(ds.asCol, ds.asCol+first, ds.asCol*second).collect().run()
+
+      val scala: Seq[(Long, Long, Long)] =
+        a.map(x => (x, x+first, x*second))
+
+      scala ?= frameless
+    }
+
+    check(forAll(prop _))
+  }
+
   test("unary_!") {
     val ds = TypedDataset.create((true, false) :: Nil)
 
