@@ -122,19 +122,6 @@ In the general case, `select()` returns a TypedDataset of type `TypedDataset[Tup
 For example, if we select three columns with types `String`, `Int`, and `Boolean` the result will have type
 `TypedDataset[(String, Int, Boolean)]`. 
 
-**Advanced topics with `select()`:** When you `select()` a single column that has type `A`, 
-the resulting type is `TypedDataset[A]` and not `TypedDataset[Tuple1[A]]`. 
-This behavior makes working with nested schema easier (i.e., in the case where `A` is a complex data type)
-and simplifies type-checking column operations (e.g., verify that two columns can be added, divided, etc.). 
-However, when `A` is scalar, say a `Long`, it makes it harder to select and work with the resulting 
-`TypedDataset[Long]`. For instance, it's harder to reference this single scalar column using `select()`. 
-If this becomes an issue, you can bypass this behavior by using the 
-`selectMany()` method instead of `select()`. In the previous example, `selectMany()` will return
-`TypedDataset[Tuple1[Long]]` and you can reference its single column using the name `_1`. 
-`selectMany()` should also be used when you need to select more than 10 columns. 
-`select()` has better IDE support and compiles faster than the macro based `selectMany()`, 
-so prefer `select()` for the most common use cases.
-
 We often want to give more expressive types to the result of our computations.
 `as[T]` allows us to safely cast a `TypedDataset[U]` to another of type `TypedDataset[T]` as long
 as the types in `U` and `T` align.
@@ -153,6 +140,30 @@ The cast is not valid and the expression does not compile:
 ```tut:book:fail
 aptTypedDs.select(aptTypedDs('city), aptTypedDs('city)).as[UpdatedSurface]
 ```
+
+### Advanced topics with `select()`
+
+When you `select()` a single column that has type `A`, the resulting type is `TypedDataset[A]` and 
+not `TypedDataset[Tuple1[A]]`. This behavior makes working with nested schema easier (i.e., in the case 
+where `A` is a complex data type) and simplifies type-checking column operations (e.g., verify that two 
+columns can be added, divided, etc.). However, when `A` is scalar, say a `Long`, it makes it harder to select 
+and work with the resulting `TypedDataset[Long]`. For instance, it's harder to reference this single scalar 
+column using `select()`. If this becomes an issue, you can bypass this behavior by using the 
+`selectMany()` method instead of `select()`. In the previous example, `selectMany()` will return
+`TypedDataset[Tuple1[Long]]` and you can reference its single column using the name `_1`. 
+`selectMany()` should also be used when you need to select more than 10 columns. 
+`select()` has better IDE support and compiles faster than the macro based `selectMany()`, 
+so prefer `select()` for the most common use cases.
+
+When you are handed a single scalar column TypedDataset (e.g., `TypedDataset[Double]`) 
+the best way to reference its single column is using the `asCol` (short for "as a column") method. 
+This is best shown in the example below. We will see more usages of `asCol` later in this tutorial.  
+
+```tut:book
+val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs('price) / aptTypedDs('surface).cast[Double])
+priceBySurfaceUnit.select(priceBySurfaceUnit.asCol * 2).show(2).run()
+```
+
 
 ### Projections
 
@@ -326,19 +337,14 @@ val c = cityBeds.select(cityBeds.asCol, lit(List("a","b","c")))
 c.show(1).run()
 ```
 
-`asCol()` is a new method, without a direct equivalent in Spark's `Dataset` or `DataFrame` APIs.
 When working with Spark's `DataFrames`, you often select all columns using `.select($"*", ...)`. 
 In a way, `asCol()` is a typed equivalent of `$"*"`. 
-    
-Finally, note that using `select()` and `asCol()`, compared to using `withColumn()`, avoids the 
-need of an extra `case class` to define the result schema.
 
 To access nested columns, use the `colMany()` method. 
 
 ```tut:book
 c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
 ```
-
 
 ### Working with collections
 
