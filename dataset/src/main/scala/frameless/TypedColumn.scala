@@ -1,6 +1,6 @@
 package frameless
 
-import frameless.functions.{lit => flit, litAggr}
+import frameless.functions.{litAggr, lit => flit}
 import frameless.syntax._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types.DecimalType
@@ -66,6 +66,36 @@ abstract class AbstractTypedColumn[T, U]
     extends UntypedExpression[T] { self =>
 
   type ThisType[A, B] <: AbstractTypedColumn[A, B]
+
+  /** A helper class to make to simplify working with Optional fields.
+    *
+    * {{{
+    *    val x: TypedColumn[Option[Int]] = _
+    *    x.opt.map(_*2) // This only compiles if the type of x is Option[X] (in this example X is of type Int)
+    * }}}
+    *
+    * @note Known issue: map() will NOT work when the applied function is a udf().
+    *       It will compile and then throw a runtime error.
+    **/
+  trait Mapper[X] {
+    def map[G, OutputType[_,_]](u: ThisType[T, X] => OutputType[T,G])
+      (implicit
+        ev: OutputType[T,G] <:< AbstractTypedColumn[T, G]
+      ): OutputType[T, Option[G]] = {
+      u(self.asInstanceOf[ThisType[T, X]]).asInstanceOf[OutputType[T, Option[G]]]
+    }
+  }
+
+  /** Makes it easier to work with Optional columns. It returns an instance of `Mapper[X]`
+    * where `X` is type of the unwrapped Optional. E.g., in the case of `Option[Long]`,
+    * `X` is of type Long.
+    *
+    * {{{
+    *    val x: TypedColumn[Option[Int]] = _
+    *    x.opt.map(_*2)
+    * }}}
+    * */
+  def opt[X](implicit x: U <:< Option[X]): Mapper[X] = new Mapper[X] {}
 
   /** Fall back to an untyped Column */
   def untyped: Column = new Column(expr)

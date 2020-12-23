@@ -116,6 +116,47 @@ in a compilation error.
 Check [here](https://github.com/typelevel/frameless/blob/master/core/src/main/scala/frameless/CatalystCast.scala)
 for the set of available `CatalystCast.`
 
+## Working with Optional columns
+
+When working with real data we have to deal with imperfections, such as missing fields. Columns that may have
+missing data should be represented using `Options`. For this example, let's assume that the Apartments dataset
+may have missing values.  
+
+```tut:silent
+case class ApartmentOpt(city: Option[String], surface: Option[Int], price: Option[Double], bedrooms: Option[Int])
+```
+
+```tut:silent
+val apartmentsOpt = Seq(
+  ApartmentOpt(Some("Paris"), Some(50),  Some(300000.0), None),
+  ApartmentOpt(None, None, Some(450000.0), Some(3))
+)
+```
+
+```tut:book
+val aptTypedDsOpt = TypedDataset.create(apartmentsOpt)
+aptTypedDsOpt.show().run()
+```
+
+Unfortunately the syntax used above with `select()` will not work here:
+
+```tut:book:fail
+aptTypedDsOpt.select(aptTypedDsOpt('surface) * 10, aptTypedDsOpt('surface) + 2).show().run()
+```
+
+This is because we cannot multiple an `Option` with an `Int`. In Scala, `Option` has a `map()` method to help address
+exactly this (e.g., `Some(10).map(c => c * 2)`). Frameless follows a similar convention. By applying the `opt` method on 
+any `Option[X]` column you can then use `map()` to provide a function that works with the unwrapped type `X`. 
+This is best shown in the example bellow:
+
+ ```tut:book
+ aptTypedDsOpt.select(aptTypedDsOpt('surface).opt.map(c => c * 10), aptTypedDsOpt('surface).opt.map(_ + 2)).show().run()
+ ```
+
+**Known issue**: `map()` will throw a runtime exception when the applied function includes a `udf()`. If you want to 
+apply a `udf()` to an optional column, we recommend changing your `udf` to work directly with `Optional` fields. 
+
+
 ## Casting and projections
 
 In the general case, `select()` returns a TypedDataset of type `TypedDataset[TupleN[...]]` (with N in `[1...10]`).
