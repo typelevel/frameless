@@ -131,6 +131,15 @@ object Vehicle {
     Arbitrary(Gen.oneOf(Car, Bike))
 }
 
+sealed trait Fooo
+object A { case class Bar() extends Fooo }
+object B { case class Bar() extends Fooo }
+
+object Fooo {
+  implicit def arbitrary: Arbitrary[Fooo] =
+    Arbitrary(Gen.oneOf(A.Bar(), B.Bar()))
+}
+
 class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
@@ -256,6 +265,17 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[Vehicle].catalystRepr == TypedEncoder[String].catalystRepr)
   }
 
+    test("Derive encoder for ADT containing constructors with the same name") {
+    import InjectionEnum._
+
+    check(forAll(prop[X1[Fooo]] _))
+    check(forAll(prop[X1[X1[Fooo]]] _))
+    check(forAll(prop[X2[Fooo, Fooo]] _))
+    check(forAll(prop[Fooo] _))
+
+    assert(TypedEncoder[Fooo].catalystRepr == TypedEncoder[String].catalystRepr)
+  }
+
   test("apply method of derived Injection instance produces the correct string") {
     import InjectionEnum._
 
@@ -264,6 +284,8 @@ class InjectionTests extends TypedDatasetSuite {
     assert(implicitly[Injection[Pixel, String]].apply(Blue()) === "Blue")
     assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
     assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
+    assert(implicitly[Injection[Fooo, String]].apply(A.Bar()) === "Bar")
+    assert(implicitly[Injection[Fooo, String]].apply(B.Bar()) === "Bar")
   }
 
   test("invert method of derived Injection instance produces the correct value") {
@@ -274,6 +296,8 @@ class InjectionTests extends TypedDatasetSuite {
     assert(implicitly[Injection[Pixel, String]].invert("Blue") === Blue())
     assert(implicitly[Injection[Connection[Int], String]].invert("Open") === Open)
     assert(implicitly[Injection[Vehicle, String]].invert("Bike") === Bike)
+    assert(implicitly[Injection[Fooo, String]].invert("Bar") === A.Bar())
+    assert(implicitly[Injection[Fooo, String]].invert("Bar") === B.Bar())
   }
 
   test(
