@@ -280,24 +280,24 @@ class InjectionTests extends TypedDatasetSuite {
     import InjectionEnum._
 
     assert(implicitly[Injection[Employee, String]].apply(Casual) === "Casual")
-    assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "On")
+    assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "Switch.On")
     assert(implicitly[Injection[Pixel, String]].apply(Blue()) === "Blue")
     assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
     assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
-    assert(implicitly[Injection[Fooo, String]].apply(A.Bar()) === "Bar")
-    assert(implicitly[Injection[Fooo, String]].apply(B.Bar()) === "Bar")
+    assert(implicitly[Injection[Fooo, String]].apply(A.Bar()) === "A.Bar")
+    assert(implicitly[Injection[Fooo, String]].apply(B.Bar()) === "B.Bar")
   }
 
   test("invert method of derived Injection instance produces the correct value") {
     import InjectionEnum._
 
     assert(implicitly[Injection[Employee, String]].invert("Casual") === Casual)
-    assert(implicitly[Injection[Switch, String]].invert("On") === Switch.On)
+    assert(implicitly[Injection[Switch, String]].invert("Switch.On") === Switch.On)
     assert(implicitly[Injection[Pixel, String]].invert("Blue") === Blue())
     assert(implicitly[Injection[Connection[Int], String]].invert("Open") === Open)
     assert(implicitly[Injection[Vehicle, String]].invert("Bike") === Bike)
-    assert(implicitly[Injection[Fooo, String]].invert("Bar") === A.Bar())
-    assert(implicitly[Injection[Fooo, String]].invert("Bar") === B.Bar())
+    assert(implicitly[Injection[Fooo, String]].invert("A.Bar") === A.Bar())
+    assert(implicitly[Injection[Fooo, String]].invert("B.Bar") === B.Bar())
   }
 
   test(
