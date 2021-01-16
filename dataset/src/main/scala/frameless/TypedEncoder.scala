@@ -428,4 +428,6 @@ object TypedEncoder {
         Invoke(udtInstance, "deserialize", ObjectType(udt.userClass), Seq(path))
     }
   }
+
+  object injections extends InjectionEnum
 }

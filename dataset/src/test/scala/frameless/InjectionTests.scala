@@ -131,15 +131,6 @@ object Vehicle {
     Arbitrary(Gen.oneOf(Car, Bike))
 }
 
-sealed trait Fooo
-object A { case class Bar() extends Fooo }
-object B { case class Bar() extends Fooo }
-
-object Fooo {
-  implicit def arbitrary: Arbitrary[Fooo] =
-    Arbitrary(Gen.oneOf(A.Bar(), B.Bar()))
-}
-
 class InjectionTests extends TypedDatasetSuite {
   test("Injection based encoders") {
     check(forAll(prop[Country] _))
@@ -202,7 +193,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("Resolve missing implicit by deriving Injection instance") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     check(forAll(prop[X1[Employee]] _))
     check(forAll(prop[X1[X1[Employee]]] _))
@@ -213,7 +204,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("TypedEncoder[Maybe] cannot be derived") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     illTyped(
       "implicitly[TypedEncoder[Maybe]]",
@@ -222,7 +213,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("Derive encoder for type with data constructors defined in the companion object") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     check(forAll(prop[X1[Switch]] _))
     check(forAll(prop[X1[X1[Switch]]] _))
@@ -233,7 +224,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("Derive encoder for type with data constructors defined as parameterless case classes") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     check(forAll(prop[X1[Pixel]] _))
     check(forAll(prop[X1[X1[Pixel]]] _))
@@ -244,7 +235,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("Derive encoder for phantom type") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     check(forAll(prop[X1[Connection[Int]]] _))
     check(forAll(prop[X1[X1[Connection[Int]]]] _))
@@ -255,7 +246,7 @@ class InjectionTests extends TypedDatasetSuite {
   }
 
   test("Derive encoder for ADT with abstract class as the base type") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     check(forAll(prop[X1[Vehicle]] _))
     check(forAll(prop[X1[X1[Vehicle]]] _))
@@ -265,45 +256,30 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[Vehicle].catalystRepr == TypedEncoder[String].catalystRepr)
   }
 
-    test("Derive encoder for ADT containing constructors with the same name") {
-    import InjectionEnum._
-
-    check(forAll(prop[X1[Fooo]] _))
-    check(forAll(prop[X1[X1[Fooo]]] _))
-    check(forAll(prop[X2[Fooo, Fooo]] _))
-    check(forAll(prop[Fooo] _))
-
-    assert(TypedEncoder[Fooo].catalystRepr == TypedEncoder[String].catalystRepr)
-  }
-
   test("apply method of derived Injection instance produces the correct string") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     assert(implicitly[Injection[Employee, String]].apply(Casual) === "Casual")
     assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "Switch.On")
     assert(implicitly[Injection[Pixel, String]].apply(Blue()) === "Blue")
     assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
     assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
-    assert(implicitly[Injection[Fooo, String]].apply(A.Bar()) === "A.Bar")
-    assert(implicitly[Injection[Fooo, String]].apply(B.Bar()) === "B.Bar")
   }
 
   test("invert method of derived Injection instance produces the correct value") {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     assert(implicitly[Injection[Employee, String]].invert("Casual") === Casual)
     assert(implicitly[Injection[Switch, String]].invert("Switch.On") === Switch.On)
     assert(implicitly[Injection[Pixel, String]].invert("Blue") === Blue())
     assert(implicitly[Injection[Connection[Int], String]].invert("Open") === Open)
     assert(implicitly[Injection[Vehicle, String]].invert("Bike") === Bike)
-    assert(implicitly[Injection[Fooo, String]].invert("A.Bar") === A.Bar())
-    assert(implicitly[Injection[Fooo, String]].invert("B.Bar") === B.Bar())
   }
 
   test(
     "invert method of derived Injection instance should throw exception if string does not match data constructor names"
   ) {
-    import InjectionEnum._
+    import frameless.TypedEncoder.injections._
 
     val caught = intercept[IllegalArgumentException] {
       implicitly[Injection[Employee, String]].invert("cassual")

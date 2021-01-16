@@ -2,7 +2,7 @@ package frameless
 
 import shapeless._
 
-object InjectionEnum {
+trait InjectionEnum {
   implicit val cnilInjectionEnum: Injection[CNil, String] =
     Injection(
       _ => throw new Exception("Impossible"),
