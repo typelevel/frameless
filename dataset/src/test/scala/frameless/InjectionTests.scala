@@ -260,7 +260,7 @@ class InjectionTests extends TypedDatasetSuite {
     import frameless.TypedEncoder.injections._
 
     assert(implicitly[Injection[Employee, String]].apply(Casual) === "Casual")
-    assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "Switch.On")
+    assert(implicitly[Injection[Switch, String]].apply(Switch.On) === "On")
     assert(implicitly[Injection[Pixel, String]].apply(Blue()) === "Blue")
     assert(implicitly[Injection[Connection[Int], String]].apply(Open) === "Open")
     assert(implicitly[Injection[Vehicle, String]].apply(Bike) === "Bike")
@@ -270,7 +270,7 @@ class InjectionTests extends TypedDatasetSuite {
     import frameless.TypedEncoder.injections._
 
     assert(implicitly[Injection[Employee, String]].invert("Casual") === Casual)
-    assert(implicitly[Injection[Switch, String]].invert("Switch.On") === Switch.On)
+    assert(implicitly[Injection[Switch, String]].invert("On") === Switch.On)
     assert(implicitly[Injection[Pixel, String]].invert("Blue") === Blue())
     assert(implicitly[Injection[Connection[Int], String]].invert("Open") === Open)
     assert(implicitly[Injection[Vehicle, String]].invert("Bike") === Bike)
