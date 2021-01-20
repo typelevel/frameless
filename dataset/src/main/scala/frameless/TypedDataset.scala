@@ -1204,6 +1204,27 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     TypedDataset.create[Out](trans)
   }
 
+  def explodeMap[A, B, TRep <: HList, OutMod <: HList, OutModValues <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, Map[A, B]],
+   i1: TypedEncoder[A],
+   i2: TypedEncoder[B],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, Map[A,B], Tuple2[A,B], OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
+   i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val df = dataset.toDF()
+    import org.apache.spark.sql.functions.{explode => sparkExplode}
+
+    val trans =
+      df.withColumn(column.value.name,
+        sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
+  }
+
   /**
     * Flattens a column of type Option[A]. Compiles only if the selected column is of type Option[A].
     *

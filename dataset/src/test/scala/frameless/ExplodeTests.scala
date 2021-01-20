@@ -48,4 +48,19 @@ class ExplodeTests extends TypedDatasetSuite {
     check(forAll(prop[Int] _))
     check(forAll(prop[String] _))
   }
+
+  test("explode on Maps") {
+    def prop[A: TypedEncoder: ClassTag](xs: List[X1[Map[A, A]]]): Prop = {
+      val tds = TypedDataset.create(xs)
+
+      val framelessResults = tds.explodeMap('a).collect().run().toVector
+      val scalaResults = xs.flatMap(_.a.toList).map(t => Tuple2(t._1, t._2)).toVector
+
+      framelessResults ?= scalaResults
+    }
+
+    check(forAll(prop[Long] _))
+    check(forAll(prop[Int] _))
+    check(forAll(prop[String] _))
+  }
 }
