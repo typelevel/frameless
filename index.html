@@ -252,7 +252,7 @@
                                 <h1 id="frameless">Frameless</h1>
 <p><a href="https://travis-ci.org/typelevel/frameless" target="_blank"><img src="https://travis-ci.org/typelevel/frameless.svg?branch=master" alt="Travis Badge"></a>
 <a href="https://codecov.io/gh/typelevel/frameless" target="_blank"><img src="https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg" alt="Codecov Badge"></a>
-<a href="https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.11" target="_blank"><img src="https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.11.svg" alt="Maven Badge"></a>
+<a href="https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.12" target="_blank"><img src="https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.12.svg" alt="Maven Badge"></a>
 <a href="https://gitter.im/typelevel/frameless" target="_blank"><img src="https://badges.gitter.im/typelevel/frameless.svg" alt="Gitter Badge"></a></p>
 <p>Frameless is a Scala library for working with <a href="http://spark.apache.org/" target="_blank">Spark</a> using more expressive types. 
 It consists of the following modules:</p>
@@ -275,34 +275,75 @@ associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment 
 <th>Frameless</th>
 <th>Spark</th>
 <th>Cats</th>
+<th>Cats-Effect</th>
+<th>Scala</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>0.4.0</td>
 <td>2.2.0</td>
-<td>1.0.0-MF</td>
+<td>1.0.0-IF</td>
+<td>0.4</td>
+<td>2.11</td>
 </tr>
 <tr>
 <td>0.4.1</td>
 <td>2.2.0</td>
-<td>1.0.1</td>
+<td>1.x</td>
+<td>0.8</td>
+<td>2.11</td>
 </tr>
 <tr>
-<td>0.5.0</td>
+<td>0.5.2</td>
 <td>2.2.1</td>
-<td>1.0.1</td>
+<td>1.x</td>
+<td>0.8</td>
+<td>2.11</td>
+</tr>
+<tr>
+<td>0.6.1</td>
+<td>2.3.0</td>
+<td>1.x</td>
+<td>0.8</td>
+<td>2.11</td>
+</tr>
+<tr>
+<td>0.7.0</td>
+<td>2.3.1</td>
+<td>1.x</td>
+<td>1.x</td>
+<td>2.11</td>
+</tr>
+<tr>
+<td>0.8.0</td>
+<td>2.4.0</td>
+<td>1.x</td>
+<td>1.x</td>
+<td>2.11/2.12</td>
+</tr>
+<tr>
+<td>0.9.0</td>
+<td>3.0.0</td>
+<td>1.x</td>
+<td>1.x</td>
+<td>2.12</td>
 </tr>
 </tbody>
 </table>
+<p>Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. </p>
 <p>The <strong>only</strong> dependency of the <code>frameless-dataset</code> module is on <a href="https://github.com/milessabin/shapeless" target="_blank">shapeless</a> 2.3.2. 
 Therefore, depending on <code>frameless-dataset</code>, has a minimal overhead on your Spark&apos;s application jar. 
-Only the <code>frameless-cats</code> module depends on cats, so if you prefer to work just with <code>Datasets</code> and not with <code>RDD</code>s, 
+Only the <code>frameless-cats</code> module depends on cats and cats-effect, so if you prefer to work just with <code>Datasets</code> and not with <code>RDD</code>s, 
 you may choose not to depend on <code>frameless-cats</code>. </p>
 <p>Frameless intentionally <strong>does not</strong> have a compile dependency on Spark. 
 This essentially allows you to use any version of Frameless with any version of Spark. 
 The aforementioned table simply provides the versions of Spark we officially compile 
 and test Frameless with, but other versions may probably work as well. </p>
+<h3 id="breaking-changes-in-09">Breaking changes in 0.9</h3>
+<ul>
+<li>Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame&apos;s is now <a href="https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270" target="_blank">&quot;value&quot;</a> not &quot;_1&quot;.  </li>
+</ul>
 <h2 id="why">Why?</h2>
 <p>Frameless introduces a new Spark API, called <code>TypedDataset</code>. 
 The benefits of using <code>TypedDataset</code> compared to the standard Spark <code>Dataset</code> API are as follows:</p>
@@ -311,7 +352,7 @@ The benefits of using <code>TypedDataset</code> compared to the standard Spark <
 <li>Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile) </li>
 <li>Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you 
 get a compilation error)</li>
-<li>Typesafe casting and projectios</li>
+<li>Typesafe casting and projections</li>
 </ul>
 <p>Click <a href="http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html" target="_blank">here</a> for a 
 detailed comparison of <code>TypedDataset</code> with Spark&apos;s <code>Dataset</code> API. </p>
@@ -327,9 +368,9 @@ detailed comparison of <code>TypedDataset</code> with Spark&apos;s <code>Dataset
 <li><a href="http://typelevel.org/frameless/TypedDataFrame.html" target="_blank">Proof of Concept: TypedDataFrame</a></li>
 </ul>
 <h2 id="quick-start">Quick Start</h2>
-<p>Frameless is compiled against Scala 2.11.x.</p>
+<p>Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.</p>
 <p>To use Frameless in your project add the following in your <code>build.sbt</code> file as needed:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">val</span> framelessVersion = <span class="hljs-string">&quot;0.5.0&quot;</span>
+<pre><code class="lang-scala"><span class="hljs-keyword">val</span> framelessVersion = <span class="hljs-string">&quot;0.9.0&quot;</span> <span class="hljs-comment">// for Spark 3.0.0</span>
 
 libraryDependencies ++= <span class="hljs-type">List</span>(
   <span class="hljs-string">&quot;org.typelevel&quot;</span> %% <span class="hljs-string">&quot;frameless-dataset&quot;</span> % framelessVersion,
@@ -359,11 +400,32 @@ channel for any issues/questions.</p>
 <ul>
 <li><a href="https://github.com/adelbertc" target="_blank">adelbertc</a></li>
 <li><a href="https://github.com/imarios" target="_blank">imarios</a></li>
-<li><a href="https://github.com/jeremyrsmith" target="_blank">jeremyrsmith</a></li>
 <li><a href="https://github.com/kanterov" target="_blank">kanterov</a></li>
 <li><a href="https://github.com/non" target="_blank">non</a></li>
 <li><a href="https://github.com/OlivierBlanvillain/" target="_blank">OlivierBlanvillain</a></li>
 </ul>
+<h3 id="testing">Testing</h3>
+<p>Frameless contains several property tests.  To avoid <code>OutOfMemoryError</code>s, we
+tune the default generator sizes.  The following environment variables may
+be set to adjust the size of generated collections in the <code>TypedDataSet</code> suite:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th style="text-align:right">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FRAMELESS_GEN_MIN_SIZE</td>
+<td style="text-align:right">0</td>
+</tr>
+<tr>
+<td>FRAMELESS_GEN_SIZE_RANGE</td>
+<td style="text-align:right">20</td>
+</tr>
+</tbody>
+</table>
 <h2 id="license">License</h2>
 <p>Code is provided under the Apache 2.0 license available at <a href="http://opensource.org/licenses/Apache-2.0" target="_blank">http://opensource.org/licenses/Apache-2.0</a>,
 as well as in the LICENSE file. This is the same license used as Spark.</p>
@@ -406,7 +468,7 @@ as well as in the LICENSE file. This is the same license used as Spark.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2018-02-18T23:19:00.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Introduction","level":"1.1","depth":1,"next":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"README.md","mtime":"2021-01-20T04:29:10.062Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

@@ -293,7 +293,7 @@ to compute feature vectors:</p>
 <span class="hljs-comment">// defined class Features</span>
 
 <span class="hljs-keyword">val</span> assembler = <span class="hljs-type">TypedVectorAssembler</span>[<span class="hljs-type">Features</span>]
-<span class="hljs-comment">// assembler: frameless.ml.feature.TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@159b3f1</span>
+<span class="hljs-comment">// assembler: frameless.ml.feature.TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@a559710</span>
 
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HouseDataWithFeatures</span>(<span class="hljs-params">squareFeet: <span class="hljs-type">Double</span>, hasGarden: <span class="hljs-type">Boolean</span>, price: <span class="hljs-type">Double</span>, features: <span class="hljs-type">Vector</span></span>)</span>
 <span class="hljs-comment">// defined class HouseDataWithFeatures</span>
@@ -342,10 +342,10 @@ with a label (what we predict). In our example, <code>price</code> is the label,
 <span class="hljs-comment">// defined class RFInputs</span>
 
 <span class="hljs-keyword">val</span> rf = <span class="hljs-type">TypedRandomForestRegressor</span>[<span class="hljs-type">RFInputs</span>]
-<span class="hljs-comment">// rf: frameless.ml.regression.TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@4c620c93</span>
+<span class="hljs-comment">// rf: frameless.ml.regression.TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@37d61f51</span>
 
 <span class="hljs-keyword">val</span> model = rf.fit(trainingDataWithFeatures).run()
-<span class="hljs-comment">// model: frameless.ml.AppendTransformer[RFInputs,frameless.ml.regression.TypedRandomForestRegressor.Outputs,org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anonfun$fit$1$$anon$1@36ed2d44</span>
+<span class="hljs-comment">// model: frameless.ml.AppendTransformer[RFInputs,frameless.ml.regression.TypedRandomForestRegressor.Outputs,org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@5d5c3</span>
 </code></pre>
 <p><code>TypedRandomForestRegressor[RFInputs]</code> compiles only if <code>RFInputs</code>
 contains only one field of type Double (the label) and one field of type Vector (the features):</p>
@@ -389,7 +389,7 @@ our <code>assembler</code> to compute the feature vector of <code>testData</code
 <span class="hljs-comment">// predictions: frameless.TypedDataset[HousePricePrediction] = [squareFeet: double, hasGarden: boolean ... 3 more fields]</span>
 
 predictions.select(predictions.col(<span class="hljs-symbol">&apos;predictedPrice</span>)).collect.run()
-<span class="hljs-comment">// res6: Seq[Double] = WrappedArray(420000.0)</span>
+<span class="hljs-comment">// res6: Seq[Double] = WrappedArray(296250.0)</span>
 </code></pre>
 <p><code>model.transform(testDataWithFeatures)</code> will only compile if <code>testDataWithFeatures</code> contains a field <code>price</code> of type Double
 and a field <code>features</code> of type Vector:</p>
@@ -422,7 +422,7 @@ to index <code>city</code> values in order to be able to pass them to a <code>Ty
 <span class="hljs-comment">// defined class Features</span>
 
 <span class="hljs-keyword">val</span> vectorAssembler = <span class="hljs-type">TypedVectorAssembler</span>[<span class="hljs-type">Features</span>]
-<span class="hljs-comment">// vectorAssembler: frameless.ml.feature.TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@66b12f1</span>
+<span class="hljs-comment">// vectorAssembler: frameless.ml.feature.TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@eb06753</span>
 
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HouseDataWithFeatures</span>(<span class="hljs-params">squareFeet: <span class="hljs-type">Double</span>, city: <span class="hljs-type">String</span>, price: <span class="hljs-type">Double</span>, features: <span class="hljs-type">Vector</span></span>)</span>
 <span class="hljs-comment">// defined class HouseDataWithFeatures</span>
@@ -434,10 +434,13 @@ to index <code>city</code> values in order to be able to pass them to a <code>Ty
 <span class="hljs-comment">// defined class StringIndexerInput</span>
 
 <span class="hljs-keyword">val</span> indexer = <span class="hljs-type">TypedStringIndexer</span>[<span class="hljs-type">StringIndexerInput</span>]
-<span class="hljs-comment">// indexer: frameless.ml.feature.TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@666bcbec</span>
+<span class="hljs-comment">// indexer: frameless.ml.feature.TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@4c2621e0</span>
+
+indexer.estimator.setHandleInvalid(<span class="hljs-string">&quot;keep&quot;</span>)
+<span class="hljs-comment">// res8: indexer.estimator.type = strIdx_267bc5cb88b4</span>
 
 <span class="hljs-keyword">val</span> indexerModel = indexer.fit(dataWithFeatures).run()
-<span class="hljs-comment">// indexerModel: frameless.ml.AppendTransformer[StringIndexerInput,frameless.ml.feature.TypedStringIndexer.Outputs,org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anonfun$fit$1$$anon$1@5a0797e</span>
+<span class="hljs-comment">// indexerModel: frameless.ml.AppendTransformer[StringIndexerInput,frameless.ml.feature.TypedStringIndexer.Outputs,org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@6145e82d</span>
 
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HouseDataWithFeaturesAndIndex</span>(<span class="hljs-params">
   squareFeet: <span class="hljs-type">Double</span>,
@@ -456,10 +459,10 @@ to index <code>city</code> values in order to be able to pass them to a <code>Ty
 <span class="hljs-comment">// defined class RFInputs</span>
 
 <span class="hljs-keyword">val</span> rf = <span class="hljs-type">TypedRandomForestClassifier</span>[<span class="hljs-type">RFInputs</span>]
-<span class="hljs-comment">// rf: frameless.ml.classification.TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@be7eeed</span>
+<span class="hljs-comment">// rf: frameless.ml.classification.TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@33ab9b32</span>
 
 <span class="hljs-keyword">val</span> model = rf.fit(indexedData).run()
-<span class="hljs-comment">// model: frameless.ml.AppendTransformer[RFInputs,frameless.ml.classification.TypedRandomForestClassifier.Outputs,org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anonfun$fit$1$$anon$1@20355c2f</span>
+<span class="hljs-comment">// model: frameless.ml.AppendTransformer[RFInputs,frameless.ml.classification.TypedRandomForestClassifier.Outputs,org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@5bd75b8e</span>
 </code></pre>
 <h3 id="prediction">Prediction</h3>
 <p>We now want to predict <code>city</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
@@ -498,7 +501,10 @@ as input the label array computed by our previous <code>indexerModel</code>:</p>
 <span class="hljs-comment">// defined class IndexToStringInput</span>
 
 <span class="hljs-keyword">val</span> indexToString = <span class="hljs-type">TypedIndexToString</span>[<span class="hljs-type">IndexToStringInput</span>](indexerModel.transformer.labels)
-<span class="hljs-comment">// indexToString: frameless.ml.feature.TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@c97d749</span>
+<span class="hljs-comment">// &lt;console&gt;:40: warning: method labels in class StringIndexerModel is deprecated (since 3.0.0): `labels` is deprecated and will be removed in 3.1.0. Use `labelsArray` instead.</span>
+<span class="hljs-comment">//        val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)</span>
+<span class="hljs-comment">//                                                                                            ^</span>
+<span class="hljs-comment">// indexToString: frameless.ml.feature.TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@355dd92d</span>
 
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">HouseCityPrediction</span>(<span class="hljs-params">
   features: <span class="hljs-type">Vector</span>,
@@ -514,7 +520,7 @@ as input the label array computed by our previous <code>indexerModel</code>:</p>
 <span class="hljs-comment">// predictions: frameless.TypedDataset[HouseCityPrediction] = [features: vector, cityIndexed: double ... 4 more fields]</span>
 
 predictions.select(predictions.col(<span class="hljs-symbol">&apos;predictedCity</span>)).collect.run()
-<span class="hljs-comment">// res8: Seq[String] = WrappedArray(san francisco)</span>
+<span class="hljs-comment">// res9: Seq[String] = WrappedArray(san francisco)</span>
 </code></pre>
 <h2 id="list-of-currently-implemented-typedestimators">List of currently implemented <code>TypedEstimator</code>s</h2>
 <ul>
@@ -596,7 +602,7 @@ from <code>org.apache.spark.sql.types.UserDefinedType[A]</code> to <code>TypedEn
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"next":{"title":"Proof of Concept: TypedDataFrame","level":"1.9","depth":1,"path":"TypedDataFrame.md","ref":"TypedDataFrame.md","articles":[]},"previous":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedML.md","mtime":"2018-02-18T23:19:23.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"next":{"title":"Proof of Concept: TypedDataFrame","level":"1.9","depth":1,"path":"TypedDataFrame.md","ref":"TypedDataFrame.md","articles":[]},"previous":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedML.md","mtime":"2021-01-20T04:29:02.680Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

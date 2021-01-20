@@ -283,9 +283,9 @@ ds.show()
 <span class="hljs-comment">// +---+---+</span>
 <span class="hljs-comment">// |  i|  j|</span>
 <span class="hljs-comment">// +---+---+</span>
-<span class="hljs-comment">// |  1|  Q|</span>
-<span class="hljs-comment">// | 10|  W|</span>
 <span class="hljs-comment">// |100|  E|</span>
+<span class="hljs-comment">// | 10|  W|</span>
+<span class="hljs-comment">// |  1|  Q|</span>
 <span class="hljs-comment">// +---+---+</span>
 <span class="hljs-comment">//</span>
 </code></pre>
@@ -310,9 +310,11 @@ to return type <code>Long</code> (look at the <code>as[Long]</code> statement). 
 Now, let&apos;s take a quick look at the optimized Physical Plan that Spark&apos;s Catalyst generated.</p>
 <pre><code class="lang-scala">filteredDs.explain()
 <span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *Project [i#1771L]</span>
-<span class="hljs-comment">// +- *Filter (isnotnull(i#1771L) &amp;&amp; (i#1771L = 10))</span>
-<span class="hljs-comment">//    +- *FileScan parquet [i#1771L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+<span class="hljs-comment">// *(1) Filter (isnotnull(i#23L) AND (i#23L = 10))</span>
+<span class="hljs-comment">// +- *(1) ColumnarToRow</span>
+<span class="hljs-comment">//    +- FileScan parquet [i#23L] Batched: true, DataFilters: [isnotnull(i#23L), (i#23L = 10)], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+<span class="hljs-comment">// </span>
+<span class="hljs-comment">//</span>
 </code></pre>
 <p>The last line is very important (see <code>ReadSchema</code>). The schema read
 from the parquet file only required reading column <code>i</code> without needing to access column <code>j</code>.
@@ -320,43 +322,54 @@ This is great! We have both an optimized query plan and type-safety!</p>
 <p>Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
 a non existing column <code>x</code>:</p>
 <pre><code class="lang-scala">scala&gt; ds.filter($<span class="hljs-string">&quot;i&quot;</span> === <span class="hljs-number">10</span>).select($<span class="hljs-string">&quot;x&quot;</span>.as[<span class="hljs-type">Long</span>])
-org.apache.spark.sql.<span class="hljs-type">AnalysisException</span>: cannot resolve &apos;`x`&apos; given input columns: [i, j];;
+org.apache.spark.sql.<span class="hljs-type">AnalysisException</span>: cannot resolve &apos;`x`&apos; given input columns: [i, j];
 <span class="hljs-symbol">&apos;Project</span> [<span class="hljs-symbol">&apos;x</span>]
-+- <span class="hljs-type">Filter</span> (i#<span class="hljs-number">1771</span>L = cast(<span class="hljs-number">10</span> as bigint))
-   +- <span class="hljs-type">Relation</span>[i#<span class="hljs-number">1771</span>L,j#<span class="hljs-number">1772</span>] parquet
++- <span class="hljs-type">Filter</span> (i#<span class="hljs-number">23</span>L = cast(<span class="hljs-number">10</span> as bigint))
+   +- <span class="hljs-type">Relation</span>[i#<span class="hljs-number">23</span>L,j#<span class="hljs-number">24</span>] parquet
 
   at org.apache.spark.sql.catalyst.analysis.<span class="hljs-keyword">package</span>$<span class="hljs-type">AnalysisErrorAt</span>.failAnalysis(<span class="hljs-keyword">package</span>.scala:<span class="hljs-number">42</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1</span>$$anonfun$apply$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">88</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1</span>$$anonfun$apply$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">85</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>$$anonfun$transformUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">289</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>$$anonfun$transformUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">289</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">70</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.transformUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">288</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$transformExpressionsUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">268</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$transformExpressionsUp$<span class="hljs-number">1.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">268</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpression$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">279</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">289</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">1</span>$<span class="hljs-number">1.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">293</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$map$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">234</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>$$anonfun$map$<span class="hljs-number">1.</span>apply(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">234</span>)
-  at scala.collection.immutable.<span class="hljs-type">List</span>.foreach(<span class="hljs-type">List</span>.scala:<span class="hljs-number">392</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>$<span class="hljs-class"><span class="hljs-keyword">class</span>.<span class="hljs-title">map</span>(<span class="hljs-params"><span class="hljs-type">TraversableLike</span>.scala:234</span>)</span>
-  at scala.collection.immutable.<span class="hljs-type">List</span>.map(<span class="hljs-type">List</span>.scala:<span class="hljs-number">296</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.org$apache$spark$sql$catalyst$plans$<span class="hljs-type">QueryPlan</span>$$recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">293</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>$$anonfun$<span class="hljs-number">6.</span>apply(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">298</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.mapProductIterator(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">187</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.mapExpressions(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">298</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpressionsUp(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">268</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1.</span>apply(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">85</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$checkAnalysis$<span class="hljs-number">1.</span>apply(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">78</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.foreachUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">127</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$<span class="hljs-class"><span class="hljs-keyword">class</span>.<span class="hljs-title">checkAnalysis</span>(<span class="hljs-params"><span class="hljs-type">CheckAnalysis</span>.scala:78</span>)</span>
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.checkAnalysis(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">91</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.assertAnalyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">52</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">165</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">171</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.select(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">1210</span>)
-  ... <span class="hljs-number">454</span> elided
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$$nestedInanonfun$checkAnalysis$<span class="hljs-number">1</span>$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">155</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$$nestedInanonfun$checkAnalysis$<span class="hljs-number">1</span>$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">152</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.$anonfun$transformUp$<span class="hljs-number">2</span>(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">341</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">73</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.transformUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">341</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$transformExpressionsUp$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">104</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">116</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">73</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpression$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">116</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">127</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">3</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">132</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>.$anonfun$map$<span class="hljs-number">1</span>(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">285</span>)
+  at scala.collection.immutable.<span class="hljs-type">List</span>.foreach(<span class="hljs-type">List</span>.scala:<span class="hljs-number">431</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>.map(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">285</span>)
+  at scala.collection.<span class="hljs-type">TraversableLike</span>.map$(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">278</span>)
+  at scala.collection.immutable.<span class="hljs-type">List</span>.map(<span class="hljs-type">List</span>.scala:<span class="hljs-number">305</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">132</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">4</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">137</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.mapProductIterator(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">243</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.mapExpressions(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">137</span>)
+  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpressionsUp(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">104</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.$anonfun$checkAnalysis$<span class="hljs-number">1</span>(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">152</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.$anonfun$checkAnalysis$<span class="hljs-number">1</span>$adapted(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">93</span>)
+  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.foreachUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">183</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.checkAnalysis(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">93</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.checkAnalysis$(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">90</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.checkAnalysis(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">154</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.$anonfun$executeAndCheck$<span class="hljs-number">1</span>(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">175</span>)
+  at org.apache.spark.sql.catalyst.plans.logical.<span class="hljs-type">AnalysisHelper</span>$.markInAnalyzer(<span class="hljs-type">AnalysisHelper</span>.scala:<span class="hljs-number">228</span>)
+  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.executeAndCheck(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">172</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.$anonfun$analyzed$<span class="hljs-number">1</span>(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">73</span>)
+  at org.apache.spark.sql.catalyst.<span class="hljs-type">QueryPlanningTracker</span>.measurePhase(<span class="hljs-type">QueryPlanningTracker</span>.scala:<span class="hljs-number">111</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.$anonfun$executePhase$<span class="hljs-number">1</span>(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">143</span>)
+  at org.apache.spark.sql.<span class="hljs-type">SparkSession</span>.withActive(<span class="hljs-type">SparkSession</span>.scala:<span class="hljs-number">772</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.executePhase(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">143</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.analyzed$lzycompute(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">73</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.analyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">71</span>)
+  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.assertAnalyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">63</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">210</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">216</span>)
+  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.select(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">1517</span>)
+  ... <span class="hljs-number">42</span> elided
 </code></pre>
 <p>There are two things to improve here. First, we would want to avoid the <code>as[Long]</code> casting that we are required
 to type for type-safety. This is clearly an area where we may introduce a bug by casting to an incompatible
@@ -381,11 +394,14 @@ compiler will helps us capture all the mistakes we mentioned above.</p>
 <p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
 <pre><code class="lang-scala">ds.filter(_.i == <span class="hljs-number">10</span>).map(_.i).explain()
 <span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *SerializeFromObject [input[0, bigint, false] AS value#1805L]</span>
-<span class="hljs-comment">// +- *MapElements &lt;function1&gt;, obj#1804: bigint</span>
-<span class="hljs-comment">//    +- *Filter &lt;function1&gt;.apply</span>
-<span class="hljs-comment">//       +- *DeserializeToObject newInstance(class $line14.$read$$iw$$iw$$iw$$iw$Foo), obj#1803: $line14.$read$$iw$$iw$$iw$$iw$Foo</span>
-<span class="hljs-comment">//          +- *FileScan parquet [i#1771L,j#1772] Batched: true, Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;</span>
+<span class="hljs-comment">// *(1) SerializeFromObject [input[0, bigint, false] AS value#74L]</span>
+<span class="hljs-comment">// +- *(1) MapElements &lt;function1&gt;, obj#73: bigint</span>
+<span class="hljs-comment">//    +- *(1) Filter &lt;function1&gt;.apply</span>
+<span class="hljs-comment">//       +- *(1) DeserializeToObject newInstance(class $line14.$read$$iw$$iw$$iw$$iw$Foo), obj#72: $line14.$read$$iw$$iw$$iw$$iw$Foo</span>
+<span class="hljs-comment">//          +- *(1) ColumnarToRow</span>
+<span class="hljs-comment">//             +- FileScan parquet [i#23L,j#24] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;</span>
+<span class="hljs-comment">// </span>
+<span class="hljs-comment">//</span>
 </code></pre>
 <p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
 Reading the parquet file will required loading all the fields of <code>Foo</code>. This might be ok for
@@ -405,19 +421,22 @@ with a fully optimized query plan.</p>
 <span class="hljs-comment">// fds: frameless.TypedDataset[Foo] = [i: bigint, j: string]</span>
 
 fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;i</span>)).show().run()
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// | _1|</span>
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// | 10|</span>
-<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |value|</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |   10|</span>
+<span class="hljs-comment">// +-----+</span>
 <span class="hljs-comment">//</span>
 </code></pre>
 <p>And the optimized Physical Plan:</p>
 <pre><code class="lang-scala">fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;i</span>)).explain()
 <span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *Project [i#1771L AS _1#1876L]</span>
-<span class="hljs-comment">// +- *Filter (isnotnull(i#1771L) &amp;&amp; (i#1771L = 10))</span>
-<span class="hljs-comment">//    +- *FileScan parquet [i#1771L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+<span class="hljs-comment">// *(1) Project [i#23L AS value#158L]</span>
+<span class="hljs-comment">// +- *(1) Filter (isnotnull(i#23L) AND (i#23L = 10))</span>
+<span class="hljs-comment">//    +- *(1) ColumnarToRow</span>
+<span class="hljs-comment">//       +- FileScan parquet [i#23L] Batched: true, DataFilters: [isnotnull(i#23L), (i#23L = 10)], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
+<span class="hljs-comment">// </span>
+<span class="hljs-comment">//</span>
 </code></pre>
 <p>And the compiler is our friend.</p>
 <pre><code class="lang-scala">scala&gt; fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;x</span>))
@@ -433,7 +452,7 @@ fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-n
 </code></pre>
 <p><code>Bar</code> is neither a case class nor a <code>Product</code>, so the following correctly gives a compilation error in Spark:</p>
 <pre><code class="lang-scala">scala&gt; spark.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-keyword">new</span> <span class="hljs-type">Bar</span>(<span class="hljs-number">1</span>)))
-&lt;console&gt;:<span class="hljs-number">24</span>: error: <span class="hljs-type">Unable</span> to find encoder <span class="hljs-keyword">for</span> <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">stored</span> <span class="hljs-title">in</span> <span class="hljs-title">a</span> <span class="hljs-title">Dataset</span>.  <span class="hljs-title">Primitive</span> <span class="hljs-title">types</span> (<span class="hljs-params"><span class="hljs-type">Int</span>, <span class="hljs-type">String</span>, etc</span>) <span class="hljs-title">and</span> <span class="hljs-title">Product</span> <span class="hljs-title">types</span> (<span class="hljs-params">case classes</span>) <span class="hljs-title">are</span> <span class="hljs-title">supported</span> <span class="hljs-title">by</span> <span class="hljs-title">importing</span> <span class="hljs-title">spark</span>.<span class="hljs-title">implicits</span>.<span class="hljs-title">_</span>  <span class="hljs-title">Support</span> <span class="hljs-title">for</span> <span class="hljs-title">serializing</span> <span class="hljs-title">other</span> <span class="hljs-title">types</span> <span class="hljs-title">will</span> <span class="hljs-title">be</span> <span class="hljs-title">added</span> <span class="hljs-title">in</span> <span class="hljs-title">future</span> <span class="hljs-title">releases</span>.</span>
+&lt;console&gt;:<span class="hljs-number">24</span>: error: <span class="hljs-type">Unable</span> to find encoder <span class="hljs-keyword">for</span> <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Bar</span>. <span class="hljs-title">An</span> <span class="hljs-title">implicit</span> <span class="hljs-title">Encoder</span>[<span class="hljs-type">Bar</span>] <span class="hljs-title">is</span> <span class="hljs-title">needed</span> <span class="hljs-title">to</span> <span class="hljs-title">store</span> <span class="hljs-title">Bar</span> <span class="hljs-title">instances</span> <span class="hljs-title">in</span> <span class="hljs-title">a</span> <span class="hljs-title">Dataset</span>. <span class="hljs-title">Primitive</span> <span class="hljs-title">types</span> (<span class="hljs-params"><span class="hljs-type">Int</span>, <span class="hljs-type">String</span>, etc</span>) <span class="hljs-title">and</span> <span class="hljs-title">Product</span> <span class="hljs-title">types</span> (<span class="hljs-params">case classes</span>) <span class="hljs-title">are</span> <span class="hljs-title">supported</span> <span class="hljs-title">by</span> <span class="hljs-title">importing</span> <span class="hljs-title">spark</span>.<span class="hljs-title">implicits</span>.<span class="hljs-title">_</span>  <span class="hljs-title">Support</span> <span class="hljs-title">for</span> <span class="hljs-title">serializing</span> <span class="hljs-title">other</span> <span class="hljs-title">types</span> <span class="hljs-title">will</span> <span class="hljs-title">be</span> <span class="hljs-title">added</span> <span class="hljs-title">in</span> <span class="hljs-title">future</span> <span class="hljs-title">releases</span>.</span>
        spark.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-keyword">new</span> <span class="hljs-type">Bar</span>(<span class="hljs-number">1</span>)))
                           ^
 </code></pre>
@@ -446,31 +465,32 @@ For example, using the following case class leads to a runtime failure:</p>
 <span class="hljs-comment">// java.lang.UnsupportedOperationException: No Encoder found for java.util.Date</span>
 <span class="hljs-comment">// - field (class: &quot;java.util.Date&quot;, name: &quot;jday&quot;)</span>
 <span class="hljs-comment">// - root class: &quot;MyDate&quot;</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1.apply(ScalaReflection.scala:632)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1.apply(ScalaReflection.scala:455)</span>
-<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:56)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$class.cleanUpReflectionObjects(ScalaReflection.scala:809)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:39)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor(ScalaReflection.scala:455)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1$$anonfun$10.apply(ScalaReflection.scala:626)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1$$anonfun$10.apply(ScalaReflection.scala:614)</span>
-<span class="hljs-comment">//   at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)</span>
-<span class="hljs-comment">//   at scala.collection.TraversableLike$$anonfun$flatMap$1.apply(TraversableLike.scala:241)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:392)</span>
-<span class="hljs-comment">//   at scala.collection.TraversableLike$class.flatMap(TraversableLike.scala:241)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.flatMap(List.scala:355)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1.apply(ScalaReflection.scala:614)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$$anonfun$org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor$1.apply(ScalaReflection.scala:455)</span>
-<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:56)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$class.cleanUpReflectionObjects(ScalaReflection.scala:809)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:39)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.org$apache$spark$sql$catalyst$ScalaReflection$$serializerFor(ScalaReflection.scala:455)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:444)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:71)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Encoders$.product(Encoders.scala:275)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.LowPrioritySQLImplicits$class.newProductEncoder(SQLImplicits.scala:233)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:33)</span>
-<span class="hljs-comment">//   ... 770 elided</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:591)</span>
+<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:432)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$6(ScalaReflection.scala:577)</span>
+<span class="hljs-comment">//   at scala.collection.immutable.List.map(List.scala:293)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:562)</span>
+<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:432)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerForType$1(ScalaReflection.scala:421)</span>
+<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerForType(ScalaReflection.scala:413)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:56)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Encoders$.product(Encoders.scala:285)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:251)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:251)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)</span>
+<span class="hljs-comment">//   ... 42 elided</span>
 </code></pre>
 <p>In comparison, a TypedDataset will notify about the encoding problem at compile time: </p>
 <pre><code class="lang-scala"><span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">MyDate</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>(<span class="hljs-type">System</span>.currentTimeMillis))))
@@ -486,35 +506,50 @@ This is problematic when you start mixing the two.</p>
 <span class="hljs-comment">// import org.apache.spark.sql.functions.sum</span>
 </code></pre>
 <pre><code class="lang-scala">ds.select(sum($<span class="hljs-string">&quot;i&quot;</span>), $<span class="hljs-string">&quot;i&quot;</span>*<span class="hljs-number">2</span>)
-<span class="hljs-comment">// org.apache.spark.sql.AnalysisException: grouping expressions sequence is empty, and &apos;`i`&apos; is not an aggregate function. Wrap &apos;(sum(`i`) AS `sum(i)`)&apos; in windowing function(s) or wrap &apos;`i`&apos; in first() (or first_value) if you don&apos;t care which value you get.;;</span>
-<span class="hljs-comment">// Aggregate [sum(i#1771L) AS sum(i)#1889L, (i#1771L * cast(2 as bigint)) AS (i * 2)#1890L]</span>
-<span class="hljs-comment">// +- Relation[i#1771L,j#1772] parquet</span>
+<span class="hljs-comment">// org.apache.spark.sql.AnalysisException: grouping expressions sequence is empty, and &apos;`i`&apos; is not an aggregate function. Wrap &apos;(sum(`i`) AS `sum(i)`)&apos; in windowing function(s) or wrap &apos;`i`&apos; in first() (or first_value) if you don&apos;t care which value you get.;</span>
+<span class="hljs-comment">// Aggregate [sum(i#23L) AS sum(i)#164L, (i#23L * cast(2 as bigint)) AS (i * 2)#165L]</span>
+<span class="hljs-comment">// +- Relation[i#23L,j#24] parquet</span>
 <span class="hljs-comment">// </span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$class.failAnalysis(CheckAnalysis.scala:39)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.failAnalysis(Analyzer.scala:91)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1(CheckAnalysis.scala:239)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1$5.apply(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1$5.apply(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:392)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1$5.apply(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1$5.apply(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:392)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$class$$anonfun$$checkValidAggregateExpression$1(CheckAnalysis.scala:253)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$apply$9.apply(CheckAnalysis.scala:280)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1$$anonfun$apply$9.apply(CheckAnalysis.scala:280)</span>
-<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)</span>
-<span class="hljs-comment">//   at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.apply(CheckAnalysis.scala:280)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$checkAnalysis$1.apply(CheckAnalysis.scala:78)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:127)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$class.checkAnalysis(CheckAnalysis.scala:78)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:91)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:52)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:67)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.org$apache$spark$sql$Dataset$$withPlan(Dataset.scala:2884)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.select(Dataset.scala:1150)</span>
-<span class="hljs-comment">//   ... 854 elided</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis(CheckAnalysis.scala:50)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis$(CheckAnalysis.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.failAnalysis(Analyzer.scala:154)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:263)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12$adapted(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:431)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12$adapted(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:431)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:272)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$15(CheckAnalysis.scala:299)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$15$adapted(CheckAnalysis.scala:299)</span>
+<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)</span>
+<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)</span>
+<span class="hljs-comment">//   at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:299)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:93)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:183)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:93)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:90)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:154)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:175)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:228)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:172)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:73)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:143)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:772)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:143)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:73)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:71)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:63)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:772)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:3715)</span>
+<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.select(Dataset.scala:1462)</span>
+<span class="hljs-comment">//   ... 42 elided</span>
 </code></pre>
 <p>In Frameless, mixing the two results in a compilation error.</p>
 <pre><code class="lang-scala"><span class="hljs-comment">// To avoid confusing frameless&apos; sum with the standard Spark&apos;s sum</span>
@@ -531,11 +566,11 @@ This is problematic when you start mixing the two.</p>
 <p>As the error suggests, we expected a <code>TypedColumn</code> but we got a <code>TypedAggregate</code> instead. </p>
 <p>Here is how you apply an aggregation method in Frameless: </p>
 <pre><code class="lang-scala">fds.agg(fsum(fds(<span class="hljs-symbol">&apos;i</span>))+<span class="hljs-number">22</span>).show().run()
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// | _1|</span>
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// |133|</span>
-<span class="hljs-comment">// +---+</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |value|</span>
+<span class="hljs-comment">// +-----+</span>
+<span class="hljs-comment">// |  133|</span>
+<span class="hljs-comment">// +-----+</span>
 <span class="hljs-comment">//</span>
 </code></pre>
 <p>Similarly, mixing projections while aggregating does not make sense, and in Frameless
@@ -590,7 +625,7 @@ you get a compilation error.  </p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"next":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"previous":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedDatasetVsSparkDataset.md","mtime":"2018-02-18T23:19:06.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"next":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"previous":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedDatasetVsSparkDataset.md","mtime":"2021-01-20T04:28:44.110Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

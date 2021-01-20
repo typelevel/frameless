@@ -295,10 +295,10 @@ this pre-existing monad stack:</p>
 <span class="hljs-comment">// typedDs: frameless.TypedDataset[(Int, String)] = [_1: int, _2: string]</span>
 
 <span class="hljs-keyword">val</span> result: <span class="hljs-type">Action</span>[(<span class="hljs-type">Seq</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">String</span>)], <span class="hljs-type">Long</span>)] = <span class="hljs-keyword">for</span> {
-  sample &lt;- typedDs.take(<span class="hljs-number">1</span>)
-  count &lt;- typedDs.count()
+  sample &lt;- typedDs.take[<span class="hljs-type">Action</span>](<span class="hljs-number">1</span>)
+  count &lt;- typedDs.count[<span class="hljs-type">Action</span>]()
 } <span class="hljs-keyword">yield</span> (sample, count)
-<span class="hljs-comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(&lt;function1&gt;)</span>
+<span class="hljs-comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(cats.data.Kleisli$$$Lambda$12127/0x0000000802d65040@27729265)</span>
 </code></pre>
 <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
 run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
@@ -324,7 +324,7 @@ instance of <code>SparkSession</code> and the ability to suspend effects.</p>
          }
        }
 } <span class="hljs-keyword">yield</span> r
-<span class="hljs-comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(&lt;function1&gt;)</span>
+<span class="hljs-comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(cats.data.Kleisli$$$Lambda$12127/0x0000000802d65040@252f71e5)</span>
 
 resultWithDescription.run(spark).unsafeRunSync()
 <span class="hljs-comment">// Description: fancy cats</span>
@@ -340,7 +340,7 @@ leveraging a large collection of Type Classes for ordering and aggregating data.
 <span class="hljs-comment">// import frameless.cats.implicits._</span>
 
 <span class="hljs-keyword">val</span> data: <span class="hljs-type">RDD</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>)] = sc.makeRDD((<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>) :: (<span class="hljs-number">1</span>, <span class="hljs-number">5</span>, <span class="hljs-number">3</span>) :: (<span class="hljs-number">8</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>) :: <span class="hljs-type">Nil</span>)
-<span class="hljs-comment">// data: org.apache.spark.rdd.RDD[(Int, Int, Int)] = ParallelCollectionRDD[14] at makeRDD at &lt;console&gt;:44</span>
+<span class="hljs-comment">// data: org.apache.spark.rdd.RDD[(Int, Int, Int)] = ParallelCollectionRDD[12] at makeRDD at &lt;console&gt;:43</span>
 
 println(data.csum)
 <span class="hljs-comment">// (10,9,9)</span>
@@ -355,7 +355,7 @@ println(data.cmin)
 elements inside the RDD. There are counterpart operations to those that have an <code>Option</code> return type
 to deal with the case of an empty RDD:</p>
 <pre><code class="lang-scala"><span class="hljs-keyword">val</span> data: <span class="hljs-type">RDD</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>)] = sc.emptyRDD
-<span class="hljs-comment">// data: org.apache.spark.rdd.RDD[(Int, Int, Int)] = EmptyRDD[15] at emptyRDD at &lt;console&gt;:44</span>
+<span class="hljs-comment">// data: org.apache.spark.rdd.RDD[(Int, Int, Int)] = EmptyRDD[13] at emptyRDD at &lt;console&gt;:43</span>
 
 println(data.csum)
 <span class="hljs-comment">// (0,0,0)</span>
@@ -384,10 +384,10 @@ println(data.cminOption)
 
 <span class="hljs-keyword">val</span> allData: <span class="hljs-type">RDD</span>[(<span class="hljs-type">User</span>,<span class="hljs-type">TransactionCount</span>)] =
    sc.makeRDD((<span class="hljs-string">&quot;Bob&quot;</span>, <span class="hljs-number">12</span>) :: (<span class="hljs-string">&quot;Joe&quot;</span>, <span class="hljs-number">1</span>) :: (<span class="hljs-string">&quot;Anna&quot;</span>, <span class="hljs-number">100</span>) :: (<span class="hljs-string">&quot;Bob&quot;</span>, <span class="hljs-number">20</span>) :: (<span class="hljs-string">&quot;Joe&quot;</span>, <span class="hljs-number">2</span>) :: <span class="hljs-type">Nil</span>)
-<span class="hljs-comment">// allData: org.apache.spark.rdd.RDD[(User, TransactionCount)] = ParallelCollectionRDD[16] at makeRDD at &lt;console&gt;:47</span>
+<span class="hljs-comment">// allData: org.apache.spark.rdd.RDD[(User, TransactionCount)] = ParallelCollectionRDD[14] at makeRDD at &lt;console&gt;:46</span>
 
 <span class="hljs-keyword">val</span> totalPerUser =  allData.csumByKey
-<span class="hljs-comment">// totalPerUser: org.apache.spark.rdd.RDD[(User, TransactionCount)] = ShuffledRDD[17] at reduceByKey at implicits.scala:42</span>
+<span class="hljs-comment">// totalPerUser: org.apache.spark.rdd.RDD[(User, TransactionCount)] = ShuffledRDD[15] at reduceByKey at implicits.scala:42</span>
 
 totalPerUser.collectAsMap
 <span class="hljs-comment">// res16: scala.collection.Map[User,TransactionCount] = Map(Bob -&gt; 32, Joe -&gt; 3, Anna -&gt; 100)</span>
@@ -399,10 +399,10 @@ totalPerUser.collectAsMap
 <span class="hljs-keyword">val</span> allDataComplexKeu =
    sc.makeRDD( (<span class="hljs-string">&quot;Bob&quot;</span>, <span class="hljs-type">SortedMap</span>(<span class="hljs-string">&quot;task1&quot;</span> -&gt; <span class="hljs-number">10</span>)) ::
     (<span class="hljs-string">&quot;Joe&quot;</span>, <span class="hljs-type">SortedMap</span>(<span class="hljs-string">&quot;task1&quot;</span> -&gt; <span class="hljs-number">1</span>, <span class="hljs-string">&quot;task2&quot;</span> -&gt; <span class="hljs-number">3</span>)) :: (<span class="hljs-string">&quot;Bob&quot;</span>, <span class="hljs-type">SortedMap</span>(<span class="hljs-string">&quot;task1&quot;</span> -&gt; <span class="hljs-number">10</span>, <span class="hljs-string">&quot;task2&quot;</span> -&gt; <span class="hljs-number">1</span>)) :: (<span class="hljs-string">&quot;Joe&quot;</span>, <span class="hljs-type">SortedMap</span>(<span class="hljs-string">&quot;task3&quot;</span> -&gt; <span class="hljs-number">4</span>)) :: <span class="hljs-type">Nil</span> )
-<span class="hljs-comment">// allDataComplexKeu: org.apache.spark.rdd.RDD[(String, scala.collection.immutable.SortedMap[String,Int])] = ParallelCollectionRDD[18] at makeRDD at &lt;console&gt;:46</span>
+<span class="hljs-comment">// allDataComplexKeu: org.apache.spark.rdd.RDD[(String, scala.collection.immutable.SortedMap[String,Int])] = ParallelCollectionRDD[16] at makeRDD at &lt;console&gt;:45</span>
 
 <span class="hljs-keyword">val</span> overalTasksPerUser = allDataComplexKeu.csumByKey
-<span class="hljs-comment">// overalTasksPerUser: org.apache.spark.rdd.RDD[(String, scala.collection.immutable.SortedMap[String,Int])] = ShuffledRDD[19] at reduceByKey at implicits.scala:42</span>
+<span class="hljs-comment">// overalTasksPerUser: org.apache.spark.rdd.RDD[(String, scala.collection.immutable.SortedMap[String,Int])] = ShuffledRDD[17] at reduceByKey at implicits.scala:42</span>
 
 overalTasksPerUser.collectAsMap
 <span class="hljs-comment">// res17: scala.collection.Map[String,scala.collection.immutable.SortedMap[String,Int]] = Map(Bob -&gt; Map(task1 -&gt; 20, task2 -&gt; 1), Joe -&gt; Map(task1 -&gt; 1, task2 -&gt; 3, task3 -&gt; 4))</span>
@@ -420,13 +420,13 @@ overalTasksPerUser.collectAsMap
 <span class="hljs-comment">// import frameless.cats.outer._</span>
 
 <span class="hljs-keyword">val</span> day1: <span class="hljs-type">RDD</span>[(<span class="hljs-type">UserName</span>,<span class="hljs-type">TimeSeries</span>)] = sc.makeRDD( (<span class="hljs-string">&quot;John&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">2</span>, <span class="hljs-number">1</span> -&gt; <span class="hljs-number">4</span>)) :: (<span class="hljs-string">&quot;Chris&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">1</span>, <span class="hljs-number">1</span> -&gt; <span class="hljs-number">2</span>)) :: (<span class="hljs-string">&quot;Sam&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">1</span>)) :: <span class="hljs-type">Nil</span> )
-<span class="hljs-comment">// day1: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[20] at makeRDD at &lt;console&gt;:50</span>
+<span class="hljs-comment">// day1: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[18] at makeRDD at &lt;console&gt;:49</span>
 
 <span class="hljs-keyword">val</span> day2: <span class="hljs-type">RDD</span>[(<span class="hljs-type">UserName</span>,<span class="hljs-type">TimeSeries</span>)] = sc.makeRDD( (<span class="hljs-string">&quot;John&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">10</span>, <span class="hljs-number">1</span> -&gt; <span class="hljs-number">11</span>)) :: (<span class="hljs-string">&quot;Chris&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">1</span>, <span class="hljs-number">1</span> -&gt; <span class="hljs-number">2</span>)) :: (<span class="hljs-string">&quot;Joe&quot;</span>, <span class="hljs-type">Map</span>(<span class="hljs-number">0</span> -&gt; <span class="hljs-number">1</span>, <span class="hljs-number">1</span> -&gt; <span class="hljs-number">2</span>)) :: <span class="hljs-type">Nil</span> )
-<span class="hljs-comment">// day2: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[21] at makeRDD at &lt;console&gt;:50</span>
+<span class="hljs-comment">// day2: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[19] at makeRDD at &lt;console&gt;:49</span>
 
 <span class="hljs-keyword">val</span> daysCombined = day1 |+| day2
-<span class="hljs-comment">// daysCombined: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = MapPartitionsRDD[25] at mapValues at implicits.scala:67</span>
+<span class="hljs-comment">// daysCombined: org.apache.spark.rdd.RDD[(UserName, TimeSeries)] = MapPartitionsRDD[23] at mapValues at implicits.scala:67</span>
 
 daysCombined.collect()
 <span class="hljs-comment">// res19: Array[(UserName, TimeSeries)] = Array((Joe,Map(0 -&gt; 1, 1 -&gt; 2)), (Sam,Map(0 -&gt; 1)), (Chris,Map(0 -&gt; 2, 1 -&gt; 4)), (John,Map(0 -&gt; 12, 1 -&gt; 15)))</span>
@@ -436,7 +436,7 @@ The <code>|+|</code> (Semigroup) operator for key-value pair RDD will execute a 
 on the key and combine values using the default Semigroup for the value type.</p>
 <p>In <code>cats</code>:</p>
 <pre><code class="lang-scala"><span class="hljs-type">Map</span>(<span class="hljs-number">1</span> -&gt; <span class="hljs-number">2</span>, <span class="hljs-number">2</span> -&gt; <span class="hljs-number">3</span>) |+| <span class="hljs-type">Map</span>(<span class="hljs-number">1</span> -&gt; <span class="hljs-number">4</span>, <span class="hljs-number">2</span> -&gt; <span class="hljs-number">-1</span>)
-<span class="hljs-comment">// res20: Map[Int,Int] = Map(1 -&gt; 6, 2 -&gt; 2)</span>
+<span class="hljs-comment">// res20: scala.collection.immutable.Map[Int,Int] = Map(1 -&gt; 6, 2 -&gt; 2)</span>
 </code></pre>
 
                                 
@@ -481,7 +481,7 @@ on the key and combine values using the default Semigroup for the value type.</p
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"next":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"path":"TypedML.md","ref":"TypedML.md","articles":[]},"previous":{"title":"Job[A]","level":"1.6","depth":1,"path":"Job.md","ref":"Job.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Cats.md","mtime":"2018-02-18T23:18:30.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"next":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"path":"TypedML.md","ref":"TypedML.md","articles":[]},"previous":{"title":"Job[A]","level":"1.6","depth":1,"path":"Job.md","ref":"Job.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Cats.md","mtime":"2021-01-20T04:29:10.024Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>

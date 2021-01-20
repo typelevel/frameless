@@ -273,14 +273,14 @@ exactly 20% of its elements:</p>
 <span class="hljs-comment">// import frameless.syntax._</span>
 
 <span class="hljs-keyword">val</span> ds = <span class="hljs-type">TypedDataset</span>.create(<span class="hljs-number">1</span> to <span class="hljs-number">20</span>)
-<span class="hljs-comment">// ds: frameless.TypedDataset[Int] = [_1: int]</span>
+<span class="hljs-comment">// ds: frameless.TypedDataset[Int] = [value: int]</span>
 
 <span class="hljs-keyword">val</span> countAndTakeJob =
   <span class="hljs-keyword">for</span> {
     count &lt;- ds.count()
     sample &lt;- ds.take((count/<span class="hljs-number">5</span>).toInt)
   } <span class="hljs-keyword">yield</span> sample
-<span class="hljs-comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@729d8021</span>
+<span class="hljs-comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@49c2901b</span>
 
 countAndTakeJob.run()
 <span class="hljs-comment">// res1: Seq[Int] = WrappedArray(1, 2, 3, 4)</span>
@@ -295,7 +295,7 @@ of Spark jobs.</p>
 <span class="hljs-comment">// computeMinOfSample: (sample: frameless.Job[Seq[Int]])frameless.Job[Int]</span>
 
 <span class="hljs-keyword">val</span> finalJob = computeMinOfSample(countAndTakeJob)
-<span class="hljs-comment">// finalJob: frameless.Job[Int] = frameless.Job$$anon$2@30c69a34</span>
+<span class="hljs-comment">// finalJob: frameless.Job[Int] = frameless.Job$$anon$2@123416f3</span>
 </code></pre>
 <p>Now we can execute this new job by specifying a <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit" target="_blank">group-id</a> and a description.
 This allows the programmer to see this information on the Spark UI and help track, say,
@@ -357,7 +357,7 @@ has a <code>cats.effect.Sync</code> instance.</p>
     <script>
         var gitbook = gitbook || [];
         gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Job[A]","level":"1.6","depth":1,"next":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"previous":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Job.md","mtime":"2018-02-18T23:19:00.000Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2018-02-18T23:19:28.928Z"},"basePath":".","book":{"language":""}});
+            gitbook.page.hasChanged({"page":{"title":"Job[A]","level":"1.6","depth":1,"next":{"title":"Using Cats with RDDs","level":"1.7","depth":1,"path":"Cats.md","ref":"Cats.md","articles":[]},"previous":{"title":"Injection: Creating Custom Encoders","level":"1.5","depth":1,"path":"Injection.md","ref":"Injection.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"Job.md","mtime":"2021-01-20T04:29:42.335Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
         });
     </script>
 </div>
