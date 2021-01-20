@@ -2,7 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{SparkSession, functions => sqlf}
+import org.apache.spark.sql.{SparkSession, functions => sparkFunctions}
 
 class SelfJoinTests extends TypedDatasetSuite {
   // Without crossJoin.enabled=true Spark doesn't like trivial join conditions:
@@ -17,11 +17,20 @@ class SelfJoinTests extends TypedDatasetSuite {
     result
   }
 
+  def allowAmbiguousJoin[T](body: => T)(implicit session: SparkSession): T = {
+    val crossJoin = "spark.sql.analyzer.failAmbiguousSelfJoin"
+    val oldSetting = session.conf.get(crossJoin)
+    session.conf.set(crossJoin, "false")
+    val result = body
+    session.conf.set(crossJoin, oldSetting)
+    result
+  }
+
   test("self join with colLeft/colRight disambiguation") {
     def prop[
       A : TypedEncoder : Ordering,
       B : TypedEncoder : Ordering
-    ](dx: List[X2[A, B]], d: X2[A, B]): Prop = {
+    ](dx: List[X2[A, B]], d: X2[A, B]): Prop = allowAmbiguousJoin {
       val data = d :: dx
       val ds = TypedDataset.create(data)
 
@@ -29,7 +38,7 @@ class SelfJoinTests extends TypedDatasetSuite {
       val df1 = ds.dataset.as("df1")
       val df2 = ds.dataset.as("df2")
       val vanilla = df1.join(df2,
-        sqlf.col("df1.a") === sqlf.col("df2.a")).count()
+        sparkFunctions.col("df1.a") === sparkFunctions.col("df2.a")).count()
 
       val typed = ds.joinInner(ds)(
         ds.colLeft('a) === ds.colRight('a)
@@ -46,7 +55,8 @@ class SelfJoinTests extends TypedDatasetSuite {
       A : TypedEncoder : Ordering,
       B : TypedEncoder : Ordering
     ](dx: List[X2[A, B]], d: X2[A, B]): Prop =
-      allowTrivialJoin {
+      allowTrivialJoin { allowAmbiguousJoin {
+
         val data = d :: dx
         val ds = TypedDataset.create(data)
         val untyped = ds.dataset
@@ -54,13 +64,13 @@ class SelfJoinTests extends TypedDatasetSuite {
         // obtain a trivial join condition of shape df1.a == df1.a, Spark we
         // always interpret that as df1.a == df2.a. For the purpose of this
         // test we fall-back to lit(true) instead.
-        // val trivial = sqlf.col("df1.a") === sqlf.col("df1.a")
-        val trivial = sqlf.lit(true)
+        // val trivial = sparkFunctions.col("df1.a") === sparkFunctions.col("df1.a")
+        val trivial = sparkFunctions.lit(true)
         val vanilla = untyped.as("df1").join(untyped.as("df2"), trivial).count()
 
         val typed = ds.joinInner(ds)(ds.colLeft('a) === ds.colLeft('a)).count().run
         vanilla ?= typed
-      }
+      } }
 
     check(prop[Int, Int] _)
   }
@@ -69,15 +79,15 @@ class SelfJoinTests extends TypedDatasetSuite {
     def prop[
       A : TypedEncoder : CatalystNumeric : Ordering,
       B : TypedEncoder : Ordering
-    ](data: List[X3[A, A, B]]): Prop = {
+    ](data: List[X3[A, A, B]]): Prop = allowAmbiguousJoin {
       val ds = TypedDataset.create(data)
 
       val df1 = ds.dataset.alias("df1")
       val df2 = ds.dataset.alias("df2")
 
       val vanilla = df1.join(df2,
-        (sqlf.col("df1.a") + sqlf.col("df1.b")) ===
-        (sqlf.col("df2.a") + sqlf.col("df2.b"))).count()
+        (sparkFunctions.col("df1.a") + sparkFunctions.col("df1.b")) ===
+        (sparkFunctions.col("df2.a") + sparkFunctions.col("df2.b"))).count()
 
       val typed = ds.joinInner(ds)(
         (ds.colLeft('a) + ds.colLeft('b)) === (ds.colRight('a) + ds.colRight('b))
@@ -94,7 +104,7 @@ class SelfJoinTests extends TypedDatasetSuite {
       A : TypedEncoder : CatalystNumeric : Ordering,
       B : TypedEncoder : Ordering
     ](data: List[X3[A, A, B]]): Prop =
-      allowTrivialJoin {
+      allowTrivialJoin { allowAmbiguousJoin {
         val ds = TypedDataset.create(data)
 
         // The point I'm making here is that it "behaves just like Spark". I
@@ -109,7 +119,7 @@ class SelfJoinTests extends TypedDatasetSuite {
         ).count().run()
 
         vanilla ?= typed
-      }
+      } }
 
       check(prop[Int, Int] _)
     }

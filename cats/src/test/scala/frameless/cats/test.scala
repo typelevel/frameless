@@ -11,14 +11,14 @@ import org.apache.spark.{SparkConf, SparkContext => SC}
 
 import org.scalatest.compatible.Assertion
 import org.scalactic.anyvals.PosInt
-import org.scalatest.Matchers
 import org.scalacheck.Arbitrary
-import org.scalatest._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import Arbitrary._
-import prop._
 
 import scala.collection.immutable.SortedMap
 import scala.reflect.ClassTag
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
 
 trait SparkTests {
   val appID: String = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
@@ -63,7 +63,7 @@ object Tests {
   }
 }
 
-class Test extends PropSpec with Matchers with PropertyChecks with SparkTests {
+class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with SparkTests {
   implicit override val generatorDrivenConfig =
     PropertyCheckConfiguration(minSize = PosInt(10))
 

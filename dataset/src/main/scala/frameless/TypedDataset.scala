@@ -2,17 +2,18 @@ package frameless
 
 import java.util
 
+import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
-import org.apache.spark.sql.catalyst.plans.logical.Join
-import org.apache.spark.sql.catalyst.plans.{Inner, LeftOuter, RightOuter, FullOuter}
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
+import org.apache.spark.sql.catalyst.plans.logical.{Join, JoinHint}
+import org.apache.spark.sql.catalyst.plans.Inner
+import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
-import shapeless.ops.record.{Keys, Remover, Values}
+import shapeless.ops.record.{Keys, Modifier, Remover, Values}
 
 /** [[TypedDataset]] is a safer interface for working with `Dataset`.
   *
@@ -104,15 +105,23 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i3: TypedEncoder[Out]
       ): TypedDataset[Out] = {
 
-        val cols = columns.toList[UntypedExpression[T]].map(c => new Column(c.expr))
+      val underlyingColumns = columns.toList[UntypedExpression[T]]
+      val cols: Seq[Column] = for {
+        (c, i) <- columns.toList[UntypedExpression[T]].zipWithIndex
+      } yield new Column(c.expr).as(s"_${i+1}")
 
-        val selected = dataset.toDF()
-          .agg(cols.head.alias("_1"), cols.tail: _*)
-          .as[Out](TypedExpressionEncoder[Out])
-          .filter("_1 is not null") // otherwise spark produces List(null) for empty datasets
+      // Workaround to SPARK-20346. One alternative is to allow the result to be Vector(null) for empty DataFrames.
+      // Another one would be to return an Option.
+      val filterStr = (
+        for {
+          (c, i) <- underlyingColumns.zipWithIndex
+          if !c.uencoder.nullable
+        } yield s"_${i+1} is not null"
+        ).mkString(" or ")
 
-        TypedDataset.create[Out](selected)
-      }
+      val selected = dataset.toDF().agg(cols.head, cols.tail:_*).as[Out](TypedExpressionEncoder[Out])
+      TypedDataset.create[Out](if (filterStr.isEmpty) selected else selected.filter(filterStr))
+    }
   }
 
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
@@ -236,8 +245,13 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * }}}
     */
   def asCol: TypedColumn[T, T] = {
-    val allColumns: Array[Column] = dataset.columns.map(dataset.col)
-    val projectedColumn: Column = org.apache.spark.sql.functions.struct(allColumns: _*)
+    val projectedColumn: Column = encoder.catalystRepr match {
+      case StructType(_) =>
+        val allColumns: Array[Column] = dataset.columns.map(dataset.col)
+        org.apache.spark.sql.functions.struct(allColumns: _*)
+      case _ =>
+        dataset.col(dataset.columns.head)
+    }
     new TypedColumn[T,T](projectedColumn)
   }
 
@@ -399,15 +413,121 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   def foreachPartition[F[_]](func: Iterator[T] => Unit)(implicit F: SparkDelay[F]): F[Unit] =
     F.delay(dataset.foreachPartition(func))
 
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified column,
+    * so we can run aggregation on it.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  def cube[K1](
+    c1: TypedColumn[T, K1]
+  ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
+
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  def cube[K1, K2](
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
+
+  /**
+    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.cubeMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     15    null    1
+    *     15      25    1
+    *   null    null    2
+    *   null      25    1
+    *   null      20    1
+    *     10    null    1
+    *     10      20    1
+    *
+    * }}}
+    *
+    * Differs from `Dataset#cube` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  object cubeMany extends ProductArgs {
+    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
+      (implicit
+        i0: ColumnTypes.Aux[T, TK, K],
+        i1: Tupler.Aux[K, KT],
+        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+      ): CubeManyOps[T, TK, K, KT] = new CubeManyOps[T, TK, K, KT](self, groupedBy)
+  }
+
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * apache/spark
+    */
   def groupBy[K1](
     c1: TypedColumn[T, K1]
   ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
 
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * apache/spark
+    */
   def groupBy[K1, K2](
     c1: TypedColumn[T, K1],
     c2: TypedColumn[T, K2]
   ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
 
+  /**
+    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+    *
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.groupByMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     10      20    1
+    *     15      25    1
+    *
+    * }}}
+    *
+    * apache/spark
+    */
   object groupByMany extends ProductArgs {
     def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
       (implicit
@@ -415,6 +535,73 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i1: Tupler.Aux[K, KT],
         i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
       ): GroupedByManyOps[T, TK, K, KT] = new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
+  }
+
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified column,
+    * so we can run aggregation on it.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  def rollup[K1](
+    c1: TypedColumn[T, K1]
+  ): Rollup1Ops[K1, T] = new Rollup1Ops[K1, T](this, c1)
+
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  def rollup[K1, K2](
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Rollup2Ops[K1, K2, T] = new Rollup2Ops[K1, K2, T](this, c1, c2)
+
+  /**
+    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
+    * so we can run aggregation on them.
+    * See [[frameless.functions.AggregateFunctions]] for all the available aggregate functions.
+    *
+    * {{{
+    *   case class MyClass(a: Int, b: Int, c: Int)
+    *   val ds: TypedDataset[MyClass]
+    *
+    *   val cubeDataset: TypedDataset[(Option[A], Option[B], Long)] =
+    *     ds.rollupMany(ds('a), ds('b)).agg(count[MyClass]())
+    *
+    *   // original dataset:
+    *     a       b     c
+    *    10      20     1
+    *    15      25     2
+    *
+    *   // after aggregation:
+    *     _1      _2   _3
+    *     15    null    1
+    *     15      25    1
+    *   null    null    2
+    *     10    null    1
+    *     10      20    1
+    *
+    * }}}
+    *
+    * Differs from `Dataset#rollup` by wrapping values into `Option` instead of returning `null`.
+    *
+    * apache/spark
+    */
+  object rollupMany extends ProductArgs {
+    def applyProduct[TK <: HList, K <: HList, KT](groupedBy: TK)
+      (implicit
+        i0: ColumnTypes.Aux[T, TK, K],
+        i1: Tupler.Aux[K, KT],
+        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+      ): RollupManyOps[T, TK, K, KT] = new RollupManyOps[T, TK, K, KT](self, groupedBy)
   }
 
   /** Computes the cartesian project of `this` `Dataset` with the `other` `Dataset` */
@@ -426,15 +613,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * returning a `Tuple2` for each pair where condition evaluates to true.
     */
   def joinFull[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
-    (implicit e: TypedEncoder[(Option[T], Option[U])]): TypedDataset[(Option[T], Option[U])] = {
-      import FramelessInternals._
-      val leftPlan = logicalPlan(dataset)
-      val rightPlan = logicalPlan(other.dataset)
-      val join = disambiguate(Join(leftPlan, rightPlan, FullOuter, Some(condition.expr)))
-      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
-      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(Option[T], Option[U])])
-      TypedDataset.create[(Option[T], Option[U])](joinedDs)
-    }
+    (implicit e: TypedEncoder[(Option[T], Option[U])]): TypedDataset[(Option[T], Option[U])] =
+    new TypedDataset(self.dataset.joinWith(other.dataset, condition.untyped, "full")
+      .as[(Option[T], Option[U])](TypedExpressionEncoder[(Option[T], Option[U])]))
 
   /** Computes the inner join of `this` `Dataset` with the `other` `Dataset`,
     * returning a `Tuple2` for each pair where condition evaluates to true.
@@ -444,7 +625,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       import FramelessInternals._
       val leftPlan = logicalPlan(dataset)
       val rightPlan = logicalPlan(other.dataset)
-      val join = disambiguate(Join(leftPlan, rightPlan, Inner, Some(condition.expr)))
+      val join = disambiguate(Join(leftPlan, rightPlan, Inner, Some(condition.expr), JoinHint.NONE))
       val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
       val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, U)])
       TypedDataset.create[(T, U)](joinedDs)
@@ -454,16 +635,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * returning a `Tuple2` for each pair where condition evaluates to true.
     */
   def joinLeft[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
-    (implicit e: TypedEncoder[(T, Option[U])]): TypedDataset[(T, Option[U])] = {
-      import FramelessInternals._
-      val leftPlan = logicalPlan(dataset)
-      val rightPlan = logicalPlan(other.dataset)
-      val join = disambiguate(Join(leftPlan, rightPlan, LeftOuter, Some(condition.expr)))
-      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
-      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, Option[U])])
-
-      TypedDataset.create[(T, Option[U])](joinedDs)
-    }
+    (implicit e: TypedEncoder[(T, Option[U])]): TypedDataset[(T, Option[U])] =
+      new TypedDataset(self.dataset.joinWith(other.dataset, condition.untyped, "left_outer")
+        .as[(T, Option[U])](TypedExpressionEncoder[(T, Option[U])]))
 
   /** Computes the left semi join of `this` `Dataset` with the `other` `Dataset`,
     * returning a `Tuple2` for each pair where condition evaluates to true.
@@ -483,15 +657,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * returning a `Tuple2` for each pair where condition evaluates to true.
     */
   def joinRight[U](other: TypedDataset[U])(condition: TypedColumn[T with U, Boolean])
-    (implicit e: TypedEncoder[(Option[T], U)]): TypedDataset[(Option[T], U)] = {
-      import FramelessInternals._
-      val leftPlan = logicalPlan(dataset)
-      val rightPlan = logicalPlan(other.dataset)
-      val join = disambiguate(Join(leftPlan, rightPlan, RightOuter, Some(condition.expr)))
-      val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
-      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(Option[T], U)])
-      TypedDataset.create[(Option[T], U)](joinedDs)
-    }
+    (implicit e: TypedEncoder[(Option[T], U)]): TypedDataset[(Option[T], U)] =
+    new TypedDataset(self.dataset.joinWith(other.dataset, condition.untyped, "right_outer")
+      .as[(Option[T], U)](TypedExpressionEncoder[(Option[T], U)]))
 
   private def disambiguate(join: Join): Join = {
     val plan = FramelessInternals.ofRows(dataset.sparkSession, join).queryExecution.analyzed.asInstanceOf[Join]
@@ -739,11 +907,11 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i2: Tupler.Aux[Out0, Out],
         i3: TypedEncoder[Out]
       ): TypedDataset[Out] = {
-        val selected = dataset.toDF()
+        val base = dataset.toDF()
           .select(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
-          .as[Out](TypedExpressionEncoder[Out])
+        val selected = base.as[Out](TypedExpressionEncoder[Out])
 
-          TypedDataset.create[Out](selected)
+        TypedDataset.create[Out](selected)
       }
   }
 
@@ -988,6 +1156,75 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       TypedDataset.create[U](selected)
     }
   }
+
+  /**
+    * Explodes a single column at a time. It only compiles if the type of column supports this operation.
+    *
+    * @example
+    *
+    * {{{
+    *   case class X(i: Int, j: Array[Int])
+    *   case class Y(i: Int, j: Int)
+    *
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.explode('j).as[Y]
+    * }}}
+    * @param column the column we wish to explode
+    */
+  def explode[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, V[A]],
+   i1: TypedEncoder[A],
+   i2: CatalystExplodableCollection[V],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
+   i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val df = dataset.toDF()
+    import org.apache.spark.sql.functions.{explode => sparkExplode}
+
+    val trans =
+      df.withColumn(column.value.name,
+        sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
+  }
+
+  /**
+    * Flattens a column of type Option[A]. Compiles only if the selected column is of type Option[A].
+    *
+    *
+    * @example
+    *
+    * {{{
+    *   case class X(i: Int, j: Option[Int])
+    *   case class Y(i: Int, j: Int)
+    *
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.flattenOption('j).as[Y]
+    * }}}
+    *
+    * @param column the column we wish to flatten
+    */
+  def flattenOption[A, TRep <: HList, V[_], OutMod <: HList, OutModValues <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, V[A]],
+   i1: TypedEncoder[A],
+   i2: V[A] =:= Option[A],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
+   i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    val df = dataset.toDF()
+    val trans = 
+      df.filter(df(column.value.name).isNotNull).as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
+  }
 }
 
 object TypedDataset {
@@ -1036,8 +1273,15 @@ object TypedDataset {
     val shouldReshape = output.zip(targetColNames).exists {
       case (expr, colName) => expr.name != colName
     }
+    val canSelect = targetColNames.toSet.subsetOf(output.map(_.name).toSet)
 
-    val reshaped = if (shouldReshape) df.toDF(targetColNames: _*) else df
+    val reshaped = if (shouldReshape && canSelect) {
+      df.select(targetColNames.head, targetColNames.tail:_*)
+    } else if (shouldReshape) {
+      df.toDF(targetColNames: _*)
+    } else {
+      df
+    }
 
     new TypedDataset[A](reshaped.as[A](TypedExpressionEncoder[A]))
   }

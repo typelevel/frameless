@@ -3,10 +3,12 @@ package frameless
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
-import org.scalatest.prop.Checkers
+import org.scalatest.BeforeAndAfterAll
+import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+import scala.util.{Properties, Try}
+import org.scalatest.funsuite.AnyFunSuite
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
@@ -38,10 +40,18 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 }
 
 
-class TypedDatasetSuite extends FunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
-  // Limit size of generated collections and number of checks because Travis
-  implicit override val generatorDrivenConfig =
-    PropertyCheckConfiguration(sizeRange = PosZInt(10), minSize = PosZInt(10))
+class TypedDatasetSuite extends AnyFunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
+  // Limit size of generated collections and number of checks to avoid OutOfMemoryError
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = {
+    def getPosZInt(name: String, default: PosZInt) = Properties.envOrNone(s"FRAMELESS_GEN_${name}")
+      .flatMap(s => Try(s.toInt).toOption)
+      .flatMap(PosZInt.from)
+      .getOrElse(default)
+    PropertyCheckConfiguration(
+      sizeRange = getPosZInt("SIZE_RANGE", PosZInt(20)),
+      minSize = getPosZInt("MIN_SIZE", PosZInt(0))
+    )
+  }
 
   implicit val sparkDelay: SparkDelay[Job] = Job.framelessSparkDelayForJob
 

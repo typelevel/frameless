@@ -1,10 +1,52 @@
-val sparkVersion = "2.2.1"
-val catsCoreVersion = "1.0.1"
-val catsEffectVersion = "0.8"
-val catsMtlVersion = "0.2.3"
-val scalatest = "3.0.3"
-val shapeless = "2.3.2"
-val scalacheck = "1.13.5"
+val sparkVersion = "3.1.0"
+val catsCoreVersion = "2.3.1"
+val catsEffectVersion = "2.3.1"
+val catsMtlVersion = "0.7.1"
+val scalatest = "3.2.3"
+val scalatestplus = "3.1.0.0-RC2"
+val shapeless = "2.3.3"
+val scalacheck = "1.15.2"
+val irrecVersion = "0.4.0"
+
+val Scala212 = "2.12.12"
+
+ThisBuild / crossScalaVersions := Seq(Scala212)
+ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq()
+
+ThisBuild / githubWorkflowArtifactUpload := false
+
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Use("actions",
+                   "setup-python",
+                   "v2",
+                   name = Some("Setup Python"),
+                   params = Map("python-version" -> "3.x")
+  ),
+  WorkflowStep.Run(List("pip install codecov"),
+                   name = Some("Setup codecov")
+  ),
+  WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "coverage", "test", "coverageReport"),
+                   name = Some("Test & Compute Coverage")
+  ),
+  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
+                   name = Some("Upload Codecov Results")
+  )
+)
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "docs",
+    "Documentation",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "doc", "tut"),
+                       name = Some("Documentation")
+      )
+    ),
+    scalas = List(Scala212)
+  )
+)
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
@@ -14,17 +56,15 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
 lazy val core = project
   .settings(name := "frameless-core")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
 
 
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(publishSettings: _*)
   .settings(
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full),
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
@@ -39,19 +79,18 @@ lazy val cats = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-core"      % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-sql"       % sparkVersion % "provided",
+    "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
   ))
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val ml = project
   .settings(name := "frameless-ml")
   .settings(framelessSettings: _*)
-  .settings(warnUnusedImport: _*)
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
@@ -67,7 +106,8 @@ lazy val ml = project
 lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
-  .settings(tutSettings: _*)
+  .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
+  .enablePlugins(TutPlugin)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -75,53 +115,57 @@ lazy val docs = project
     "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
   .settings(
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4"),
-    scalacOptions += "-Ypartial-unification"
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full),
+    scalacOptions ++= Seq(
+      "-Ypartial-unification",
+      "-Ydelambdafy:inline"
+    )
   )
   .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  scalaVersion := "2.11.12",
-  scalacOptions ++= commonScalacOptions,
+  scalacOptions ++= commonScalacOptions(scalaVersion.value),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
+    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  javaOptions in Test ++= Seq("-Xmx1G"),
+  javaOptions in Test ++= Seq("-Xmx1G", "-ea"),
   fork in Test := true,
   parallelExecution in Test := false
-)
+) ++ consoleSettings
 
-lazy val commonScalacOptions = Seq(
-  "-deprecation",
-  "-encoding", "UTF-8",
-  "-feature",
-  "-unchecked",
-  "-Xfatal-warnings",
-  "-Xlint:-missing-interpolator,_",
-  "-Yinline-warnings",
-  "-Yno-adapted-args",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard",
-  "-language:existentials",
-  "-language:experimental.macros",
-  "-language:implicitConversions",
-  "-language:higherKinds",
-  "-Xfuture")
+def commonScalacOptions(scalaVersion: String): Seq[String] = {
 
-lazy val warnUnusedImport = Seq(
-  scalacOptions ++= {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 10)) =>
-        Seq()
-      case Some((2, n)) if n >= 11 =>
-        Seq("-Ywarn-unused-import")
-    }
-  },
+  val versionSpecific = CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, 11)) =>
+      Seq("-Xlint:-missing-interpolator,_", "-Yinline-warnings")
+    case Some((2, n)) if n >= 12 =>
+      Seq("-Xlint:-missing-interpolator,-unused,_")
+  }
+
+  Seq(
+    "-target:jvm-1.8",
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Ywarn-unused-import",
+    "-Ywarn-value-discard",
+    "-language:existentials",
+    "-language:implicitConversions",
+    "-language:higherKinds",
+    "-Xfuture") ++ versionSpecific
+}
+
+lazy val consoleSettings = Seq(
   scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
   scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 )
@@ -154,7 +198,6 @@ lazy val framelessTypedDatasetREPL = Seq(
 )
 
 lazy val publishSettings = Seq(
-  useGpg := true,
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
@@ -207,8 +250,8 @@ lazy val publishSettings = Seq(
 )
 
 lazy val noPublishSettings = Seq(
-  publish := (),
-  publishLocal := (),
+  publish := (()),
+  publishLocal := (()),
   publishArtifact := false
 )
 
@@ -220,10 +263,11 @@ lazy val credentialSettings = Seq(
   } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
 )
 
-copyReadme := copyReadmeImpl.value
+
 lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
   val from = baseDirectory.value / "README.md"
   val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
-  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true)
+  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
 }
+copyReadme := copyReadmeImpl.value

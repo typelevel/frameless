@@ -65,6 +65,7 @@ class UdfTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Int, Int] _))
     check(forAll(prop[String, Int, Int] _))
     check(forAll(prop[X3[Int, String, Boolean], Int, Int] _))
+    check(forAll(prop[X3U[Int, String, Boolean], Int, Int] _))
   }
 
   test("two argument udf") {
@@ -134,25 +135,29 @@ class UdfTests extends TypedDatasetSuite {
   }
 
   test("four argument udf") {
-    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder]
-    (data: Vector[X3[A, B, C]], f: (A, B, C, A) => C): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder]
+    (data: Vector[X4[A, B, C, D]], f: (A, B, C, D) => C): Prop = {
       val dataset = TypedDataset.create(data)
-      val u1 = udf[X3[A, B, C], A, B, C, A, C](f)
+      val u1 = udf[X4[A, B, C, D], A, B, C, D, C](f)
       val u2 = dataset.makeUDF(f)
 
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
+      val D = dataset.col[D]('d)
 
-      val dataset21 = dataset.select(u1(A, B, C, A)).collect().run().toVector
-      val dataset22 = dataset.select(u2(A, B, C, A)).collect().run().toVector
-      val d = data.map(x => f(x.a, x.b, x.c, x.a))
+      val dataset21 = dataset.select(u1(A, B, C, D)).collect().run().toVector
+      val dataset22 = dataset.select(u2(A, B, C, D)).collect().run().toVector
+      val d = data.map(x => f(x.a, x.b, x.c, x.d))
 
       (dataset21 ?= d) && (dataset22 ?= d)
     }
 
-    check(forAll(prop[Int, Int, Int] _))
-    check(forAll(prop[String, Int, Int] _))
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, String] _))
+    check(forAll(prop[String, String, String, String] _))
+    check(forAll(prop[String, Long, String, String] _))
+    check(forAll(prop[String, Boolean, Boolean, String] _))
   }
 
   test("five argument udf") {

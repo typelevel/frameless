@@ -2,9 +2,9 @@ package frameless
 package functions
 
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression}
+import org.apache.spark.sql.catalyst.expressions.{Expression, LeafExpression, NonSQLExpression}
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.objects.LambdaVariable
+import Block._
 import org.apache.spark.sql.types.DataType
 import shapeless.syntax.std.tuple._
 
@@ -90,7 +90,7 @@ case class FramelessUdf[T, R](
   override def nullable: Boolean = rencoder.nullable
   override def toString: String = s"FramelessUdf(${children.mkString(", ")})"
 
-  def eval(input: InternalRow): Any = {
+  lazy val evalCode = {
     val ctx = new CodegenContext()
     val eval = genCode(ctx)
 
@@ -120,9 +120,14 @@ case class FramelessUdf[T, R](
     val code = CodeFormatter.stripOverlappingComments(
       new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
 
-    val codegen = CodeGenerator.compile(code).generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
+    val (clazz, _) = CodeGenerator.compile(code)
+    val codegen = clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
 
-    codegen(input)
+    codegen
+  }
+
+  def eval(input: InternalRow): Any = {
+    evalCode(input)
   }
 
   def dataType: DataType = rencoder.catalystRepr
@@ -130,36 +135,33 @@ case class FramelessUdf[T, R](
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
 
-    val internalTerm = ctx.freshName("internal")
-    val internalNullTerm = ctx.freshName("internalNull")
-    val internalTpe = ctx.boxedType(rencoder.jvmRepr)
-    val internalExpr = LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr)
-
     // save reference to `function` field from `FramelessUdf` to call it later
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
-    val funcTerm = ctx.freshName("udf")
     val funcExpressionIdx = ctx.references.size - 1
-    ctx.addMutableState(funcClassName, funcTerm,
-      s"this.$funcTerm = ($funcClassName)((($framelessUdfClassName)references" +
+    val funcTerm = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
+      v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
         s"[$funcExpressionIdx]).function());")
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
       case (encoder, child) =>
         val eval = child.genCode(ctx)
-        val codeTpe = ctx.boxedType(encoder.jvmRepr)
+        val codeTpe = CodeGenerator.boxedType(encoder.jvmRepr)
         val argTerm = ctx.freshName("arg")
         val convert = s"${eval.code}\n$codeTpe $argTerm = ${eval.isNull} ? (($codeTpe)null) : (($codeTpe)(${eval.value}));"
 
         (convert, argTerm)
     }.unzip
 
+    val internalTpe = CodeGenerator.boxedType(rencoder.jvmRepr)
+    val internalTerm = ctx.addMutableState(internalTpe, ctx.freshName("internal"))
+    val internalNullTerm = ctx.addMutableState("boolean", ctx.freshName("internalNull"))
+    // CTw - can't inject the term, may have to duplicate old code for parity
+    val internalExpr = Spark2_4_LambdaVariable(internalTerm, internalNullTerm, rencoder.jvmRepr, true)
+
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
-    ctx.addMutableState(internalTpe, internalTerm, "")
-    ctx.addMutableState("boolean", internalNullTerm, "")
-
-    ev.copy(code = s"""
+    ev.copy(code = code"""
       ${argsCode.mkString("\n")}
 
       $internalTerm =
@@ -172,6 +174,39 @@ case class FramelessUdf[T, R](
       isNull = resultEval.isNull
     )
   }
+}
+
+case class Spark2_4_LambdaVariable(
+                           value: String,
+                           isNull: String,
+                           dataType: DataType,
+                           nullable: Boolean = true) extends LeafExpression with NonSQLExpression {
+
+  private val accessor: (InternalRow, Int) => Any = InternalRow.getAccessor(dataType)
+
+  // Interpreted execution of `LambdaVariable` always get the 0-index element from input row.
+  override def eval(input: InternalRow): Any = {
+    assert(input.numFields == 1,
+      "The input row of interpreted LambdaVariable should have only 1 field.")
+    if (nullable && input.isNullAt(0)) {
+      null
+    } else {
+      accessor(input, 0)
+    }
+  }
+
+  override def genCode(ctx: CodegenContext): ExprCode = {
+    val isNullValue = if (nullable) {
+      JavaCode.isNullVariable(isNull)
+    } else {
+      FalseLiteral
+    }
+    ExprCode(value = JavaCode.variable(value, dataType), isNull = isNullValue)
+  }
+
+  // This won't be called as `genCode` is overrided, just overriding it to make
+  // `LambdaVariable` non-abstract.
+  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ev
 }
 
 object FramelessUdf {

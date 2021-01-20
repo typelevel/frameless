@@ -3,10 +3,9 @@ package ops
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
-import org.apache.spark.sql.{Column, FramelessInternals}
+import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
 import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
-
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
   (self: TypedDataset[T], groupedBy: TK)
@@ -14,7 +13,7 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
     i0: ColumnTypes.Aux[T, TK, K],
     i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
     i3: Tupler.Aux[K, KT]
-  ) {
+  ) extends AggregatingOps[T, TK, K, KT](self, groupedBy, (dataset, cols) => dataset.groupBy(cols: _*)) {
   object agg extends ProductArgs {
     def applyProduct[TC <: HList, C <: HList, Out0 <: HList, Out1]
       (columns: TC)
@@ -25,90 +24,8 @@ class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
         i6: TypedEncoder[Out1],
         i7: ToTraversable.Aux[TC, List, UntypedExpression[T]]
       ): TypedDataset[Out1] = {
-        def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
-
-        val groupByExprs = groupedBy.toList[UntypedExpression[T]].map(expr)
-        val aggregates =
-          if (retainGroupColumns) columns.toList[UntypedExpression[T]].map(expr)
-          else groupByExprs ++ columns.toList[UntypedExpression[T]].map(expr)
-
-        val aggregated = self.dataset.toDF()
-          .groupBy(groupByExprs: _*)
-          .agg(aggregates.head, aggregates.tail: _*)
-          .as[Out1](TypedExpressionEncoder[Out1])
-
-        TypedDataset.create[Out1](aggregated)
+        aggregate[TC, Out1](columns)
       }
-  }
-
-  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def mapGroups[U: TypedEncoder](
-    f: (KT, Iterator[T]) => U
-  )(implicit e: TypedEncoder[KT] ): TypedDataset[U] =
-    deserialized.mapGroups(f)
-
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def flatMapGroups[U: TypedEncoder](
-    f: (KT, Iterator[T]) => TraversableOnce[U]
-  )(implicit e: TypedEncoder[KT]): TypedDataset[U] =
-    deserialized.flatMapGroups(f)
-  // $COVERAGE-ON$
-
-  /** Methods on `TypedDataset[T]` that go through a full serialization and
-    * deserialization of `T`, and execute outside of the Catalyst runtime.
-    */
-  object deserialized {
-    def mapGroups[U: TypedEncoder](f: (KT, Iterator[T]) => U)(
-      implicit e: TypedEncoder[KT]
-    ): TypedDataset[U] = {
-      val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
-      flatMapGroups(func)
-    }
-
-    def flatMapGroups[U: TypedEncoder](
-      f: (KT, Iterator[T]) => TraversableOnce[U]
-    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
-      implicit val tendcoder = self.encoder
-
-      val cols = groupedBy.toList[UntypedExpression[T]]
-      val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
-      val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
-      val withKey = Project(withKeyColumns, logicalPlan)
-      val executed = FramelessInternals.executePlan(self.dataset, withKey)
-      val keyAttributes = executed.analyzed.output.takeRight(cols.size)
-      val dataAttributes = executed.analyzed.output.dropRight(cols.size)
-
-      val mapGroups = MapGroups(
-        f,
-        keyAttributes,
-        dataAttributes,
-        executed.analyzed
-      )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
-
-      val groupedAndFlatMapped = FramelessInternals.mkDataset(
-        self.dataset.sqlContext,
-        mapGroups,
-        TypedExpressionEncoder[U]
-      )
-
-      TypedDataset.create(groupedAndFlatMapped)
-    }
-  }
-
-  private def retainGroupColumns: Boolean = {
-    self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
-  }
-
-  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]):
-    PivotNotValues[T, TK, P] =
-      PivotNotValues(self, groupedBy, pivotColumn)
-}
-
-object GroupedByManyOps {
-  /** Utility function to help Spark with serialization of closures */
-  def tuple1[K1, V, U](f: (K1, Iterator[V]) => U): (Tuple1[K1], Iterator[V]) => U = {
-    (x: Tuple1[K1], it: Iterator[V]) => f(x._1, it)
   }
 }
 
@@ -144,28 +61,16 @@ class GroupedBy1Ops[K1, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
-  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
-    deserialized.mapGroups(f)
-  }
-
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    deserialized.flatMapGroups(f)
-  }
-  // $COVERAGE-ON$
-
   /** Methods on `TypedDataset[T]` that go through a full serialization and
     * deserialization of `T`, and execute outside of the Catalyst runtime.
     */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
-      underlying.deserialized.mapGroups(GroupedByManyOps.tuple1(f))
+      underlying.deserialized.mapGroups(AggregatingOps.tuple1(f))
     }
 
     def flatMapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-      underlying.deserialized.flatMapGroups(GroupedByManyOps.tuple1(f))
+      underlying.deserialized.flatMapGroups(AggregatingOps.tuple1(f))
     }
   }
 
@@ -208,17 +113,6 @@ class GroupedBy2Ops[K1, K2, V](
     underlying.agg(c1, c2, c3, c4, c5)
   }
 
-  // $COVERAGE-OFF$ We do not test deprecated method since forwarded methods are tested.
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
-    deserialized.mapGroups(f)
-  }
-
-  @deprecated("deserialized methods have moved to a separate section to highlight their runtime overhead", "0.5.0")
-  def flatMapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => TraversableOnce[U]): TypedDataset[U] = {
-    deserialized.flatMapGroups(f)
-  }
-  // $COVERAGE-ON$
 
   /** Methods on `TypedDataset[T]` that go through a full serialization and
     * deserialization of `T`, and execute outside of the Catalyst runtime.
@@ -236,6 +130,89 @@ class GroupedBy2Ops[K1, K2, V](
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[V, P]):
     PivotNotValues[V, TypedColumn[V,K1] :: TypedColumn[V, K2] :: HNil, P] =
       PivotNotValues(self, g1 :: g2 :: HNil, pivotColumn)
+}
+
+private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
+  (self: TypedDataset[T], groupedBy: TK, groupingFunc: (Dataset[T], Seq[Column]) => RelationalGroupedDataset)
+  (implicit
+    i0: ColumnTypes.Aux[T, TK, K],
+    i1: ToTraversable.Aux[TK, List, UntypedExpression[T]],
+    i2: Tupler.Aux[K, KT]
+  ) {
+  def aggregate[TC <: HList, Out1](columns: TC)
+  (implicit
+    i7: TypedEncoder[Out1],
+    i8: ToTraversable.Aux[TC, List, UntypedExpression[T]]
+  ): TypedDataset[Out1] = {
+    def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
+
+    val groupByExprs = groupedBy.toList[UntypedExpression[T]].map(expr)
+    val aggregates =
+      if (retainGroupColumns) columns.toList[UntypedExpression[T]].map(expr)
+      else groupByExprs ++ columns.toList[UntypedExpression[T]].map(expr)
+
+    val aggregated =
+      groupingFunc(self.dataset, groupByExprs)
+        .agg(aggregates.head, aggregates.tail: _*)
+        .as[Out1](TypedExpressionEncoder[Out1])
+
+    TypedDataset.create[Out1](aggregated)
+  }
+
+  /** Methods on `TypedDataset[T]` that go through a full serialization and
+    * deserialization of `T`, and execute outside of the Catalyst runtime.
+    */
+  object deserialized {
+    def mapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => U
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
+      val func = (key: KT, it: Iterator[T]) => Iterator(f(key, it))
+      flatMapGroups(func)
+    }
+
+    def flatMapGroups[U: TypedEncoder](
+      f: (KT, Iterator[T]) => TraversableOnce[U]
+    )(implicit e: TypedEncoder[KT]): TypedDataset[U] = {
+      implicit val tendcoder = self.encoder
+
+      val cols = groupedBy.toList[UntypedExpression[T]]
+      val logicalPlan = FramelessInternals.logicalPlan(self.dataset)
+      val withKeyColumns = logicalPlan.output ++ cols.map(_.expr).map(UnresolvedAlias(_))
+      val withKey = Project(withKeyColumns, logicalPlan)
+      val executed = FramelessInternals.executePlan(self.dataset, withKey)
+      val keyAttributes = executed.analyzed.output.takeRight(cols.size)
+      val dataAttributes = executed.analyzed.output.dropRight(cols.size)
+
+      val mapGroups = MapGroups(
+        f,
+        keyAttributes,
+        dataAttributes,
+        executed.analyzed
+      )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
+
+      val groupedAndFlatMapped = FramelessInternals.mkDataset(
+        self.dataset.sqlContext,
+        mapGroups,
+        TypedExpressionEncoder[U]
+      )
+
+      TypedDataset.create(groupedAndFlatMapped)
+    }
+  }
+
+  private def retainGroupColumns: Boolean = {
+    self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
+  }
+
+  def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]): PivotNotValues[T, TK, P] =
+    PivotNotValues(self, groupedBy, pivotColumn)
+}
+
+private[ops] object AggregatingOps {
+  /** Utility function to help Spark with serialization of closures */
+  def tuple1[K1, V, U](f: (K1, Iterator[V]) => U): (Tuple1[K1], Iterator[V]) => U = {
+    (x: Tuple1[K1], it: Iterator[V]) => f(x._1, it)
+  }
 }
 
 /** Represents a typed Pivot operation.

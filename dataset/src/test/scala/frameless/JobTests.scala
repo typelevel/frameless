@@ -1,11 +1,13 @@
 package frameless
 
 import org.scalacheck.Arbitrary
-import org.scalatest.{BeforeAndAfterAll, FreeSpec, Matchers}
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.BeforeAndAfterAll
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class JobTests extends FreeSpec with BeforeAndAfterAll with SparkTesting with GeneratorDrivenPropertyChecks with Matchers {
+class JobTests extends AnyFreeSpec with BeforeAndAfterAll with SparkTesting with ScalaCheckDrivenPropertyChecks with Matchers {
 
   "map" - {
     "identity" in {

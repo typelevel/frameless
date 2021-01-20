@@ -9,6 +9,8 @@ import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
+import shapeless.ops.hlist.IsHCons
+
 import scala.reflect.ClassTag
 
 abstract class TypedEncoder[T](implicit val classTag: ClassTag[T]) extends Serializable {
@@ -40,7 +42,7 @@ object TypedEncoder {
   def apply[T: TypedEncoder]: TypedEncoder[T] = implicitly[TypedEncoder[T]]
 
   implicit val stringEncoder: TypedEncoder[String] = new TypedEncoder[String] {
-    def nullable: Boolean = true
+    def nullable: Boolean = false
 
     def jvmRepr: DataType = FramelessInternals.objectTypeFor[String]
     def catalystRepr: DataType = StringType
@@ -229,7 +231,7 @@ object TypedEncoder {
 
           case ByteType => path
 
-          case otherwise => MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+          case _ => MapObjects(encodeT.toCatalyst _, path, encodeT.jvmRepr, encodeT.nullable)
         }
 
       def fromCatalyst(path: Expression): Expression =
@@ -243,14 +245,14 @@ object TypedEncoder {
 
           case ByteType => path
 
-          case otherwise =>
-            Invoke(MapObjects(encodeT.fromCatalyst, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
+          case _ =>
+            Invoke(MapObjects(encodeT.fromCatalyst _, path, encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
         }
     }
 
   implicit def collectionEncoder[C[X] <: Seq[X], T]
     (implicit
-      encodeT: TypedEncoder[T],
+      encodeT: Lazy[TypedEncoder[T]],
       CT: ClassTag[C[T]]
     ): TypedEncoder[C[T]] =
       new TypedEncoder[C[T]] {
@@ -258,19 +260,19 @@ object TypedEncoder {
 
         def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
 
-        def catalystRepr: DataType = ArrayType(encodeT.catalystRepr, encodeT.nullable)
+        def catalystRepr: DataType = ArrayType(encodeT.value.catalystRepr, encodeT.value.nullable)
 
         def toCatalyst(path: Expression): Expression =
-          if (ScalaReflection.isNativeType(encodeT.jvmRepr))
+          if (ScalaReflection.isNativeType(encodeT.value.jvmRepr))
             NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
-          else MapObjects(encodeT.toCatalyst, path, encodeT.jvmRepr, encodeT.nullable)
+          else MapObjects(encodeT.value.toCatalyst _, path, encodeT.value.jvmRepr, encodeT.value.nullable)
 
         def fromCatalyst(path: Expression): Expression =
           MapObjects(
-            encodeT.fromCatalyst,
+            encodeT.value.fromCatalyst,
             path,
-            encodeT.catalystRepr,
-            encodeT.nullable,
+            encodeT.value.catalystRepr,
+            encodeT.value.nullable,
             Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
           )
       }
@@ -372,7 +374,7 @@ object TypedEncoder {
               "booleanValue",
               BooleanType)
 
-          case other => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
+          case _ => underlying.toCatalyst(UnwrapOption(underlying.jvmRepr, path))
         }
       }
 
@@ -399,13 +401,16 @@ object TypedEncoder {
         }
       }
 
-  /** Encodes things as records if there is not Injection defined */
-  implicit def usingDerivation[F, G <: HList]
+  /** Encodes things as records if there is no Injection defined */
+  implicit def usingDerivation[F, G <: HList, H <: HList]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
-      i1: Lazy[RecordEncoderFields[G]],
-      i2: ClassTag[F]
-    ): TypedEncoder[F] = new RecordEncoder[F, G]
+      i1: DropUnitValues.Aux[G, H],
+      i2: IsHCons[H],
+      i3: Lazy[RecordEncoderFields[H]],
+      i4: Lazy[NewInstanceExprs[G]],
+      i5: ClassTag[F]
+    ): TypedEncoder[F] = new RecordEncoder[F, G, H]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[A >: Null : UserDefinedType : ClassTag]: TypedEncoder[A] = {

@@ -4,6 +4,7 @@ import java.util
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
@@ -116,6 +117,14 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   def write: DataFrameWriter[T] =
     dataset.write
 
+  /**
+    * Interface for saving the content of the streaming Dataset out into external storage.
+    *
+    * apache/spark
+    */
+  def writeStream: DataStreamWriter[T] =
+    dataset.writeStream
+    
   /** Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
     * Similar to coalesce defined on an RDD, this operation results in a narrow dependency, e.g.
     * if you go from 1000 partitions to 100 partitions, there will not be a shuffle, instead each of

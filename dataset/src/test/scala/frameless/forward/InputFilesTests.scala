@@ -5,7 +5,7 @@ import java.util.UUID
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class InputFilesTests extends TypedDatasetSuite with Matchers {
   test("inputFiles") {

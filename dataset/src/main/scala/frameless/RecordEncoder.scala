@@ -1,12 +1,12 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{Invoke, NewInstance}
 import org.apache.spark.sql.types._
-import shapeless.labelled.FieldType
 import shapeless._
+import shapeless.labelled.FieldType
+import shapeless.ops.hlist.IsHCons
 
 import scala.reflect.ClassTag
 
@@ -21,6 +21,7 @@ trait RecordEncoderFields[T <: HList] extends Serializable {
 }
 
 object RecordEncoderFields {
+
   implicit def deriveRecordLast[K <: Symbol, H]
     (implicit
       key: Witness.Aux[K],
@@ -44,10 +45,81 @@ object RecordEncoderFields {
     }
 }
 
-class RecordEncoder[F, G <: HList]
+/**
+  * Assists the generation of constructor call parameters from a labelled generic representation.
+  * As Unit typed fields were removed earlier, we need to put back unit literals in the  appropriate positions.
+  *
+  * @tparam T labelled generic representation of type fields
+  */
+trait NewInstanceExprs[T <: HList] extends Serializable {
+  def from(exprs: List[Expression]): Seq[Expression]
+}
+
+object NewInstanceExprs {
+
+  implicit def deriveHNil: NewInstanceExprs[HNil] = new NewInstanceExprs[HNil] {
+    def from(exprs: List[Expression]): Seq[Expression] = Nil
+  }
+
+  implicit def deriveUnit[K <: Symbol, T <: HList]
+    (implicit
+      tail: NewInstanceExprs[T]
+    ): NewInstanceExprs[FieldType[K, Unit] :: T] = new NewInstanceExprs[FieldType[K, Unit] :: T] {
+      def from(exprs: List[Expression]): Seq[Expression] =
+        Literal.fromObject(()) +: tail.from(exprs)
+    }
+
+  implicit def deriveNonUnit[K <: Symbol, V , T <: HList]
+    (implicit
+      notUnit: V =:!= Unit,
+      tail: NewInstanceExprs[T]
+    ): NewInstanceExprs[FieldType[K, V] :: T] = new NewInstanceExprs[FieldType[K, V] :: T] {
+      def from(exprs: List[Expression]): Seq[Expression] = exprs.head +: tail.from(exprs.tail)
+    }
+}
+
+/**
+  * Drops fields with Unit type from labelled generic representation of types.
+  *
+  * @tparam L labelled generic representation of type fields
+  */
+trait DropUnitValues[L <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
+
+object DropUnitValues {
+  def apply[L <: HList](implicit dropUnitValues: DropUnitValues[L]): Aux[L, dropUnitValues.Out] = dropUnitValues
+
+  type Aux[L <: HList, Out0 <: HList] = DropUnitValues[L] { type Out = Out0 }
+
+  implicit def deriveHNil[H]: Aux[HNil, HNil] = new DropUnitValues[HNil] {
+    type Out = HNil
+    def apply(l: HNil): Out = HNil
+  }
+
+  implicit def deriveUnit[K <: Symbol, T <: HList, OutT <: HList]
+    (implicit
+      dropUnitValues : DropUnitValues.Aux[T, OutT]
+    ): Aux[FieldType[K, Unit] :: T, OutT] = new DropUnitValues[FieldType[K, Unit] :: T] {
+      type Out = OutT
+      def apply(l : FieldType[K, Unit] :: T): Out = dropUnitValues(l.tail)
+    }
+
+  implicit def deriveNonUnit[K <: Symbol, V, T <: HList, OutH, OutT <: HList]
+    (implicit
+      nonUnit: V =:!= Unit,
+      dropUnitValues : DropUnitValues.Aux[T, OutT]
+    ): Aux[FieldType[K, V] :: T, FieldType[K, V] :: OutT] = new DropUnitValues[FieldType[K, V] :: T] {
+      type Out = FieldType[K, V] :: OutT
+      def apply(l : FieldType[K, V] :: T): Out = l.head :: dropUnitValues(l.tail)
+    }
+}
+
+class RecordEncoder[F, G <: HList, H <: HList]
   (implicit
-    lgen: LabelledGeneric.Aux[F, G],
-    fields: Lazy[RecordEncoderFields[G]],
+    i0: LabelledGeneric.Aux[F, G],
+    i1: DropUnitValues.Aux[G, H],
+    i2: IsHCons[H],
+    fields: Lazy[RecordEncoderFields[H]],
+    newInstanceExprs: Lazy[NewInstanceExprs[G]],
     classTag: ClassTag[F]
   ) extends TypedEncoder[F] {
     def nullable: Boolean = false
@@ -82,20 +154,20 @@ class RecordEncoder[F, G <: HList]
         case (nameExpr, valueExpr) => nameExpr :: valueExpr :: Nil
       }
 
-      CreateNamedStruct(exprs)
+      val createExpr = CreateNamedStruct(exprs)
+      val nullExpr = Literal.create(null, createExpr.dataType)
+      If(IsNull(path), nullExpr, createExpr)
     }
 
     def fromCatalyst(path: Expression): Expression = {
       val exprs = fields.value.value.map { field =>
-        val fieldPath = path match {
-          case BoundReference(ordinal, dataType, nullable) =>
-            GetColumnByOrdinal(field.ordinal, field.encoder.jvmRepr)
-          case other =>
-            GetStructField(path, field.ordinal, Some(field.name))
-        }
-        field.encoder.fromCatalyst(fieldPath)
+        field.encoder.fromCatalyst( GetStructField(path, field.ordinal, Some(field.name)) )
       }
 
-      NewInstance(classTag.runtimeClass, exprs, jvmRepr, propagateNull = true)
+      val newArgs = newInstanceExprs.value.from(exprs)
+      val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
+
+      val nullExpr = Literal.create(null, jvmRepr)
+      If(IsNull(path), nullExpr, newExpr)
     }
 }

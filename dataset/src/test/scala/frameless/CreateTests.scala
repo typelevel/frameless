@@ -2,9 +2,10 @@ package frameless
 
 import org.scalacheck.{Arbitrary, Prop}
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
+
 import scala.reflect.ClassTag
 import shapeless.test.illTyped
+import org.scalatest.matchers.should.Matchers
 
 class CreateTests extends TypedDatasetSuite with Matchers {
 
@@ -23,6 +24,7 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[Int, Char, X2[Option[Country], Country], Int] _))
     check(forAll(prop[X2[Int, Int], Int, Boolean, Vector[Food]] _))
     check(forAll(prop[String, Food, X3[Food, Country, Boolean], Int] _))
+    check(forAll(prop[String, Food, X3U[Food, Country, Boolean], Int] _))
     check(forAll(prop[
       Option[Vector[Food]],
       Vector[Vector[X2[Vector[(Person, X1[Char])], Country]]],
@@ -124,12 +126,28 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     illTyped("TypedDataset.create(data)", ".*could not find implicit value for parameter encoder.*")
   }
 
-  test("not alligned columns should throw an exception") {
+  test("not aligned columns should throw an exception") {
     val v = Vector(X2(1,2))
     val df = TypedDataset.create(v).dataset.toDF()
 
     a [IllegalStateException] should be thrownBy {
       TypedDataset.createUnsafe[X1[Int]](df).show().run()
     }
+  }
+
+  test("dataset with different column order") {
+    // e.g. when loading data from partitioned dataset
+    // the partition columns get appended to the end of the underlying relation
+    def prop[A: Arbitrary: TypedEncoder, B: Arbitrary: TypedEncoder] = forAll {
+      (a1: A, b1: B) => {
+        val ds = TypedDataset.create(
+          Vector((b1, a1))
+        ).dataset.toDF("b", "a").as[X2[A, B]](TypedExpressionEncoder[X2[A, B]])
+        TypedDataset.create(ds).collect().run().head ?= X2(a1, b1)
+
+      }
+    }
+    check(prop[X1[Double], X1[X1[SQLDate]]])
+    check(prop[String, Int])
   }
 }

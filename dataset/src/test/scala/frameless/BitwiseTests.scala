@@ -2,7 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class BitwiseTests extends TypedDatasetSuite with Matchers{
 

@@ -19,7 +19,7 @@ case class DateRange(s: java.util.Date, e: java.util.Date)
 ```
 
 ```tut:fail
-val ds: Dataset[DateRange] = sqlContext.createDataset(Seq(DateRange(new java.util.Date, new java.util.Date)))
+val ds: Dataset[DateRange] = Seq(DateRange(new java.util.Date, new java.util.Date)).toDS()
 ```
 
 As shown by the stack trace, this runtime error goes through [ScalaReflection](https://github.com/apache/spark/blob/19cf208063f035d793d2306295a251a9af7e32f6/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/ScalaReflection.scala) to try to derive an `Encoder` for `Dataset` schema. Beside the annoyance of not detecting this error at compile time, a more important limitation of the reflection-based approach is its inability to be extended for custom types. See this Stack Overflow question for a summary of the current situation (as of 2.0) in vanilla Spark: [How to store custom objects in a Dataset?](http://stackoverflow.com/a/39442829/2311362).

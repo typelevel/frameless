@@ -1,6 +1,6 @@
 package frameless
 
-import frameless.functions.{lit => flit, litAggr}
+import frameless.functions.{litAggr, lit => flit}
 import frameless.syntax._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.types.DecimalType
@@ -67,26 +67,52 @@ abstract class AbstractTypedColumn[T, U]
 
   type ThisType[A, B] <: AbstractTypedColumn[A, B]
 
-  /** Fall back to an untyped Column
-    */
+  /** A helper class to make to simplify working with Optional fields.
+    *
+    * {{{
+    *    val x: TypedColumn[Option[Int]] = _
+    *    x.opt.map(_*2) // This only compiles if the type of x is Option[X] (in this example X is of type Int)
+    * }}}
+    *
+    * @note Known issue: map() will NOT work when the applied function is a udf().
+    *       It will compile and then throw a runtime error.
+    **/
+  trait Mapper[X] {
+    def map[G, OutputType[_,_]](u: ThisType[T, X] => OutputType[T,G])
+      (implicit
+        ev: OutputType[T,G] <:< AbstractTypedColumn[T, G]
+      ): OutputType[T, Option[G]] = {
+      u(self.asInstanceOf[ThisType[T, X]]).asInstanceOf[OutputType[T, Option[G]]]
+    }
+  }
+
+  /** Makes it easier to work with Optional columns. It returns an instance of `Mapper[X]`
+    * where `X` is type of the unwrapped Optional. E.g., in the case of `Option[Long]`,
+    * `X` is of type Long.
+    *
+    * {{{
+    *    val x: TypedColumn[Option[Int]] = _
+    *    x.opt.map(_*2)
+    * }}}
+    * */
+  def opt[X](implicit x: U <:< Option[X]): Mapper[X] = new Mapper[X] {}
+
+  /** Fall back to an untyped Column */
   def untyped: Column = new Column(expr)
 
   private def equalsTo[TT, W](other: ThisType[TT, U])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] = typed {
-    if (uencoder.nullable && uencoder.catalystRepr.typeName != "struct") EqualNullSafe(self.expr, other.expr)
+    if (uencoder.nullable) EqualNullSafe(self.expr, other.expr)
     else EqualTo(self.expr, other.expr)
   }
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate from an expression.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate from an expression. */
   protected def typed[W, U1: TypedEncoder](e: Expression): ThisType[W, U1] =
     typed(new Column(e))
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate. */
   def typed[W, U1: TypedEncoder](c: Column): ThisType[W, U1]
 
-  /** Creates a typed column of either TypedColumn or TypedAggregate.
-    */
+  /** Creates a typed column of either TypedColumn or TypedAggregate. */
   def lit[U1: TypedEncoder](c: U1): ThisType[T, U1]
 
   /** Equality test.
@@ -143,6 +169,13 @@ abstract class AbstractTypedColumn[T, U]
   def isNotNone(implicit i0: U <:< Option[_]): ThisType[T, Boolean] =
     typed(Not(equalsTo(lit(None.asInstanceOf[U])).expr))
 
+  /** True if the current expression is a fractional number and is not NaN.
+    *
+    * apache/spark
+    */
+  def isNaN(implicit n: CatalystNaN[U]): ThisType[T, Boolean] =
+    typed(self.untyped.isNaN)
+
   /** Convert an Optional column by providing a default value
     * {{{
     *   df( df('opt).getOrElse(df('defaultValue)) )
@@ -192,6 +225,18 @@ abstract class AbstractTypedColumn[T, U]
     */
   def +(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.plus(u))
+
+  /**
+    * Inversion of boolean expression, i.e. NOT.
+    * {{{
+    *   // Select rows that are not active (isActive === false)
+    *   df.filter( !df('isActive) )
+    * }}}
+    *
+    * apache/spark
+    */
+  def unary_!(implicit i0: U <:< Boolean): ThisType[T, Boolean] =
+    typed(!untyped)
 
   /** Unary minus, i.e. negate the expression.
     * {{{
@@ -285,8 +330,28 @@ abstract class AbstractTypedColumn[T, U]
   def *(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
     typed(self.untyped.multiply(u))
 
-  /**
-    * Division this expression by another expression.
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def mod[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, Out] =
+    typed(self.untyped.mod(other.untyped))
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %[TT, W](other: ThisType[TT, U])(implicit n: CatalystNumeric[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
+    mod(other)
+
+  /** Modulo (a.k.a. remainder) expression.
+    *
+    * apache/spark
+    */
+  def %(u: U)(implicit n: CatalystNumeric[U]): ThisType[T, U] =
+    typed(self.untyped.mod(u))
+
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
@@ -298,8 +363,7 @@ abstract class AbstractTypedColumn[T, U]
   def divide[Out: TypedEncoder, TT, W](other: ThisType[TT, U])(implicit n: CatalystDivisible[U, Out], w: With.Aux[T, TT, W]): ThisType[W, Out] =
     typed(self.untyped.divide(other.untyped))
 
-  /**
-    * Division this expression by another expression.
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / people('weight) )
@@ -311,8 +375,7 @@ abstract class AbstractTypedColumn[T, U]
   def /[Out, TT, W](other: ThisType[TT, U])(implicit n: CatalystDivisible[U, Out], e: TypedEncoder[Out], w: With.Aux[T, TT, W]): ThisType[W, Out] =
     divide(other)
 
-  /**
-    * Division this expression by another expression.
+  /** Division this expression by another expression.
     * {{{
     *   // The following divides a person's height by their weight.
     *   people.select( people('height) / 2 )
@@ -338,8 +401,7 @@ abstract class AbstractTypedColumn[T, U]
   def asc(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
     new SortedTypedColumn[T, U](untyped.asc)
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
     * }}}
@@ -350,8 +412,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseAND(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseAND(u))
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseAND (df.col('colB)))
     * }}}
@@ -362,8 +423,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseAND[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseAND(other.untyped))
 
-  /**
-    * Bitwise AND this expression and another expression (of same type).
+  /** Bitwise AND this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Int] & -1)
     * }}}
@@ -374,20 +434,18 @@ abstract class AbstractTypedColumn[T, U]
   def &(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseAND(u)
 
-  /**
-    * Bitwise AND this expression and another expression.
+  /** Bitwise AND this expression and another expression.
     * {{{
     *   df.select(df.col('colA) & (df.col('colB)))
     * }}}
     *
-    * @param u a constant of the same type
+    * @param other a constant of the same type
     * apache/spark
     */
   def &[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     bitwiseAND(other)
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
     * }}}
@@ -398,8 +456,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseOR(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseOR(u))
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseOR (df.col('colB)))
     * }}}
@@ -410,8 +467,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseOR[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseOR(other.untyped))
 
-  /**
-    * Bitwise OR this expression and another expression (of same type).
+  /** Bitwise OR this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Long] | 1L)
     * }}}
@@ -422,8 +478,7 @@ abstract class AbstractTypedColumn[T, U]
   def |(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseOR(u)
 
-  /**
-    * Bitwise OR this expression and another expression.
+  /** Bitwise OR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) | (df.col('colB)))
     * }}}
@@ -434,8 +489,7 @@ abstract class AbstractTypedColumn[T, U]
   def |[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     bitwiseOR(other)
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
     * }}}
@@ -446,8 +500,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseXOR(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     typed(self.untyped.bitwiseXOR(u))
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) bitwiseXOR (df.col('colB)))
     * }}}
@@ -458,8 +511,7 @@ abstract class AbstractTypedColumn[T, U]
   def bitwiseXOR[TT, W](other: ThisType[TT, U])(implicit n: CatalystBitwise[U], w: With.Aux[T, TT, W]): ThisType[W, U] =
     typed(self.untyped.bitwiseXOR(other.untyped))
 
-  /**
-    * Bitwise XOR this expression and another expression (of same type).
+  /** Bitwise XOR this expression and another expression (of same type).
     * {{{
     *   df.select(df.col('colA).cast[Long] ^ 1L)
     * }}}
@@ -470,8 +522,7 @@ abstract class AbstractTypedColumn[T, U]
   def ^(u: U)(implicit n: CatalystBitwise[U]): ThisType[T, U] =
     bitwiseXOR(u)
 
-  /**
-    * Bitwise XOR this expression and another expression.
+  /** Bitwise XOR this expression and another expression.
     * {{{
     *   df.select(df.col('colA) ^ (df.col('colB)))
     * }}}
@@ -490,21 +541,127 @@ abstract class AbstractTypedColumn[T, U]
   def cast[A: TypedEncoder](implicit c: CatalystCast[U, A]): ThisType[T, A] =
     typed(self.untyped.cast(TypedEncoder[A].catalystRepr))
 
-  /** Contains test.
+  /**
+    * An expression that returns a substring
+    * {{{
+    *   df.select(df('a).substr(0, 5))
+    * }}}
+    *
+    * @param startPos starting position
+    * @param len length of the substring
+    */
+  def substr(startPos: Int, len: Int)(implicit ev: U =:= String): ThisType[T, String] =
+    typed(self.untyped.substr(startPos, len))
+
+  /**
+    * An expression that returns a substring
+    * {{{
+    *   df.select(df('a).substr(df('b), df('c)))
+    * }}}
+    *
+    * @param startPos expression for the starting position
+    * @param len expression for the length of the substring
+    */
+  def substr[TT1, TT2, W1, W2](startPos: ThisType[TT1, Int], len: ThisType[TT2, Int])
+                   (implicit
+                    ev: U =:= String,
+                    w1: With.Aux[T, TT1, W1],
+                    w2: With.Aux[W1, TT2, W2]): ThisType[W2, String] =
+    typed(self.untyped.substr(startPos.untyped, len.untyped))
+
+  /** SQL like expression. Returns a boolean column based on a SQL LIKE match.
+    * {{{
+    *   val ds = TypedDataset.create(X2("foo", "bar") :: Nil)
+    *   // true
+    *   ds.select(ds('a).like("foo"))
+    *
+    *   // Selected column has value "bar"
+    *   ds.select(when(ds('a).like("f"), ds('a)).otherwise(ds('b))
+    * }}}
+    * apache/spark
+    */
+  def like(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.like(literal))
+
+  /** SQL RLIKE expression (LIKE with Regex). Returns a boolean column based on a regex match.
+    * {{{
+    *   val ds = TypedDataset.create(X1("foo") :: Nil)
+    *   // true
+    *   ds.select(ds('a).rlike("foo"))
+    *
+    *   // true
+    *   ds.select(ds('a).rlike(".*))
+    * }}}
+    * apache/spark
+    */
+  def rlike(literal: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.rlike(literal))
+
+  /** String contains another string literal.
     * {{{
     *   df.filter ( df.col('a).contains("foo") )
     * }}}
+    *
+    * @param other a string that is being tested against.
+    * apache/spark
     */
   def contains(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
     typed(self.untyped.contains(other))
 
-  /** Contains test.
+  /** String contains.
     * {{{
     *   df.filter ( df.col('a).contains(df.col('b) )
     * }}}
+    *
+    * @param other a column which values is used as a string that is being tested against.
+    * apache/spark
     */
   def contains[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped.contains(other.untyped))
+
+  /** String starts with another string literal.
+    * {{{
+    *   df.filter ( df.col('a).startsWith("foo")
+    * }}}
+    *
+    * @param other a prefix that is being tested against.
+    * apache/spark
+    */
+  def startsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.startsWith(other))
+
+  /** String starts with.
+    * {{{
+    *   df.filter ( df.col('a).startsWith(df.col('b))
+    * }}}
+    *
+    * @param other a column which values is used as a prefix that is being tested against.
+    * apache/spark
+    */
+  def startsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.startsWith(other.untyped))
+
+  /** String ends with another string literal.
+    * {{{
+    *   df.filter ( df.col('a).endsWith("foo")
+    * }}}
+    *
+    * @param other a suffix that is being tested against.
+    * apache/spark
+    */
+  def endsWith(other: String)(implicit ev: U =:= String): ThisType[T, Boolean] =
+    typed(self.untyped.endsWith(other))
+
+  /** String ends with.
+    * {{{
+    *   df.filter ( df.col('a).endsWith(df.col('b))
+    * }}}
+    *
+    * @param other a column which values is used as a suffix that is being tested against.
+    * apache/spark
+    */
+  def endsWith[TT, W](other: ThisType[TT, U])(implicit ev: U =:= String, w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
+    typed(self.untyped.endsWith(other.untyped))
 
   /** Boolean AND.
     * {{{
@@ -538,8 +695,7 @@ abstract class AbstractTypedColumn[T, U]
   def || [TT, W](other: ThisType[TT, Boolean])(implicit w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     or(other)
 
-  /**
-    * Less than.
+  /** Less than.
     * {{{
     *   // The following selects people younger than the maxAge column.
     *   df.select( df('age) < df('maxAge) )
@@ -551,8 +707,7 @@ abstract class AbstractTypedColumn[T, U]
   def <[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped < other.untyped)
 
-  /**
-    * Less than or equal to.
+  /** Less than or equal to.
     * {{{
     *   // The following selects people younger or equal than the maxAge column.
     *   df.select( df('age) <= df('maxAge)
@@ -564,8 +719,7 @@ abstract class AbstractTypedColumn[T, U]
   def <=[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped <= other.untyped)
 
-  /**
-    * Greater than.
+  /** Greater than.
     * {{{
     *   // The following selects people older than the maxAge column.
     *   df.select( df('age) > df('maxAge) )
@@ -577,8 +731,7 @@ abstract class AbstractTypedColumn[T, U]
   def >[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped > other.untyped)
 
-  /**
-    * Greater than or equal.
+  /** Greater than or equal.
     * {{{
     *   // The following selects people older or equal than the maxAge column.
     *   df.select( df('age) >= df('maxAge) )
@@ -590,8 +743,7 @@ abstract class AbstractTypedColumn[T, U]
   def >=[TT, W](other: ThisType[TT, U])(implicit i0: CatalystOrdered[U], w: With.Aux[T, TT, W]): ThisType[W, Boolean] =
     typed(self.untyped >= other.untyped)
 
-  /**
-    * Less than.
+  /** Less than.
     * {{{
     *   // The following selects people younger than 21.
     *   df.select( df('age) < 21 )
@@ -603,8 +755,7 @@ abstract class AbstractTypedColumn[T, U]
   def <(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped < lit(u)(self.uencoder).untyped)
 
-  /**
-    * Less than or equal to.
+  /** Less than or equal to.
     * {{{
     *   // The following selects people younger than 22.
     *   df.select( df('age) <= 2 )
@@ -616,8 +767,7 @@ abstract class AbstractTypedColumn[T, U]
   def <=(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped <= lit(u)(self.uencoder).untyped)
 
-  /**
-    * Greater than.
+  /** Greater than.
     * {{{
     *   // The following selects people older than 21.
     *   df.select( df('age) > 21 )
@@ -629,8 +779,7 @@ abstract class AbstractTypedColumn[T, U]
   def >(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped > lit(u)(self.uencoder).untyped)
 
-  /**
-    * Greater than or equal.
+  /** Greater than or equal.
     * {{{
     *   // The following selects people older than 20.
     *   df.select( df('age) >= 21 )
@@ -641,6 +790,44 @@ abstract class AbstractTypedColumn[T, U]
     */
   def >=(u: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
     typed(self.untyped >= lit(u)(self.uencoder).untyped)
+
+  /**
+    * Returns true if the value of this column is contained in of the arguments.
+    * {{{
+    *   // The following selects people with age 15, 20, or 30.
+    *   df.select( df('age).isin(15, 20, 30) )
+    * }}}
+    *
+    * @param values are constants of the same type
+    * apache/spark
+    */
+  def isin(values: U*)(implicit e: CatalystIsin[U]): ThisType[T, Boolean] =
+    typed(self.untyped.isin(values:_*))
+
+  /**
+    * True if the current column is between the lower bound and upper bound, inclusive.
+    *
+    * @param lowerBound a constant of the same type
+    * @param upperBound a constant of the same type
+    * apache/spark
+    */
+  def between(lowerBound: U, upperBound: U)(implicit i0: CatalystOrdered[U]): ThisType[T, Boolean] =
+    typed(self.untyped.between(lit(lowerBound)(self.uencoder).untyped, lit(upperBound)(self.uencoder).untyped))
+
+  /**
+    * True if the current column is between the lower bound and upper bound, inclusive.
+    *
+    * @param lowerBound another column of the same type
+    * @param upperBound another column of the same type
+    * apache/spark
+    */
+  def between[TT1, TT2, W1, W2](lowerBound: ThisType[TT1, U], upperBound: ThisType[TT2, U])
+    (implicit
+      i0: CatalystOrdered[U],
+      w0: With.Aux[T, TT1, W1],
+      w1: With.Aux[TT2, W1, W2]
+    ): ThisType[W2, Boolean] =
+      typed(self.untyped.between(lowerBound.untyped, upperBound.untyped))
 }
 
 
@@ -668,9 +855,7 @@ object SortedTypedColumn {
 
 
 object TypedColumn {
-  /**
-    * Evidence that type `T` has column `K` with type `V`.
-    */
+  /** Evidence that type `T` has column `K` with type `V`. */
   @implicitNotFound(msg = "No column ${K} of type ${V} in ${T}")
   trait Exists[T, K, V]
 

@@ -66,7 +66,7 @@ def join2(tf1: TypedDataFrame[Foo], tf2: TypedDataFrame[Bar])
   tf1.innerJoin(tf2).using('i)
 ```
 
-Further example are available in the [TypedDataFrame join tests.](../dataframe/src/test/scala/JoinTests.scala)
+Further example are available in the [TypedDataFrame join tests.](https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/JoinTests.scala)
 
 ### Complete example
 
@@ -130,7 +130,7 @@ def bestNeighborhood
 }
 ```
 
-If you compare this version to vanilla Spark where every line is a `DataFrame`, you see how much types can improve readability. An executable version of this example is available in the [BestNeighborhood test](../dataframe/src/test/scala/BestNeighborhood.scala).
+If you compare this version to vanilla Spark where every line is a `DataFrame`, you see how much types can improve readability. An executable version of this example is available in the [BestNeighborhood test](https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/BestNeighborhood.scala).
 
 ### Limitations
 

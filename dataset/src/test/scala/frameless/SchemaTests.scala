@@ -2,18 +2,29 @@ package frameless
 
 import frameless.functions.aggregate._
 import frameless.functions._
+import org.apache.spark.sql.types.StructType
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 
 class SchemaTests extends TypedDatasetSuite with Matchers {
 
-  def prop[A](dataset: TypedDataset[A]): Prop = {
+  def structToNonNullable(struct: StructType): StructType = {
+    StructType(struct.fields.map( f => f.copy(nullable = false)))
+  }
+
+  def prop[A](dataset: TypedDataset[A], ignoreNullable: Boolean = false): Prop = {
     val schema = dataset.dataset.schema
 
     Prop.all(
-      dataset.schema ?= schema,
-      TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
+      if (!ignoreNullable)
+        dataset.schema ?= schema
+      else
+        structToNonNullable(dataset.schema) ?= structToNonNullable(schema),
+      if (!ignoreNullable)
+        TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
+      else
+        structToNonNullable(TypedExpressionEncoder.targetStructType(dataset.encoder))  ?= structToNonNullable(schema)
     )
   }
 
@@ -24,7 +35,7 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
 
     val df = df0.groupBy(_a).agg(sum(_b))
 
-    check(prop(df))
+    check(prop(df, true))
   }
 
   test("schema of select(lit(1L))") {
