@@ -117,7 +117,7 @@ import, `import frameless.TypedEncoder.injections._`. This will encode the data 
 For example, consider the following sealed family:
 
 ```tut:book
-sealed treat Foo
+sealed trait Foo
 object A { case object Bar extends Foo }
 object B { case object Bar extends Foo }
 ```
