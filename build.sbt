@@ -18,9 +18,7 @@ ThisBuild / githubWorkflowPublishTargetBranches := Seq()
 ThisBuild / githubWorkflowArtifactUpload := false
 
 ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Use("actions",
-                   "setup-python",
-                   "v2",
+  WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
                    name = Some("Setup Python"),
                    params = Map("python-version" -> "3.x")
   ),
