@@ -5,7 +5,9 @@ import shapeless._
 trait InjectionEnum {
   implicit val cnilInjectionEnum: Injection[CNil, String] =
     Injection(
+      // $COVERAGE-OFF$No value of type CNil so impossible to test
       _ => throw new Exception("Impossible"),
+      // $COVERAGE-ON$
       name =>
         throw new IllegalArgumentException(
           s"Cannot construct a value of type CNil: $name did not match data constructor names"
