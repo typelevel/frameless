@@ -34,6 +34,7 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | 0.7.0  | 2.3.1  | 1.x | 1.x | 2.11
 | 0.8.0  | 2.4.0  | 1.x | 1.x | 2.11/2.12
 | 0.9.0  | 3.0.0  | 1.x | 1.x | 2.12
+| 0.10.1  | 3.1.0  | 1.x | 1.x | 2.12
 
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
