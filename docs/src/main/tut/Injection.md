@@ -109,3 +109,17 @@ val personDS = TypedDataset.create(people)
 ```tut:invisible
 spark.stop()
 ```
+
+Alternatively, an injection instance can be derived for sealed families such as `Gender` using the following 
+import, `import frameless.TypedEncoder.injections._`. This will encode the data constructors as strings.
+
+**Known issue**: An invalid injection instance will be derived if there are data constructors with the same name.
+For example, consider the following sealed family:
+
+```tut:book
+sealed trait Foo
+object A { case object Bar extends Foo }
+object B { case object Bar extends Foo }
+```
+
+`A.Bar` and `B.Bar` will both be encoded as `"Bar"` thereby breaking the law that `invert(apply(x)) == x`.
