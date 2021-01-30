@@ -1,6 +1,6 @@
 # Injection: Creating Custom Encoders
 
-```tut:invisible
+```scala mdoc:invisible
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
@@ -25,21 +25,21 @@ trait Injection[A, B] extends Serializable {
 
 Let's define a simple case class:
 
-```tut:book
+```scala mdoc
 case class Person(age: Int, birthday: java.util.Date)
 val people = Seq(Person(42, new java.util.Date))
 ```
 
 And an instance of a `TypedDataset`:
 
-```tut:book:fail
+```scala mdoc:fail
 val personDS = TypedDataset.create(people)
 ```
 
 Looks like we can't, a `TypedEncoder` instance of `Person` is not available, or more precisely for `java.util.Date`.
 But we can define a injection from `java.util.Date` to an encodable type, like `Long`:
 
-```tut:book
+```scala mdoc
 import frameless._
 implicit val dateToLongInjection = new Injection[java.util.Date, Long] {
   def apply(d: java.util.Date): Long = d.getTime()
@@ -49,14 +49,14 @@ implicit val dateToLongInjection = new Injection[java.util.Date, Long] {
 
 We can be less verbose using the `Injection.apply` function:
 
-```tut:book
+```scala mdoc
 import frameless._
 implicit val dateToLongInjection = Injection((_: java.util.Date).getTime(), new java.util.Date((_: Long)))
 ```
 
 Now we can create our `TypedDataset`:
 
-```tut:book
+```scala mdoc
 val personDS = TypedDataset.create(people)
 ```
 
@@ -64,7 +64,7 @@ val personDS = TypedDataset.create(people)
 
 Let's define a sealed family:
 
-```tut:book
+```scala mdoc
 sealed trait Gender
 case object Male extends Gender
 case object Female extends Gender
@@ -73,20 +73,20 @@ case object Other extends Gender
 
 And a simple case class:
 
-```tut:book
+```scala mdoc
 case class Person(age: Int, gender: Gender)
 val people = Seq(Person(42, Male))
 ```
 
 Again if we try to create a `TypedDataset`, we get a compilation error.
 
-```tut:book:fail
+```scala mdoc:fail
 val personDS = TypedDataset.create(people)
 ```
 
 Let's define an injection instance for `Gender`:
 
-```tut:book
+```scala mdoc
 implicit val genderToInt: Injection[Gender, Int] = Injection(
   {
     case Male   => 1
@@ -102,10 +102,10 @@ implicit val genderToInt: Injection[Gender, Int] = Injection(
 
 And now we can create our `TypedDataset`:
 
-```tut:book
+```scala mdoc
 val personDS = TypedDataset.create(people)
 ```
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```
