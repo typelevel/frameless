@@ -5,7 +5,7 @@ val catsMtlVersion = "0.7.1"
 val scalatest = "3.2.3"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.3"
-val scalacheck = "1.15.2"
+val scalacheck = "1.15.3"
 val irrecVersion = "0.4.0"
 
 val Scala212 = "2.12.12"
