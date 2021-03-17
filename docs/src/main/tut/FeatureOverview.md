@@ -53,7 +53,7 @@ val aptTypedDs = TypedDataset.create(aptDs)
 Or use the Frameless syntax:
 
 ```tut:book
-import frameless.syntax._
+`import frameless.syntax._`
 
 val aptTypedDs2 = aptDs.typed
 ```
