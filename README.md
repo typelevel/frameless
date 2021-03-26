@@ -1,6 +1,6 @@
 # Frameless
 
-[![Travis Badge](https://travis-ci.org/typelevel/frameless.svg?branch=master)](https://travis-ci.org/typelevel/frameless)
+[![Workflow Badge](https://github.com/typelevel/frameless/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/typelevel/frameless/actions/workflows/ci.yml)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
 [![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.12)
 [![Gitter Badge](https://badges.gitter.im/typelevel/frameless.svg)](https://gitter.im/typelevel/frameless)
