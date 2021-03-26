@@ -20,6 +20,8 @@ import frameless.syntax._
 import frameless.functions.aggregate._
 ```
 
+## Working with CSV 
+
 We first load some CSV data and print the schema. 
 
 ```tut:book
@@ -41,16 +43,20 @@ data.show(2).run()
 
 If we do not explicitly define the schema of the CSV file then the types will not match leading to runtime errors. 
 
-
-```tut:book:fail
+```tut:book
 val testDataNoSchema = spark.read.format("csv").load(testDataPath)
 val data: TypedDataset[Iris] = TypedDataset.createUnsafe[Iris](testDataNoSchema)
+```
+
+```tut:book:fail
 data.collect().run()
 ```
 
-When the dataset has many columns, it is impractical to define a case class that contains all the columns we don't need. 
+### Dealing with CSV files with multiple columns
+
+When the dataset has many columns, it is impractical to define a case class that contains many columns we don't need. 
 In such case, we can project the columns we do need, cast them to the proper type, and then call `createUnsafe` using a case class
-that contains only the columns we need.  
+that contains a much smaller subset of the columns.  
 
 ```tut:book
 import org.apache.spark.sql.types.DoubleType
@@ -62,6 +68,38 @@ val data = TypedDataset.createUnsafe[IrisLight](projectedDf)
 data.take(2).run()
 ```
 
+## Working with Parquet
+```tut:invisible
+val testDataPathParquet: String = getClass.getResource("/iris.parquet").getPath
+```
+
+Spark is much better at reading the schema from parquet files. 
+
+```tut:book
+val testDataParquet = spark.read.format("parquet").load(testDataPathParquet)
+testDataParquet.printSchema
+```
+
+So as long as we use a type (case class) that reflects the same number, type, and order of the fields 
+from the data everything works as expected. 
+
+```tut:book
+val data: TypedDataset[Iris] = TypedDataset.createUnsafe[Iris](testDataParquet)
+data.take(2).run()
+```
+
+### Dealing with Parquet files with multiple columns
+
+The main difference compared to CSV is that with Parquet Spark is better at inferring the types. This makes it simpler 
+to project the columns we need without having the cast the to the proper type. 
+
+```tut:book
+final case class IrisLight(kind: String, sLength: Double)
+
+val projectedDf = testDataParquet.select("kind", "sLength")
+val data = TypedDataset.createUnsafe[IrisLight](projectedDf)
+data.take(2).run()
+```
 
 ```tut:invisible
 spark.stop()
