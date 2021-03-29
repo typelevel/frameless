@@ -3,6 +3,7 @@ package cats
 
 import _root_.cats.data.ReaderT
 import _root_.cats.effect.IO
+import _root_.cats.effect.unsafe.implicits.global
 import frameless.{ TypedDataset, TypedDatasetSuite, TypedEncoder, X2 }
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop, Prop._
