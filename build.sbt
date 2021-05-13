@@ -1,5 +1,5 @@
 val sparkVersion = "3.1.1"
-val catsCoreVersion = "2.6.0"
+val catsCoreVersion = "2.6.1"
 val catsEffectVersion = "2.4.0"
 val catsMtlVersion = "0.7.1"
 val scalatest = "3.2.8"
