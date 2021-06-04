@@ -8,7 +8,7 @@ val shapeless = "2.3.7"
 val scalacheck = "1.15.3"
 val irrecVersion = "0.4.0"
 
-val Scala212 = "2.12.12"
+val Scala212 = "2.12.14"
 
 ThisBuild / crossScalaVersions := Seq(Scala212)
 ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
