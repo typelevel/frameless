@@ -60,7 +60,7 @@ jobs:
         run: pip install codecov
 
       - name: Test & Compute Coverage
-        run: 'sbt --client ''++${{ matrix.scala }}; -Dfile.encoding=UTF8; -J-XX:ReservedCodeCacheSize=256M; coverage; test; coverageReport'''
+        run: sbt --client '++${{ matrix.scala }}; coverage; test; coverageReport'
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
@@ -97,4 +97,4 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Documentation
-        run: 'sbt --client ''++${{ matrix.scala }}; -Dfile.encoding=UTF8; -J-XX:ReservedCodeCacheSize=256M; doc'''
+        run: sbt --client '++${{ matrix.scala }}; doc'

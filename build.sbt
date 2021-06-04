@@ -25,7 +25,7 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Run(List("pip install codecov"),
                    name = Some("Setup codecov")
   ),
-  WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "coverage", "test", "coverageReport"),
+  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
                    name = Some("Test & Compute Coverage")
   ),
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
@@ -38,7 +38,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     "docs",
     "Documentation",
     githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "doc"),
+      WorkflowStep.Sbt(List("doc"),
                        name = Some("Documentation")
       )
     ),
