@@ -1,5 +1,5 @@
-val sparkVersion = "3.1.1"
-val catsCoreVersion = "2.6.0"
+val sparkVersion = "3.1.2"
+val catsCoreVersion = "2.6.1"
 val catsEffectVersion = "2.4.0"
 val catsMtlVersion = "0.7.1"
 val scalatest = "3.2.8"
@@ -25,7 +25,7 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Run(List("pip install codecov"),
                    name = Some("Setup codecov")
   ),
-  WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "coverage", "test", "coverageReport"),
+  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
                    name = Some("Test & Compute Coverage")
   ),
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
@@ -38,7 +38,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     "docs",
     "Documentation",
     githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("-Dfile.encoding=UTF8", "-J-XX:ReservedCodeCacheSize=256M", "doc", "tut"),
+      WorkflowStep.Sbt(List("doc"),
                        name = Some("Documentation")
       )
     ),
@@ -62,7 +62,7 @@ lazy val cats = project
   .settings(framelessSettings: _*)
   .settings(publishSettings: _*)
   .settings(
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.0" cross CrossVersion.full),
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
@@ -105,7 +105,6 @@ lazy val docs = project
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
-  .enablePlugins(TutPlugin)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
@@ -113,7 +112,7 @@ lazy val docs = project
     "org.apache.spark" %% "spark-mllib"  % sparkVersion
   ))
   .settings(
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.3" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.0" cross CrossVersion.full),
     scalacOptions ++= Seq(
       "-Ypartial-unification",
       "-Ydelambdafy:inline"
@@ -123,29 +122,8 @@ lazy val docs = project
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  scalacOptions ++= commonScalacOptions(scalaVersion.value),
-  licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
-  testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
-  libraryDependencies ++= Seq(
-    "com.chuusai" %% "shapeless" % shapeless,
-    "org.scalatest" %% "scalatest" % scalatest % "test",
-    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
-    "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
-  javaOptions in Test ++= Seq("-Xmx1G", "-ea"),
-  fork in Test := true,
-  parallelExecution in Test := false
-) ++ consoleSettings
-
-def commonScalacOptions(scalaVersion: String): Seq[String] = {
-
-  val versionSpecific = CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, 11)) =>
-      Seq("-Xlint:-missing-interpolator,_", "-Yinline-warnings")
-    case Some((2, n)) if n >= 12 =>
-      Seq("-Xlint:-missing-interpolator,-unused,_")
-  }
-
-  Seq(
+  scalacOptions ++= Seq(
+    "-Xlint:-missing-interpolator,-unused,_",
     "-target:jvm-1.8",
     "-deprecation",
     "-encoding", "UTF-8",
@@ -160,12 +138,23 @@ def commonScalacOptions(scalaVersion: String): Seq[String] = {
     "-language:existentials",
     "-language:implicitConversions",
     "-language:higherKinds",
-    "-Xfuture") ++ versionSpecific
-}
+    "-Xfuture"
+  ),
+  licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
+  Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
+  libraryDependencies ++= Seq(
+    "com.chuusai" %% "shapeless" % shapeless,
+    "org.scalatest" %% "scalatest" % scalatest % "test",
+    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
+    "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
+  Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
+  Test / fork := true,
+  Test / parallelExecution := false
+) ++ consoleSettings
 
 lazy val consoleSettings = Seq(
-  scalacOptions in (Compile, console) ~= {_.filterNot("-Ywarn-unused-import" == _)},
-  scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
+  Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
+  Test / console / scalacOptions := (Compile / console / scalacOptions).value
 )
 
 lazy val framelessTypedDatasetREPL = Seq(
@@ -173,7 +162,7 @@ lazy val framelessTypedDatasetREPL = Seq(
     val ansi = System.getProperty("sbt.log.noformat", "false") != "true"
     if (ansi) System.setProperty("scala.color", "true")
   },
-  initialCommands in console :=
+  console / initialCommands :=
     """
       |import org.apache.spark.{SparkConf, SparkContext}
       |import org.apache.spark.sql.SparkSession
@@ -189,7 +178,7 @@ lazy val framelessTypedDatasetREPL = Seq(
       |
       |import frameless.TypedDataset
     """.stripMargin,
-  cleanupCommands in console :=
+  console / cleanupCommands :=
     """
       |spark.stop()
     """.stripMargin
@@ -204,7 +193,7 @@ lazy val publishSettings = Seq(
     else
       Some(Opts.resolver.sonatypeStaging)
   },
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   pomIncludeRepository := Function.const(false),
   pomExtra in Global := {
     <url>https://github.com/typelevel/frameless</url>
