@@ -116,7 +116,7 @@ final case class IrisLight(kind: String, sLength: Double)
 
 val projectedDf = testDataParquet.select("kind", "sLength")
 val data = TypedDataset.createUnsafe[IrisLight](projectedDf)
-// data.take(2).run()
+data.take(2).run()
 ```
 
 ```scala mdoc:invisible
