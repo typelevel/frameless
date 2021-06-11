@@ -1,6 +1,6 @@
 # Using Cats with Frameless
 
-```tut:invisible
+```scala mdoc:invisible
 import org.apache.spark.{SparkConf, SparkContext => SC}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
@@ -30,7 +30,7 @@ All the examples below assume you have previously imported `cats.implicits` and 
 
 *Note that you should not import `frameless.syntax._` together with `frameless.cats.implicits._`.*
 
-```tut:book
+```scala mdoc
 import cats.implicits._
 import frameless.cats.implicits._
 ```
@@ -48,7 +48,7 @@ an instance of `cats.effect.Sync[F]`.
 
 This allows one to run operations on `TypedDataset` in an existing monad stack. For example, given
 this pre-existing monad stack:
-```tut:book
+```scala mdoc
 import frameless.TypedDataset
 import cats.data.ReaderT
 import cats.effect.IO
@@ -58,7 +58,7 @@ type Action[T] = ReaderT[IO, SparkSession, T]
 ```
 
 We will be able to request that values from `TypedDataset` will be suspended in this stack:
-```tut:book
+```scala mdoc
 val typedDs = TypedDataset.create(Seq((1, "string"), (2, "another")))
 val result: Action[(Seq[(Int, String)], Long)] = for {
   sample <- typedDs.take[Action](1)
@@ -69,7 +69,7 @@ val result: Action[(Seq[(Int, String)], Long)] = for {
 As with `Job`, note that nothing has been run yet. The effect has been properly suspended. To
 run our program, we must first supply the `SparkSession` to the `ReaderT` layer and then
 run the `IO` effect:
-```tut:book
+```scala mdoc
 result.run(spark).unsafeRunSync()
 ```
 
@@ -80,12 +80,12 @@ stack that has the same capabilities as `Action` above. Namely, the ability to p
 instance of `SparkSession` and the ability to suspend effects.
 
 For these to work, we will need to import the implicit machinery from the `cats-mtl` library:
-```tut:book
+```scala mdoc
 import cats.mtl.implicits._
 ```
 
 And now, we can set the description for the computation being run:
-```tut:book
+```scala mdoc
 val resultWithDescription: Action[(Seq[(Int, String)], Long)] = for {
   r <- result.withDescription("fancy cats")
   session <- ReaderT.ask[IO, SparkSession]
@@ -109,7 +109,7 @@ leveraging a large collection of Type Classes for ordering and aggregating data.
 
 Cats offers ways to sort and aggregate tuples of arbitrary arity.
 
-```tut:book
+```scala mdoc
 import frameless.cats.implicits._
 
 val data: RDD[(Int, Int, Int)] = sc.makeRDD((1, 2, 3) :: (1, 5, 3) :: (8, 2, 3) :: Nil)
@@ -123,7 +123,7 @@ In case the RDD is empty, the `csum`, `cmax` and `cmin` will use the default val
 elements inside the RDD. There are counterpart operations to those that have an `Option` return type
 to deal with the case of an empty RDD:
 
-```tut:book
+```scala mdoc:nest
 val data: RDD[(Int, Int, Int)] = sc.emptyRDD
 
 println(data.csum)
@@ -136,7 +136,7 @@ println(data.cminOption)
 
 The following example aggregates all the elements with a common key.
 
-```tut:book
+```scala mdoc
 type User = String
 type TransactionCount = Int
 
@@ -150,7 +150,7 @@ totalPerUser.collectAsMap
 
 The same example would work for more complex keys.
 
-```tut:book
+```scala mdoc
 import scala.collection.immutable.SortedMap
 
 val allDataComplexKeu =
@@ -164,7 +164,7 @@ overalTasksPerUser.collectAsMap
 
 #### Joins
 
-```tut:book
+```scala mdoc
 // Type aliases for meaningful types
 type TimeSeries = Map[Int,Int]
 type UserName = String
@@ -172,7 +172,7 @@ type UserName = String
 
 Example: Using the implicit full-our-join operator
 
-```tut:book
+```scala mdoc
 import frameless.cats.outer._
 
 val day1: RDD[(UserName,TimeSeries)] = sc.makeRDD( ("John", Map(0 -> 2, 1 -> 4)) :: ("Chris", Map(0 -> 1, 1 -> 2)) :: ("Sam", Map(0 -> 1)) :: Nil )
@@ -189,10 +189,10 @@ on the key and combine values using the default Semigroup for the value type.
 
 In `cats`:
 
-```tut:book
+```scala mdoc
 Map(1 -> 2, 2 -> 3) |+| Map(1 -> 4, 2 -> -1)
 ```
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```

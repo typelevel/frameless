@@ -72,7 +72,7 @@ Further example are available in the [TypedDataFrame join tests.](https://github
 
 We now consider a complete example to see how the Frameless types can improve not only correctness but also the readability of Spark jobs. Consider the following domain of phonebooks, city maps and neighborhoods:
 
-```tut:silent
+```scala mdoc:silent
 type Neighborhood = String
 type Address = String
 
@@ -92,7 +92,7 @@ Our goal will be to compute the neighborhood with unique names, approximating "u
 letters in the alphabet: 'x', 'q', and 'z'. We are going to need a natural language processing library at some point, so
 let's use the following for the example:
 
-```tut:silent
+```scala mdoc:silent
 object NLPLib {
   def uniqueName(name: String): Boolean = name.exists(Set('x', 'q', 'z'))
 }

@@ -38,7 +38,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     "docs",
     "Documentation",
     githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("doc"),
+      WorkflowStep.Sbt(List("doc", "mdoc"),
                        name = Some("Documentation")
       )
     ),
@@ -102,9 +102,11 @@ lazy val ml = project
   )
 
 lazy val docs = project
+  .in(file("mdocs"))
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
+  .enablePlugins(MdocPlugin)
   .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,

@@ -1,6 +1,6 @@
 # Comparing TypedDatasets with Spark's Datasets
 
-```tut:invisible
+```scala mdoc:invisible:reset-object
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
@@ -28,7 +28,7 @@ separately, so if we only need a subset of the columns Spark will optimize for t
 the entire dataset. This is a rather simplistic view of how Spark and parquet work together but it
 will serve us well for the context of this discussion.
 
-```tut:book
+```scala mdoc
 import spark.implicits._
 
 // Our example case class Foo acting here as a schema
@@ -49,7 +49,7 @@ The value `ds` holds the content of the `initialDs` read from a parquet file.
 Let's try to only use field `i` from Foo and see how Spark's Catalyst (the query optimizer)
 optimizes this.
 
-```tut:book
+```scala mdoc
 // Using a standard Spark TypedColumn in select()
 val filteredDs = ds.filter($"i" === 10).select($"i".as[Long])
 
@@ -61,7 +61,7 @@ Unfortunately, this syntax requires handholding by explicitly setting the `Typed
 to return type `Long` (look at the `as[Long]` statement). We will discuss this limitation next in more detail.
 Now, let's take a quick look at the optimized Physical Plan that Spark's Catalyst generated.
 
-```tut:book
+```scala mdoc
 filteredDs.explain()
 ```
 
@@ -73,7 +73,7 @@ Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to
 a non existing column `x`:
 
 
-```tut:fail
+```scala mdoc:crash
 ds.filter($"i" === 10).select($"x".as[Long])
 ```
 
@@ -82,7 +82,7 @@ to type for type-safety. This is clearly an area where we may introduce a bug by
 type. Second, we want a solution where reference to a non existing column name fails at compilation time.
 The standard Spark Dataset can achieve this using the following syntax.
 
-```tut:book
+```scala mdoc
 ds.filter(_.i == 10).map(_.i).show()
 ```
 
@@ -90,13 +90,13 @@ This looks great! It reminds us the familiar syntax from Scala.
 The two closures in filter and map are functions that operate on `Foo` and the
 compiler will helps us capture all the mistakes we mentioned above.
 
-```tut:fail
+```scala mdoc:fail
 ds.filter(_.i == 10).map(_.x).show()
 ```
 
 Unfortunately, this syntax does not allow Spark to optimize the code.
 
-```tut:book
+```scala mdoc
 ds.filter(_.i == 10).map(_.i).explain()
 ```
 
@@ -110,7 +110,7 @@ we use just one or all of `Foo`'s fields.
 The `TypedDataset` in Frameless solves this problem. It allows for a simple and type-safe syntax
 with a fully optimized query plan.
 
-```tut:book
+```scala mdoc
 import frameless.TypedDataset
 import frameless.syntax._
 val fds = TypedDataset.create(ds)
@@ -120,13 +120,13 @@ fds.filter(fds('i) === 10).select(fds('i)).show().run()
 
 And the optimized Physical Plan:
 
-```tut:book
+```scala mdoc
 fds.filter(fds('i) === 10).select(fds('i)).explain()
 ```
 
 And the compiler is our friend.
 
-```tut:fail
+```scala mdoc:fail
 fds.filter(fds('i) === 10).select(fds('x))
 ```
 
@@ -135,30 +135,30 @@ fds.filter(fds('i) === 10).select(fds('x))
 Encoders in Spark's `Datasets` are partially type-safe. If you try to create a `Dataset` using  a type that is not 
  a Scala `Product` then you get a compilation error:
 
-```tut:book
+```scala mdoc
 class Bar(i: Int)
 ```
 
 `Bar` is neither a case class nor a `Product`, so the following correctly gives a compilation error in Spark:
 
-```tut:fail
+```scala mdoc:fail
 spark.createDataset(Seq(new Bar(1)))
 ```
 
 However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
 For example, using the following case class leads to a runtime failure:
 
-```tut:book
+```scala mdoc
 case class MyDate(jday: java.util.Date)
 ```
 
-```tut:book:fail
+```scala mdoc:crash
 val myDateDs = spark.createDataset(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
 ```
 
 In comparison, a TypedDataset will notify about the encoding problem at compile time: 
 
-```tut:book:fail
+```scala mdoc:fail
 TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
 ```
 
@@ -169,22 +169,22 @@ Spark's `Dataset` do not distinguish between columns created from aggregate oper
 such as summing or averaging, and simple projections/selections. 
 This is problematic when you start mixing the two.
 
-```tut:book
+```scala mdoc
 import org.apache.spark.sql.functions.sum
 ```
 
-```tut:book:fail
+```scala mdoc:crash
 ds.select(sum($"i"), $"i"*2)
 ```
 
 In Frameless, mixing the two results in a compilation error.
 
-```tut:book
+```scala mdoc
 // To avoid confusing frameless' sum with the standard Spark's sum
 import frameless.functions.aggregate.{sum => fsum}
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 fds.select(fsum(fds('i)))
 ```
 
@@ -192,19 +192,19 @@ As the error suggests, we expected a `TypedColumn` but we got a `TypedAggregate`
 
 Here is how you apply an aggregation method in Frameless: 
 
-```tut:book
+```scala mdoc
 fds.agg(fsum(fds('i))+22).show().run()
 ```
 
 Similarly, mixing projections while aggregating does not make sense, and in Frameless
 you get a compilation error.  
 
-```tut:book:fail
+```scala mdoc:fail
 fds.agg(fsum(fds('i)), fds('i)).show().run()
 ```
 
 
-```tut:invisible
+```scala mdoc:invisible
 org.apache.commons.io.FileUtils.deleteDirectory(new java.io.File("/tmp/foo/"))
 spark.stop()
 ```

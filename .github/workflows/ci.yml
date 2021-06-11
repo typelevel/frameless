@@ -97,4 +97,4 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Documentation
-        run: sbt --client '++${{ matrix.scala }}; doc'
+        run: sbt --client '++${{ matrix.scala }}; doc; mdoc'
