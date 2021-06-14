@@ -1,6 +1,6 @@
 # Typed Encoders in Frameless
 
-```tut:invisible
+```scala mdoc:invisible:reset-object
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
@@ -11,14 +11,14 @@ System.setProperty("spark.cleaner.ttl", "300")
 
 Spark uses Reflection to derive its `Encoder`s, which is why they can fail at run time. For example, because Spark does not support `java.util.Date`, the following leads to an error:
 
-```tut:silent
+```scala mdoc:silent
 import org.apache.spark.sql.Dataset
 import spark.implicits._
 
 case class DateRange(s: java.util.Date, e: java.util.Date)
 ```
 
-```tut:fail
+```scala mdoc:crash
 val ds: Dataset[DateRange] = Seq(DateRange(new java.util.Date, new java.util.Date)).toDS()
 ```
 
@@ -26,18 +26,18 @@ As shown by the stack trace, this runtime error goes through [ScalaReflection](h
 
 Frameless introduces a new type class called `TypeEncoder` to solve these issues. `TypeEncoder`s are passed around as implicit parameters to every Frameless method to ensure that the data being manipulated is `Encoder`. It uses a standard implicit resolution coupled with shapeless' type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the `java.util.Date` example won't compile with Frameless:
 
-```tut:silent
+```scala mdoc:silent
 import frameless.TypedDataset
 import frameless.syntax._
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
 ```
 
 Type class derivation takes care of recursively constructing (and proving the existence of) `TypeEncoder`s for case classes. The following works as expected:
 
-```tut:book
+```scala mdoc
 case class Bar(d: Double, s: String)
 case class Foo(i: Int, b: Bar)
 val ds: TypedDataset[Foo] = TypedDataset.create(Seq(Foo(1, Bar(1.1, "s"))))
@@ -46,17 +46,17 @@ ds.collect()
 
 But any non-encodable in the case class hierarchy will be detected at compile time:
 
-```tut:silent
+```scala mdoc:silent
 case class BarDate(d: Double, s: String, t: java.util.Date)
 case class FooDate(i: Int, b: BarDate)
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, "s", new java.util.Date))))
 ```
 
 It should be noted that once derived, reflection-based `Encoder`s and implicitly derived `TypeEncoder`s have identical performance. The derivation mechanism is different, but the objects generated to encode and decode JVM objects in Spark's internal representation behave the same at runtime.
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```

@@ -18,7 +18,7 @@ contrary to Spark ML API which only deals with DataFrames (the data structure wi
 please check [Spark ML documentation](https://spark.apache.org/docs/2.2.0/ml-pipeline.html) for more details 
 on `Transformer`s and `Estimator`s.
 
-```tut:invisible
+```scala mdoc:invisible:reset-object
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 
@@ -39,7 +39,7 @@ has a garden or not. We will use a `TypedRandomForestRegressor`.
 As with the Spark ML API, we use a `TypedVectorAssembler` (the type-safe equivalent of `VectorAssembler`)
 to compute feature vectors:
 
-```tut:silent
+```scala mdoc:silent
 import frameless._
 import frameless.syntax._
 import frameless.ml._
@@ -48,7 +48,7 @@ import frameless.ml.regression._
 import org.apache.spark.ml.linalg.Vector
 ```
 
-```tut:book
+```scala mdoc
 case class HouseData(squareFeet: Double, hasGarden: Boolean, price: Double)
 
 val trainingData = TypedDataset.create(Seq(
@@ -68,7 +68,7 @@ val trainingDataWithFeatures = assembler.transform(trainingData).as[HouseDataWit
 In the above code snippet, `.as[HouseDataWithFeatures]` is a `TypedDataset`'s type-safe cast
 (see [TypedDataset: Feature Overview](https://typelevel.org/frameless/FeatureOverview.html)):
 
-```tut:silent
+```scala mdoc:silent
 case class WrongHouseFeatures(
   squareFeet: Double,
   hasGarden: Int, // hasGarden has wrong type
@@ -77,36 +77,36 @@ case class WrongHouseFeatures(
 )
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 assembler.transform(trainingData).as[WrongHouseFeatures]
 ```
 
 Moreover, `TypedVectorAssembler[Features]` will compile only if `Features` contains exclusively fields of type Numeric or Boolean:
 
-```tut:silent
+```scala mdoc:silent
 case class WrongFeatures(squareFeet: Double, hasGarden: Boolean, city: String)
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 TypedVectorAssembler[WrongFeatures]
 ```
 
 The subsequent call `assembler.transform(trainingData)` compiles only if `trainingData` contains all fields (names and types)
 of `Features`:
 
-```tut:book
+```scala mdoc
 case class WrongHouseData(squareFeet: Double, price: Double) // hasGarden is missing
 val wrongTrainingData = TypedDataset.create(Seq(WrongHouseData(20, 100000)))
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 assembler.transform(wrongTrainingData)
 ```
 
 Then, we train the model. To train a Random Forest, one needs to feed it with features (what we predict from) and
 with a label (what we predict). In our example, `price` is the label, `features` are the features:
 
-```tut:book
+```scala mdoc
 case class RFInputs(price: Double, features: Vector)
 val rf = TypedRandomForestRegressor[RFInputs]
 
@@ -116,22 +116,22 @@ val model = rf.fit(trainingDataWithFeatures).run()
 `TypedRandomForestRegressor[RFInputs]` compiles only if `RFInputs`
 contains only one field of type Double (the label) and one field of type Vector (the features):
 
-```tut:silent
+```scala mdoc:silent
 case class WrongRFInputs(labelOfWrongType: String, features: Vector)
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 TypedRandomForestRegressor[WrongRFInputs]
 ```
 
 The subsequent `rf.fit(trainingDataWithFeatures)` call compiles only if `trainingDataWithFeatures` contains the same fields
 (names and types) as RFInputs.
 
-```tut:book
+```scala mdoc
 val wrongTrainingDataWithFeatures = TypedDataset.create(Seq(HouseData(20, false, 100000))) // features are missing
 ```
 
-```tut:book:fail
+```scala mdoc:fail
 rf.fit(wrongTrainingDataWithFeatures) 
 ```
 
@@ -141,7 +141,7 @@ We now want to predict `price` for `testData` using the previously trained model
 `testData` has a default value for `price` (`0` in our case) that will be ignored at prediction time. We reuse
 our `assembler` to compute the feature vector of `testData`.
 
-```tut:book
+```scala mdoc
 val testData = TypedDataset.create(Seq(HouseData(70, true, 0)))
 val testDataWithFeatures = assembler.transform(testData).as[HouseDataWithFeatures]
 
@@ -160,11 +160,32 @@ predictions.select(predictions.col('predictedPrice)).collect.run()
 `model.transform(testDataWithFeatures)` will only compile if `testDataWithFeatures` contains a field `price` of type Double
 and a field `features` of type Vector:
 
-```tut:book:fail
+```scala mdoc:fail
 model.transform(testData)
 ```
 
+```scala mdoc:invisible
+spark.stop()
+```
+
 ## Example 2: predict a categorical value using a `TypedRandomForestClassifier`
+
+```scala mdoc:invisible:reset-object
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SparkSession
+
+val conf = new SparkConf().setMaster("local[*]").setAppName("Frameless repl").set("spark.ui.enabled", "false")
+implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+spark.sparkContext.setLogLevel("WARN")
+
+import spark.implicits._
+import frameless._
+import frameless.syntax._
+import frameless.ml._
+import frameless.ml.feature._
+import frameless.ml.regression._
+import org.apache.spark.ml.linalg.Vector
+```
 
 In this example, we want to predict in which city a house is located depending on its price and its square footage. We use a
 `TypedRandomForestClassifier`.
@@ -175,11 +196,11 @@ As with the Spark ML API, we use a `TypedVectorAssembler` to compute feature vec
 to index `city` values in order to be able to pass them to a `TypedRandomForestClassifier`
 (which only accepts Double values as label):
 
-```tut:silent
+```scala mdoc:silent
 import frameless.ml.classification._
 ```
 
-```tut:book
+```scala mdoc
 case class HouseData(squareFeet: Double, city: String, price: Double)
 
 val trainingData = TypedDataset.create(Seq(
@@ -212,7 +233,7 @@ val indexedData = indexerModel.transform(dataWithFeatures).as[HouseDataWithFeatu
 
 Then, we train the model:
 
-```tut:book
+```scala mdoc
 case class RFInputs(cityIndexed: Double, features: Vector)
 val rf = TypedRandomForestClassifier[RFInputs]
 
@@ -225,7 +246,7 @@ We now want to predict `city` for `testData` using the previously trained model.
 `testData` has a default value for `city` (empty string in our case) that will be ignored at prediction time. We reuse
 our `vectorAssembler` to compute the feature vector of `testData` and our `indexerModel` to index `city`.
 
-```tut:book
+```scala mdoc
 val testData = TypedDataset.create(Seq(HouseData(120, "", 800000)))
 
 val testDataWithFeatures = vectorAssembler.transform(testData).as[HouseDataWithFeatures]
@@ -247,7 +268,7 @@ val indexedPredictions = model.transform(testInput).as[HouseCityPredictionIndexe
 Then, we use a `TypedIndexToString` to get back a String value from `predictedCityIndexed`. `TypedIndexToString` takes
 as input the label array computed by our previous `indexerModel`:
 
-```tut:book
+```scala mdoc
 case class IndexToStringInput(predictedCityIndexed: Double)
 val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)
 
@@ -282,13 +303,13 @@ predictions.select(predictions.col('predictedCity)).collect.run()
 `frameless-ml` provides `TypedEncoder` instances for `org.apache.spark.ml.linalg.Vector` 
 and `org.apache.spark.ml.linalg.Matrix`:
 
-```tut:silent
+```scala mdoc:silent
 import frameless._
 import frameless.ml._
 import org.apache.spark.ml.linalg._
 ```
 
-```tut:book
+```scala mdoc
 val vector = Vectors.dense(1, 2, 3)
 val vectorDs = TypedDataset.create(Seq("label" -> vector))
 
@@ -300,6 +321,6 @@ Under the hood, Vector and Matrix are encoded using `org.apache.spark.ml.linalg.
 and `org.apache.spark.ml.linalg.MatrixUDT`. This is possible thanks to the implicit derivation 
 from `org.apache.spark.sql.types.UserDefinedType[A]` to `TypedEncoder[A]` defined in `TypedEncoder` companion object.
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```
