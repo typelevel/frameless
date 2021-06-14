@@ -10,7 +10,7 @@ spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._
 
-val testDataPath: String = "docs/src/main/resources/iris.data"
+val testDataPath: String = "docs/iris.data"
 ```
 You need these imports for most Frameless projects. 
 
@@ -83,7 +83,7 @@ spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._
 
-val testDataPathParquet: String = "docs/src/main/resources/iris.parquet"
+val testDataPathParquet: String = "docs/iris.parquet"
 import frameless._
 import frameless.syntax._
 import frameless.functions.aggregate._

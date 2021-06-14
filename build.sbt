@@ -107,7 +107,6 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
-  .settings(crossTarget := file(".") / "docs" / "target")
   .settings(libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion,
     "org.apache.spark" %% "spark-sql"  % sparkVersion,
