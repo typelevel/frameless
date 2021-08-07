@@ -425,4 +425,17 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     "ds.select(ds('_1).opt.map(x => x))" shouldNot typeCheck
     "ds.select(ds('_2).opt.map(x => x))" shouldNot typeCheck
   }
+
+  test("field") {
+    val ds = TypedDataset.create((1, (2.3F, "a")) :: Nil)
+    val rs = ds.select(ds('_2).field('_2)).collect().run()
+
+    rs shouldEqual Seq("a")
+  }
+
+  test("field compiles only for valid field") {
+    val ds = TypedDataset.create((1, (2.3F, "a")) :: Nil)
+
+    "ds.select(ds('_2).field('_3))" shouldNot typeCheck
+  }
 }
