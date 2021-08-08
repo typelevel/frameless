@@ -10,30 +10,33 @@ object TypedExpressionEncoder {
 
   /** In Spark, DataFrame has always schema of StructType
     *
-    * DataFrames of primitive types become records with a single field called "value" set in ExpressionEncoder.
+    * DataFrames of primitive types become records 
+    * with a single field called "value" set in ExpressionEncoder.
     */
-  def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
+  def targetStructType[A](encoder: TypedEncoder[A]): StructType =
    encoder.catalystRepr match {
       case x: StructType =>
         if (encoder.nullable) StructType(x.fields.map(_.copy(nullable = true)))
         else x
+
       case dt => new StructType().add("value", dt, nullable = encoder.nullable)
     }
-  }
 
-  def apply[T: TypedEncoder]: Encoder[T] = {
-    val encoder = TypedEncoder[T]
+  def apply[T](implicit encoder: TypedEncoder[T]): Encoder[T] = {
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
     val (out, serializer) = encoder.toCatalyst(in) match {
-      case it @ If(_, _, _: CreateNamedStruct) =>
+      case it @ If(_, _, _: CreateNamedStruct) => {
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
-        (out, it)
-      case other =>
+        out -> it
+      }
+
+      case other => {
         val out = GetColumnByOrdinal(0, encoder.catalystRepr)
 
-       (out, other)
+        out -> other
+      }
     }
 
     new ExpressionEncoder[T](

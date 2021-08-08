@@ -1,11 +1,13 @@
 package frameless
 
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, functions => F}
 import org.apache.spark.sql.types.{
   IntegerType, LongType, ObjectType, StringType, StructField, StructType
 }
+
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
+
 import org.scalatest.matchers.should.Matchers
 
 case class UnitsOnly(a: Unit, b: Unit)
@@ -23,7 +25,7 @@ object RecordEncoderTests {
   case class B(a: Seq[A])
   case class C(b: B)
 
-  class Name(val value: String) extends AnyVal
+  class Name(val value: String) extends AnyVal with Serializable
 
   case class Person(name: Name, age: Int)
 
@@ -32,7 +34,7 @@ object RecordEncoderTests {
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
-    illTyped("""TypedEncoder[UnitsOnly]""")
+    illTyped("TypedEncoder[UnitsOnly]")
   }
 
   test("Dropping fields") {
@@ -107,17 +109,63 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Case class with value class field") {
     import RecordEncoderTests._
 
+    illTyped(
+      // As `Person` is not a Value class
+      "val _: RecordFieldEncoder[Person] = RecordFieldEncoder.valueClass")
+
+    val fieldEncoder: RecordFieldEncoder[Name] = RecordFieldEncoder.valueClass
+
+    fieldEncoder.encoder.catalystRepr shouldBe StringType
+    fieldEncoder.encoder.jvmRepr shouldBe ObjectType(classOf[String])
+
+    // Encode as a Person field
     val encoder = TypedEncoder[Person]
 
     encoder.jvmRepr shouldBe ObjectType(classOf[Person])
 
-    encoder.catalystRepr shouldBe StructType(Seq(
+    val expectedPersonStructType = StructType(Seq(
       StructField("name", StringType, false),
       StructField("age", IntegerType, false)))
+
+    encoder.catalystRepr shouldBe expectedPersonStructType
+
+    val unsafeDs: TypedDataset[Person] = {
+      val rdd = sc.parallelize(Seq(
+        Row.fromTuple("Foo" -> 2),
+        Row.fromTuple("Bar" -> 3)
+      ))
+      val df = session.createDataFrame(rdd, expectedPersonStructType)
+
+      TypedDataset.createUnsafe(df)(encoder)
+    }
+
+    val expected = Seq(
+      Person(new Name("Foo"), 2), Person(new Name("Bar"), 3))
+
+    unsafeDs.collect.run() shouldBe expected
+
+    // Safely created DS
+    val safeDs = TypedDataset.create(expected)
+
+    safeDs.collect.run() shouldBe expected
+
+    // TODO: withColumnReplaced
   }
 
   test("Case class with value class as optional field") {
     import RecordEncoderTests._
+
+    illTyped( // As `Person` is not a Value class
+      """val _: RecordFieldEncoder[Option[Person]] =
+           RecordFieldEncoder.optionValueClass""")
+
+    val fieldEncoder: RecordFieldEncoder[Option[Name]] =
+      RecordFieldEncoder.optionValueClass
+
+    fieldEncoder.encoder.catalystRepr shouldBe StringType
+
+    fieldEncoder.encoder. // !StringType
+      jvmRepr shouldBe ObjectType(classOf[Option[_]])
 
     // Encode as a Person field
     val encoder = TypedEncoder[User]
@@ -129,5 +177,48 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
       StructField("name", StringType, true)))
 
     encoder.catalystRepr shouldBe expectedPersonStructType
+
+    val ds1: TypedDataset[User] = {
+      val rdd = sc.parallelize(Seq(
+        Row(1L, null),
+        Row(2L, "Foo")
+      ))
+
+      val df = session.createDataFrame(rdd, expectedPersonStructType)
+
+      TypedDataset.createUnsafe(df)(encoder)
+    }
+
+    ds1.collect.run() shouldBe Seq(
+      User(1L, None),
+      User(2L, Some(new Name("Foo"))))
+
+    val ds2: TypedDataset[User] = {
+      val sqlContext = session.sqlContext
+      import sqlContext.implicits._
+
+      val df1 = Seq(
+        """{"id":3,"label":"unused"}""",
+        """{"id":4,"name":"Lorem"}""",
+        """{"id":5,"name":null}"""
+      ).toDF
+
+      val df2 = df1.withColumn(
+        "jsonValue",
+        F.from_json(df1.col("value"), expectedPersonStructType)).
+        select("jsonValue.id", "jsonValue.name")
+
+      TypedDataset.createUnsafe[User](df2)
+    }
+
+    val expected = Seq(
+      User(3L, None),
+      User(4L, Some(new Name("Lorem"))),
+      User(5L, None))
+
+    ds2.collect.run() shouldBe expected
+
+    // Safely created ds
+    TypedDataset.create(expected).collect.run() shouldBe expected
   }
 }

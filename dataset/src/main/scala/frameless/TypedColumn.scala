@@ -49,6 +49,7 @@ sealed class TypedAggregate[T, U](expr: Expression)(
   }
 
   override def typed[W, U1: TypedEncoder](c: Column): TypedAggregate[W, U1] = c.typedAggregate
+
   override def lit[U1: TypedEncoder](c: U1): TypedAggregate[T, U1] = litAggr(c)
 }
 
@@ -835,7 +836,8 @@ abstract class AbstractTypedColumn[T, U]
   /**
     * Returns a nested column matching the field `symbol`.
     * 
-    * @param V the type of the nested field
+    * @param symbol the field symbol
+    * @tparam V the type of the nested field
     */
   def field[V](symbol: Witness.Lt[Symbol])(implicit
       i0: TypedColumn.Exists[U, symbol.T, V],
