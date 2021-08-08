@@ -1,7 +1,9 @@
 package frameless
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{
+  ObjectType, StringType, StructField, StructType
+}
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
 import org.scalatest.matchers.should.Matchers
@@ -21,6 +23,8 @@ object RecordEncoderTests {
   case class B(a: Seq[A])
   case class C(b: B)
 }
+
+class Name(val value: String) extends AnyVal
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
@@ -75,5 +79,22 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val rdd = sc.parallelize(Seq(obj))
     val ds = session.createDataset(rdd)(TypedExpressionEncoder[C])
     ds.collect.head shouldBe obj
+  }
+
+  test("Scalar value class") {
+    val encoder = TypedEncoder[Name]
+
+    encoder.jvmRepr shouldBe ObjectType(classOf[Name])
+
+    encoder.catalystRepr shouldBe StructType(
+      Seq(StructField("value", StringType, false)))
+
+    val sqlContext = session.sqlContext
+    import sqlContext.implicits._
+
+    TypedDataset
+      .createUnsafe[Name](Seq("Foo", "Bar").toDF)(encoder)
+      .collect().run() shouldBe Seq(new Name("Foo"), new Name("Bar"))
+
   }
 }
