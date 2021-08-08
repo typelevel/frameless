@@ -2,7 +2,7 @@ package frameless
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{
-  ObjectType, StringType, StructField, StructType
+  IntegerType, ObjectType, StringType, StructField, StructType
 }
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
@@ -22,9 +22,11 @@ object RecordEncoderTests {
   case class A(x: Int)
   case class B(a: Seq[A])
   case class C(b: B)
-}
 
-class Name(val value: String) extends AnyVal
+  class Name(val value: String) extends AnyVal
+
+  case class Person(name: Name, age: Int)
+}
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
@@ -82,6 +84,8 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   }
 
   test("Scalar value class") {
+    import RecordEncoderTests._
+
     val encoder = TypedEncoder[Name]
 
     encoder.jvmRepr shouldBe ObjectType(classOf[Name])
@@ -96,5 +100,17 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
       .createUnsafe[Name](Seq("Foo", "Bar").toDF)(encoder)
       .collect().run() shouldBe Seq(new Name("Foo"), new Name("Bar"))
 
+  }
+
+  test("Case class with value class field") {
+    import RecordEncoderTests._
+
+    val encoder = TypedEncoder[Person]
+
+    encoder.jvmRepr shouldBe ObjectType(classOf[Person])
+
+    encoder.catalystRepr shouldBe StructType(Seq(
+      StructField("name", StringType, false),
+      StructField("age", IntegerType, false)))
   }
 }
