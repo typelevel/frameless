@@ -2,7 +2,7 @@ package frameless
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{
-  IntegerType, ObjectType, StringType, StructField, StructType
+  IntegerType, LongType, ObjectType, StringType, StructField, StructType
 }
 import shapeless.{HList, LabelledGeneric}
 import shapeless.test.illTyped
@@ -26,6 +26,8 @@ object RecordEncoderTests {
   class Name(val value: String) extends AnyVal
 
   case class Person(name: Name, age: Int)
+
+  case class User(id: Long, name: Option[Name])
 }
 
 class RecordEncoderTests extends TypedDatasetSuite with Matchers {
@@ -112,5 +114,20 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     encoder.catalystRepr shouldBe StructType(Seq(
       StructField("name", StringType, false),
       StructField("age", IntegerType, false)))
+  }
+
+  test("Case class with value class as optional field") {
+    import RecordEncoderTests._
+
+    // Encode as a Person field
+    val encoder = TypedEncoder[User]
+
+    encoder.jvmRepr shouldBe ObjectType(classOf[User])
+
+    val expectedPersonStructType = StructType(Seq(
+      StructField("id", LongType, false),
+      StructField("name", StringType, true)))
+
+    encoder.catalystRepr shouldBe expectedPersonStructType
   }
 }
