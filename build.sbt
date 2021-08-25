@@ -15,55 +15,6 @@ ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / crossScalaVersions := Seq(Scala212)
 ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
 
-ThisBuild / githubWorkflowArtifactUpload := false
-
-ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
-                   name = Some("Setup Python"),
-                   params = Map("python-version" -> "3.x")
-  ),
-  WorkflowStep.Run(List("pip install codecov"),
-                   name = Some("Setup codecov")
-  ),
-  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
-                   name = Some("Test & Compute Coverage")
-  ),
-  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
-                   name = Some("Upload Codecov Results")
-  )
-)
-
-ThisBuild / githubWorkflowPublishTargetBranches := Seq(
-  RefPredicate.Equals(Ref.Branch("master")),
-  RefPredicate.StartsWith(Ref.Tag("v"))
-)
-
-ThisBuild / githubWorkflowPublish := Seq(
-  WorkflowStep.Sbt(
-    List("ci-release"),
-    name = Some("Publish artifacts"),
-    env = Map(
-      "PGP_PASSPHRASE"    -> "${{ secrets.PGP_PASSPHRASE }}",
-      "PGP_SECRET"        -> "${{ secrets.PGP_SECRET }}",
-      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
-      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
-    )
-  )
-)
-
-ThisBuild / githubWorkflowAddedJobs ++= Seq(
-  WorkflowJob(
-    "docs",
-    "Documentation",
-    githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("doc", "mdoc"),
-                       name = Some("Documentation")
-      )
-    ),
-    scalas = List(Scala212)
-  )
-)
-
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
@@ -260,3 +211,52 @@ lazy val copyReadmeImpl = Def.task {
   sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
 }
 copyReadme := copyReadmeImpl.value
+
+ThisBuild / githubWorkflowArtifactUpload := false
+
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
+                   name = Some("Setup Python"),
+                   params = Map("python-version" -> "3.x")
+  ),
+  WorkflowStep.Run(List("pip install codecov"),
+                   name = Some("Setup codecov")
+  ),
+  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
+                   name = Some("Test & Compute Coverage")
+  ),
+  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
+                   name = Some("Upload Codecov Results")
+  )
+)
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq(
+  RefPredicate.Equals(Ref.Branch("master")),
+  RefPredicate.StartsWith(Ref.Tag("v"))
+)
+
+ThisBuild / githubWorkflowPublish := Seq(
+  WorkflowStep.Sbt(
+    List("ci-release"),
+    name = Some("Publish artifacts"),
+    env = Map(
+      "PGP_PASSPHRASE"    -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET"        -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
+  )
+)
+
+ThisBuild / githubWorkflowAddedJobs ++= Seq(
+  WorkflowJob(
+    "docs",
+    "Documentation",
+    githubWorkflowJobSetup.value.toList ::: List(
+      WorkflowStep.Sbt(List("doc", "mdoc"),
+                       name = Some("Documentation")
+      )
+    ),
+    scalas = List(Scala212)
+  )
+)
