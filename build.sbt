@@ -10,10 +10,10 @@ val irrecVersion = "0.4.0"
 
 val Scala212 = "2.12.14"
 
+ThisBuild / versionScheme := Some("semver-spec")
+
 ThisBuild / crossScalaVersions := Seq(Scala212)
 ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
-
-ThisBuild / githubWorkflowPublishTargetBranches := Seq()
 
 ThisBuild / githubWorkflowArtifactUpload := false
 
@@ -30,6 +30,24 @@ ThisBuild / githubWorkflowBuild := Seq(
   ),
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
                    name = Some("Upload Codecov Results")
+  )
+)
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq(
+  RefPredicate.Equals(Ref.Branch("master")),
+  RefPredicate.StartsWith(Ref.Tag("v"))
+)
+
+ThisBuild / githubWorkflowPublish := Seq(
+  WorkflowStep.Sbt(
+    List("ci-release"),
+    name = Some("Publish artifacts"),
+    env = Map(
+      "PGP_PASSPHRASE"    -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET"        -> "${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
+    )
   )
 )
 
@@ -70,8 +88,8 @@ lazy val cats = project
     "org.typelevel"    %% "cats-effect"    % catsEffectVersion,
     "org.typelevel"    %% "cats-mtl-core"  % catsMtlVersion,
     "org.typelevel"    %% "alleycats-core" % catsCoreVersion,
-    "org.apache.spark" %% "spark-core"     % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"      % sparkVersion % "provided"))
+    "org.apache.spark" %% "spark-core"     % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-sql"      % sparkVersion % Provided))
   .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project
@@ -80,8 +98,8 @@ lazy val dataset = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"      % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"       % sparkVersion % "provided",
+    "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
     "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
   ))
   .dependsOn(core % "test->test;compile->compile")
@@ -92,9 +110,9 @@ lazy val ml = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
-    "org.apache.spark" %% "spark-mllib"  % sparkVersion % "provided"
+    "org.apache.spark" %% "spark-core"  % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-sql"   % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-mllib" % sparkVersion % Provided
   ))
   .dependsOn(
     core % "test->test;compile->compile",
@@ -108,9 +126,9 @@ lazy val docs = project
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion,
-    "org.apache.spark" %% "spark-mllib"  % sparkVersion
+    "org.apache.spark" %% "spark-core"  % sparkVersion,
+    "org.apache.spark" %% "spark-sql"   % sparkVersion,
+    "org.apache.spark" %% "spark-mllib" % sparkVersion
   ))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.0" cross CrossVersion.full),
@@ -142,6 +160,7 @@ lazy val framelessSettings = Seq(
     "-Xfuture"
   ),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
+  homepage := Some(url("https://github.com/typelevel/frameless")),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
@@ -187,17 +206,8 @@ lazy val framelessTypedDatasetREPL = Seq(
 
 lazy val publishSettings = Seq(
   publishMavenStyle := true,
-  publishTo := {
-    val nexus = "https://oss.sonatype.org/"
-    if (isSnapshot.value)
-      Some(Opts.resolver.sonatypeSnapshots)
-    else
-      Some(Opts.resolver.sonatypeStaging)
-  },
   Test / publishArtifact := false,
-  pomIncludeRepository := Function.const(false),
   pomExtra in Global := {
-    <url>https://github.com/typelevel/frameless</url>
     <scm>
       <url>git@github.com:typelevel/frameless.git</url>
       <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
@@ -242,15 +252,6 @@ lazy val noPublishSettings = Seq(
   publishLocal := (()),
   publishArtifact := false
 )
-
-lazy val credentialSettings = Seq(
-  // For Travis CI - see http://www.cakesolutions.net/teamblogs/publishing-artefacts-to-oss-sonatype-nexus-using-sbt-and-travis-ci
-  credentials ++= (for {
-    username <- Option(System.getenv().get("SONATYPE_USERNAME"))
-    password <- Option(System.getenv().get("SONATYPE_PASSWORD"))
-  } yield Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", username, password)).toSeq
-)
-
 
 lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
