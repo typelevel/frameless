@@ -156,7 +156,6 @@ lazy val framelessTypedDatasetREPL = Seq(
 )
 
 lazy val publishSettings = Seq(
-  publishMavenStyle := true,
   Test / publishArtifact := false,
   pomExtra in Global := {
     <scm>
