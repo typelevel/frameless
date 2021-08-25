@@ -2,8 +2,9 @@
 
 [![Workflow Badge](https://github.com/typelevel/frameless/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/typelevel/frameless/actions/workflows/ci.yml)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
-[![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.12)
 [![Discord Badge](https://img.shields.io/badge/chat-on%20discord-46BC99)](https://discord.gg/ZDZsxWcBJt)
+[![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-core_2.12?color=blue)](https://search.maven.org/search?q=g:org.typelevel%20and%20frameless)
+[![Snapshots Badge](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.typelevel/frameless-core_2.12)](https://oss.sonatype.org/content/repositories/snapshots/org/typelevel/)
 
 Frameless is a Scala library for working with [Spark](http://spark.apache.org/) using more expressive types. 
 It consists of the following modules:
