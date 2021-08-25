@@ -3,7 +3,7 @@
 [![Workflow Badge](https://github.com/typelevel/frameless/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/typelevel/frameless/actions/workflows/ci.yml)
 [![Codecov Badge](https://codecov.io/gh/typelevel/frameless/branch/master/graph/badge.svg)](https://codecov.io/gh/typelevel/frameless)
 [![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-dataset_2.12.svg)](https://maven-badges.herokuapp.com/maven-central/org.typelevel/frameless-dataset_2.12)
-[![Gitter Badge](https://img.shields.io/badge/chat-on%20discord-46BC99)](https://discord.gg/ZDZsxWcBJt)
+[![Discord Badge](https://img.shields.io/badge/chat-on%20discord-46BC99)](https://discord.gg/ZDZsxWcBJt)
 
 Frameless is a Scala library for working with [Spark](http://spark.apache.org/) using more expressive types. 
 It consists of the following modules:
@@ -17,7 +17,7 @@ made for at least the next few versions.
 
 The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
-associated channels (e.g. GitHub, Gitter) to be a safe and friendly environment for contributing and learning.
+associated channels (e.g. GitHub, Discord) to be a safe and friendly environment for contributing and learning.
 
 
 ## Versions and dependencies
@@ -111,7 +111,7 @@ and all its dependencies loaded (including Spark).
 
 ## Need help?
 
-Feel free to messages us on our [gitter](https://gitter.im/typelevel/frameless) 
+Feel free to messages us on our [discord](https://discord.gg/ZDZsxWcBJt) 
 channel for any issues/questions.
 
 
