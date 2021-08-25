@@ -69,7 +69,7 @@ object NewInstanceExprs {
         Literal.fromObject(()) +: tail.from(exprs)
     }
 
-  implicit def deriveNonUnit[K <: Symbol, V , T <: HList]
+  implicit def deriveNonUnit[K <: Symbol, V, T <: HList]
     (implicit
       notUnit: V =:!= Unit,
       tail: NewInstanceExprs[T]
