@@ -111,7 +111,7 @@ lazy val framelessSettings = Seq(
     "-Xfuture"
   ),
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
-  homepage := Some(url("https://github.com/typelevel/frameless")),
+  homepage := Some(url("https://typelevel.org/frameless")),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
