@@ -30,6 +30,7 @@ sealed class TypedColumn[T, U](expr: Expression)(
   }
 
   override def typed[W, U1: TypedEncoder](c: Column): TypedColumn[W, U1] = c.typedColumn
+
   override def lit[U1: TypedEncoder](c: U1): TypedColumn[T,U1] = flit(c)
 }
 
@@ -828,6 +829,18 @@ abstract class AbstractTypedColumn[T, U]
       w1: With.Aux[TT2, W1, W2]
     ): ThisType[W2, Boolean] =
       typed(self.untyped.between(lowerBound.untyped, upperBound.untyped))
+
+  /**
+    * Returns a nested column matching the field `symbol`.
+    * 
+    * @param V the type of the nested field
+    */
+  def field[V](symbol: Witness.Lt[Symbol])(implicit
+      i0: TypedColumn.Exists[U, symbol.T, V],
+      i1: TypedEncoder[V]
+    ): ThisType[T, V] = 
+    typed(self.untyped.getField(symbol.value.name))
+
 }
 
 

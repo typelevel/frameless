@@ -9,9 +9,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: ['*']
+    branches: ['**']
   push:
-    branches: ['*']
+    branches: ['**']
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.12]
+        scala: [2.12.14]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
 
@@ -60,7 +60,7 @@ jobs:
         run: pip install codecov
 
       - name: Test & Compute Coverage
-        run: 'sbt ++${{ matrix.scala }} -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M coverage test coverageReport'
+        run: sbt ++${{ matrix.scala }} coverage test coverageReport
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
@@ -70,7 +70,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.12]
+        scala: [2.12.14]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
     steps:
@@ -80,7 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Java and Scala
-        uses: olafurpg/setup-scala@v10
+        uses: olafurpg/setup-scala@v13
         with:
           java-version: ${{ matrix.java }}
 
@@ -97,4 +97,4 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Documentation
-        run: 'sbt ++${{ matrix.scala }} -Dfile.encoding=UTF8 -J-XX:ReservedCodeCacheSize=256M doc tut'
+        run: sbt ++${{ matrix.scala }} doc mdoc

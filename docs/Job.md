@@ -19,7 +19,7 @@ The toy example showcases the use of for-comprehension to explicitly sequences S
 First we calculate the size of the `TypedDataset` and then we collect to the driver
 exactly 20% of its elements:
 
-```tut:invisible
+```scala mdoc:invisible
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
@@ -32,7 +32,7 @@ spark.sparkContext.setLogLevel("WARN")
 import spark.implicits._
 ```
 
-```tut:book
+```scala mdoc
 import frameless.syntax._
 
 val ds = TypedDataset.create(1 to 20)
@@ -50,7 +50,7 @@ The `countAndTakeJob` can either be executed using `run()` (as we show above) or
 be passed along to other parts of the program to be further composed into more complex sequences
 of Spark jobs.
 
-```tut:book
+```scala mdoc
 import frameless.Job
 def computeMinOfSample(sample: Job[Seq[Int]]): Job[Int] = sample.map(_.min)
 
@@ -61,7 +61,7 @@ Now we can execute this new job by specifying a [group-id][group-id] and a descr
 This allows the programmer to see this information on the Spark UI and help track, say,
 performance issues.
 
-```tut:book
+```scala mdoc
 finalJob.
   withGroupId("samplingJob").
   withDescription("Samples 20% of elements and computes the min").
@@ -69,7 +69,7 @@ finalJob.
 ```
 
 
-```tut:invisible
+```scala mdoc:invisible
 spark.stop()
 ```
 
