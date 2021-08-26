@@ -16,6 +16,6 @@ exclude-labels:
   - 'skip-changelog'
   - 'documentation'
   - 'build/process improvement'
-change-template: '- $TITLE [#$NUMBER](https://github.com/sbt/sbt-jni/pull/$NUMBER) (@$AUTHOR)'
+change-template: '- $TITLE [#$NUMBER](https://github.com/typelevel/frameless/pull/$NUMBER) (@$AUTHOR)'
 template: |
   $CHANGES
