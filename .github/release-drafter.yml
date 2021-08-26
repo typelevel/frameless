@@ -12,6 +12,12 @@ categories:
     labels:
       - 'fix'
       - 'bug'
+include-labels:
+  - 'feature'
+  - 'enhancement'
+  - 'dependency-update'
+  - 'fix'
+  - 'bug'
 exclude-labels:
   - 'skip-changelog'
   - 'documentation'
