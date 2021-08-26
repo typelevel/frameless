@@ -1,0 +1,21 @@
+name-template: '$NEXT_MINOR_VERSION'
+tag-template: 'v$NEXT_MINOR_VERSION'
+categories:
+  - title: 'Added'
+    labels:
+      - 'feature'
+  - title: 'Changed'
+    labels:
+      - 'enhancement'
+      - 'dependency-update'
+  - title: 'Fixed'
+    labels:
+      - 'fix'
+      - 'bug'
+exclude-labels:
+  - 'skip-changelog'
+  - 'documentation'
+  - 'build/process improvement'
+change-template: '- $TITLE [#$NUMBER](https://github.com/sbt/sbt-jni/pull/$NUMBER) (@$AUTHOR)'
+template: |
+  $CHANGES
