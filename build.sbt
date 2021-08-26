@@ -243,7 +243,8 @@ ThisBuild / githubWorkflowPublish := Seq(
       "PGP_SECRET"        -> "${{ secrets.PGP_SECRET }}",
       "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
       "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
-    )
+    ),
+    cond = Some("${{ env.SONATYPE_PASSWORD != '' && env.SONATYPE_USERNAME != '' }}")
   )
 )
 
