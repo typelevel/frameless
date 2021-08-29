@@ -12,19 +12,23 @@ class LitTests extends TypedDatasetSuite with Matchers {
   def prop[A: TypedEncoder](value: A): Prop = {
     val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
+    val l: TypedColumn[Int, A] = lit(value)
+
     // filter forces whole codegen
-    val elems = df.deserialized.filter((_:Int) => true).select(lit(value))
+    val elems = df.deserialized.filter((_:Int) => true).select(l)
       .collect()
       .run()
       .toVector
 
     // otherwise it uses local relation
-    val localElems = df.select(lit(value))
+    val localElems = df.select(l)
       .collect()
       .run()
       .toVector
 
-    (localElems ?= Vector(value)) && (elems ?= Vector(value))
+    val expected = Vector(value)
+
+    (localElems ?= expected) && (elems ?= expected)
   }
 
   test("select(lit(...))") {
