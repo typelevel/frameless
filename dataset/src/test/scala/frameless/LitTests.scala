@@ -2,10 +2,13 @@ package frameless
 
 import frameless.functions.lit
 
-import org.scalacheck.Prop
-import org.scalacheck.Prop._
+import org.scalatest.matchers.should.Matchers
 
-class LitTests extends TypedDatasetSuite {
+import org.scalacheck.{ Arbitrary, Gen, Prop }, Prop._
+
+import RecordEncoderTests.Name
+
+class LitTests extends TypedDatasetSuite with Matchers {
   def prop[A: TypedEncoder](value: A): Prop = {
     val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
@@ -20,7 +23,6 @@ class LitTests extends TypedDatasetSuite {
       .collect()
       .run()
       .toVector
-
 
     (localElems ?= Vector(value)) && (elems ?= Vector(value))
   }
@@ -45,8 +47,27 @@ class LitTests extends TypedDatasetSuite {
 
     check(prop[Food] _)
 
+    implicit def nameArb: Arbitrary[Name] =
+      Arbitrary(Gen.alphaStr.map(new Name(_)))
+
+    check(prop[Name] _)
+
     // doesn't work, object has to be serializable
     // check(prop[frameless.LocalDateTime] _)
+  }
+
+  test("support value class") {
+    val initial = Seq(
+      Q(name = new Name("Foo"), id = 1),
+      Q(name = new Name("Bar"), id = 2))
+    val ds = TypedDataset.create(initial)
+
+    ds.collect.run() shouldBe initial
+
+    val lorem = new Name("Lorem")
+
+    ds.withColumnReplaced('name, lit(lorem)).
+      collect.run() shouldBe initial.map(_.copy(name = lorem))
   }
 
   test("#205: comparing literals encoded using Injection") {
@@ -58,8 +79,10 @@ class LitTests extends TypedDatasetSuite {
     val data = Vector(P(42, today))
     val tds = TypedDataset.create(data)
 
-    tds.filter(tds('d) === today).collect().run()
+    tds.filter(tds('d) === today).collect.run().map(_.i) shouldBe Seq(42)
   }
 }
 
 final case class P(i: Int, d: java.sql.Date)
+
+final case class Q(id: Int, name: Name)

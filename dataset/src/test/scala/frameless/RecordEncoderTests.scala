@@ -25,7 +25,9 @@ object RecordEncoderTests {
   case class B(a: Seq[A])
   case class C(b: B)
 
-  class Name(val value: String) extends AnyVal with Serializable
+  class Name(val value: String) extends AnyVal with Serializable {
+    override def toString = value
+  }
 
   case class Person(name: Name, age: Int)
 
