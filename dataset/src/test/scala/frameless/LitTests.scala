@@ -1,10 +1,10 @@
 package frameless
 
-import frameless.functions.lit
+import frameless.functions.{ lit, litValue }
 
 import org.scalatest.matchers.should.Matchers
 
-import org.scalacheck.{ Arbitrary, Gen, Prop }, Prop._
+import org.scalacheck.Prop, Prop._
 
 import RecordEncoderTests.Name
 
@@ -51,11 +51,6 @@ class LitTests extends TypedDatasetSuite with Matchers {
 
     check(prop[Food] _)
 
-    implicit def nameArb: Arbitrary[Name] =
-      Arbitrary(Gen.alphaStr.map(new Name(_)))
-
-    check(prop[Name] _)
-
     // doesn't work, object has to be serializable
     // check(prop[frameless.LocalDateTime] _)
   }
@@ -70,7 +65,7 @@ class LitTests extends TypedDatasetSuite with Matchers {
 
     val lorem = new Name("Lorem")
 
-    ds.withColumnReplaced('name, lit(lorem)).
+    ds.withColumnReplaced('name, litValue(lorem)).
       collect.run() shouldBe initial.map(_.copy(name = lorem))
   }
 

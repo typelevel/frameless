@@ -151,7 +151,10 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     safeDs.collect.run() shouldBe expected
 
-    // TODO: withColumnReplaced
+    val lorem = new Name("Lorem")
+
+    safeDs.withColumnReplaced('name, functions.litValue(lorem)).
+      collect.run() shouldBe expected.map(_.copy(name = lorem))
   }
 
   test("Case class with value class as optional field") {
