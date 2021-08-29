@@ -20,8 +20,8 @@ package object functions extends Udf with UnaryFunctions {
     *
     * apache/spark
     */
-  def litAggr[A: TypedEncoder, T](value: A): TypedAggregate[T, A] =
-    new TypedAggregate[T,A](lit(value).expr)
+  def litAggr[A, T](value: A)(implicit i0: TypedEncoder[A], i1: Refute[IsValueClass[A]]): TypedAggregate[T, A] =
+    new TypedAggregate[T, A](lit(value).expr)
 
   /** Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
     * sure the injection instance is in scope.
@@ -41,7 +41,7 @@ package object functions extends Udf with UnaryFunctions {
       val expr = new Literal(value, encoder.jvmRepr)
 
       new TypedColumn[T, A](
-        new functions.Lit(
+        Lit(
           dataType = encoder.catalystRepr,
           nullable = encoder.nullable,
           toCatalyst = encoder.toCatalyst(expr).genCode(_),
@@ -57,7 +57,7 @@ package object functions extends Udf with UnaryFunctions {
     * @tparam A the value class
     * @tparam T the row type
     */
-  def litValue[A <: AnyVal, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], V, VS <: HList](value: A)(
+  def litValue[A : IsValueClass, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], V, VS <: HList](value: A)(
     implicit
       i0: LabelledGeneric.Aux[A, G],
       i1: DropUnitValues.Aux[G, H],
@@ -78,7 +78,7 @@ package object functions extends Udf with UnaryFunctions {
       RecordFieldEncoder.valueClass[A, G, H, V].encoder
 
     new TypedColumn[T, A](
-      new Lit(
+      Lit(
         dataType = i5.catalystRepr,
         nullable = i5.nullable,
         toCatalyst = i5.toCatalyst(expr).genCode(_),

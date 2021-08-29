@@ -5,16 +5,15 @@ import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression}
 import org.apache.spark.sql.types.DataType
 
-case class Lit[T <: AnyVal] private[frameless] (
-    val dataType: DataType,
-    val nullable: Boolean,
+private[frameless] case class Lit[T <: AnyVal](
+    dataType: DataType,
+    nullable: Boolean,
     toCatalyst: CodegenContext => ExprCode,
     show: () => String)
     extends Expression
     with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
-  @SuppressWarnings(Array("AsInstanceOf", "MethodReturningAny"))
   def eval(input: InternalRow): Any = {
     val ctx = new CodegenContext()
     val eval = genCode(ctx)

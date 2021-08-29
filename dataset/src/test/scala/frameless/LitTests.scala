@@ -1,6 +1,6 @@
 package frameless
 
-import frameless.functions.{ lit, litValue }
+import frameless.functions.lit
 
 import org.scalatest.matchers.should.Matchers
 
@@ -9,7 +9,7 @@ import org.scalacheck.Prop, Prop._
 import RecordEncoderTests.Name
 
 class LitTests extends TypedDatasetSuite with Matchers {
-  def prop[A: TypedEncoder](value: A): Prop = {
+  def prop[A: TypedEncoder](value: A)(implicit i0: shapeless.Refute[IsValueClass[A]]): Prop = {
     val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
     val l: TypedColumn[Int, A] = lit(value)
@@ -65,7 +65,7 @@ class LitTests extends TypedDatasetSuite with Matchers {
 
     val lorem = new Name("Lorem")
 
-    ds.withColumnReplaced('name, litValue(lorem)).
+    ds.withColumnReplaced('name, functions.litValue(lorem)).
       collect.run() shouldBe initial.map(_.copy(name = lorem))
   }
 

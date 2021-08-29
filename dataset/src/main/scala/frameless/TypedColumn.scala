@@ -33,7 +33,7 @@ sealed class TypedColumn[T, U](expr: Expression)(
 
   override def typed[W, U1: TypedEncoder](c: Column): TypedColumn[W, U1] = c.typedColumn
 
-  override def lit[U1: TypedEncoder](c: U1): TypedColumn[T,U1] = flit(c)
+  override def lit[U1: TypedEncoder](c: U1): TypedColumn[T, U1] = flit(c)
 }
 
 /** Expression used in `agg`-like constructions.

@@ -4,7 +4,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.matchers.should.Matchers
 
-class BitwiseTests extends TypedDatasetSuite with Matchers{
+class BitwiseTests extends TypedDatasetSuite with Matchers {
 
   /**
     * providing instances with implementations for bitwise operations since in the tests

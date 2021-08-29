@@ -188,7 +188,7 @@ object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
    * @tparam K the key type for the fields
    * @tparam V the inner value type
    */
-  implicit def optionValueClass[F <: AnyVal, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], K <: Symbol, V, KS <: ::[_ <: Symbol, HNil]]
+  implicit def optionValueClass[F : IsValueClass, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], K <: Symbol, V, KS <: ::[_ <: Symbol, HNil]]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
       i1: DropUnitValues.Aux[G, H],
@@ -229,7 +229,7 @@ object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
    * @tparam H the single field of the value class (with guarantee it's not a `Unit` value)
    * @tparam V the inner value type
    */
-  implicit def valueClass[F <: AnyVal, G <: ::[_, HNil], H <: ::[_, HNil], V]
+  implicit def valueClass[F : IsValueClass, G <: ::[_, HNil], H <: ::[_, HNil], V]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
       i1: DropUnitValues.Aux[G, H],
