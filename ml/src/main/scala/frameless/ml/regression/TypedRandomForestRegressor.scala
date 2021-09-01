@@ -2,14 +2,14 @@ package frameless
 package ml
 package regression
 
-import frameless.ml.internals.TreesInputsChecker
-import frameless.ml.params.trees.FeatureSubsetStrategy
 import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
 
+import frameless.ml.internals.TreesInputsChecker
+import frameless.ml.params.trees.FeatureSubsetStrategy
+
 /**
- * <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a>
- * learning algorithm for regression.
- * It supports both continuous and categorical features.
+ * <a href="http://en.wikipedia.org/wiki/Random_forest">Random Forest</a> learning algorithm for
+ * regression. It supports both continuous and categorical features.
  */
 final class TypedRandomForestRegressor[Inputs] private[ml] (
     rf: RandomForestRegressor,

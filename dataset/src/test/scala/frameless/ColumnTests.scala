@@ -2,13 +2,17 @@ package frameless
 
 import java.time.Instant
 
-import org.scalacheck.Prop._
-import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
-import org.scalatest.matchers.should.Matchers
-import shapeless.test.illTyped
-import ceedubs.irrec.regex.gen.CharRegexGen.genCharRegexAndCandidate
-
 import scala.math.Ordering.Implicits._
+
+import ceedubs.irrec.regex.gen.CharRegexGen.genCharRegexAndCandidate
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.should.Matchers
+
+import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.Prop._
+
+import Arbitrary.arbitrary
 
 final class ColumnTests extends TypedDatasetSuite with Matchers {
 

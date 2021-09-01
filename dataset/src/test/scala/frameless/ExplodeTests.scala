@@ -1,11 +1,11 @@
 package frameless
 
-import frameless.functions.CatalystExplodableCollection
-import org.scalacheck.{Arbitrary, Prop}
-import org.scalacheck.Prop.forAll
-import org.scalacheck.Prop._
-
 import scala.reflect.ClassTag
+
+import frameless.functions.CatalystExplodableCollection
+
+import org.scalacheck.{Arbitrary, Prop}
+import org.scalacheck.Prop.{forAll, _}
 
 class ExplodeTests extends TypedDatasetSuite {
   test("simple explode test") {

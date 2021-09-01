@@ -2,8 +2,10 @@ package frameless
 package ml
 package regression
 
-import frameless.ml.feature.TypedVectorAssembler
 import org.apache.spark.ml.linalg.Vector
+
+import frameless.ml.feature.TypedVectorAssembler
+
 import org.scalatest.matchers.must.Matchers
 
 class RegressionIntegrationTests extends FramelessMlSuite with Matchers {

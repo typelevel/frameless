@@ -1,14 +1,19 @@
 package frameless
 
+import scala.util.{Properties, Try}
+
 import org.apache.spark.{SparkConf, SparkContext}
+
 import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.scalactic.anyvals.PosZInt
+
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.Checkers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import scala.util.{Properties, Try}
-import org.scalatest.funsuite.AnyFunSuite
+
+import org.scalactic.anyvals.PosZInt
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 

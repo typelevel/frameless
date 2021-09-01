@@ -2,10 +2,12 @@ package frameless
 package ml
 package feature
 
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.must.Matchers
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
-import org.scalatest.matchers.must.Matchers
 
 class TypedIndexToStringTests extends FramelessMlSuite with Matchers {
 

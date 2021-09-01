@@ -1,12 +1,15 @@
 package frameless.forward
 
-import frameless.{TypedDataset, TypedDatasetSuite, TypedEncoder, TypedExpressionEncoder, X1}
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.SparkSession
+
+import frameless.{TypedDataset, TypedDatasetSuite, TypedEncoder, TypedExpressionEncoder, X1}
+
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-
-import scala.reflect.ClassTag
-import org.scalatest.matchers.should.Matchers
 
 class HeadTests extends TypedDatasetSuite with Matchers {
   def propArray[A: TypedEncoder: ClassTag: Ordering](data: Vector[X1[A]])(

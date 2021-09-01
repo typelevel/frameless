@@ -1,11 +1,12 @@
 package frameless
 
+import scala.collection.JavaConverters._
+
+import org.scalatest.matchers.should.Matchers
+
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop._
-import org.scalacheck.{Arbitrary, Gen}
-
-import scala.collection.JavaConverters._
-import org.scalatest.matchers.should.Matchers
 
 class RandomSplitTests extends TypedDatasetSuite with Matchers {
 

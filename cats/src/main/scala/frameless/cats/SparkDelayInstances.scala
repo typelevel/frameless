@@ -1,8 +1,9 @@
 package frameless
 package cats
 
-import _root_.cats.effect.Sync
 import org.apache.spark.sql.SparkSession
+
+import _root_.cats.effect.Sync
 
 trait SparkDelayInstances {
   implicit def framelessCatsSparkDelayForSync[F[_]](implicit S: Sync[F]): SparkDelay[F] =

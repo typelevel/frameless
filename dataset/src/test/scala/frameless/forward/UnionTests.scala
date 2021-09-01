@@ -1,8 +1,9 @@
 package frameless
 
+import shapeless.test.illTyped
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
 
 class UnionTests extends TypedDatasetSuite {
 

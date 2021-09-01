@@ -1,8 +1,7 @@
 package frameless
 
 import org.scalacheck.Prop
-import org.scalacheck.Prop.forAll
-import org.scalacheck.Prop._
+import org.scalacheck.Prop.{forAll, _}
 
 class FlattenTests extends TypedDatasetSuite {
   test("simple flatten test") {

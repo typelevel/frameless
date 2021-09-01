@@ -1,9 +1,11 @@
 package frameless
 package functions
 
+import org.apache.spark.sql.{Column, Encoder}
+
 import frameless.{TypedAggregate, TypedColumn}
 import frameless.functions.aggregate._
-import org.apache.spark.sql.{Column, Encoder}
+
 import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop._
 

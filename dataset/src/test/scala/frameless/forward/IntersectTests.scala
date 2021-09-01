@@ -2,6 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+
 import math.Ordering
 
 class IntersectTests extends TypedDatasetSuite {

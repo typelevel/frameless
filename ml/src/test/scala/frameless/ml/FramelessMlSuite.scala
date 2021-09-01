@@ -1,10 +1,11 @@
 package frameless
 package ml
 
-import org.scalactic.anyvals.PosZInt
 import org.scalatest.BeforeAndAfterAll
-import org.scalatestplus.scalacheck.Checkers
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.Checkers
+
+import org.scalactic.anyvals.PosZInt
 
 class FramelessMlSuite
     extends AnyFunSuite

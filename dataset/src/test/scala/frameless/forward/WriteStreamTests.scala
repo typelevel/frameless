@@ -4,8 +4,9 @@ import java.util.UUID
 
 import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
-import org.scalacheck.Prop._
+
 import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.Prop._
 
 class WriteStreamTests extends TypedDatasetSuite {
 

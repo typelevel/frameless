@@ -1,12 +1,12 @@
 package frameless
 package forward
 
+import scala.collection.JavaConverters._
+
 import org.apache.spark.util.CollectionAccumulator
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-
-import scala.collection.JavaConverters._
 
 class ForeachTests extends TypedDatasetSuite {
   test("foreach") {

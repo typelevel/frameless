@@ -1,9 +1,11 @@
 package frameless
 package ml
 
+import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
+
 import frameless.ml.params.linears.{LossStrategy, Solver}
 import frameless.ml.params.trees.FeatureSubsetStrategy
-import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
+
 import org.scalacheck.{Arbitrary, Gen}
 
 object Generators {

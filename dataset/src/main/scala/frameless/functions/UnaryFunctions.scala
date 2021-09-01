@@ -1,9 +1,9 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.{Column, functions => sparkFunctions}
-
 import scala.math.Ordering
+
+import org.apache.spark.sql.{functions => sparkFunctions, Column}
 
 trait UnaryFunctions {
 
@@ -25,8 +25,8 @@ trait UnaryFunctions {
     new TypedColumn[T, Int](sparkFunctions.size(column.untyped))
 
   /**
-   * Sorts the input array for the given column in ascending order, according to
-   * the natural ordering of the array elements.
+   * Sorts the input array for the given column in ascending order, according to the natural
+   * ordering of the array elements.
    *
    * apache/spark
    */
@@ -37,8 +37,8 @@ trait UnaryFunctions {
       column.uencoder)
 
   /**
-   * Sorts the input array for the given column in descending order, according to
-   * the natural ordering of the array elements.
+   * Sorts the input array for the given column in descending order, according to the natural
+   * ordering of the array elements.
    *
    * apache/spark
    */
@@ -49,8 +49,8 @@ trait UnaryFunctions {
       column.uencoder)
 
   /**
-   * Creates a new row for each element in the given collection. The column types
-   * eligible for this operation are constrained by CatalystExplodableCollection.
+   * Creates a new row for each element in the given collection. The column types eligible for
+   * this operation are constrained by CatalystExplodableCollection.
    *
    * apache/spark
    */

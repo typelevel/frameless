@@ -2,12 +2,15 @@ package frameless
 package ml
 package classification
 
-import shapeless.test.illTyped
 import org.apache.spark.ml.linalg._
+
 import frameless.ml.params.trees.FeatureSubsetStrategy
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.must.Matchers
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import org.scalatest.matchers.must.Matchers
 
 class TypedRandomForestClassifierTests extends FramelessMlSuite with Matchers {
   implicit val arbDouble: Arbitrary[Double] =

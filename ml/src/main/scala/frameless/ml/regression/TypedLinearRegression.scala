@@ -2,14 +2,16 @@ package frameless
 package ml
 package regression
 
-import frameless.ml.internals.LinearInputsChecker
-import frameless.ml.params.linears.{LossStrategy, Solver}
-import frameless.ml.{AppendTransformer, TypedEstimator}
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 
+import frameless.ml.{AppendTransformer, TypedEstimator}
+import frameless.ml.internals.LinearInputsChecker
+import frameless.ml.params.linears.{LossStrategy, Solver}
+
 /**
- * <a href="https://en.wikipedia.org/wiki/Linear_regression">Linear Regression</a>  linear approach to modelling the relationship
- * between a scalar response (or dependent variable) and one or more explanatory variables
+ * <a href="https://en.wikipedia.org/wiki/Linear_regression">Linear Regression</a> linear
+ * approach to modelling the relationship between a scalar response (or dependent variable) and
+ * one or more explanatory variables
  */
 final class TypedLinearRegression[Inputs] private[ml] (
     lr: LinearRegression,

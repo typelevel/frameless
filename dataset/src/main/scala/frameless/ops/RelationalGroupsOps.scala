@@ -2,15 +2,21 @@ package frameless
 package ops
 
 import org.apache.spark.sql.{Column, Dataset, RelationalGroupedDataset}
-import shapeless.ops.hlist.{Mapped, Prepend, ToTraversable, Tupler}
+
 import shapeless.{::, HList, HNil, ProductArgs}
+import shapeless.ops.hlist.{Mapped, Prepend, ToTraversable, Tupler}
 
 /**
- * @param groupingFunc functions used to group elements, can be cube or rollup
- * @tparam T the original `TypedDataset's` type T
- * @tparam TK all columns chosen for aggregation
- * @tparam K individual columns' types as HList
- * @tparam KT individual columns' types as Tuple
+ * @param groupingFunc
+ *   functions used to group elements, can be cube or rollup
+ * @tparam T
+ *   the original `TypedDataset's` type T
+ * @tparam TK
+ *   all columns chosen for aggregation
+ * @tparam K
+ *   individual columns' types as HList
+ * @tparam KT
+ *   individual columns' types as Tuple
  */
 private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT](
     self: TypedDataset[T],
@@ -24,11 +30,16 @@ private[ops] abstract class RelationalGroupsOps[T, TK <: HList, K <: HList, KT](
   object agg extends ProductArgs {
 
     /**
-     * @tparam TC   resulting columns after aggregation function
-     * @tparam C    individual columns' types as HList
-     * @tparam OptK columns' types mapped to Option
-     * @tparam Out0 OptK columns appended to C
-     * @tparam Out1 output type
+     * @tparam TC
+     *   resulting columns after aggregation function
+     * @tparam C
+     *   individual columns' types as HList
+     * @tparam OptK
+     *   columns' types mapped to Option
+     * @tparam Out0
+     *   OptK columns appended to C
+     * @tparam Out1
+     *   output type
      */
     def applyProduct[TC <: HList, C <: HList, OptK <: HList, Out0 <: HList, Out1](columns: TC)(
         implicit i3: AggregateTypes.Aux[
@@ -102,8 +113,8 @@ private[ops] abstract class RelationalGroups1Ops[K1, V](
   }
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
@@ -175,8 +186,8 @@ private[ops] abstract class RelationalGroups2Ops[K1, K2, V](
   }
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {

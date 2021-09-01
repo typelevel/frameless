@@ -2,6 +2,7 @@ package frameless
 package ops
 
 import frameless.functions.aggregate._
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 

@@ -2,12 +2,15 @@ package frameless
 package ml
 package regression
 
-import frameless.ml.params.linears.{LossStrategy, Solver}
 import org.apache.spark.ml.linalg._
+
+import frameless.ml.params.linears.{LossStrategy, Solver}
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop._
-import org.scalatest.matchers.should.Matchers
-import shapeless.test.illTyped
 
 class TypedLinearRegressionTests extends FramelessMlSuite with Matchers {
 

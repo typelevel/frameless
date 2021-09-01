@@ -2,8 +2,10 @@ package frameless
 package ml
 package classification
 
-import frameless.ml.feature.{TypedIndexToString, TypedStringIndexer, TypedVectorAssembler}
 import org.apache.spark.ml.linalg.Vector
+
+import frameless.ml.feature.{TypedIndexToString, TypedStringIndexer, TypedVectorAssembler}
+
 import org.scalatest.matchers.must.Matchers
 
 class ClassificationIntegrationTests extends FramelessMlSuite with Matchers {

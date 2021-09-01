@@ -1,16 +1,19 @@
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
-import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
+import org.apache.spark.sql.catalyst.expressions.{
+  Alias,
+  CreateStruct,
+  Expression,
+  NamedExpression,
+  _
+}
+import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.types.ObjectType
-import scala.reflect.ClassTag
+import org.apache.spark.sql.types.{ObjectType, _}
 
 object FramelessInternals {
   def objectTypeFor[A](implicit classTag: ClassTag[A]): ObjectType = ObjectType(

@@ -1,9 +1,11 @@
 package frameless
 
+import scala.reflect.ClassTag
+
+import shapeless.test.illTyped
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
-import scala.reflect.ClassTag
 
 class SelectTests extends TypedDatasetSuite {
   test("select('a) FROM abcd") {

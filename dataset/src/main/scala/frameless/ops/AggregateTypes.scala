@@ -6,7 +6,8 @@ import shapeless._
 /**
  * A type class to extract the column types out of an HList of [[frameless.TypedAggregate]].
  *
- * @note This type class is mostly a workaround to issue with slow implicit derivation for Comapped.
+ * @note
+ *   This type class is mostly a workaround to issue with slow implicit derivation for Comapped.
  * @example
  * {{{
  *   type U = TypedAggregate[T,A] :: TypedAggregate[T,B] :: TypedAggregate[T,C] :: HNil

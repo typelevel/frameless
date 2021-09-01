@@ -1,11 +1,13 @@
 package frameless
 package ops
 
-import frameless.functions.aggregate._
 import org.apache.spark.sql.{functions => sparkFunctions}
+
+import frameless.functions.aggregate._
+
+import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop._
-import org.scalacheck.{Gen, Prop}
 
 class PivotTest extends TypedDatasetSuite {
   def withCustomGenX4: Gen[Vector[X4[String, String, Int, Boolean]]] = {

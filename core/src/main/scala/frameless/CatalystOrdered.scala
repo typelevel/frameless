@@ -1,6 +1,7 @@
 package frameless
 
 import scala.annotation.implicitNotFound
+
 import shapeless.{Generic, HList, Lazy}
 import shapeless.ops.hlist.LiftAll
 

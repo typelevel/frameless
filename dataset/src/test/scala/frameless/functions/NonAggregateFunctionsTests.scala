@@ -3,11 +3,14 @@ package functions
 
 import java.io.File
 
-import frameless.functions.nonAggregate._
 import org.apache.commons.io.FileUtils
-import org.apache.spark.sql.{Column, Encoder, SaveMode, functions => sparkFunctions}
-import org.scalacheck.Prop._
+
+import org.apache.spark.sql.{functions => sparkFunctions, Column, Encoder, SaveMode}
+
+import frameless.functions.nonAggregate._
+
 import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.Prop._
 
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
   val testTempFiles = "target/testoutput"

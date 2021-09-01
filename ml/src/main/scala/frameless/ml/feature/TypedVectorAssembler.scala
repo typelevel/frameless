@@ -2,13 +2,14 @@ package frameless
 package ml
 package feature
 
+import scala.annotation.implicitNotFound
+
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.ml.linalg.Vector
-import shapeless.{HList, HNil, LabelledGeneric}
+
+import shapeless.{HList, HNil, LabelledGeneric, _}
 import shapeless.ops.hlist.ToTraversable
 import shapeless.ops.record.{Keys, Values}
-import shapeless._
-import scala.annotation.implicitNotFound
 
 /**
  * A feature transformer that merges multiple columns into a vector column.

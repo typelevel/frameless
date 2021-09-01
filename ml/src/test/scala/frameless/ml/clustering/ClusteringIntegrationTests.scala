@@ -2,12 +2,13 @@ package frameless
 package ml
 package clustering
 
-import frameless.ml.FramelessMlSuite
-import frameless.ml.classification.{TypedBisectingKMeans, TypedKMeans}
 import org.apache.spark.ml.linalg.Vector
+
 import frameless._
-import frameless.ml._
+import frameless.ml.{FramelessMlSuite, _}
+import frameless.ml.classification.{TypedBisectingKMeans, TypedKMeans}
 import frameless.ml.feature._
+
 import org.scalatest.matchers.must.Matchers
 
 class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {

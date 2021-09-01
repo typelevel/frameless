@@ -2,10 +2,10 @@ package frameless
 package ml
 package internals
 
-import shapeless.ops.hlist.Length
-import shapeless.{HList, LabelledGeneric, Nat, Witness}
-
 import scala.annotation.implicitNotFound
+
+import shapeless.{HList, LabelledGeneric, Nat, Witness}
+import shapeless.ops.hlist.Length
 
 /**
  * Can be used for all unary transformers (i.e almost all of them)

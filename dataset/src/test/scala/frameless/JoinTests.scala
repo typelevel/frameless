@@ -1,6 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.types.{StructField, StructType}
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 

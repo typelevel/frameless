@@ -1,8 +1,9 @@
 package frameless
 package ml
 
-import frameless.ops.SmartProject
 import org.apache.spark.ml.{Estimator, Model}
+
+import frameless.ops.SmartProject
 
 /**
  * A TypedEstimator fits models to data.

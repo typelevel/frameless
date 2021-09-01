@@ -1,9 +1,10 @@
 package frameless
 
 import frameless.CollectTests.prop
+import shapeless.test.illTyped
+
 import org.scalacheck._
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
 
 sealed trait Country
 case object France extends Country

@@ -1,8 +1,9 @@
 package frameless
 
-import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.ml.FramelessInternals
 import org.apache.spark.ml.linalg.{Matrix, Vector}
+
+import org.apache.spark.sql.FramelessInternals.UserDefinedType
 
 package object ml {
 

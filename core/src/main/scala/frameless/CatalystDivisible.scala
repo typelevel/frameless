@@ -3,8 +3,8 @@ package frameless
 import scala.annotation.implicitNotFound
 
 /**
- * Spark divides everything as Double, expect BigDecimals are divided into
- * another BigDecimal, benefiting from some added precision.
+ * Spark divides everything as Double, expect BigDecimals are divided into another BigDecimal,
+ * benefiting from some added precision.
  */
 @implicitNotFound("Cannot compute division on type ${In}.")
 trait CatalystDivisible[In, Out]

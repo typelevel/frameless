@@ -2,22 +2,22 @@ package frameless
 
 import java.util
 
+import scala.util.Random
+
 import org.apache.spark.rdd.RDD
+import org.apache.spark.storage.StorageLevel
+
+import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, DataFrameWriter, SQLContext, SparkSession}
-import org.apache.spark.storage.StorageLevel
-
-import scala.util.Random
 
 /**
- * This trait implements [[TypedDataset]] methods that have the same signature
- * than their `Dataset` equivalent. Each method simply forwards the call to the
- * underlying `Dataset`.
+ * This trait implements [[TypedDataset]] methods that have the same signature than their
+ * `Dataset` equivalent. Each method simply forwards the call to the underlying `Dataset`.
  *
- * Documentation marked "apache/spark" is thanks to apache/spark Contributors
- * at https://github.com/apache/spark, licensed under Apache v2.0 available at
+ * Documentation marked "apache/spark" is thanks to apache/spark Contributors at
+ * https://github.com/apache/spark, licensed under Apache v2.0 available at
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
@@ -64,8 +64,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   /**
    * Returns a `QueryExecution` from this [[TypedDataset]].
    *
-   * It is the primary workflow for executing relational queries using Spark.  Designed to allow easy
-   * access to the intermediate phases of query execution for developers.
+   * It is the primary workflow for executing relational queries using Spark. Designed to allow
+   * easy access to the intermediate phases of query execution for developers.
    *
    * apache/spark
    */
@@ -73,7 +73,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.queryExecution
 
   /**
-   * Converts this strongly typed collection of data to generic Dataframe.  In contrast to the
+   * Converts this strongly typed collection of data to generic Dataframe. In contrast to the
    * strongly typed objects that Dataset operations work on, a Dataframe returns generic Row
    * objects that allow fields to be accessed by ordinal or name.
    *
@@ -99,7 +99,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.repartition(numPartitions))
 
   /**
-   * Get the [[TypedDataset]]'s current storage level, or StorageLevel.NONE if not persisted.
+   * Get the [[TypedDataset]] 's current storage level, or StorageLevel.NONE if not persisted.
    *
    * apache/spark
    */
@@ -115,7 +115,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.toJSON)
 
   /**
-   * Interface for saving the content of the non-streaming [[TypedDataset]] out into external storage.
+   * Interface for saving the content of the non-streaming [[TypedDataset]] out into external
+   * storage.
    *
    * apache/spark
    */
@@ -131,10 +132,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.writeStream
 
   /**
-   * Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions.
-   * Similar to coalesce defined on an RDD, this operation results in a narrow dependency, e.g.
-   * if you go from 1000 partitions to 100 partitions, there will not be a shuffle, instead each of
-   * the 100 new partitions will claim 10 of the current partitions.
+   * Returns a new [[TypedDataset]] that has exactly `numPartitions` partitions. Similar to
+   * coalesce defined on an RDD, this operation results in a narrow dependency, e.g. if you go
+   * from 1000 partitions to 100 partitions, there will not be a shuffle, instead each of the
+   * 100 new partitions will claim 10 of the current partitions.
    *
    * apache/spark
    */
@@ -177,10 +178,11 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.sample(withReplacement, fraction, seed))
 
   /**
-   * Returns a new [[TypedDataset]] that contains only the unique elements of this [[TypedDataset]].
+   * Returns a new [[TypedDataset]] that contains only the unique elements of this
+   * [[TypedDataset]].
    *
-   * Note that, equality checking is performed directly on the encoded representation of the data
-   * and thus is not affected by a custom `equals` function defined on `T`.
+   * Note that, equality checking is performed directly on the encoded representation of the
+   * data and thus is not affected by a custom `equals` function defined on `T`.
    *
    * apache/spark
    */
@@ -188,9 +190,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.distinct)
 
   /**
-   * Returns a best-effort snapshot of the files that compose this [[TypedDataset]]. This method simply
-   * asks each constituent BaseRelation for its respective files and takes the union of all results.
-   * Depending on the source relations, this may not find all input files. Duplicates are removed.
+   * Returns a best-effort snapshot of the files that compose this [[TypedDataset]]. This method
+   * simply asks each constituent BaseRelation for its respective files and takes the union of
+   * all results. Depending on the source relations, this may not find all input files.
+   * Duplicates are removed.
    *
    * apache/spark
    */
@@ -199,8 +202,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.inputFiles
 
   /**
-   * Returns true if the `collect` and `take` methods can be run locally
-   * (without any Spark executors).
+   * Returns true if the `collect` and `take` methods can be run locally (without any Spark
+   * executors).
    *
    * apache/spark
    */
@@ -208,12 +211,11 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.isLocal
 
   /**
-   * Returns true if this [[TypedDataset]] contains one or more sources that continuously
-   * return data as it arrives. A [[TypedDataset]] that reads data from a streaming source
-   * must be executed as a `StreamingQuery` using the `start()` method in
-   * `DataStreamWriter`. Methods that return a single answer, e.g. `count()` or
-   * `collect()`, will throw an `AnalysisException` when there is a streaming
-   * source present.
+   * Returns true if this [[TypedDataset]] contains one or more sources that continuously return
+   * data as it arrives. A [[TypedDataset]] that reads data from a streaming source must be
+   * executed as a `StreamingQuery` using the `start()` method in `DataStreamWriter`. Methods
+   * that return a single answer, e.g. `count()` or `collect()`, will throw an
+   * `AnalysisException` when there is a streaming source present.
    *
    * apache/spark
    */
@@ -221,11 +223,11 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.isStreaming
 
   /**
-   * Returns a new [[TypedDataset]] that contains only the elements of this [[TypedDataset]] that are also
-   * present in `other`.
+   * Returns a new [[TypedDataset]] that contains only the elements of this [[TypedDataset]]
+   * that are also present in `other`.
    *
-   * Note that, equality checking is performed directly on the encoded representation of the data
-   * and thus is not affected by a custom `equals` function defined on `T`.
+   * Note that, equality checking is performed directly on the encoded representation of the
+   * data and thus is not affected by a custom `equals` function defined on `T`.
    *
    * apache/spark
    */
@@ -233,8 +235,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.intersect(other.dataset))
 
   /**
-   * Randomly splits this [[TypedDataset]] with the provided weights.
-   * Weights for splits, will be normalized if they don't sum to 1.
+   * Randomly splits this [[TypedDataset]] with the provided weights. Weights for splits, will
+   * be normalized if they don't sum to 1.
    *
    * apache/spark
    */
@@ -244,8 +246,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   // $COVERAGE-ON$
 
   /**
-   * Randomly splits this [[TypedDataset]] with the provided weights.
-   * Weights for splits, will be normalized if they don't sum to 1.
+   * Randomly splits this [[TypedDataset]] with the provided weights. Weights for splits, will
+   * be normalized if they don't sum to 1.
    *
    * apache/spark
    */
@@ -253,8 +255,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     dataset.randomSplit(weights, seed).map(TypedDataset.create[T])
 
   /**
-   * Returns a Java list that contains randomly split [[TypedDataset]] with the provided weights.
-   * Weights for splits, will be normalized if they don't sum to 1.
+   * Returns a Java list that contains randomly split [[TypedDataset]] with the provided
+   * weights. Weights for splits, will be normalized if they don't sum to 1.
    *
    * apache/spark
    */
@@ -264,11 +266,11 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   }
 
   /**
-   * Returns a new Dataset containing rows in this Dataset but not in another Dataset.
-   * This is equivalent to `EXCEPT` in SQL.
+   * Returns a new Dataset containing rows in this Dataset but not in another Dataset. This is
+   * equivalent to `EXCEPT` in SQL.
    *
-   * Note that, equality checking is performed directly on the encoded representation of the data
-   * and thus is not affected by a custom `equals` function defined on `T`.
+   * Note that, equality checking is performed directly on the encoded representation of the
+   * data and thus is not affected by a custom `equals` function defined on `T`.
    *
    * apache/spark
    */
@@ -285,8 +287,9 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
 
   /**
    * Persist this [[TypedDataset]] with the given storage level.
-   * @param newLevel One of: `MEMORY_ONLY`, `MEMORY_AND_DISK`, `MEMORY_ONLY_SER`,
-   *   `MEMORY_AND_DISK_SER`, `DISK_ONLY`, `MEMORY_ONLY_2`, `MEMORY_AND_DISK_2`, etc.
+   * @param newLevel
+   *   One of: `MEMORY_ONLY`, `MEMORY_AND_DISK`, `MEMORY_ONLY_SER`, `MEMORY_AND_DISK_SER`,
+   *   `DISK_ONLY`, `MEMORY_ONLY_2`, `MEMORY_AND_DISK_2`, etc.
    *
    * apache/spark
    */
@@ -294,8 +297,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     TypedDataset.create(dataset.persist(newLevel))
 
   /**
-   * Mark the [[TypedDataset]] as non-persistent, and remove all blocks for it from memory and disk.
-   * @param blocking Whether to block until all blocks are deleted.
+   * Mark the [[TypedDataset]] as non-persistent, and remove all blocks for it from memory and
+   * disk.
+   * @param blocking
+   *   Whether to block until all blocks are deleted.
    *
    * apache/spark
    */
@@ -335,33 +340,34 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
   // $COVERAGE-ON$
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    *
-   * @example The correct way to do a projection on a single column is to
-   *          use the `select` method as follows:
+   * @example
+   *   The correct way to do a projection on a single column is to use the `select` method as
+   *   follows:
    *
-   *          {{{
+   * {{{
    *           ds: TypedDataset[(String, String, String)] -> ds.select(ds('_2)).run()
-   *          }}}
+   * }}}
    *
-   *          Spark provides an alternative way to obtain the same resulting `Dataset`,
-   *          using the `map` method:
+   * Spark provides an alternative way to obtain the same resulting `Dataset`, using the `map`
+   * method:
    *
-   *          {{{
+   * {{{
    *           ds: TypedDataset[(String, String, String)] -> ds.deserialized.map(_._2).run()
-   *          }}}
+   * }}}
    *
-   *          This second approach is however substantially slower than the first one,
-   *          and should be avoided as possible. Indeed, under the hood this `map` will
-   *          deserialize the entire `Tuple3` to an full JVM object, call the apply
-   *          method of the `_._2` closure on it, and serialize the resulting String back
-   *          to its Catalyst representation.
+   * This second approach is however substantially slower than the first one, and should be
+   * avoided as possible. Indeed, under the hood this `map` will deserialize the entire `Tuple3`
+   * to an full JVM object, call the apply method of the `_._2` closure on it, and serialize the
+   * resulting String back to its Catalyst representation.
    */
   object deserialized {
 
     /**
-     * Returns a new [[TypedDataset]] that contains the result of applying `func` to each element.
+     * Returns a new [[TypedDataset]] that contains the result of applying `func` to each
+     * element.
      *
      * apache/spark
      */
@@ -369,7 +375,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
       TypedDataset.create(self.dataset.map(func)(TypedExpressionEncoder[U]))
 
     /**
-     * Returns a new [[TypedDataset]] that contains the result of applying `func` to each partition.
+     * Returns a new [[TypedDataset]] that contains the result of applying `func` to each
+     * partition.
      *
      * apache/spark
      */
@@ -377,8 +384,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
       TypedDataset.create(self.dataset.mapPartitions(func)(TypedExpressionEncoder[U]))
 
     /**
-     * Returns a new [[TypedDataset]] by first applying a function to all elements of this [[TypedDataset]],
-     * and then flattening the results.
+     * Returns a new [[TypedDataset]] by first applying a function to all elements of this
+     * [[TypedDataset]], and then flattening the results.
      *
      * apache/spark
      */
@@ -394,10 +401,12 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
       TypedDataset.create(self.dataset.filter(func))
 
     /**
-     * Optionally reduces the elements of this [[TypedDataset]] using the specified binary function. The given
-     * `func` must be commutative and associative or the result may be non-deterministic.
+     * Optionally reduces the elements of this [[TypedDataset]] using the specified binary
+     * function. The given `func` must be commutative and associative or the result may be
+     * non-deterministic.
      *
-     * Differs from `Dataset#reduce` by wrapping its result into an `Option` and an effect-suspending `F`.
+     * Differs from `Dataset#reduce` by wrapping its result into an `Option` and an
+     * effect-suspending `F`.
      */
     def reduceOption[F[_]](func: (T, T) => T)(implicit F: SparkDelay[F]): F[Option[T]] =
       F.delay {

@@ -1,13 +1,15 @@
 package frameless
 package cats
 
-import _root_.cats._
-import _root_.cats.kernel.{CommutativeMonoid, CommutativeSemigroup}
-import _root_.cats.implicits._
-import alleycats.Empty
-
 import scala.reflect.ClassTag
+
 import org.apache.spark.rdd.RDD
+
+import _root_.cats._
+import _root_.cats.implicits._
+import _root_.cats.kernel.{CommutativeMonoid, CommutativeSemigroup}
+
+import alleycats.Empty
 
 object implicits extends FramelessSyntax with SparkDelayInstances {
   implicit class rddOps[A: ClassTag](lhs: RDD[A]) {

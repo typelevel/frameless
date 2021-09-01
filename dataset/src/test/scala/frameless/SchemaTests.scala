@@ -1,11 +1,14 @@
 package frameless
 
-import frameless.functions.aggregate._
-import frameless.functions._
 import org.apache.spark.sql.types.StructType
+
+import frameless.functions._
+import frameless.functions.aggregate._
+
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.matchers.should.Matchers
 
 class SchemaTests extends TypedDatasetSuite with Matchers {
 

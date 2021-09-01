@@ -2,11 +2,12 @@ package frameless
 package ml
 package internals
 
-import shapeless.labelled.FieldType
 import shapeless.{::, DepFn1, HList, Witness}
+import shapeless.labelled.FieldType
 
 /**
- * Typeclass supporting record selection by value type (returning the first key whose value is of type `Value`)
+ * Typeclass supporting record selection by value type (returning the first key whose value is
+ * of type `Value`)
  */
 trait SelectorByValue[L <: HList, Value] extends DepFn1[L] with Serializable {
   type Out <: Symbol

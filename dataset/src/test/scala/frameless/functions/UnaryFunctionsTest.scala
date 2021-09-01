@@ -1,12 +1,13 @@
 package frameless
 package functions
 
-import org.scalacheck.{Arbitrary, Prop}
-import org.scalacheck.Prop._
 import scala.collection.SeqLike
 
 import scala.math.Ordering
 import scala.reflect.ClassTag
+
+import org.scalacheck.{Arbitrary, Prop}
+import org.scalacheck.Prop._
 
 class UnaryFunctionsTest extends TypedDatasetSuite {
   test("size tests") {

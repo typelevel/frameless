@@ -1,9 +1,9 @@
 package frameless
 
+import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{GenericInternalRow, UnsafeArrayData}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.FramelessInternals.UserDefinedType
 
 @SQLUserDefinedType(udt = classOf[UdtEncodedClassUdt])
 class UdtEncodedClass(val a: Int, val b: Array[Double]) {

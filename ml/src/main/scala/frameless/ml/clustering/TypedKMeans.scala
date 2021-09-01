@@ -2,14 +2,17 @@ package frameless
 package ml
 package classification
 
+import org.apache.spark.ml.clustering.{KMeans, KMeansModel}
+
 import frameless.ml.internals.VectorInputsChecker
 import frameless.ml.params.kmeans.KMeansInitMode
-import org.apache.spark.ml.clustering.{KMeans, KMeansModel}
 
 /**
  * K-means clustering with support for k-means|| initialization proposed by Bahmani et al.
  *
- * @see <a href="http://dx.doi.org/10.14778/2180912.2180915">Bahmani et al., Scalable k-means++.</a>
+ * @see
+ *   <a href="http://dx.doi.org/10.14778/2180912.2180915">Bahmani et al., Scalable
+ *   k-means++.</a>
  */
 class TypedKMeans[Inputs] private[ml] (
     km: KMeans,

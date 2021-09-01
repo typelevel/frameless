@@ -3,10 +3,12 @@ package ml
 package feature
 
 import frameless.ml.feature.TypedStringIndexer.HandleInvalid
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.must.Matchers
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
-import org.scalatest.matchers.must.Matchers
 
 class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
 

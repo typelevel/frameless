@@ -1,11 +1,13 @@
 package frameless
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.Encoder
-import org.scalacheck.{Arbitrary, Gen, Prop}
-import org.scalacheck.Prop._
+
 import org.scalatest.matchers.should.Matchers
 
-import scala.reflect.ClassTag
+import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.Prop._
 
 class NumericTests extends TypedDatasetSuite with Matchers {
   test("plus") {

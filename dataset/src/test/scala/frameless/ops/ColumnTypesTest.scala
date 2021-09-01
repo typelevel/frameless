@@ -1,10 +1,10 @@
 package frameless
 package ops
 
+import shapeless.{::, HNil}
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop.forAll
-import shapeless.HNil
-import shapeless.::
 
 class ColumnTypesTest extends TypedDatasetSuite {
   test("test summoning") {

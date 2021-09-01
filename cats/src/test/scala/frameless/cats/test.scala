@@ -1,24 +1,29 @@
 package frameless
 package cats
 
+import scala.collection.immutable.SortedMap
+
+import scala.reflect.ClassTag
+
+import org.apache.spark.{SparkConf, SparkContext => SC}
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+
+import org.apache.spark.sql.SparkSession
+
 import _root_.cats.Foldable
 import _root_.cats.implicits._
 
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext => SC}
-
 import org.scalatest.compatible.Assertion
-import org.scalactic.anyvals.PosInt
-import org.scalacheck.Arbitrary
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import Arbitrary._
-
-import scala.collection.immutable.SortedMap
-import scala.reflect.ClassTag
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.propspec.AnyPropSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+
+import org.scalacheck.Arbitrary
+
+import org.scalactic.anyvals.PosInt
+
+import Arbitrary._
 
 trait SparkTests {
   val appID: String =
@@ -48,7 +53,10 @@ object Tests {
 
     val mz0 = (xs |+| ys).collectAsMap
     val mz1 = (xs join ys).mapValues { case (x, y) => x |+| y }.collectAsMap
-    val mz2 = (for { (k, x) <- mx; y <- my.get(k) } yield (k, x + y)).toMap
+    val mz2 = (for {
+      (k, x) <- mx
+      y <- my.get(k)
+    } yield (k, x + y)).toMap
     check(mz0, mz1)
     check(mz1, mz2)
 

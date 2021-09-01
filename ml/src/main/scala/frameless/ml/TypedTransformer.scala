@@ -1,8 +1,9 @@
 package frameless
 package ml
 
-import frameless.ops.SmartProject
 import org.apache.spark.ml.Transformer
+
+import frameless.ops.SmartProject
 import shapeless.{Generic, HList}
 import shapeless.ops.hlist.{Prepend, Tupler}
 

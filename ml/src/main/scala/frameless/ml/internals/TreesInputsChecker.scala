@@ -2,14 +2,16 @@ package frameless
 package ml
 package internals
 
-import shapeless.ops.hlist.Length
-import shapeless.{HList, LabelledGeneric, Nat, Witness}
-import org.apache.spark.ml.linalg._
-
 import scala.annotation.implicitNotFound
 
+import org.apache.spark.ml.linalg._
+
+import shapeless.{HList, LabelledGeneric, Nat, Witness}
+import shapeless.ops.hlist.Length
+
 /**
- * Can be used for all tree-based ML algorithm (decision tree, random forest, gradient-boosted trees)
+ * Can be used for all tree-based ML algorithm (decision tree, random forest, gradient-boosted
+ * trees)
  */
 @implicitNotFound(
   msg = "Cannot prove that ${Inputs} is a valid input type. " +

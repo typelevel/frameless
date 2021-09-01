@@ -3,9 +3,9 @@ package frameless
 import scala.annotation.implicitNotFound
 
 /**
- * Types that can be bitwise ORed, ANDed, or XORed by Catalyst.
- * Note that Catalyst requires that when performing bitwise operations between columns
- * the two types must be the same so in some cases casting is necessary.
+ * Types that can be bitwise ORed, ANDed, or XORed by Catalyst. Note that Catalyst requires that
+ * when performing bitwise operations between columns the two types must be the same so in some
+ * cases casting is necessary.
  */
 @implicitNotFound("Cannot do bitwise operations on columns of type ${A}.")
 trait CatalystBitwise[A] extends CatalystNumeric[A]

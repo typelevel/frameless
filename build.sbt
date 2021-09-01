@@ -30,7 +30,13 @@ inThisBuild(
   )
 )
 
-lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
+ThisBuild / githubWorkflowBuildPreamble += WorkflowStep.Sbt(
+  List("scalafmtCheckAll", "scalafmtSbtCheck"),
+  name = Some("Check formatting")
+)
+
+lazy val root = Project("frameless", file("." + "frameless"))
+  .in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
@@ -41,7 +47,6 @@ lazy val core = project
   .settings(framelessSettings: _*)
   .settings(publishSettings: _*)
 
-
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings: _*)
@@ -51,12 +56,13 @@ lazy val cats = project
     scalacOptions += "-Ypartial-unification"
   )
   .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats-core"      % catsCoreVersion,
-    "org.typelevel"    %% "cats-effect"    % catsEffectVersion,
-    "org.typelevel"    %% "cats-mtl-core"  % catsMtlVersion,
-    "org.typelevel"    %% "alleycats-core" % catsCoreVersion,
-    "org.apache.spark" %% "spark-core"     % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-sql"      % sparkVersion % Provided))
+    "org.typelevel" %% "cats-core" % catsCoreVersion,
+    "org.typelevel" %% "cats-effect" % catsEffectVersion,
+    "org.typelevel" %% "cats-mtl-core" % catsMtlVersion,
+    "org.typelevel" %% "alleycats-core" % catsCoreVersion,
+    "org.apache.spark" %% "spark-core" % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-sql" % sparkVersion % Provided
+  ))
   .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val dataset = project
@@ -95,8 +101,8 @@ lazy val ml = project
   .settings(framelessTypedDatasetREPL: _*)
   .settings(publishSettings: _*)
   .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"  % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-sql"   % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-core" % sparkVersion % Provided,
+    "org.apache.spark" %% "spark-sql" % sparkVersion % Provided,
     "org.apache.spark" %% "spark-mllib" % sparkVersion % Provided
   ))
   .dependsOn(
@@ -110,11 +116,12 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"  % sparkVersion,
-    "org.apache.spark" %% "spark-sql"   % sparkVersion,
-    "org.apache.spark" %% "spark-mllib" % sparkVersion
-  ))
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-core" % sparkVersion,
+      "org.apache.spark" %% "spark-sql" % sparkVersion,
+      "org.apache.spark" %% "spark-mllib" % sparkVersion
+    ))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
     scalacOptions ++= Seq(
@@ -131,7 +138,8 @@ lazy val framelessSettings = Seq(
     "-Xlint:-missing-interpolator,-unused,_",
     "-target:jvm-1.8",
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-unchecked",
     "-Xfatal-warnings",
@@ -152,7 +160,8 @@ lazy val framelessSettings = Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % "test",
     "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
-    "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
+    "org.scalacheck" %% "scalacheck" % scalacheck % "test"
+  ),
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
@@ -160,7 +169,7 @@ lazy val framelessSettings = Seq(
 ) ++ consoleSettings
 
 lazy val consoleSettings = Seq(
-  Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
+  Compile / console / scalacOptions ~= { _.filterNot("-Ywarn-unused-import" == _) },
   Test / console / scalacOptions := (Compile / console / scalacOptions).value
 )
 
@@ -242,8 +251,14 @@ lazy val noPublishSettings = Seq(
 lazy val copyReadme = taskKey[Unit]("copy for website generation")
 lazy val copyReadmeImpl = Def.task {
   val from = baseDirectory.value / "README.md"
-  val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
-  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
+  val to = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
+  sbt
+    .IO
+    .copy(
+      List((from, to)),
+      overwrite = true,
+      preserveLastModified = true,
+      preserveExecutable = true)
 }
 copyReadme := copyReadmeImpl.value
 
@@ -280,8 +295,8 @@ ThisBuild / githubWorkflowPublish := Seq(
     List("ci-release"),
     name = Some("Publish artifacts"),
     env = Map(
-      "PGP_PASSPHRASE"    -> "${{ secrets.PGP_PASSPHRASE }}",
-      "PGP_SECRET"        -> "${{ secrets.PGP_SECRET }}",
+      "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
       "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
       "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}"
     ),
@@ -294,9 +309,7 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     "docs",
     "Documentation",
     githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("doc", "mdoc"),
-                       name = Some("Documentation")
-      )
+      WorkflowStep.Sbt(List("doc", "mdoc"), name = Some("Documentation"))
     ),
     scalas = List(Scala212)
   )

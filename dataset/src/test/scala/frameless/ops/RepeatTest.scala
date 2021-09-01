@@ -1,8 +1,8 @@
 package frameless
 package ops
 
-import shapeless.test.illTyped
 import shapeless.{::, HNil, Nat}
+import shapeless.test.illTyped
 
 class RepeatTest extends TypedDatasetSuite {
   test("summoning with implicitly") {

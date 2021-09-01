@@ -1,11 +1,14 @@
 package frameless
 package ml
 
-import org.scalacheck.Prop._
+import scala.util.Random
+
 import org.apache.spark.ml.linalg._
 import org.apache.spark.ml.regression.DecisionTreeRegressor
+
+import org.scalacheck.Prop._
+
 import Generators._
-import scala.util.Random
 
 class TypedEncoderInstancesTests extends FramelessMlSuite {
 

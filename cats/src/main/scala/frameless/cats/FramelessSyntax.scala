@@ -1,10 +1,11 @@
 package frameless
 package cats
 
+import org.apache.spark.sql.SparkSession
+
 import _root_.cats.effect.Sync
 import _root_.cats.implicits._
 import _root_.cats.mtl.ApplicativeAsk
-import org.apache.spark.sql.SparkSession
 
 trait FramelessSyntax extends frameless.FramelessSyntax {
   implicit class SparkJobOps[F[_], A](fa: F[A])(

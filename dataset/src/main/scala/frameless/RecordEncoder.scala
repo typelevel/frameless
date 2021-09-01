@@ -1,5 +1,7 @@
 package frameless
 
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{
@@ -11,8 +13,6 @@ import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
 import shapeless.ops.record.Keys
-
-import scala.reflect.ClassTag
 
 case class RecordEncoderField(
   ordinal: Int,
@@ -49,9 +49,11 @@ object RecordEncoderFields {
 
 /**
  * Assists the generation of constructor call parameters from a labelled generic representation.
- * As Unit typed fields were removed earlier, we need to put back unit literals in the  appropriate positions.
+ * As Unit typed fields were removed earlier, we need to put back unit literals in the
+ * appropriate positions.
  *
- * @tparam T labelled generic representation of type fields
+ * @tparam T
+ *   labelled generic representation of type fields
  */
 trait NewInstanceExprs[T <: HList] extends Serializable {
   def from(exprs: List[Expression]): Seq[Expression]
@@ -81,7 +83,8 @@ object NewInstanceExprs {
 /**
  * Drops fields with Unit type from labelled generic representation of types.
  *
- * @tparam L labelled generic representation of type fields
+ * @tparam L
+ *   labelled generic representation of type fields
  */
 trait DropUnitValues[L <: HList] extends DepFn1[L] with Serializable { type Out <: HList }
 

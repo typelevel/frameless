@@ -1,10 +1,11 @@
 package frameless
 
-import org.scalacheck.Arbitrary
 import org.scalatest.BeforeAndAfterAll
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
+import org.scalacheck.Arbitrary
 
 class JobTests
     extends AnyFreeSpec

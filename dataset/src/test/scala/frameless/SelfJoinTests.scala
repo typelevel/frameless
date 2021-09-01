@@ -1,8 +1,9 @@
 package frameless
 
+import org.apache.spark.sql.{functions => sparkFunctions, SparkSession}
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{SparkSession, functions => sparkFunctions}
 
 class SelfJoinTests extends TypedDatasetSuite {
   // Without crossJoin.enabled=true Spark doesn't like trivial join conditions:

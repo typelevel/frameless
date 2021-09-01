@@ -1,10 +1,13 @@
 package frameless
 
+import org.apache.spark.sql.Column
+
+import shapeless.test.illTyped
+
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import shapeless.test.illTyped
-import org.apache.spark.sql.Column
-import org.scalatest.matchers.should.Matchers
 
 class OrderByTests extends TypedDatasetSuite with Matchers {
   def sortings[A: CatalystOrdered, T]

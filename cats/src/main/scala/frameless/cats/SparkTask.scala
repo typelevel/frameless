@@ -1,9 +1,10 @@
 package frameless
 package cats
 
+import org.apache.spark.SparkContext
+
 import _root_.cats.Id
 import _root_.cats.data.Kleisli
-import org.apache.spark.SparkContext
 
 object SparkTask {
   def apply[A](f: SparkContext => A): SparkTask[A] =

@@ -4,12 +4,11 @@ import scala.annotation.implicitNotFound
 
 /**
  * When averaging Spark doesn't change these types:
- * - BigDecimal -> BigDecimal
- * - Double     -> Double
- * But it changes these types :
- * - Int        -> Double
- * - Short      -> Double
- * - Long       -> Double
+ *   - BigDecimal -> BigDecimal
+ *   - Double -> Double But it changes these types :
+ *   - Int -> Double
+ *   - Short -> Double
+ *   - Long -> Double
  */
 @implicitNotFound("Cannot compute average of type ${In}.")
 trait CatalystAverageable[In, Out]

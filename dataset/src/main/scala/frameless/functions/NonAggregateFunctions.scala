@@ -1,14 +1,15 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.{Column, functions => sparkFunctions}
-
 import scala.util.matching.Regex
+
+import org.apache.spark.sql.{functions => sparkFunctions, Column}
 
 trait NonAggregateFunctions {
 
   /**
-   * Non-Aggregate function: calculates the SHA-2 digest of a binary column and returns the value as a 40 character hex string
+   * Non-Aggregate function: calculates the SHA-2 digest of a binary column and returns the
+   * value as a 40 character hex string
    *
    * apache/spark
    */
@@ -18,7 +19,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.sha2(column.untyped, numBits))
 
   /**
-   * Non-Aggregate function: calculates the SHA-1 digest of a binary column and returns the value as a 40 character hex string
+   * Non-Aggregate function: calculates the SHA-1 digest of a binary column and returns the
+   * value as a 40 character hex string
    *
    * apache/spark
    */
@@ -64,7 +66,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.conv(column.untyped, fromBase, toBase))
 
   /**
-   * Non-Aggregate function: Converts an angle measured in radians to an approximately equivalent angle measured in degrees.
+   * Non-Aggregate function: Converts an angle measured in radians to an approximately
+   * equivalent angle measured in degrees.
    *
    * apache/spark
    */
@@ -92,7 +95,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.floor(column.untyped))(i1)
 
   /**
-   * Non-Aggregate function: unsigned shift the the given value numBits right. If given long, will return long else it will return an integer.
+   * Non-Aggregate function: unsigned shift the the given value numBits right. If given long,
+   * will return long else it will return an integer.
    *
    * apache/spark
    */
@@ -102,7 +106,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.shiftRightUnsigned(column.untyped, numBits))
 
   /**
-   * Non-Aggregate function: shift the the given value numBits right. If given long, will return long else it will return an integer.
+   * Non-Aggregate function: shift the the given value numBits right. If given long, will return
+   * long else it will return an integer.
    *
    * apache/spark
    */
@@ -112,7 +117,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.shiftRight(column.untyped, numBits))
 
   /**
-   * Non-Aggregate function: shift the the given value numBits left. If given long, will return long else it will return an integer.
+   * Non-Aggregate function: shift the the given value numBits left. If given long, will return
+   * long else it will return an integer.
    *
    * apache/spark
    */
@@ -135,7 +141,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the cosine of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def cos[A, T](column: AbstractTypedColumn[T, A])(
@@ -146,7 +152,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the hyperbolic cosine of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def cosh[A, T](column: AbstractTypedColumn[T, A])(
@@ -157,7 +163,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the signum of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def signum[A, T](column: AbstractTypedColumn[T, A])(
@@ -168,7 +174,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the sine of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def sin[A, T](column: AbstractTypedColumn[T, A])(
@@ -179,7 +185,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the hyperbolic sine of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def sinh[A, T](column: AbstractTypedColumn[T, A])(
@@ -190,7 +196,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the tangent of the given column.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def tan[A, T](column: AbstractTypedColumn[T, A])(
@@ -201,7 +207,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: Computes the hyperbolic tangent of the given value.
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def tanh[A, T](column: AbstractTypedColumn[T, A])(
@@ -212,7 +218,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: returns the acos of a numeric column
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def acos[A, T](column: AbstractTypedColumn[T, A])(
@@ -220,7 +226,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.acos(column.cast[Double].untyped))
 
   /**
-   * Non-Aggregate function: returns true if value is contained with in the array in the specified column
+   * Non-Aggregate function: returns true if value is contained with in the array in the
+   * specified column
    *
    * apache/spark
    */
@@ -233,7 +240,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: returns the atan of a numeric column
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def atan[A, T](column: AbstractTypedColumn[T, A])(
@@ -244,7 +251,7 @@ trait NonAggregateFunctions {
    * Non-Aggregate function: returns the asin of a numeric column
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def asin[A, T](column: AbstractTypedColumn[T, A])(
@@ -252,11 +259,11 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.asin(column.cast[Double].untyped))
 
   /**
-   * Non-Aggregate function: returns the angle theta from the conversion of rectangular coordinates (x, y) to
-   * polar coordinates (r, theta).
+   * Non-Aggregate function: returns the angle theta from the conversion of rectangular
+   * coordinates (x, y) to polar coordinates (r, theta).
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def atan2[A, B, T](l: TypedColumn[T, A], r: TypedColumn[T, B])(
@@ -265,11 +272,11 @@ trait NonAggregateFunctions {
     r.typed(sparkFunctions.atan2(l.cast[Double].untyped, r.cast[Double].untyped))
 
   /**
-   * Non-Aggregate function: returns the angle theta from the conversion of rectangular coordinates (x, y) to
-   * polar coordinates (r, theta).
+   * Non-Aggregate function: returns the angle theta from the conversion of rectangular
+   * coordinates (x, y) to polar coordinates (r, theta).
    *
    * Spark will expect a Double value for this expression. See:
-   *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
+   * [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
    * apache/spark
    */
   def atan2[A, B, T](l: TypedAggregate[T, A], r: TypedAggregate[T, B])(
@@ -321,7 +328,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.exp(column.cast[Double].untyped))
 
   /**
-   * Non-Aggregate function: Returns the value of the column `e` rounded to 0 decimal places with HALF_UP round mode.
+   * Non-Aggregate function: Returns the value of the column `e` rounded to 0 decimal places
+   * with HALF_UP round mode.
    *
    * apache/spark
    */
@@ -332,8 +340,9 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.round(column.untyped))(i1)
 
   /**
-   * Non-Aggregate function: Round the value of `e` to `scale` decimal places with HALF_UP round mode
-   * if `scale` is greater than or equal to 0 or at integral part when `scale` is less than 0.
+   * Non-Aggregate function: Round the value of `e` to `scale` decimal places with HALF_UP round
+   * mode if `scale` is greater than or equal to 0 or at integral part when `scale` is less than
+   * 0.
    *
    * apache/spark
    */
@@ -344,8 +353,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.round(column.untyped, scale))(i1)
 
   /**
-   * Non-Aggregate function: Bankers Rounding - returns the rounded to 0 decimal places value with HALF_EVEN round mode
-   *  of a numeric column.
+   * Non-Aggregate function: Bankers Rounding - returns the rounded to 0 decimal places value
+   * with HALF_EVEN round mode of a numeric column.
    *
    * apache/spark
    */
@@ -356,8 +365,9 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.bround(column.untyped))(i1)
 
   /**
-   * Non-Aggregate function: Bankers Rounding - returns the rounded to `scale` decimal places value with HALF_EVEN round mode
-   *  of a numeric column. If `scale` is greater than or equal to 0 or at integral part when `scale` is less than 0.
+   * Non-Aggregate function: Bankers Rounding - returns the rounded to `scale` decimal places
+   * value with HALF_EVEN round mode of a numeric column. If `scale` is greater than or equal to
+   * 0 or at integral part when `scale` is less than 0.
    *
    * apache/spark
    */
@@ -488,8 +498,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.pmod(column.untyped, column2.untyped))
 
   /**
-   * Non-Aggregate function: Returns the string representation of the binary value of the given long
-   * column. For example, bin("12") returns "1100".
+   * Non-Aggregate function: Returns the string representation of the binary value of the given
+   * long column. For example, bin("12") returns "1100".
    *
    * apache/spark
    */
@@ -497,8 +507,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.bin(column.untyped))
 
   /**
-   * Calculates the MD5 digest of a binary column and returns the value
-   * as a 32 character hex string.
+   * Calculates the MD5 digest of a binary column and returns the value as a 32 character hex
+   * string.
    *
    * apache/spark
    */
@@ -525,8 +535,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.bitwiseNOT(column.untyped))(column.uencoder)
 
   /**
-   * Non-Aggregate function: file name of the current Spark task. Empty string if row did not originate from
-   * a file
+   * Non-Aggregate function: file name of the current Spark task. Empty string if row did not
+   * originate from a file
    *
    * apache/spark
    */
@@ -544,8 +554,8 @@ trait NonAggregateFunctions {
   }
 
   /**
-   * Non-Aggregate function: Evaluates a list of conditions and returns one of multiple
-   * possible result expressions. If none match, otherwise is returned
+   * Non-Aggregate function: Evaluates a list of conditions and returns one of multiple possible
+   * result expressions. If none match, otherwise is returned
    * {{{
    *   when(ds('boolField), ds('a))
    *     .when(ds('otherBoolField), lit(123))
@@ -578,7 +588,8 @@ trait NonAggregateFunctions {
   //////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Non-Aggregate function: takes the first letter of a string column and returns the ascii int value in a new column
+   * Non-Aggregate function: takes the first letter of a string column and returns the ascii int
+   * value in a new column
    *
    * apache/spark
    */
@@ -586,8 +597,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.ascii(column.untyped))
 
   /**
-   * Non-Aggregate function: Computes the BASE64 encoding of a binary column and returns it as a string column.
-   * This is the reverse of unbase64.
+   * Non-Aggregate function: Computes the BASE64 encoding of a binary column and returns it as a
+   * string column. This is the reverse of unbase64.
    *
    * apache/spark
    */
@@ -595,8 +606,8 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.base64(column.untyped))
 
   /**
-   * Non-Aggregate function: Decodes a BASE64 encoded string column and returns it as a binary column.
-   * This is the reverse of base64.
+   * Non-Aggregate function: Decodes a BASE64 encoded string column and returns it as a binary
+   * column. This is the reverse of base64.
    *
    * apache/spark
    */
@@ -604,8 +615,11 @@ trait NonAggregateFunctions {
     column.typed(sparkFunctions.unbase64(column.untyped))
 
   /**
-   * Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
-   * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
+   * Non-Aggregate function: Concatenates multiple input string columns together into a single
+   * string column.
+   * @note
+   *   varargs make it harder to generalize so we overload the method for [[TypedColumn]] and
+   *   [[TypedAggregate]]
    *
    * apache/spark
    */
@@ -613,8 +627,11 @@ trait NonAggregateFunctions {
     new TypedColumn(sparkFunctions.concat(columns.map(_.untyped): _*))
 
   /**
-   * Non-Aggregate function: Concatenates multiple input string columns together into a single string column.
-   * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
+   * Non-Aggregate function: Concatenates multiple input string columns together into a single
+   * string column.
+   * @note
+   *   varargs make it harder to generalize so we overload the method for [[TypedColumn]] and
+   *   [[TypedAggregate]]
    *
    * apache/spark
    */
@@ -622,9 +639,11 @@ trait NonAggregateFunctions {
     new TypedAggregate(sparkFunctions.concat(columns.map(_.untyped): _*))
 
   /**
-   * Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
-   * using the given separator.
-   * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
+   * Non-Aggregate function: Concatenates multiple input string columns together into a single
+   * string column, using the given separator.
+   * @note
+   *   varargs make it harder to generalize so we overload the method for [[TypedColumn]] and
+   *   [[TypedAggregate]]
    *
    * apache/spark
    */
@@ -632,9 +651,11 @@ trait NonAggregateFunctions {
     new TypedAggregate(sparkFunctions.concat_ws(sep, columns.map(_.untyped): _*))
 
   /**
-   * Non-Aggregate function: Concatenates multiple input string columns together into a single string column,
-   * using the given separator.
-   * @note varargs make it harder to generalize so we overload the method for [[TypedColumn]] and [[TypedAggregate]]
+   * Non-Aggregate function: Concatenates multiple input string columns together into a single
+   * string column, using the given separator.
+   * @note
+   *   varargs make it harder to generalize so we overload the method for [[TypedColumn]] and
+   *   [[TypedAggregate]]
    *
    * apache/spark
    */
@@ -642,11 +663,12 @@ trait NonAggregateFunctions {
     new TypedColumn(sparkFunctions.concat_ws(sep, columns.map(_.untyped): _*))
 
   /**
-   * Non-Aggregate function: Locates the position of the first occurrence of substring column
-   * in given string
+   * Non-Aggregate function: Locates the position of the first occurrence of substring column in
+   * given string
    *
-   * @note The position is not zero based, but 1 based index. Returns 0 if substr
-   * could not be found in str.
+   * @note
+   *   The position is not zero based, but 1 based index. Returns 0 if substr could not be found
+   *   in str.
    *
    * apache/spark
    */
@@ -691,8 +713,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.lower(str.untyped))
 
   /**
-   * Non-Aggregate function: Left-pad the string column with pad to a length of len. If the string column is longer
-   * than len, the return value is shortened to len characters.
+   * Non-Aggregate function: Left-pad the string column with pad to a length of len. If the
+   * string column is longer than len, the return value is shortened to len characters.
    *
    * apache/spark
    */
@@ -711,7 +733,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.ltrim(str.untyped))
 
   /**
-   * Non-Aggregate function: Replace all substrings of the specified string value that match regexp with rep.
+   * Non-Aggregate function: Replace all substrings of the specified string value that match
+   * regexp with rep.
    *
    * apache/spark
    */
@@ -730,8 +753,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.reverse(str.untyped))
 
   /**
-   * Non-Aggregate function: Right-pad the string column with pad to a length of len.
-   * If the string column is longer than len, the return value is shortened to len characters.
+   * Non-Aggregate function: Right-pad the string column with pad to a length of len. If the
+   * string column is longer than len, the return value is shortened to len characters.
    *
    * apache/spark
    */
@@ -792,7 +815,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.year(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the quarter as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the quarter as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#quarter` by wrapping it's result into an `Option`.
    *
@@ -812,7 +836,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.month(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the day of the week as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the day of the week as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#dayofweek` by wrapping it's result into an `Option`.
    *
@@ -822,7 +847,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.dayofweek(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the day of the month as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the day of the month as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#dayofmonth` by wrapping it's result into an `Option`.
    *
@@ -832,7 +858,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.dayofmonth(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the day of the year as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the day of the year as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#dayofyear` by wrapping it's result into an `Option`.
    *
@@ -842,7 +869,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.dayofyear(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the hours as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the hours as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#hour` by wrapping it's result into an `Option`.
    *
@@ -852,7 +880,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.hour(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the minutes as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the minutes as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#minute` by wrapping it's result into an `Option`.
    *
@@ -862,7 +891,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.minute(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the seconds as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the seconds as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#second` by wrapping it's result into an `Option`.
    *
@@ -872,7 +902,8 @@ trait NonAggregateFunctions {
     str.typed(sparkFunctions.second(str.untyped))
 
   /**
-   * Non-Aggregate function: Extracts the week number as an integer from a given date/timestamp/string.
+   * Non-Aggregate function: Extracts the week number as an integer from a given
+   * date/timestamp/string.
    *
    * Differs from `Column#weekofyear` by wrapping it's result into an `Option`.
    *

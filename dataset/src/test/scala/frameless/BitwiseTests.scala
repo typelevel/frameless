@@ -1,16 +1,18 @@
 package frameless
 
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.scalatest.matchers.should.Matchers
 
 class BitwiseTests extends TypedDatasetSuite with Matchers {
 
   /**
-   * providing instances with implementations for bitwise operations since in the tests
-   * we need to check the results from frameless vs the results from normal scala operators
-   * for Numeric it is easy to test since scala comes with Numeric typeclass but there seems
-   * to be no equivalent typeclass for bitwise ops for Byte Short Int and Long types supported in Catalyst
+   * providing instances with implementations for bitwise operations since in the tests we need
+   * to check the results from frameless vs the results from normal scala operators for Numeric
+   * it is easy to test since scala comes with Numeric typeclass but there seems to be no
+   * equivalent typeclass for bitwise ops for Byte Short Int and Long types supported in
+   * Catalyst
    */
   trait CatalystBitwise4Tests[A] {
     def bitwiseAnd(a1: A, a2: A): A

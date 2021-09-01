@@ -2,11 +2,12 @@ package frameless
 package ml
 package internals
 
-import org.apache.spark.ml.linalg._
-import shapeless.ops.hlist.Length
-import shapeless.{HList, LabelledGeneric, Nat, Witness}
-
 import scala.annotation.implicitNotFound
+
+import org.apache.spark.ml.linalg._
+
+import shapeless.{HList, LabelledGeneric, Nat, Witness}
+import shapeless.ops.hlist.Length
 
 /**
  * Can be used for linear reg algorithm

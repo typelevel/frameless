@@ -1,10 +1,13 @@
 package frameless
 
-import frameless.CollectTests.{prop, propArray}
+import scala.reflect.ClassTag
+
 import org.apache.spark.sql.SparkSession
+
+import frameless.CollectTests.{prop, propArray}
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import scala.reflect.ClassTag
 
 class CollectTests extends TypedDatasetSuite {
   test("collect()") {

@@ -1,5 +1,5 @@
-import java.time.format.DateTimeFormatter
 import java.time.{LocalDateTime => JavaLocalDateTime}
+import java.time.format.DateTimeFormatter
 
 import org.scalacheck.{Arbitrary, Gen}
 

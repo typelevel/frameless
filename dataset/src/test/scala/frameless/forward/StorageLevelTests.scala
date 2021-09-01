@@ -2,8 +2,9 @@ package frameless
 
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.storage.StorageLevel._
-import org.scalacheck.Prop._
+
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Prop._
 
 class StorageLevelTests extends TypedDatasetSuite {
 

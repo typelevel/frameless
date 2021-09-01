@@ -1,9 +1,10 @@
 package frameless
 package ops
 
+import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
-import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
+
 import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
 
@@ -76,8 +77,8 @@ class GroupedBy1Ops[K1, V](
   }
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: (K1, Iterator[V]) => U): TypedDataset[U] = {
@@ -146,8 +147,8 @@ class GroupedBy2Ops[K1, K2, V](
   }
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    */
   object deserialized {
     def mapGroups[U: TypedEncoder](f: ((K1, K2), Iterator[V]) => U): TypedDataset[U] = {
@@ -191,8 +192,8 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT](
   }
 
   /**
-   * Methods on `TypedDataset[T]` that go through a full serialization and
-   * deserialization of `T`, and execute outside of the Catalyst runtime.
+   * Methods on `TypedDataset[T]` that go through a full serialization and deserialization of
+   * `T`, and execute outside of the Catalyst runtime.
    */
   object deserialized {
     def mapGroups[U: TypedEncoder](

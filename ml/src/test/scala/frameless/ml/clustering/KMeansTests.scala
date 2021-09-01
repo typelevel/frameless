@@ -2,14 +2,17 @@ package frameless
 package ml
 package clustering
 
-import frameless.ml.classification.TypedKMeans
-import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
 import org.apache.spark.ml.linalg._
+
+import frameless.{TypedDataset, TypedEncoder, X1, X2, X3}
+import frameless.ml._
+import frameless.ml.classification.TypedKMeans
+import frameless.ml.params.kmeans.KMeansInitMode
+
+import org.scalatest.matchers.must.Matchers
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
-import frameless.ml._
-import frameless.ml.params.kmeans.KMeansInitMode
-import org.scalatest.matchers.must.Matchers
 
 class KMeansTests extends FramelessMlSuite with Matchers {
   implicit val arbVector: Arbitrary[Vector] =

@@ -4,20 +4,22 @@ package functions
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Expression, LeafExpression, NonSQLExpression}
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import Block._
 import org.apache.spark.sql.types.DataType
+
 import shapeless.syntax.std.tuple._
 
+import Block._
+
 /**
- * Documentation marked "apache/spark" is thanks to apache/spark Contributors
- * at https://github.com/apache/spark, licensed under Apache v2.0 available at
+ * Documentation marked "apache/spark" is thanks to apache/spark Contributors at
+ * https://github.com/apache/spark, licensed under Apache v2.0 available at
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 trait Udf {
 
   /**
-   * Defines a user-defined function of 1 arguments as user-defined function (UDF).
-   * The data types are automatically inferred based on the function's signature.
+   * Defines a user-defined function of 1 arguments as user-defined function (UDF). The data
+   * types are automatically inferred based on the function's signature.
    *
    * apache/spark
    */
@@ -27,8 +29,8 @@ trait Udf {
   }
 
   /**
-   * Defines a user-defined function of 2 arguments as user-defined function (UDF).
-   * The data types are automatically inferred based on the function's signature.
+   * Defines a user-defined function of 2 arguments as user-defined function (UDF). The data
+   * types are automatically inferred based on the function's signature.
    *
    * apache/spark
    */
@@ -40,8 +42,8 @@ trait Udf {
   }
 
   /**
-   * Defines a user-defined function of 3 arguments as user-defined function (UDF).
-   * The data types are automatically inferred based on the function's signature.
+   * Defines a user-defined function of 3 arguments as user-defined function (UDF). The data
+   * types are automatically inferred based on the function's signature.
    *
    * apache/spark
    */
@@ -53,8 +55,8 @@ trait Udf {
   }
 
   /**
-   * Defines a user-defined function of 4 arguments as user-defined function (UDF).
-   * The data types are automatically inferred based on the function's signature.
+   * Defines a user-defined function of 4 arguments as user-defined function (UDF). The data
+   * types are automatically inferred based on the function's signature.
    *
    * apache/spark
    */
@@ -69,8 +71,8 @@ trait Udf {
   }
 
   /**
-   * Defines a user-defined function of 5 arguments as user-defined function (UDF).
-   * The data types are automatically inferred based on the function's signature.
+   * Defines a user-defined function of 5 arguments as user-defined function (UDF). The data
+   * types are automatically inferred based on the function's signature.
    *
    * apache/spark
    */

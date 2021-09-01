@@ -11,7 +11,8 @@ object TypedExpressionEncoder {
   /**
    * In Spark, DataFrame has always schema of StructType
    *
-   * DataFrames of primitive types become records with a single field called "value" set in ExpressionEncoder.
+   * DataFrames of primitive types become records with a single field called "value" set in
+   * ExpressionEncoder.
    */
   def targetStructType[A](encoder: TypedEncoder[A]): StructType = {
     encoder.catalystRepr match {

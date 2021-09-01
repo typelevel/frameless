@@ -6,7 +6,8 @@ import shapeless._
 /**
  * A type class to extract the column types out of an HList of [[frameless.TypedColumn]].
  *
- * @note This type class is mostly a workaround to issue with slow implicit derivation for Comapped.
+ * @note
+ *   This type class is mostly a workaround to issue with slow implicit derivation for Comapped.
  * @example
  * {{{
  *   type U = TypedColumn[T,A] :: TypedColumn[T,B] :: TypedColumn[T,C] :: HNil

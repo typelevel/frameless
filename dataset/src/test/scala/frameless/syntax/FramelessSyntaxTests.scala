@@ -1,9 +1,10 @@
 package frameless
 package syntax
 
+import frameless.functions.aggregate._
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import frameless.functions.aggregate._
 
 class FramelessSyntaxTests extends TypedDatasetSuite {
   // Hide the implicit SparkDelay[Job] on TypedDatasetSuite to avoid ambiguous implicits

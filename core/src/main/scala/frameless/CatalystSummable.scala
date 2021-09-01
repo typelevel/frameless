@@ -4,13 +4,13 @@ import scala.annotation.implicitNotFound
 
 /**
  * When summing Spark doesn't change these types:
- * - Long       -> Long
- * - BigDecimal -> BigDecimal
- * - Double     -> Double
+ *   - Long -> Long
+ *   - BigDecimal -> BigDecimal
+ *   - Double -> Double
  *
  * For other types there are conversions:
- * - Int        -> Long
- * - Short      -> Long
+ *   - Int -> Long
+ *   - Short -> Long
  */
 @implicitNotFound("Cannot compute sum of type ${In}.")
 trait CatalystSummable[In, Out] {

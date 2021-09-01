@@ -1,8 +1,9 @@
 package frameless
 
+import scala.reflect.ClassTag
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import scala.reflect.ClassTag
 
 class TakeTests extends TypedDatasetSuite {
   test("take") {
