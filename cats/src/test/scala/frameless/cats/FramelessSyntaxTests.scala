@@ -3,7 +3,7 @@ package cats
 
 import _root_.cats.data.ReaderT
 import _root_.cats.effect.IO
-import frameless.{ TypedDataset, TypedDatasetSuite, TypedEncoder, X2 }
+import frameless.{TypedDataset, TypedDatasetSuite, TypedEncoder, X2}
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop, Prop._
 
@@ -11,7 +11,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
   override val sparkDelay = null
 
   def prop[A, B](data: Vector[X2[A, B]])(
-    implicit ev: TypedEncoder[X2[A, B]]
+      implicit ev: TypedEncoder[X2[A, B]]
   ): Prop = {
     import implicits._
 
@@ -21,7 +21,10 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
     val typedDataset = dataset.typed
     val typedDatasetFromDataFrame = dataframe.unsafeTyped[X2[A, B]]
 
-    typedDataset.collect[IO]().unsafeRunSync().toVector ?= typedDatasetFromDataFrame.collect[IO]().unsafeRunSync().toVector
+    typedDataset.collect[IO]().unsafeRunSync().toVector ?= typedDatasetFromDataFrame
+      .collect[IO]()
+      .unsafeRunSync()
+      .toVector
   }
 
   test("dataset typed - toTyped") {
@@ -34,9 +37,12 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
     import _root_.cats.mtl.implicits._
 
     check {
-      forAll { (k:String, v: String) =>
+      forAll { (k: String, v: String) =>
         val scopedKey = "frameless.tests." + k
-        1.pure[ReaderT[IO, SparkSession, *]].withLocalProperty(scopedKey,v).run(session).unsafeRunSync()
+        1.pure[ReaderT[IO, SparkSession, *]]
+          .withLocalProperty(scopedKey, v)
+          .run(session)
+          .unsafeRunSync()
         sc.getLocalProperty(scopedKey) ?= v
 
         1.pure[ReaderT[IO, SparkSession, *]].withGroupId(v).run(session).unsafeRunSync()

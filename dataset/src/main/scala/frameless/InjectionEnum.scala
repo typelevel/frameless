@@ -15,11 +15,10 @@ trait InjectionEnum {
     )
 
   implicit def coproductInjectionEnum[H, T <: Coproduct](
-    implicit
-    typeable: Typeable[H] ,
-    gen: Generic.Aux[H, HNil],
-    tInjectionEnum: Injection[T, String]
-    ): Injection[H :+: T, String] = {
+      implicit typeable: Typeable[H],
+      gen: Generic.Aux[H, HNil],
+      tInjectionEnum: Injection[T, String]
+  ): Injection[H :+: T, String] = {
     val dataConstructorName = typeable.describe.takeWhile(_ != '.')
 
     Injection(
@@ -36,14 +35,11 @@ trait InjectionEnum {
   }
 
   implicit def genericInjectionEnum[A, R](
-    implicit
-    gen: Generic.Aux[A, R],
-    rInjectionEnum: Injection[R, String]
-    ): Injection[A, String] =
+      implicit gen: Generic.Aux[A, R],
+      rInjectionEnum: Injection[R, String]
+  ): Injection[A, String] =
     Injection(
-      value =>
-        rInjectionEnum.apply(gen.to(value)),
-      name =>
-        gen.from(rInjectionEnum.invert(name))
+      value => rInjectionEnum.apply(gen.to(value)),
+      name => gen.from(rInjectionEnum.invert(name))
     )
 }

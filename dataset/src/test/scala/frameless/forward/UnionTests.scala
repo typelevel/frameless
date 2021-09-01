@@ -30,11 +30,14 @@ class UnionTests extends TypedDatasetSuite {
   }
 
   test("Align fields for case classes") {
-    def prop[A: TypedEncoder, B: TypedEncoder](data1: Vector[(A, B)], data2: Vector[(A, B)]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder](
+        data1: Vector[(A, B)],
+        data2: Vector[(A, B)]): Prop = {
 
       val dataset1 = TypedDataset.create(data1.map((Foo.apply[A, B] _).tupled))
       val dataset2 = TypedDataset.create(data2.map { case (a, b) => Bar[A, B](b, a) })
-      val datasetUnion = dataset1.union(dataset2).collect().run().map(foo => (foo.x, foo.y)).toVector
+      val datasetUnion =
+        dataset1.union(dataset2).collect().run().map(foo => (foo.x, foo.y)).toVector
       val dataUnion = data1 union data2
 
       datasetUnion ?= dataUnion
@@ -45,11 +48,14 @@ class UnionTests extends TypedDatasetSuite {
   }
 
   test("Align fields for different number of columns") {
-    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](data1: Vector[(A, B, C)], data2: Vector[(A, B)]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
+        data1: Vector[(A, B, C)],
+        data2: Vector[(A, B)]): Prop = {
 
       val dataset1 = TypedDataset.create(data2.map((Foo.apply[A, B] _).tupled))
       val dataset2 = TypedDataset.create(data1.map { case (a, b, c) => Baz[A, B, C](c, b, a) })
-      val datasetUnion: Seq[(A, B)] = dataset1.union(dataset2).collect().run().map(foo => (foo.x, foo.y)).toVector
+      val datasetUnion: Seq[(A, B)] =
+        dataset1.union(dataset2).collect().run().map(foo => (foo.x, foo.y)).toVector
       val dataUnion = data2 union data1.map { case (a, b, _) => (a, b) }
 
       datasetUnion ?= dataUnion

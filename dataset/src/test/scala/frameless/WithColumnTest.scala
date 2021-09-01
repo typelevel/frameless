@@ -8,28 +8,28 @@ class WithColumnTest extends TypedDatasetSuite {
   import WithColumnTest._
 
   test("fail to compile on missing value") {
-    val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1) :: X(1, 1) :: X(1, 10) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XMissing] = f.withColumn[XMissing](f('j) === 10)"""
     }
   }
 
   test("fail to compile on different column name") {
-    val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1) :: X(1, 1) :: X(1, 10) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XDifferentColumnName] = f.withColumn[XDifferentColumnName](f('j) === 10)"""
     }
   }
 
   test("fail to compile on added column name") {
-    val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1) :: X(1, 1) :: X(1, 10) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XAdded] = f.withColumn[XAdded](f('j) === 10)"""
     }
   }
 
   test("fail to compile on wrong typed column") {
-    val f: TypedDataset[X] = TypedDataset.create(X(1,1) :: X(1,1) :: X(1,10) :: Nil)
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1) :: X(1, 1) :: X(1, 10) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XWrongType] = f.withColumn[XWrongType](f('j) === 10)"""
     }
@@ -54,13 +54,10 @@ class WithColumnTest extends TypedDatasetSuite {
   }
 
   test("update in place") {
-    def prop[A : TypedEncoder](startValue: A, replaceValue: A): Prop = {
+    def prop[A: TypedEncoder](startValue: A, replaceValue: A): Prop = {
       val d = TypedDataset.create(X2(startValue, replaceValue) :: Nil)
 
-      val X2(a, b) = d.withColumnReplaced('a, d('b))
-        .collect()
-        .run()
-        .head
+      val X2(a, b) = d.withColumnReplaced('a, d('b)).collect().run().head
 
       a ?= b
     }

@@ -14,11 +14,11 @@ class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {
 
   test("predict field2 from field1 using a K-means clustering") {
     // Training
-    val trainingDataDs = TypedDataset.create(Seq.fill(5)(X2(10D, 0)) :+ X2(100D,0))
+    val trainingDataDs = TypedDataset.create(Seq.fill(5)(X2(10d, 0)) :+ X2(100d, 0))
 
     val vectorAssembler = TypedVectorAssembler[X1[Double]]
 
-    val dataWithFeatures = vectorAssembler.transform(trainingDataDs).as[X3[Double,Int,Vector]]
+    val dataWithFeatures = vectorAssembler.transform(trainingDataDs).as[X3[Double, Int, Vector]]
 
     case class Input(c: Vector)
     val km = TypedKMeans[Input].setK(2)
@@ -27,14 +27,14 @@ class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {
 
     // Prediction
     val testSeq = Seq(
-      X2(10D, 0),
-      X2(100D, 1)
+      X2(10d, 0),
+      X2(100d, 1)
     )
 
     val testData = TypedDataset.create(testSeq)
-    val testDataWithFeatures = vectorAssembler.transform(testData).as[X3[Double,Int,Vector]]
+    val testDataWithFeatures = vectorAssembler.transform(testData).as[X3[Double, Int, Vector]]
 
-    val predictionDs = model.transform(testDataWithFeatures).as[X4[Double,Int,Vector,Int]]
+    val predictionDs = model.transform(testDataWithFeatures).as[X4[Double, Int, Vector, Int]]
 
     val prediction = predictionDs.select(predictionDs.col[Int]('d)).collect.run().toList
 
@@ -43,7 +43,7 @@ class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {
 
   test("predict field2 from field1 using a bisecting K-means clustering") {
     // Training
-    val trainingDataDs = TypedDataset.create(Seq.fill(5)(X2(10D, 0)) :+ X2(100D,0))
+    val trainingDataDs = TypedDataset.create(Seq.fill(5)(X2(10d, 0)) :+ X2(100d, 0))
 
     val vectorAssembler = TypedVectorAssembler[X1[Double]]
 
@@ -56,14 +56,14 @@ class ClusteringIntegrationTests extends FramelessMlSuite with Matchers {
 
     // Prediction
     val testSeq = Seq(
-      X2(10D, 0),
-      X2(100D, 1)
+      X2(10d, 0),
+      X2(100d, 1)
     )
 
     val testData = TypedDataset.create(testSeq)
     val testDataWithFeatures = vectorAssembler.transform(testData).as[X3[Double, Int, Vector]]
 
-    val predictionDs = model.transform(testDataWithFeatures).as[X4[Double,Int,Vector,Int]]
+    val predictionDs = model.transform(testDataWithFeatures).as[X4[Double, Int, Vector, Int]]
 
     val prediction = predictionDs.select(predictionDs.col[Int]('d)).collect.run().toList
 

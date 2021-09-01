@@ -46,7 +46,8 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   }
 
   test("Representation skips units") {
-    assert(TypedEncoder[(Int, String)].catalystRepr == TypedEncoder[TupleWithUnits].catalystRepr)
+    assert(
+      TypedEncoder[(Int, String)].catalystRepr == TypedEncoder[TupleWithUnits].catalystRepr)
   }
 
   test("Serialization skips units") {

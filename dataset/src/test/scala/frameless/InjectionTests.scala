@@ -76,8 +76,10 @@ case class I[A](value: A)
 
 object I {
   implicit def injection[A]: Injection[I[A], A] = Injection(_.value, I(_))
-  implicit def typedEncoder[A: TypedEncoder]: TypedEncoder[I[A]] = TypedEncoder.usingInjection[I[A], A]
-  implicit def arbitrary[A: Arbitrary]: Arbitrary[I[A]] = Arbitrary(Arbitrary.arbitrary[A].map(I(_)))
+  implicit def typedEncoder[A: TypedEncoder]: TypedEncoder[I[A]] =
+    TypedEncoder.usingInjection[I[A], A]
+  implicit def arbitrary[A: Arbitrary]: Arbitrary[I[A]] = Arbitrary(
+    Arbitrary.arbitrary[A].map(I(_)))
 }
 
 sealed trait Employee

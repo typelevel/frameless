@@ -11,9 +11,13 @@ import org.scalatest.matchers.must.Matchers
 
 class TypedRandomForestClassifierTests extends FramelessMlSuite with Matchers {
   implicit val arbDouble: Arbitrary[Double] =
-    Arbitrary(Gen.choose(1, 99).map(_.toDouble)) // num classes must be between 0 and 100 for the test
+    Arbitrary(
+      Gen.choose(1, 99).map(_.toDouble)
+    ) // num classes must be between 0 and 100 for the test
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =
-    Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0)) // vector must not be empty for RandomForestClassifier
+    Arbitrary(
+      Generators.arbVector.arbitrary suchThat (_.size > 0)
+    ) // vector must not be empty for RandomForestClassifier
   import Generators.arbTreesFeaturesSubsetStrategy
 
   test("fit() returns a correct TypedTransformer") {
@@ -58,21 +62,21 @@ class TypedRandomForestClassifierTests extends FramelessMlSuite with Matchers {
         .setFeatureSubsetStrategy(featureSubsetStrategy)
         .setMaxDepth(10)
         .setMaxMemoryInMB(100)
-        .setMinInfoGain(0.1D)
+        .setMinInfoGain(0.1d)
         .setMinInstancesPerNode(2)
-        .setSubsamplingRate(0.9D)
+        .setSubsamplingRate(0.9d)
 
-      val ds = TypedDataset.create(Seq(X2(0D, Vectors.dense(0D))))
+      val ds = TypedDataset.create(Seq(X2(0d, Vectors.dense(0d))))
       val model = rf.fit(ds).run()
 
       model.transformer.getNumTrees == 10 &&
-        model.transformer.getMaxBins == 100 &&
-        model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
-        model.transformer.getMaxDepth == 10 &&
-        model.transformer.getMaxMemoryInMB == 100 &&
-        model.transformer.getMinInfoGain == 0.1D &&
-        model.transformer.getMinInstancesPerNode == 2 &&
-        model.transformer.getSubsamplingRate == 0.9D
+      model.transformer.getMaxBins == 100 &&
+      model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
+      model.transformer.getMaxDepth == 10 &&
+      model.transformer.getMaxMemoryInMB == 100 &&
+      model.transformer.getMinInfoGain == 0.1d &&
+      model.transformer.getMinInstancesPerNode == 2 &&
+      model.transformer.getSubsamplingRate == 0.9d
     }
 
     check(prop)

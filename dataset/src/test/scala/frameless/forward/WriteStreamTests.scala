@@ -36,10 +36,15 @@ class WriteStreamTests extends TypedDatasetSuite {
       val checkpointPath = s"$TEST_OUTPUT_DIR/checkpoint/$uid"
       val inputStream = MemoryStream[A]
       val input = TypedDataset.create(inputStream.toDS())
-      val inputter = input.writeStream.format("csv").option("checkpointLocation", s"$checkpointPath/input").start(filePath)
+      val inputter = input
+        .writeStream
+        .format("csv")
+        .option("checkpointLocation", s"$checkpointPath/input")
+        .start(filePath)
       inputStream.addData(data)
       inputter.processAllAvailable()
-      val dataset = TypedDataset.createUnsafe(sqlContext.readStream.schema(input.schema).csv(filePath))
+      val dataset =
+        TypedDataset.createUnsafe(sqlContext.readStream.schema(input.schema).csv(filePath))
 
       val tester = dataset
         .writeStream
@@ -49,7 +54,10 @@ class WriteStreamTests extends TypedDatasetSuite {
         .start()
       tester.processAllAvailable()
       val output = spark.table(s"testCsv_$uidNoHyphens").as[A]
-      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case  (k, arr) => (k, arr.toSeq) }
+      TypedDataset.create(data).collect().run().groupBy(identity) ?= output
+        .collect()
+        .groupBy(identity)
+        .map { case (k, arr) => (k, arr.toSeq) }
     }
 
     check(forAll(Gen.nonEmptyListOf(Gen.alphaNumStr.suchThat(_.nonEmpty)))(prop[String]))
@@ -66,10 +74,15 @@ class WriteStreamTests extends TypedDatasetSuite {
       val checkpointPath = s"$TEST_OUTPUT_DIR/checkpoint/$uid"
       val inputStream = MemoryStream[A]
       val input = TypedDataset.create(inputStream.toDS())
-      val inputter = input.writeStream.format("parquet").option("checkpointLocation", s"$checkpointPath/input").start(filePath)
+      val inputter = input
+        .writeStream
+        .format("parquet")
+        .option("checkpointLocation", s"$checkpointPath/input")
+        .start(filePath)
       inputStream.addData(data)
       inputter.processAllAvailable()
-      val dataset = TypedDataset.createUnsafe(sqlContext.readStream.schema(input.schema).parquet(filePath))
+      val dataset =
+        TypedDataset.createUnsafe(sqlContext.readStream.schema(input.schema).parquet(filePath))
 
       val tester = dataset
         .writeStream
@@ -79,7 +92,10 @@ class WriteStreamTests extends TypedDatasetSuite {
         .start()
       tester.processAllAvailable()
       val output = spark.table(s"testParquet_$uidNoHyphens").as[A]
-      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case  (k, arr) => (k, arr.toSeq) }
+      TypedDataset.create(data).collect().run().groupBy(identity) ?= output
+        .collect()
+        .groupBy(identity)
+        .map { case (k, arr) => (k, arr.toSeq) }
     }
 
     check(forAll(Gen.nonEmptyListOf(genWriteExample))(prop[WriteExample]))

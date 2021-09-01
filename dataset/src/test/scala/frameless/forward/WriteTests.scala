@@ -30,7 +30,8 @@ class WriteTests extends TypedDatasetSuite {
       val input = TypedDataset.create(data)
       input.write.csv(filePath)
 
-      val dataset = TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).csv(filePath))
+      val dataset =
+        TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).csv(filePath))
 
       dataset.collect().run().groupBy(identity) ?= input.collect().run().groupBy(identity)
     }
@@ -45,7 +46,8 @@ class WriteTests extends TypedDatasetSuite {
       val input = TypedDataset.create(data)
       input.write.parquet(filePath)
 
-      val dataset = TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).parquet(filePath))
+      val dataset =
+        TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).parquet(filePath))
 
       dataset.collect().run().groupBy(identity) ?= input.collect().run().groupBy(identity)
     }

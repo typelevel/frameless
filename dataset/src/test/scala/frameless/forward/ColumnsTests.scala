@@ -13,15 +13,17 @@ class ColumnsTests extends TypedDatasetSuite {
       val x5 = X5(i, s, b, l, d) :: Nil
       val x6 = X6(i, s, b, l, d, by) :: Nil
 
-      val datasets = Seq(TypedDataset.create(x1), TypedDataset.create(x2),
-        TypedDataset.create(x3), TypedDataset.create(x4),
-        TypedDataset.create(x5), TypedDataset.create(x6))
+      val datasets = Seq(
+        TypedDataset.create(x1),
+        TypedDataset.create(x2),
+        TypedDataset.create(x3),
+        TypedDataset.create(x4),
+        TypedDataset.create(x5),
+        TypedDataset.create(x6))
 
       Prop.all(datasets.flatMap { dataset =>
         val columns = dataset.dataset.columns
-        dataset.columns.map(col =>
-          Prop.propBoolean(columns contains col)
-        )
+        dataset.columns.map(col => Prop.propBoolean(columns contains col))
       }: _*)
     }
 

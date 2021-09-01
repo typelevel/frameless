@@ -7,20 +7,22 @@ import frameless.ml.internals.UnaryInputsChecker
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
 
 /**
-  * A label indexer that maps a string column of labels to an ML column of label indices.
-  * The indices are in [0, numLabels), ordered by label frequencies.
-  * So the most frequent label gets index 0.
-  *
-  * @see `TypedIndexToString` for the inverse transformation
-  */
-final class TypedStringIndexer[Inputs] private[ml](stringIndexer: StringIndexer, inputCol: String)
-  extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
+ * A label indexer that maps a string column of labels to an ML column of label indices.
+ * The indices are in [0, numLabels), ordered by label frequencies.
+ * So the most frequent label gets index 0.
+ *
+ * @see `TypedIndexToString` for the inverse transformation
+ */
+final class TypedStringIndexer[Inputs] private[ml] (
+    stringIndexer: StringIndexer,
+    inputCol: String)
+    extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
 
-  val estimator: StringIndexer = stringIndexer
-    .setInputCol(inputCol)
-    .setOutputCol(AppendTransformer.tempColumnName)
+  val estimator: StringIndexer =
+    stringIndexer.setInputCol(inputCol).setOutputCol(AppendTransformer.tempColumnName)
 
-  def setHandleInvalid(value: HandleInvalid): TypedStringIndexer[Inputs] = copy(stringIndexer.setHandleInvalid(value.sparkValue))
+  def setHandleInvalid(value: HandleInvalid): TypedStringIndexer[Inputs] = copy(
+    stringIndexer.setHandleInvalid(value.sparkValue))
 
   private def copy(newStringIndexer: StringIndexer): TypedStringIndexer[Inputs] =
     new TypedStringIndexer[Inputs](newStringIndexer, inputCol)
@@ -36,7 +38,9 @@ object TypedStringIndexer {
     case object Keep extends HandleInvalid("keep")
   }
 
-  def apply[Inputs](implicit inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {
+  def apply[Inputs](
+      implicit
+      inputsChecker: UnaryInputsChecker[Inputs, String]): TypedStringIndexer[Inputs] = {
     new TypedStringIndexer[Inputs](new StringIndexer(), inputsChecker.inputCol)
   }
 }

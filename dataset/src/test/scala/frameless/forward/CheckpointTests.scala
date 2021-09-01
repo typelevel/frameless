@@ -3,7 +3,6 @@ package frameless
 import org.scalacheck.Prop
 import org.scalacheck.Prop.{forAll, _}
 
-
 class CheckpointTests extends TypedDatasetSuite {
   test("checkpoint") {
     def prop[A: TypedEncoder](data: Vector[A], isEager: Boolean): Prop = {

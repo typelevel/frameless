@@ -10,7 +10,7 @@ import org.scalatest.matchers.should.Matchers
 class SchemaTests extends TypedDatasetSuite with Matchers {
 
   def structToNonNullable(struct: StructType): StructType = {
-    StructType(struct.fields.map( f => f.copy(nullable = false)))
+    StructType(struct.fields.map(f => f.copy(nullable = false)))
   }
 
   def prop[A](dataset: TypedDataset[A], ignoreNullable: Boolean = false): Prop = {
@@ -24,7 +24,9 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
       if (!ignoreNullable)
         TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
       else
-        structToNonNullable(TypedExpressionEncoder.targetStructType(dataset.encoder))  ?= structToNonNullable(schema)
+        structToNonNullable(
+          TypedExpressionEncoder.targetStructType(dataset.encoder)) ?= structToNonNullable(
+          schema)
     )
   }
 

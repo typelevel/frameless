@@ -17,7 +17,18 @@ ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / crossScalaVersions := Seq(Scala212)
 ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
 
-ThisBuild / mimaFailOnNoPrevious := false
+// Format and style
+ThisBuild / scalafmtOnCompile := true
+
+inThisBuild(
+  List(
+    //scalaVersion := "2.13.3",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision,
+    scalafixDependencies ++= Seq(
+      "com.github.liancheng" %% "organize-imports" % "0.5.0")
+  )
+)
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
@@ -111,7 +122,7 @@ lazy val docs = project
       "-Ydelambdafy:inline"
     )
   )
-  .settings(mimaPreviousArtifacts := Set())
+.settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(

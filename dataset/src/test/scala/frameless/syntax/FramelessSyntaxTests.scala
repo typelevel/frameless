@@ -10,7 +10,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
   override val sparkDelay = null
 
   def prop[A, B](data: Vector[X2[A, B]])(
-    implicit ev: TypedEncoder[X2[A, B]]
+      implicit ev: TypedEncoder[X2[A, B]]
   ): Prop = {
     val dataset = TypedDataset.create(data).dataset
     val dataframe = dataset.toDF()
@@ -23,12 +23,15 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
 
   test("dataset typed - toTyped") {
     def prop[A, B](data: Vector[X2[A, B]])(
-      implicit ev: TypedEncoder[X2[A, B]]
+        implicit ev: TypedEncoder[X2[A, B]]
     ): Prop = {
       val dataset = session.createDataset(data)(TypedExpressionEncoder(ev)).typed
       val dataframe = dataset.toDF()
 
-      dataset.collect().run().toVector ?= dataframe.unsafeTyped[X2[A, B]].collect().run().toVector
+      dataset
+        .collect()
+        .run()
+        .toVector ?= dataframe.unsafeTyped[X2[A, B]].collect().run().toVector
     }
 
     check(forAll(prop[Int, String] _))
@@ -39,7 +42,10 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](a: A, b: A): Prop = {
       val d = TypedDataset.create((a, b) :: Nil)
       (d.select(d('_1).untyped.typedColumn).collect().run ?= d.select(d('_1)).collect().run).&&(
-        d.agg(first(d('_1))).collect().run() ?= d.agg(first(d('_1)).untyped.typedAggregate).collect().run()
+        d.agg(first(d('_1))).collect().run() ?= d
+          .agg(first(d('_1)).untyped.typedAggregate)
+          .collect()
+          .run()
       )
     }
 

@@ -5,15 +5,14 @@ import frameless.ops.SmartProject
 import org.apache.spark.ml.{Estimator, Model}
 
 /**
-  * A TypedEstimator fits models to data.
-  */
+ * A TypedEstimator fits models to data.
+ */
 trait TypedEstimator[Inputs, Outputs, M <: Model[M]] {
   val estimator: Estimator[M]
 
   def fit[T, F[_]](ds: TypedDataset[T])(
-    implicit
-    smartProject: SmartProject[T, Inputs],
-    F: SparkDelay[F]
+      implicit smartProject: SmartProject[T, Inputs],
+      F: SparkDelay[F]
   ): F[AppendTransformer[Inputs, Outputs, M]] = {
     implicit val sparkSession = ds.dataset.sparkSession
     F.delay {

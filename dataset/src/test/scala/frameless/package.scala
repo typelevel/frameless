@@ -4,7 +4,10 @@ import java.time.{LocalDateTime => JavaLocalDateTime}
 import org.scalacheck.{Arbitrary, Gen}
 
 package object frameless {
-  /** Fixed decimal point to avoid precision problems specific to Spark */
+
+  /**
+   * Fixed decimal point to avoid precision problems specific to Spark
+   */
   implicit val arbBigDecimal: Arbitrary[BigDecimal] = Arbitrary {
     for {
       x <- Gen.chooseNum(-1000, 1000)
@@ -12,7 +15,9 @@ package object frameless {
     } yield BigDecimal(s"$x.$y")
   }
 
-  /** Fixed decimal point to avoid precision problems specific to Spark */
+  /**
+   * Fixed decimal point to avoid precision problems specific to Spark
+   */
   implicit val arbDouble: Arbitrary[Double] = Arbitrary {
     arbBigDecimal.arbitrary.map(_.toDouble)
   }
@@ -54,7 +59,9 @@ package object frameless {
     } yield JavaLocalDateTime.of(year, month, dayOfMonth, hour, minute)
   }
 
-  /** LocalDateTime String Generator to test time related Spark functions */
+  /**
+   * LocalDateTime String Generator to test time related Spark functions
+   */
   val dateTimeStringGen: Gen[List[String]] =
     for {
       listOfDates <- Gen.listOf(localDateArb.arbitrary)

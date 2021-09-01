@@ -9,8 +9,8 @@ import shapeless.{HList, LabelledGeneric, Nat, Witness}
 import scala.annotation.implicitNotFound
 
 /**
-  * Can be used for linear reg algorithm
-  */
+ * Can be used for linear reg algorithm
+ */
 @implicitNotFound(
   msg = "Cannot prove that ${Inputs} is a valid input type. " +
     "Input type must only contain a field of type Double (the label) and a field of type " +
@@ -25,17 +25,16 @@ trait LinearInputsChecker[Inputs] {
 object LinearInputsChecker {
 
   implicit def checkLinearInputs[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol](
-    implicit
-    i0: LabelledGeneric.Aux[Inputs, InputsRec],
-    i1: Length.Aux[InputsRec, Nat._2],
-    i2: SelectorByValue.Aux[InputsRec, Double, LabelK],
-    i3: Witness.Aux[LabelK],
-    i4: SelectorByValue.Aux[InputsRec, Vector, FeaturesK],
-    i5: Witness.Aux[FeaturesK]
+      Inputs,
+      InputsRec <: HList,
+      LabelK <: Symbol,
+      FeaturesK <: Symbol](
+      implicit i0: LabelledGeneric.Aux[Inputs, InputsRec],
+      i1: Length.Aux[InputsRec, Nat._2],
+      i2: SelectorByValue.Aux[InputsRec, Double, LabelK],
+      i3: Witness.Aux[LabelK],
+      i4: SelectorByValue.Aux[InputsRec, Vector, FeaturesK],
+      i5: Witness.Aux[FeaturesK]
   ): LinearInputsChecker[Inputs] = {
     new LinearInputsChecker[Inputs] {
       val labelCol: String = implicitly[Witness.Aux[LabelK]].value.name
@@ -45,20 +44,19 @@ object LinearInputsChecker {
   }
 
   implicit def checkLinearInputs2[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol,
-  WeightK <: Symbol](
-    implicit
-    i0: LabelledGeneric.Aux[Inputs, InputsRec],
-    i1: Length.Aux[InputsRec, Nat._3],
-    i2: SelectorByValue.Aux[InputsRec, Vector, FeaturesK],
-    i3: Witness.Aux[FeaturesK],
-    i4: SelectorByValue.Aux[InputsRec, Double, LabelK],
-    i5: Witness.Aux[LabelK],
-    i6: SelectorByValue.Aux[InputsRec, Float, WeightK],
-    i7: Witness.Aux[WeightK]
+      Inputs,
+      InputsRec <: HList,
+      LabelK <: Symbol,
+      FeaturesK <: Symbol,
+      WeightK <: Symbol](
+      implicit i0: LabelledGeneric.Aux[Inputs, InputsRec],
+      i1: Length.Aux[InputsRec, Nat._3],
+      i2: SelectorByValue.Aux[InputsRec, Vector, FeaturesK],
+      i3: Witness.Aux[FeaturesK],
+      i4: SelectorByValue.Aux[InputsRec, Double, LabelK],
+      i5: Witness.Aux[LabelK],
+      i6: SelectorByValue.Aux[InputsRec, Float, WeightK],
+      i7: Witness.Aux[WeightK]
   ): LinearInputsChecker[Inputs] = {
     new LinearInputsChecker[Inputs] {
       val labelCol: String = implicitly[Witness.Aux[LabelK]].value.name

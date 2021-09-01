@@ -12,7 +12,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
-  val appID: String = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
+  val appID: String =
+    new java.util.Date().toString + math.floor(math.random * 10e4).toLong.toString
 
   val conf: SparkConf = new SparkConf()
     .setMaster("local[*]")
@@ -39,11 +40,15 @@ trait SparkTesting { self: BeforeAndAfterAll =>
   }
 }
 
-
-class TypedDatasetSuite extends AnyFunSuite with Checkers with BeforeAndAfterAll with SparkTesting {
+class TypedDatasetSuite
+    extends AnyFunSuite
+    with Checkers
+    with BeforeAndAfterAll
+    with SparkTesting {
   // Limit size of generated collections and number of checks to avoid OutOfMemoryError
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration = {
-    def getPosZInt(name: String, default: PosZInt) = Properties.envOrNone(s"FRAMELESS_GEN_${name}")
+    def getPosZInt(name: String, default: PosZInt) = Properties
+      .envOrNone(s"FRAMELESS_GEN_${name}")
       .flatMap(s => Try(s.toInt).toOption)
       .flatMap(PosZInt.from)
       .getOrElse(default)
@@ -58,14 +63,14 @@ class TypedDatasetSuite extends AnyFunSuite with Checkers with BeforeAndAfterAll
   def approximatelyEqual[A](a: A, b: A)(implicit numeric: Numeric[A]): Prop = {
     val da = numeric.toDouble(a)
     val db = numeric.toDouble(b)
-    val epsilon = 1E-6
+    val epsilon = 1e-6
     // Spark has a weird behaviour concerning expressions that should return Inf
     // Most of the time they return NaN instead, for instance stddev of Seq(-7.827553978923477E227, -5.009124275715786E153)
-    if((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
-    else if (
-      (da - db).abs < epsilon ||
+    if ((da.isNaN || da.isInfinity) && (db.isNaN || db.isInfinity)) proved
+    else if ((da - db).abs < epsilon ||
       (da - db).abs < da.abs / 100)
-        proved
-    else falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
+      proved
+    else
+      falsified :| s"Expected $a but got $b, which is more than 1% off and greater than epsilon = $epsilon."
   }
 }

@@ -11,13 +11,13 @@ import org.scalatest.matchers.must.Matchers
 class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
 
   test(".fit() returns a correct TypedTransformer") {
-    def prop[A: TypedEncoder : Arbitrary] = forAll { x2: X2[String, A] =>
+    def prop[A: TypedEncoder: Arbitrary] = forAll { x2: X2[String, A] =>
       val indexer = TypedStringIndexer[X1[String]]
       val ds = TypedDataset.create(Seq(x2))
       val model = indexer.fit(ds).run()
       val resultDs = model.transform(ds).as[X3[String, A, Double]]
 
-      resultDs.collect.run() == Seq(X3(x2.a, x2.b, 0D))
+      resultDs.collect.run() == Seq(X3(x2.a, x2.b, 0d))
     }
 
     check(prop[Double])
@@ -30,8 +30,7 @@ class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
     }
 
     val prop = forAll { handleInvalid: HandleInvalid =>
-      val indexer = TypedStringIndexer[X1[String]]
-        .setHandleInvalid(handleInvalid)
+      val indexer = TypedStringIndexer[X1[String]].setHandleInvalid(handleInvalid)
       val ds = TypedDataset.create(Seq(X1("foo")))
       val model = indexer.fit(ds).run()
 

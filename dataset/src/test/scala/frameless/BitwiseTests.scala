@@ -7,12 +7,12 @@ import org.scalatest.matchers.should.Matchers
 class BitwiseTests extends TypedDatasetSuite with Matchers {
 
   /**
-    * providing instances with implementations for bitwise operations since in the tests
-    * we need to check the results from frameless vs the results from normal scala operators
-    * for Numeric it is easy to test since scala comes with Numeric typeclass but there seems
-    * to be no equivalent typeclass for bitwise ops for Byte Short Int and Long types supported in Catalyst
-    */
-  trait CatalystBitwise4Tests[A]{
+   * providing instances with implementations for bitwise operations since in the tests
+   * we need to check the results from frameless vs the results from normal scala operators
+   * for Numeric it is easy to test since scala comes with Numeric typeclass but there seems
+   * to be no equivalent typeclass for bitwise ops for Byte Short Int and Long types supported in Catalyst
+   */
+  trait CatalystBitwise4Tests[A] {
     def bitwiseAnd(a1: A, a2: A): A
     def bitwiseOr(a1: A, a2: A): A
     def bitwiseXor(a1: A, a2: A): A
@@ -22,32 +22,36 @@ class BitwiseTests extends TypedDatasetSuite with Matchers {
   }
 
   object CatalystBitwise4Tests {
-    implicit val framelessbyteBitwise      : CatalystBitwise4Tests[Byte]       = new CatalystBitwise4Tests[Byte] {
-      def bitwiseOr(a1: Byte, a2: Byte) : Byte = (a1 | a2).toByte
-      def bitwiseAnd(a1: Byte, a2: Byte): Byte = (a1 & a2).toByte
-      def bitwiseXor(a1: Byte, a2: Byte): Byte = (a1 ^ a2).toByte
-    }
-    implicit val framelessshortBitwise     : CatalystBitwise4Tests[Short]      = new CatalystBitwise4Tests[Short] {
-      def bitwiseOr(a1: Short, a2: Short) : Short = (a1 | a2).toShort
-      def bitwiseAnd(a1: Short, a2: Short): Short = (a1 & a2).toShort
-      def bitwiseXor(a1: Short, a2: Short): Short = (a1 ^ a2).toShort
-    }
-    implicit val framelessintBitwise       : CatalystBitwise4Tests[Int]        = new CatalystBitwise4Tests[Int] {
-      def bitwiseOr(a1: Int, a2: Int) : Int = a1 | a2
-      def bitwiseAnd(a1: Int, a2: Int): Int = a1 & a2
-      def bitwiseXor(a1: Int, a2: Int): Int = a1 ^ a2
-    }
-    implicit val framelesslongBitwise      : CatalystBitwise4Tests[Long]       = new CatalystBitwise4Tests[Long] {
-      def bitwiseOr(a1: Long, a2: Long) : Long = a1 | a2
-      def bitwiseAnd(a1: Long, a2: Long): Long = a1 & a2
-      def bitwiseXor(a1: Long, a2: Long): Long = a1 ^ a2
-    }
+    implicit val framelessbyteBitwise: CatalystBitwise4Tests[Byte] =
+      new CatalystBitwise4Tests[Byte] {
+        def bitwiseOr(a1: Byte, a2: Byte): Byte = (a1 | a2).toByte
+        def bitwiseAnd(a1: Byte, a2: Byte): Byte = (a1 & a2).toByte
+        def bitwiseXor(a1: Byte, a2: Byte): Byte = (a1 ^ a2).toByte
+      }
+    implicit val framelessshortBitwise: CatalystBitwise4Tests[Short] =
+      new CatalystBitwise4Tests[Short] {
+        def bitwiseOr(a1: Short, a2: Short): Short = (a1 | a2).toShort
+        def bitwiseAnd(a1: Short, a2: Short): Short = (a1 & a2).toShort
+        def bitwiseXor(a1: Short, a2: Short): Short = (a1 ^ a2).toShort
+      }
+    implicit val framelessintBitwise: CatalystBitwise4Tests[Int] =
+      new CatalystBitwise4Tests[Int] {
+        def bitwiseOr(a1: Int, a2: Int): Int = a1 | a2
+        def bitwiseAnd(a1: Int, a2: Int): Int = a1 & a2
+        def bitwiseXor(a1: Int, a2: Int): Int = a1 ^ a2
+      }
+    implicit val framelesslongBitwise: CatalystBitwise4Tests[Long] =
+      new CatalystBitwise4Tests[Long] {
+        def bitwiseOr(a1: Long, a2: Long): Long = a1 | a2
+        def bitwiseAnd(a1: Long, a2: Long): Long = a1 & a2
+        def bitwiseXor(a1: Long, a2: Long): Long = a1 ^ a2
+      }
 
   }
   import CatalystBitwise4Tests._
   test("bitwiseAND") {
     def prop[A: TypedEncoder: CatalystBitwise](a: A, b: A)(
-      implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
+        implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
     ): Prop = {
       val df = TypedDataset.create(X2(a, b) :: Nil)
       val result = implicitly[CatalystBitwise4Tests[A]].bitwiseAnd(a, b)
@@ -71,7 +75,7 @@ class BitwiseTests extends TypedDatasetSuite with Matchers {
 
   test("bitwiseOR") {
     def prop[A: TypedEncoder: CatalystBitwise](a: A, b: A)(
-      implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
+        implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
     ): Prop = {
       val df = TypedDataset.create(X2(a, b) :: Nil)
       val result = implicitly[CatalystBitwise4Tests[A]].bitwiseOr(a, b)
@@ -95,7 +99,7 @@ class BitwiseTests extends TypedDatasetSuite with Matchers {
 
   test("bitwiseXOR") {
     def prop[A: TypedEncoder: CatalystBitwise](a: A, b: A)(
-      implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
+        implicit catalystBitwise4Tests: CatalystBitwise4Tests[A]
     ): Prop = {
       val df = TypedDataset.create(X2(a, b) :: Nil)
       val result = implicitly[CatalystBitwise4Tests[A]].bitwiseXor(a, b)

@@ -62,16 +62,16 @@ class TypedLinearRegressionTests extends FramelessMlSuite with Matchers {
         .setTol(2.3)
         .setSolver(solver)
 
-      val ds = TypedDataset.create(Seq(X2(0D, Vectors.dense(0D))))
+      val ds = TypedDataset.create(Seq(X2(0d, Vectors.dense(0d))))
       val model = lr.fit(ds).run()
 
       model.transformer.getAggregationDepth == 10 &&
-        model.transformer.getEpsilon == 4.0 &&
-        model.transformer.getLoss == lossStrategy.sparkValue &&
-        model.transformer.getMaxIter == 23 &&
-        model.transformer.getRegParam == 1.2 &&
-        model.transformer.getTol == 2.3 &&
-        model.transformer.getSolver == solver.sparkValue
+      model.transformer.getEpsilon == 4.0 &&
+      model.transformer.getLoss == lossStrategy.sparkValue &&
+      model.transformer.getMaxIter == 23 &&
+      model.transformer.getRegParam == 1.2 &&
+      model.transformer.getTol == 2.3 &&
+      model.transformer.getSolver == solver.sparkValue
     }
 
     check(prop)
@@ -98,25 +98,23 @@ class TypedLinearRegressionTests extends FramelessMlSuite with Matchers {
     )
 
     val ds2 = Seq(
-      X3(new DenseVector(Array(1.0)): Vector,2F, 1.0),
-      X3(new DenseVector(Array(2.0)): Vector,2F, 2.0),
-      X3(new DenseVector(Array(3.0)): Vector,2F, 3.0),
-      X3(new DenseVector(Array(4.0)): Vector,2F, 4.0),
-      X3(new DenseVector(Array(5.0)): Vector,2F, 5.0),
-      X3(new DenseVector(Array(6.0)): Vector,2F, 6.0)
+      X3(new DenseVector(Array(1.0)): Vector, 2f, 1.0),
+      X3(new DenseVector(Array(2.0)): Vector, 2f, 2.0),
+      X3(new DenseVector(Array(3.0)): Vector, 2f, 3.0),
+      X3(new DenseVector(Array(4.0)): Vector, 2f, 4.0),
+      X3(new DenseVector(Array(5.0)): Vector, 2f, 5.0),
+      X3(new DenseVector(Array(6.0)): Vector, 2f, 6.0)
     )
 
     val tds = TypedDataset.create(ds)
 
-    val lr = TypedLinearRegression[X2[Vector, Double]]
-      .setMaxIter(10)
+    val lr = TypedLinearRegression[X2[Vector, Double]].setMaxIter(10)
 
     val model = lr.fit(tds).run()
 
     val tds2 = TypedDataset.create(ds2)
 
-    val lr2 = TypedLinearRegression[X3[Vector, Float, Double]]
-      .setMaxIter(10)
+    val lr2 = TypedLinearRegression[X3[Vector, Float, Double]].setMaxIter(10)
 
     val model2 = lr2.fit(tds2).run()
 

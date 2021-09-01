@@ -24,7 +24,7 @@ class BisectingKMeansTests extends FramelessMlSuite with Matchers {
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
     }
 
-    def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
+    def prop3[A: TypedEncoder: Arbitrary] = forAll { x2: X2[Vector, A] =>
       val km = TypedBisectingKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x2))
       val model = km.fit(ds).run()
@@ -44,12 +44,12 @@ class BisectingKMeansTests extends FramelessMlSuite with Matchers {
       .setMinDivisibleClusterSize(1)
       .setSeed(123332)
 
-    val ds = TypedDataset.create(Seq(X2(Vectors.dense(Array(0D)),0)))
+    val ds = TypedDataset.create(Seq(X2(Vectors.dense(Array(0d)), 0)))
     val model = rf.fit(ds).run()
 
-      model.transformer.getK  == 10 &&
-      model.transformer.getMaxIter  == 10 &&
-      model.transformer.getMinDivisibleClusterSize  == 1 &&
-      model.transformer.getSeed == 123332
+    model.transformer.getK == 10 &&
+    model.transformer.getMaxIter == 10 &&
+    model.transformer.getMinDivisibleClusterSize == 1 &&
+    model.transformer.getSeed == 123332
   }
 }

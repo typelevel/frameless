@@ -1,9 +1,10 @@
 package frameless
 
-/** An Injection[A, B] is a reversible function from A to B.
-  *
-  * Must obey `forAll { a: A => invert(apply(a)) == a }`.
-  */
+/**
+ * An Injection[A, B] is a reversible function from A to B.
+ *
+ * Must obey `forAll { a: A => invert(apply(a)) == a }`.
+ */
 trait Injection[A, B] extends Serializable {
   def apply(a: A): B
   def invert(b: B): A

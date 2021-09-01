@@ -3,7 +3,10 @@ package frameless
 import org.apache.spark.sql.SparkSession
 
 sealed abstract class Job[A](implicit spark: SparkSession) { self =>
-  /** Runs a new Spark job. */
+
+  /**
+   * Runs a new Spark job.
+   */
   def run(): A
 
   def withGroupId(groupId: String): Job[A] = {
@@ -31,7 +34,6 @@ sealed abstract class Job[A](implicit spark: SparkSession) { self =>
     def run(): B = fn(Job.this.run()).run()
   }
 }
-
 
 object Job {
   def apply[A](a: => A)(implicit spark: SparkSession): Job[A] = new Job[A] {

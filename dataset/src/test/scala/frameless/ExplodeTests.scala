@@ -7,15 +7,15 @@ import org.scalacheck.Prop._
 
 import scala.reflect.ClassTag
 
-
 class ExplodeTests extends TypedDatasetSuite {
   test("simple explode test") {
-    val ds = TypedDataset.create(Seq((1,Array(1,2))))
-    ds.explode('_2): TypedDataset[(Int,Int)]
+    val ds = TypedDataset.create(Seq((1, Array(1, 2))))
+    ds.explode('_2): TypedDataset[(Int, Int)]
   }
 
   test("explode on vectors/list/seq") {
-    def prop[F[X] <: Traversable[X] : CatalystExplodableCollection, A: TypedEncoder](xs: List[X1[F[A]]])(implicit arb: Arbitrary[F[A]], enc: TypedEncoder[F[A]]): Prop = {
+    def prop[F[X] <: Traversable[X]: CatalystExplodableCollection, A: TypedEncoder](
+        xs: List[X1[F[A]]])(implicit arb: Arbitrary[F[A]], enc: TypedEncoder[F[A]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.explode('a).collect().run().toVector

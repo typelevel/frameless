@@ -53,7 +53,8 @@ object union {
 }
 
 object inner {
-  implicit def pairwiseInnerSemigroup[K: ClassTag, V: ClassTag: Semigroup]: Semigroup[RDD[(K, V)]] =
+  implicit def pairwiseInnerSemigroup[K: ClassTag, V: ClassTag: Semigroup]
+      : Semigroup[RDD[(K, V)]] =
     new Semigroup[RDD[(K, V)]] {
       def combine(lhs: RDD[(K, V)], rhs: RDD[(K, V)]): RDD[(K, V)] =
         lhs.join(rhs).mapValues { case (x, y) => x |+| y }
@@ -61,7 +62,8 @@ object inner {
 }
 
 object outer {
-  implicit def pairwiseOuterSemigroup[K: ClassTag, V: ClassTag](implicit m: Monoid[V]): Semigroup[RDD[(K, V)]] =
+  implicit def pairwiseOuterSemigroup[K: ClassTag, V: ClassTag](
+      implicit m: Monoid[V]): Semigroup[RDD[(K, V)]] =
     new Semigroup[RDD[(K, V)]] {
       def combine(lhs: RDD[(K, V)], rhs: RDD[(K, V)]): RDD[(K, V)] =
         lhs.fullOuterJoin(rhs).mapValues {

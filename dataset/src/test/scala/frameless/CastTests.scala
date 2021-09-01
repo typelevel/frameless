@@ -6,8 +6,7 @@ import org.scalacheck.Prop._
 class CastTests extends TypedDatasetSuite {
 
   def prop[A: TypedEncoder, B: TypedEncoder](f: A => B)(a: A)(
-    implicit
-    cast: CatalystCast[A, B]
+      implicit cast: CatalystCast[A, B]
   ): Prop = {
     val df = TypedDataset.create(X1(a) :: Nil)
     val got = df.select(df.col('a).cast[B]).collect().run()

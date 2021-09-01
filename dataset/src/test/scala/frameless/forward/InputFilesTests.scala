@@ -14,7 +14,8 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       val filePath = s"$TEST_OUTPUT_DIR/${UUID.randomUUID()}.txt"
 
       TypedDataset.create(data).dataset.write.text(filePath)
-      val dataset = TypedDataset.create(implicitly[SparkSession].sparkContext.textFile(filePath))
+      val dataset =
+        TypedDataset.create(implicitly[SparkSession].sparkContext.textFile(filePath))
 
       dataset.inputFiles sameElements dataset.dataset.inputFiles
     }

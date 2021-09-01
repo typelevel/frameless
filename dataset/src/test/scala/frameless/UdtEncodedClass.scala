@@ -26,10 +26,11 @@ object UdtEncodedClass {
 
 class UdtEncodedClassUdt extends UserDefinedType[UdtEncodedClass] {
   def sqlType: DataType = {
-    StructType(Seq(
-      StructField("a", IntegerType, nullable = false),
-      StructField("b", ArrayType(DoubleType, containsNull = false), nullable = false)
-    ))
+    StructType(
+      Seq(
+        StructField("a", IntegerType, nullable = false),
+        StructField("b", ArrayType(DoubleType, containsNull = false), nullable = false)
+      ))
   }
 
   def serialize(obj: UdtEncodedClass): InternalRow = {

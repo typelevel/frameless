@@ -9,10 +9,13 @@ class MapPartitionsTests extends TypedDatasetSuite {
   test("mapPartitions") {
     def prop[A: TypedEncoder, B: TypedEncoder](mapFunction: A => B, data: Vector[A]): Prop = {
       val lifted: Iterator[A] => Iterator[B] = _.map(mapFunction)
-      TypedDataset.create(data).
-        deserialized.
-        mapPartitions(lifted).
-        collect().run().toVector =? data.map(mapFunction)
+      TypedDataset
+        .create(data)
+        .deserialized
+        .mapPartitions(lifted)
+        .collect()
+        .run()
+        .toVector =? data.map(mapFunction)
     }
 
     check(forAll(prop[Int, Int] _))

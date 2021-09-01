@@ -12,10 +12,10 @@ import frameless.ml.params.kmeans.KMeansInitMode
 import org.scalatest.matchers.must.Matchers
 
 class KMeansTests extends FramelessMlSuite with Matchers {
-  implicit val arbVector:  Arbitrary[Vector] =
+  implicit val arbVector: Arbitrary[Vector] =
     Arbitrary(Generators.arbVector.arbitrary)
   implicit val arbKMeansInitMode: Arbitrary[KMeansInitMode] =
-    Arbitrary{
+    Arbitrary {
       Gen.oneOf(
         Gen.const(KMeansInitMode.KMeansPlusPlus),
         Gen.const(KMeansInitMode.Random)
@@ -32,7 +32,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
     }
 
-    def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
+    def prop3[A: TypedEncoder: Arbitrary] = forAll { x2: X2[Vector, A] =>
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x2))
       val model = km.fit(ds).run()
@@ -53,17 +53,17 @@ class KMeansTests extends FramelessMlSuite with Matchers {
         .setK(10)
         .setMaxIter(15)
         .setSeed(123223L)
-        .setTol(12D)
+        .setTol(12d)
 
-      val ds = TypedDataset.create(Seq(X2(Vectors.dense(Array(0D)), 0)))
+      val ds = TypedDataset.create(Seq(X2(Vectors.dense(Array(0d)), 0)))
       val model = rf.fit(ds).run()
 
       model.transformer.getInitMode == KMeansInitMode.Random.sparkValue &&
-        model.transformer.getInitSteps == 2 &&
-        model.transformer.getK == 10 &&
-        model.transformer.getMaxIter == 15 &&
-        model.transformer.getSeed == 123223L &&
-        model.transformer.getTol == 12D
+      model.transformer.getInitSteps == 2 &&
+      model.transformer.getK == 10 &&
+      model.transformer.getMaxIter == 15 &&
+      model.transformer.getSeed == 123223L &&
+      model.transformer.getTol == 12d
     }
 
     check(prop)

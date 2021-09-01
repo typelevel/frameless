@@ -1,6 +1,6 @@
 package frameless
 
-import frameless.CollectTests.{ prop, propArray }
+import frameless.CollectTests.{prop, propArray}
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -84,10 +84,11 @@ class CollectTests extends TypedDatasetSuite {
 object CollectTests {
   import frameless.syntax._
 
-  def prop[A: TypedEncoder : ClassTag](data: Vector[A])(implicit c: SparkSession): Prop =
+  def prop[A: TypedEncoder: ClassTag](data: Vector[A])(implicit c: SparkSession): Prop =
     TypedDataset.create(data).collect().run().toVector ?= data
 
-  def propArray[A: TypedEncoder : ClassTag](data: Vector[X1[Array[A]]])(implicit c: SparkSession): Prop =
+  def propArray[A: TypedEncoder: ClassTag](data: Vector[X1[Array[A]]])(
+      implicit c: SparkSession): Prop =
     Prop(TypedDataset.create(data).collect().run().toVector.zip(data).forall {
       case (X1(l), X1(r)) => l.sameElements(r)
     })

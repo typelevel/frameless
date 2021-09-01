@@ -5,7 +5,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 
-
 case class Foo(i: Int, j: Int, x: String)
 case class Bar(i: Int, x: String)
 case class InvalidFooProjectionType(i: Int, x: Boolean)
@@ -25,7 +24,8 @@ class SmartProjectTest extends TypedDatasetSuite {
   }
 
   test("X4 to X1,X2,X3,X4 projections") {
-    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](data: Vector[X4[A, B, C, D]]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder, D: TypedEncoder](
+        data: Vector[X4[A, B, C, D]]): Prop = {
       val dataset = TypedDataset.create(data)
 
       dataset.project[X4[A, B, C, D]].collect().run().toVector ?= data
@@ -42,7 +42,8 @@ class SmartProjectTest extends TypedDatasetSuite {
   }
 
   test("X3U to X1,X2,X3 projections") {
-    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](data: Vector[X3U[A, B, C]]): Prop = {
+    def prop[A: TypedEncoder, B: TypedEncoder, C: TypedEncoder](
+        data: Vector[X3U[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data)
 
       dataset.project[X3[A, B, C]].collect().run().toVector ?= data.map(x => X3(x.a, x.b, x.c))
