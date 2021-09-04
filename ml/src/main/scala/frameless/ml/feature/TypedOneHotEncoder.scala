@@ -1,9 +1,11 @@
 package frameless.ml.feature
 
+import frameless.ml.TypedEstimator
 import frameless.ml.feature.TypedOneHotEncoder.HandleInvalid
 import frameless.ml.internals.UnaryInputsChecker
+
 import org.apache.spark.ml.Estimator
-import org.apache.spark.ml.feature.{OneHotEncoderEstimator, OneHotEncoderModel}
+import org.apache.spark.ml.feature.{OneHotEncoder, OneHotEncoderModel}
 import org.apache.spark.ml.linalg.Vector
 
 /**
@@ -12,7 +14,7 @@ import org.apache.spark.ml.linalg.Vector
  *
  *  @see `TypedStringIndexer` for converting categorical values into category indices
  */
-class TypedOneHotEncoder[Inputs] private[ml](oneHotEncoder: OneHotEncoderEstimator, inputCol: String)
+class TypedOneHotEncoder[Inputs] private[ml](oneHotEncoder: OneHotEncoder, inputCol: String)
   extends TypedEstimator[Inputs, TypedOneHotEncoder.Outputs, OneHotEncoderModel] {
 
   override val estimator: Estimator[OneHotEncoderModel] = oneHotEncoder
@@ -25,7 +27,7 @@ class TypedOneHotEncoder[Inputs] private[ml](oneHotEncoder: OneHotEncoderEstimat
   def setDropLast(value: Boolean): TypedOneHotEncoder[Inputs] =
     copy(oneHotEncoder.setDropLast(value))
 
-  private def copy(newOneHotEncoder: OneHotEncoderEstimator): TypedOneHotEncoder[Inputs] =
+  private def copy(newOneHotEncoder: OneHotEncoder): TypedOneHotEncoder[Inputs] =
     new TypedOneHotEncoder[Inputs](newOneHotEncoder, inputCol)
 }
 
@@ -33,7 +35,7 @@ object TypedOneHotEncoder {
 
   case class Outputs(output: Vector)
 
-  final class HandleInvalid private(val sparkValue: String) extends AnyVal
+  sealed class HandleInvalid private(val sparkValue: String) extends AnyVal
 
   object HandleInvalid {
     case object Error extends HandleInvalid("error")
@@ -41,5 +43,5 @@ object TypedOneHotEncoder {
   }
 
   def apply[T](implicit inputsChecker: UnaryInputsChecker[T, Int]): TypedOneHotEncoder[T] =
-    new TypedOneHotEncoder[Inputs](new OneHotEncoderEstimator(), inputsChecker.inputCol)
+    new TypedOneHotEncoder[T](new OneHotEncoder(), inputsChecker.inputCol)
 }
