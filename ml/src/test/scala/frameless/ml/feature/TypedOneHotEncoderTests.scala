@@ -1,12 +1,14 @@
 package frameless.ml.feature
 
+import frameless.ml.FramelessMlSuite
 import frameless.ml.feature.TypedOneHotEncoder.HandleInvalid
+
 import org.apache.spark.ml.linalg._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 
-class TypedOneHotEncoderTests extends FramelessMlSuite {
+final class TypedOneHotEncoderTests extends FramelessMlSuite {
 
   test(".fit() returns a correct TypedTransformer") {
     implicit val arbInt = Arbitrary(Gen.choose(0, 99))
