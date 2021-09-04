@@ -51,9 +51,6 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt ++${{ matrix.scala }} githubWorkflowCheck
 
-      - name: Binary compatibility check
-        run: sbt ++${{ matrix.scala }} mimaReportBinaryIssues
-
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
@@ -67,6 +64,9 @@ jobs:
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
+
+      - name: Binary compatibility check
+        run: sbt ++${{ matrix.scala }} mimaReportBinaryIssues
 
   publish:
     name: Publish Artifacts

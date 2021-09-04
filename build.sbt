@@ -220,12 +220,7 @@ copyReadme := copyReadmeImpl.value
 
 ThisBuild / githubWorkflowArtifactUpload := false
 
-ThisBuild / githubWorkflowBuild := Seq(WorkflowStep.Sbt(
-  List("mimaReportBinaryIssues"),
-  name = Some("Binary compatibility check")
-))
-
-ThisBuild / githubWorkflowBuild ++= Seq(
+ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
                    name = Some("Setup Python"),
                    params = Map("python-version" -> "3.x")
@@ -239,6 +234,11 @@ ThisBuild / githubWorkflowBuild ++= Seq(
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
                    name = Some("Upload Codecov Results")
   )
+)
+
+ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(
+  List("mimaReportBinaryIssues"),
+  name = Some("Binary compatibility check")
 )
 
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(
