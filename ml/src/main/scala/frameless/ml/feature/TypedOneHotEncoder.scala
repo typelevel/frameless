@@ -1,6 +1,6 @@
 package frameless.ml.feature
 
-import frameless.ml.TypedEstimator
+import frameless.ml.{AppendTransformer, TypedEstimator}
 import frameless.ml.feature.TypedOneHotEncoder.HandleInvalid
 import frameless.ml.internals.UnaryInputsChecker
 
@@ -35,11 +35,11 @@ object TypedOneHotEncoder {
 
   case class Outputs(output: Vector)
 
-  sealed class HandleInvalid private(val sparkValue: String) extends AnyVal
+  final class HandleInvalid private(val sparkValue: String) extends AnyVal
 
   object HandleInvalid {
-    case object Error extends HandleInvalid("error")
-    case object Keep extends HandleInvalid("keep")
+    val Error = new HandleInvalid("error")
+    val Keep = new HandleInvalid("keep")
   }
 
   def apply[T](implicit inputsChecker: UnaryInputsChecker[T, Int]): TypedOneHotEncoder[T] =
