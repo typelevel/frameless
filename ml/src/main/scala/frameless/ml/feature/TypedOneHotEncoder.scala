@@ -1,6 +1,4 @@
-package frameless
-package ml
-package feature
+package frameless.ml.feature
 
 import frameless.ml.feature.TypedOneHotEncoder.HandleInvalid
 import frameless.ml.internals.UnaryInputsChecker
@@ -35,13 +33,13 @@ object TypedOneHotEncoder {
 
   case class Outputs(output: Vector)
 
-  sealed abstract class HandleInvalid(val sparkValue: String)
+  final class HandleInvalid private(val sparkValue: String) extends AnyVal
+
   object HandleInvalid {
     case object Error extends HandleInvalid("error")
     case object Keep extends HandleInvalid("keep")
   }
 
-  def apply[Inputs](implicit inputsChecker: UnaryInputsChecker[Inputs, Int]): TypedOneHotEncoder[Inputs] = {
+  def apply[T](implicit inputsChecker: UnaryInputsChecker[T, Int]): TypedOneHotEncoder[T] =
     new TypedOneHotEncoder[Inputs](new OneHotEncoderEstimator(), inputsChecker.inputCol)
-  }
 }
