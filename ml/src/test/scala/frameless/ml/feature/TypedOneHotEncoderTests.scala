@@ -1,6 +1,4 @@
-package frameless
-package ml
-package feature
+package frameless.ml.feature
 
 import frameless.ml.feature.TypedOneHotEncoder.HandleInvalid
 import org.apache.spark.ml.linalg._
