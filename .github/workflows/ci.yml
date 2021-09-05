@@ -65,6 +65,9 @@ jobs:
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
 
+      - name: Binary compatibility check
+        run: sbt ++${{ matrix.scala }} mimaReportBinaryIssues
+
   publish:
     name: Publish Artifacts
     needs: [build]

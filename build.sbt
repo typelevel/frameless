@@ -10,15 +10,20 @@ val irrecVersion = "0.4.0"
 
 val Scala212 = "2.12.14"
 
+val previousVersion = "0.10.1"
+
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / crossScalaVersions := Seq(Scala212)
 ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
 
+ThisBuild / mimaFailOnNoPrevious := false
+
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .aggregate(core, cats, dataset, ml, docs)
   .settings(framelessSettings: _*)
   .settings(noPublishSettings: _*)
+  .settings(mimaPreviousArtifacts := Set())
 
 lazy val core = project
   .settings(name := "frameless-core")
@@ -88,6 +93,7 @@ lazy val docs = project
       "-Ydelambdafy:inline"
     )
   )
+  .settings(mimaPreviousArtifacts := Set())
   .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
@@ -120,7 +126,8 @@ lazy val framelessSettings = Seq(
     "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
-  Test / parallelExecution := false
+  Test / parallelExecution := false,
+  mimaPreviousArtifacts := Set("org.typelevel" %% name.value % previousVersion)
 ) ++ consoleSettings
 
 lazy val consoleSettings = Seq(
@@ -227,6 +234,11 @@ ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
                    name = Some("Upload Codecov Results")
   )
+)
+
+ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(
+  List("mimaReportBinaryIssues"),
+  name = Some("Binary compatibility check")
 )
 
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(
