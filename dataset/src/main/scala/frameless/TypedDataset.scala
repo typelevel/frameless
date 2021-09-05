@@ -248,8 +248,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
    *
    * It is statically checked that column with such name exists and has type `A`.
    */
-  def col[A](x: Function1[T, A]): TypedColumn[T, A] = macro TypedColumn.macroImpl[T, A]
-
+  def col[A](x: Function1[T, A]): TypedColumn[T, A] =
+    macro TypedColumnMacroImpl.applyImpl[T, A]
 
   /** Projects the entire TypedDataset[T] into a single column of type TypedColumn[T,T]
     * {{{

@@ -8,54 +8,52 @@ case class MyClass2(d: Long, e: MyClass3)
 case class MyClass3(f: Double)
 case class MyClass4(h: Boolean)
 
-class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
+final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
 
   def ds = {
     TypedDataset.create(Seq(
-      MyClass1(1, "2", MyClass2(3L, MyClass3(7.0)), Some(MyClass4(true))),
-      MyClass1(4, "5", MyClass2(6L, MyClass3(8.0)), None)))
+      MyClass1(1, "2", MyClass2(3L, MyClass3(7.0D)), Some(MyClass4(true))),
+      MyClass1(4, "5", MyClass2(6L, MyClass3(8.0D)), None)))
   }
 
   test("col(_.a)") {
-    val col = ds.col(_.a)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(1, 4)
-    actual shouldEqual expected
+    val col = TypedColumn[MyClass1, Int](_.a)
+
+    ds.select(col).collect.run() shouldEqual Seq(1, 4)
   }
 
   test("col(x => x.a") {
-    val col = ds.col(x => x.a)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(1, 4)
-    actual shouldEqual expected
+    val col = TypedColumn[MyClass1, Int](x => x.a)
+
+    ds.select(col).collect.run() shouldEqual Seq(1, 4)
   }
 
   test("col((x: MyClass1) => x.a") {
-    val col = ds.col((x: MyClass1) => x.a)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(1, 4)
-    actual shouldEqual expected
+    val col = TypedColumn { (x: MyClass1) => x.a }
+
+    ds.select(col).collect.run() shouldEqual Seq(1, 4)
   }
 
-  test("col((x:MyClass1) => x.a") {
-    val col = ds.col((x: MyClass1) => x.a)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(1, 4)
-    actual shouldEqual expected
+  test("col((x: MyClass1) => x.c.e.f") {
+    val col = TypedColumn { (x: MyClass1) => x.c.e.f }
+
+    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
   }
 
   test("col(_.c.d)") {
-    val col = ds.col(_.c.d)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(3, 6)
-    actual shouldEqual expected
+    val col = TypedColumn[MyClass1, Long](_.c.d)
+
+    ds.select(col).collect.run() shouldEqual Seq(3L, 6L)
   }
 
   test("col(_.c.e.f)") {
-    val col = ds.col(_.c.e.f)
-    val actual = ds.select(col).collect.run()
-    val expected = Seq(7.0, 8.0)
-    actual shouldEqual expected
+    val col = TypedColumn[MyClass1, Double](_.c.e.f)
+
+    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
+  }
+
+  test("col(_.c.d) as int does not compile (is long)") {
+    illTyped("TypedColumn[MyClass1, Int](_.c.d)")
   }
 
   test("col(_.g.h does not compile") {
@@ -63,12 +61,19 @@ class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
     illTyped("""ds.col(_.g.h)""")
   }
 
-  test("col(_.a.toString) should not compile") {
+  test("col(_.a.toString) does not compile") {
     illTyped("""ds.col(_.a.toString)""")
   }
 
-  test("col(x => java.lang.Math.abs(x.a)) should not compile") {
-    illTyped("""col(x => java.lang.Math.abs(x.a))""")
+  test("col(_.a.toString.size) does not compile") {
+    illTyped("""ds.col(_.a.toString.size)""")
   }
 
+  test("col((x: MyClass1) => x.toString.size) does not compile") {
+    illTyped("""ds.col((x: MyClass1) => x.toString.size)""")
+  }
+
+  test("col(x => java.lang.Math.abs(x.a)) does not compile") {
+    illTyped("""col(x => java.lang.Math.abs(x.a))""")
+  }
 }

@@ -10,7 +10,7 @@ import shapeless.ops.record.Selector
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
-import scala.reflect.macros.whitebox
+
 import scala.language.experimental.macros
 
 sealed trait UntypedExpression[T] {
@@ -866,8 +866,7 @@ object SortedTypedColumn {
       implicit def caseTypedColumn[T, U : CatalystOrdered] = at[TypedColumn[T, U]](c => defaultAscending(c))
       implicit def caseTypeSortedColumn[T, U] = at[SortedTypedColumn[T, U]](identity)
     }
-  }
-
+}
 
 object TypedColumn {
   /** Evidence that type `T` has column `K` with type `V`. */
@@ -899,49 +898,17 @@ object TypedColumn {
       ): Exists[T, K, V] = new Exists[T, K, V] {}
   }
 
-  def apply[T, A](x: Function1[T, A]): TypedColumn[T, A] = macro macroImpl[T, A]
+  /**
+    * {{{
+    * import frameless.TypedColumn
+    * 
+    * case class Foo(id: Int, bar: String)
+    * 
+    * val colbar: TypedColumn[Foo, String] = TypedColumn { foo: Foo => foo.bar }
+    * val colid = TypedColumn[Foo, Int](_.id)
+    * }}}
+    */
+  def apply[T, U](x: T => U): TypedColumn[T, U] =
+    macro TypedColumnMacroImpl.applyImpl[T, U]
 
-  def macroImpl[T: c.WeakTypeTag, A: c.WeakTypeTag](c: whitebox.Context)(x: c.Tree) = {
-
-    import c.universe._
-
-    val t = c.weakTypeOf[T]
-    val a = c.weakTypeOf[A]
-
-    def buildExpression(columnNames: List[String]) = {
-      val columnName = columnNames.mkString(".")
-      c.Expr[TypedColumn[T, A]](q"new frameless.TypedColumn[$t, $a]((org.apache.spark.sql.functions.col($columnName)).expr)")
-    }
-
-    x match {
-      case q"((${_: TermName}:${_: Type}) => ${_: TermName}.${p: TermName})" => buildExpression(List(p.toString()))
-      case q"(_.${p: TermName})" => buildExpression(List(p.toString()))
-      case q"(_.${p: TermName}.${x: TermName})" => buildExpression(List(p.toString(), x.toString()))
-      case q"(_.${p: TermName}.${x: TermName}.${y: TermName})" => buildExpression(List(p.toString(), x.toString(), y.toString()))
-      case q"(_.${p: TermName}.${x: TermName}.${y: TermName}.${z: TermName})" => buildExpression(List(p.toString(), x.toString(), y.toString(), z.toString()))
-      case x => throw new IllegalArgumentException(s"$x is not supported")
-    }
-  }
-}
-
-/** Compute the intersection of two types:
-  *
-  * - With[A, A] = A
-  * - With[A, B] = A with B (when A != B)
-  *
-  * This type function is needed to prevent IDEs from infering large types
-  * with shape `A with A with ... with A`. These types could be confusing for
-  * both end users and IDE's type checkers.
-  */
-trait With[A, B] { type Out }
-
-trait LowPrioWith {
-  type Aux[A, B, W] = With[A, B] { type Out = W }
-  protected[this] val theInstance = new With[Any, Any] {}
-  protected[this] def of[A, B, W]: With[A, B] { type Out = W } = theInstance.asInstanceOf[Aux[A, B, W]]
-  implicit def identity[T]: Aux[T, T, T] = of[T, T, T]
-}
-
-object With extends LowPrioWith {
-  implicit def combine[A, B]: Aux[A, B, A with B] = of[A, B, A with B]
 }
