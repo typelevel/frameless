@@ -50,13 +50,31 @@ lazy val cats = project
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
-  .settings(framelessSettings: _*)
-  .settings(framelessTypedDatasetREPL: _*)
-  .settings(publishSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
-    "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(Seq(
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
+      "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
+      "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
+    ),
+    mimaBinaryIssueFilters ++= {
+      import com.typesafe.tools.mima.core._
+
+      val imt = ProblemFilters.exclude[IncompatibleMethTypeProblem](_)
+      val mc = ProblemFilters.exclude[MissingClassProblem](_)
+      val dmm = ProblemFilters.exclude[DirectMissingMethodProblem](_)
+
+      // TODO: Remove have version bump
+      Seq(
+        imt("frameless.RecordEncoderFields.deriveRecordCons"),
+        imt("frameless.RecordEncoderFields.deriveRecordLast"),
+        mc("frameless.functions.FramelessLit"),
+        mc(f"frameless.functions.FramelessLit$$"),
+        dmm("frameless.functions.package.litAggr")
+      )
+    }
   ))
   .dependsOn(core % "test->test;compile->compile")
 
