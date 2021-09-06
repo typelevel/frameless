@@ -15,26 +15,30 @@ package object functions extends Udf with UnaryFunctions {
   object aggregate extends AggregateFunctions
   object nonAggregate extends NonAggregateFunctions
 
-  /** Creates a [[frameless.TypedAggregate]] of literal value. If A is to be encoded using an Injection make
-    * sure the injection instance is in scope.
-    *
-    * apache/spark
-    */
-  def litAggr[A, T](value: A)(implicit i0: TypedEncoder[A], i1: Refute[IsValueClass[A]]): TypedAggregate[T, A] =
+  /**
+   * Creates a [[frameless.TypedAggregate]] of literal value. If A is to be encoded using an Injection make
+   * sure the injection instance is in scope.
+   *
+   * apache/spark
+   */
+  def litAggr[A, T](value: A)(
+      implicit i0: TypedEncoder[A],
+      i1: Refute[IsValueClass[A]]): TypedAggregate[T, A] =
     new TypedAggregate[T, A](lit(value).expr)
 
-  /** Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
-    * sure the injection instance is in scope.
-    *
-    * apache/spark
-    *
-    * @tparam A the literal value type
-    * @tparam T the row type
-    */
-  def lit[A, T](value: A)(
-    implicit encoder: TypedEncoder[A]): TypedColumn[T, A] = {
+  /**
+   * Creates a [[frameless.TypedColumn]] of literal value. If A is to be encoded using an Injection make
+   * sure the injection instance is in scope.
+   *
+   * apache/spark
+   *
+   * @tparam A the literal value type
+   * @tparam T the row type
+   */
+  def lit[A, T](value: A)(implicit encoder: TypedEncoder[A]): TypedColumn[T, A] = {
 
-    if (ScalaReflection.isNativeType(encoder.jvmRepr) && encoder.catalystRepr == encoder.jvmRepr) {
+    if (ScalaReflection.isNativeType(
+        encoder.jvmRepr) && encoder.catalystRepr == encoder.jvmRepr) {
       val expr = Literal(value, encoder.catalystRepr)
       new TypedColumn(expr)
     } else {
@@ -51,15 +55,21 @@ package object functions extends Udf with UnaryFunctions {
     }
   }
 
-  /** Creates a [[frameless.TypedColumn]] of literal value 
-    * for a Value class `A`.
-    * 
-    * @tparam A the value class
-    * @tparam T the row type
-    */
-  def litValue[A : IsValueClass, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], V, VS <: HList](value: A)(
-    implicit
-      i0: LabelledGeneric.Aux[A, G],
+  /**
+   * Creates a [[frameless.TypedColumn]] of literal value
+   * for a Value class `A`.
+   *
+   * @tparam A the value class
+   * @tparam T the row type
+   */
+  def litValue[
+      A: IsValueClass,
+      T,
+      G <: ::[_, HNil],
+      H <: ::[_ <: FieldType[_ <: Symbol, _], HNil],
+      V,
+      VS <: HList](value: A)(
+      implicit i0: LabelledGeneric.Aux[A, G],
       i1: DropUnitValues.Aux[G, H],
       i2: IsHCons.Aux[H, _ <: FieldType[_, V], HNil],
       i3: Values.Aux[H, VS],

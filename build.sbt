@@ -25,14 +25,8 @@ inThisBuild(
     //scalaVersion := "2.13.3",
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    scalafixDependencies ++= Seq(
-      "com.github.liancheng" %% "organize-imports" % "0.5.0")
+    scalafixDependencies ++= Seq("com.github.liancheng" %% "organize-imports" % "0.5.0")
   )
-)
-
-ThisBuild / githubWorkflowBuildPreamble += WorkflowStep.Sbt(
-  List("scalafmtCheckAll", "scalafmtSbtCheck"),
-  name = Some("Check formatting")
 )
 
 lazy val root = Project("frameless", file("." + "frameless"))
@@ -72,9 +66,9 @@ lazy val dataset = project
   .settings(publishSettings)
   .settings(Seq(
     libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
-      "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
-      "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
+      "org.apache.spark" %% "spark-core" % sparkVersion % Provided,
+      "org.apache.spark" %% "spark-sql" % sparkVersion % Provided,
+      "net.ceedubs" %% "irrec-regex-gen" % irrecVersion % Test
     ),
     mimaBinaryIssueFilters ++= {
       import com.typesafe.tools.mima.core._
@@ -129,7 +123,7 @@ lazy val docs = project
       "-Ydelambdafy:inline"
     )
   )
-.settings(mimaPreviousArtifacts := Set.empty)
+  .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(dataset, cats, ml)
 
 lazy val framelessSettings = Seq(
@@ -262,22 +256,24 @@ lazy val copyReadmeImpl = Def.task {
 }
 copyReadme := copyReadmeImpl.value
 
+// GitHub workflow
 ThisBuild / githubWorkflowArtifactUpload := false
 
+ThisBuild / githubWorkflowBuildPreamble += WorkflowStep.Sbt(
+  List("scalafmtCheckAll", "scalafmtSbtCheck"),
+  name = Some("Check formatting")
+)
+
 ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
-                   name = Some("Setup Python"),
-                   params = Map("python-version" -> "3.x")
-  ),
-  WorkflowStep.Run(List("pip install codecov"),
-                   name = Some("Setup codecov")
-  ),
-  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
-                   name = Some("Test & Compute Coverage")
-  ),
-  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
-                   name = Some("Upload Codecov Results")
-  )
+  WorkflowStep.Use(
+    UseRef.Public("actions", "setup-python", "v2"),
+    name = Some("Setup Python"),
+    params = Map("python-version" -> "3.x")),
+  WorkflowStep.Run(List("pip install codecov"), name = Some("Setup codecov")),
+  WorkflowStep
+    .Sbt(List("coverage", "test", "coverageReport"), name = Some("Test & Compute Coverage")),
+  WorkflowStep
+    .Run(List("codecov -F ${{ matrix.scala }}"), name = Some("Upload Codecov Results"))
 )
 
 ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(

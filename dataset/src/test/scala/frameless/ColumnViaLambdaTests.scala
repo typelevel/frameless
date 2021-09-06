@@ -11,9 +11,10 @@ case class MyClass4(h: Boolean)
 final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
 
   def ds = {
-    TypedDataset.create(Seq(
-      MyClass1(1, "2", MyClass2(3L, MyClass3(7.0D)), Some(MyClass4(true))),
-      MyClass1(4, "5", MyClass2(6L, MyClass3(8.0D)), None)))
+    TypedDataset.create(
+      Seq(
+        MyClass1(1, "2", MyClass2(3L, MyClass3(7.0d)), Some(MyClass4(true))),
+        MyClass1(4, "5", MyClass2(6L, MyClass3(8.0d)), None)))
   }
 
   test("col(_.a)") {
@@ -37,7 +38,7 @@ final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
   test("col((x: MyClass1) => x.c.e.f") {
     val col = TypedColumn { (x: MyClass1) => x.c.e.f }
 
-    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
+    ds.select(col).collect.run() shouldEqual Seq(7.0d, 8.0d)
   }
 
   test("col(_.c.d)") {
@@ -49,7 +50,7 @@ final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
   test("col(_.c.e.f)") {
     val col = TypedColumn[MyClass1, Double](_.c.e.f)
 
-    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
+    ds.select(col).collect.run() shouldEqual Seq(7.0d, 8.0d)
   }
 
   test("col(_.c.d) as int does not compile (is long)") {

@@ -442,7 +442,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     case class MyClass1(a: Int, b: String, c: MyClass2)
     case class MyClass2(d: Long)
 
-    val ds = TypedDataset.create(Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L))))
+    val ds =
+      TypedDataset.create(Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L))))
 
     assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
     assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])

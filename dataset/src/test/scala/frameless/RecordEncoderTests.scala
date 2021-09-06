@@ -1,8 +1,13 @@
 package frameless
 
-import org.apache.spark.sql.{Row, functions => F}
+import org.apache.spark.sql.{functions => F, Row}
 import org.apache.spark.sql.types.{
-  IntegerType, LongType, ObjectType, StringType, StructField, StructType
+  IntegerType,
+  LongType,
+  ObjectType,
+  StringType,
+  StructField,
+  StructType
 }
 
 import shapeless.{HList, LabelledGeneric}
@@ -97,15 +102,15 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     encoder.jvmRepr shouldBe ObjectType(classOf[Name])
 
-    encoder.catalystRepr shouldBe StructType(
-      Seq(StructField("value", StringType, false)))
+    encoder.catalystRepr shouldBe StructType(Seq(StructField("value", StringType, false)))
 
     val sqlContext = session.sqlContext
     import sqlContext.implicits._
 
     TypedDataset
       .createUnsafe[Name](Seq("Foo", "Bar").toDF)(encoder)
-      .collect().run() shouldBe Seq(new Name("Foo"), new Name("Bar"))
+      .collect()
+      .run() shouldBe Seq(new Name("Foo"), new Name("Bar"))
 
   }
 
@@ -126,24 +131,23 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     encoder.jvmRepr shouldBe ObjectType(classOf[Person])
 
-    val expectedPersonStructType = StructType(Seq(
-      StructField("name", StringType, false),
-      StructField("age", IntegerType, false)))
+    val expectedPersonStructType = StructType(
+      Seq(StructField("name", StringType, false), StructField("age", IntegerType, false)))
 
     encoder.catalystRepr shouldBe expectedPersonStructType
 
     val unsafeDs: TypedDataset[Person] = {
-      val rdd = sc.parallelize(Seq(
-        Row.fromTuple("Foo" -> 2),
-        Row.fromTuple("Bar" -> 3)
-      ))
+      val rdd = sc.parallelize(
+        Seq(
+          Row.fromTuple("Foo" -> 2),
+          Row.fromTuple("Bar" -> 3)
+        ))
       val df = session.createDataFrame(rdd, expectedPersonStructType)
 
       TypedDataset.createUnsafe(df)(encoder)
     }
 
-    val expected = Seq(
-      Person(new Name("Foo"), 2), Person(new Name("Bar"), 3))
+    val expected = Seq(Person(new Name("Foo"), 2), Person(new Name("Bar"), 3))
 
     unsafeDs.collect.run() shouldBe expected
 
@@ -154,8 +158,8 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     val lorem = new Name("Lorem")
 
-    safeDs.withColumnReplaced('name, functions.litValue(lorem)).
-      collect.run() shouldBe expected.map(_.copy(name = lorem))
+    safeDs.withColumnReplaced('name, functions.litValue(lorem)).collect.run() shouldBe expected
+      .map(_.copy(name = lorem))
   }
 
   test("Case class with value class as optional field") {
@@ -170,7 +174,9 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     fieldEncoder.encoder.catalystRepr shouldBe StringType
 
-    fieldEncoder.encoder. // !StringType
+    fieldEncoder
+      .encoder
+      . // !StringType
       jvmRepr shouldBe ObjectType(classOf[Option[_]])
 
     // Encode as a Person field
@@ -178,26 +184,24 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     encoder.jvmRepr shouldBe ObjectType(classOf[User])
 
-    val expectedPersonStructType = StructType(Seq(
-      StructField("id", LongType, false),
-      StructField("name", StringType, true)))
+    val expectedPersonStructType =
+      StructType(Seq(StructField("id", LongType, false), StructField("name", StringType, true)))
 
     encoder.catalystRepr shouldBe expectedPersonStructType
 
     val ds1: TypedDataset[User] = {
-      val rdd = sc.parallelize(Seq(
-        Row(1L, null),
-        Row(2L, "Foo")
-      ))
+      val rdd = sc.parallelize(
+        Seq(
+          Row(1L, null),
+          Row(2L, "Foo")
+        ))
 
       val df = session.createDataFrame(rdd, expectedPersonStructType)
 
       TypedDataset.createUnsafe(df)(encoder)
     }
 
-    ds1.collect.run() shouldBe Seq(
-      User(1L, None),
-      User(2L, Some(new Name("Foo"))))
+    ds1.collect.run() shouldBe Seq(User(1L, None), User(2L, Some(new Name("Foo"))))
 
     val ds2: TypedDataset[User] = {
       val sqlContext = session.sqlContext
@@ -209,18 +213,14 @@ class RecordEncoderTests extends TypedDatasetSuite with Matchers {
         """{"id":5,"name":null}"""
       ).toDF
 
-      val df2 = df1.withColumn(
-        "jsonValue",
-        F.from_json(df1.col("value"), expectedPersonStructType)).
-        select("jsonValue.id", "jsonValue.name")
+      val df2 = df1
+        .withColumn("jsonValue", F.from_json(df1.col("value"), expectedPersonStructType))
+        .select("jsonValue.id", "jsonValue.name")
 
       TypedDataset.createUnsafe[User](df2)
     }
 
-    val expected = Seq(
-      User(3L, None),
-      User(4L, Some(new Name("Lorem"))),
-      User(5L, None))
+    val expected = Seq(User(3L, None), User(4L, Some(new Name("Lorem"))), User(5L, None))
 
     ds2.collect.run() shouldBe expected
 

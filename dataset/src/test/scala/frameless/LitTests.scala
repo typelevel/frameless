@@ -15,16 +15,10 @@ class LitTests extends TypedDatasetSuite with Matchers {
     val l: TypedColumn[Int, A] = lit(value)
 
     // filter forces whole codegen
-    val elems = df.deserialized.filter((_:Int) => true).select(l)
-      .collect()
-      .run()
-      .toVector
+    val elems = df.deserialized.filter((_: Int) => true).select(l).collect().run().toVector
 
     // otherwise it uses local relation
-    val localElems = df.select(l)
-      .collect()
-      .run()
-      .toVector
+    val localElems = df.select(l).collect().run().toVector
 
     val expected = Vector(value)
 
@@ -56,17 +50,15 @@ class LitTests extends TypedDatasetSuite with Matchers {
   }
 
   test("support value class") {
-    val initial = Seq(
-      Q(name = new Name("Foo"), id = 1),
-      Q(name = new Name("Bar"), id = 2))
+    val initial = Seq(Q(name = new Name("Foo"), id = 1), Q(name = new Name("Bar"), id = 2))
     val ds = TypedDataset.create(initial)
 
     ds.collect.run() shouldBe initial
 
     val lorem = new Name("Lorem")
 
-    ds.withColumnReplaced('name, functions.litValue(lorem)).
-      collect.run() shouldBe initial.map(_.copy(name = lorem))
+    ds.withColumnReplaced('name, functions.litValue(lorem)).collect.run() shouldBe initial.map(
+      _.copy(name = lorem))
   }
 
   test("#205: comparing literals encoded using Injection") {
