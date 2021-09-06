@@ -10,7 +10,7 @@ import ceedubs.irrec.regex.gen.CharRegexGen.genCharRegexAndCandidate
 
 import scala.math.Ordering.Implicits._
 
-class ColumnTests extends TypedDatasetSuite with Matchers {
+final class ColumnTests extends TypedDatasetSuite with Matchers {
 
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
@@ -437,5 +437,23 @@ class ColumnTests extends TypedDatasetSuite with Matchers {
     val ds = TypedDataset.create((1, (2.3F, "a")) :: Nil)
 
     "ds.select(ds('_2).field('_3))" shouldNot typeCheck
+  }
+
+  test("col through lambda") {
+    case class MyClass1(a: Int, b: String, c: MyClass2)
+    case class MyClass2(d: Long)
+
+    val ds = TypedDataset.create(Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L))))
+
+    assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
+    assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])
+    assert(ds.col(_.c.d).isInstanceOf[TypedColumn[MyClass1, Long]])
+
+    "ds.col(_.c.toString)" shouldNot typeCheck
+    "ds.col(_.c.toInt)" shouldNot typeCheck
+    "ds.col(x => java.lang.Math.abs(x.a))" shouldNot typeCheck
+
+    // we should be able to block the following as well...
+    "ds.col(_.a.toInt)" shouldNot typeCheck
   }
 }
