@@ -2,27 +2,33 @@ package frameless
 
 import frameless.functions.lit
 
-import org.scalacheck.Prop
-import org.scalacheck.Prop._
+import org.scalatest.matchers.should.Matchers
 
-class LitTests extends TypedDatasetSuite {
-  def prop[A: TypedEncoder](value: A): Prop = {
+import org.scalacheck.Prop, Prop._
+
+import RecordEncoderTests.Name
+
+class LitTests extends TypedDatasetSuite with Matchers {
+  def prop[A: TypedEncoder](value: A)(implicit i0: shapeless.Refute[IsValueClass[A]]): Prop = {
     val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
+    val l: TypedColumn[Int, A] = lit(value)
+
     // filter forces whole codegen
-    val elems = df.deserialized.filter((_:Int) => true).select(lit(value))
+    val elems = df.deserialized.filter((_:Int) => true).select(l)
       .collect()
       .run()
       .toVector
 
     // otherwise it uses local relation
-    val localElems = df.select(lit(value))
+    val localElems = df.select(l)
       .collect()
       .run()
       .toVector
 
+    val expected = Vector(value)
 
-    (localElems ?= Vector(value)) && (elems ?= Vector(value))
+    (localElems ?= expected) && (elems ?= expected)
   }
 
   test("select(lit(...))") {
@@ -49,6 +55,20 @@ class LitTests extends TypedDatasetSuite {
     // check(prop[frameless.LocalDateTime] _)
   }
 
+  test("support value class") {
+    val initial = Seq(
+      Q(name = new Name("Foo"), id = 1),
+      Q(name = new Name("Bar"), id = 2))
+    val ds = TypedDataset.create(initial)
+
+    ds.collect.run() shouldBe initial
+
+    val lorem = new Name("Lorem")
+
+    ds.withColumnReplaced('name, functions.litValue(lorem)).
+      collect.run() shouldBe initial.map(_.copy(name = lorem))
+  }
+
   test("#205: comparing literals encoded using Injection") {
     import org.apache.spark.sql.catalyst.util.DateTimeUtils
     implicit val dateAsInt: Injection[java.sql.Date, Int] =
@@ -58,8 +78,10 @@ class LitTests extends TypedDatasetSuite {
     val data = Vector(P(42, today))
     val tds = TypedDataset.create(data)
 
-    tds.filter(tds('d) === today).collect().run()
+    tds.filter(tds('d) === today).collect.run().map(_.i) shouldBe Seq(42)
   }
 }
 
 final case class P(i: Int, d: java.sql.Date)
+
+final case class Q(id: Int, name: Name)
