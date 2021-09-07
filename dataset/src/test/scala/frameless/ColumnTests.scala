@@ -96,6 +96,17 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     t('_1).toString ?= t.dataset.col("_1").toString()
   }
 
+  test("(un)typed") {
+    type RowType = Tuple2[Tuple2[Int, Int], String]
+
+    val ds = TypedDataset.create(((1, 2) -> "foo") :: Nil)
+    val tupleCol = ds.col('_1)
+
+    val sel = tupleCol.typed[RowType, X2[Int, Int]](tupleCol.untyped)
+
+    ds.select(sel).collect.run() shouldEqual Seq(X2(1, 2))
+  }
+
   test("boolean and / or") {
     val spark = session
     import spark.implicits._
