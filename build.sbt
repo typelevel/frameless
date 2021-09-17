@@ -8,7 +8,7 @@ val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
 val irrecVersion = "0.4.0"
 
-val Scala212 = "2.12.14"
+val Scala212 = "2.12.15"
 
 val previousVersion = "0.10.1"
 
