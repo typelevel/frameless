@@ -177,7 +177,11 @@ class RecordEncoder[F, G <: HList, H <: HList]
 }
 
 final class RecordFieldEncoder[T](
-  val encoder: TypedEncoder[T]) extends Serializable
+  val encoder: TypedEncoder[T],
+  private[frameless] val jvmRepr: DataType,
+  private[frameless] val fromCatalyst: Expression => Expression,
+  private[frameless] val toCatalyst: Expression => Expression
+) extends Serializable
 
 object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
 
@@ -197,31 +201,51 @@ object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
       i4: IsHCons.Aux[KS, K, HNil],
       i5: TypedEncoder[V],
       i6: ClassTag[F]
-    ): RecordFieldEncoder[Option[F]] = RecordFieldEncoder[Option[F]](new TypedEncoder[Option[F]] {
-      val nullable = true
-
-      val jvmRepr = ObjectType(classOf[Option[F]])
-
-      @inline def catalystRepr: DataType = i5.catalystRepr
-
+    ): RecordFieldEncoder[Option[F]] = {
+      val fieldName = i4.head(i3()).name
       val innerJvmRepr = ObjectType(i6.runtimeClass)
 
-      def fromCatalyst(path: Expression): Expression = {
+      val catalyst: Expression => Expression = { path =>
+        val value = UnwrapOption(innerJvmRepr, path)
+        val javaValue = Invoke(value, fieldName, i5.jvmRepr, Nil)
+
+        i5.toCatalyst(javaValue)
+      }
+
+      val fromCatalyst: Expression => Expression = { path =>
         val javaValue = i5.fromCatalyst(path)
         val value = NewInstance(i6.runtimeClass, Seq(javaValue), innerJvmRepr)
 
         WrapOption(value, innerJvmRepr)
       }
 
-      @inline def toCatalyst(path: Expression): Expression = {
-        val value = UnwrapOption(innerJvmRepr, path)
+      val jvmr = ObjectType(classOf[Option[F]])
 
-        val fieldName = i4.head(i3()).name
-        val javaValue = Invoke(value, fieldName, i5.jvmRepr, Nil)
+      new RecordFieldEncoder[Option[F]](
+        encoder = new TypedEncoder[Option[F]] {
+          val nullable = true
 
-        i5.toCatalyst(javaValue)
-      }
-    })
+          val jvmRepr = jvmr
+
+          @inline def catalystRepr: DataType = i5.catalystRepr
+
+          def fromCatalyst(path: Expression): Expression = {
+            val javaValue = i5.fromCatalyst(path)
+            val value = NewInstance(
+              i6.runtimeClass, Seq(javaValue), innerJvmRepr)
+
+            WrapOption(value, innerJvmRepr)
+          }
+
+          def toCatalyst(path: Expression): Expression = catalyst(path)
+
+          override def toString: String = s"RecordFieldEncoder.optionValueClass[${i6.runtimeClass.getName}]('${fieldName}', $i5)"
+        },
+        jvmRepr = jvmr,
+        fromCatalyst = fromCatalyst,
+        toCatalyst = catalyst
+      )
+  }
 
   /**
    * @tparam F the value class
@@ -229,28 +253,50 @@ object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
    * @tparam H the single field of the value class (with guarantee it's not a `Unit` value)
    * @tparam V the inner value type
    */
-  implicit def valueClass[F : IsValueClass, G <: ::[_, HNil], H <: ::[_, HNil], V]
+  implicit def valueClass[F : IsValueClass, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], K <: Symbol, V, KS <: ::[_ <: Symbol, HNil]]
     (implicit
       i0: LabelledGeneric.Aux[F, G],
       i1: DropUnitValues.Aux[G, H],
-      i2: IsHCons.Aux[H, _ <: FieldType[_, V], HNil],
-      i3: TypedEncoder[V],
-      i4: ClassTag[F]
-    ): RecordFieldEncoder[F] = RecordFieldEncoder[F](new TypedEncoder[F] {
-      def nullable = i3.nullable
+      i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
+      i3: Keys.Aux[H, KS],
+      i4: IsHCons.Aux[KS, K, HNil],
+      i5: TypedEncoder[V],
+      i6: ClassTag[F]
+    ): RecordFieldEncoder[F] = {
+      val cls = i6.runtimeClass
+      val jvmr = i5.jvmRepr
+      val fieldName = i4.head(i3()).name
 
-      def jvmRepr = i3.jvmRepr
+      new RecordFieldEncoder[F](
+        encoder = new TypedEncoder[F] {
+          def nullable = i5.nullable
 
-      def catalystRepr: DataType = i3.catalystRepr
+          def jvmRepr = jvmr
 
-      def fromCatalyst(path: Expression): Expression =
-        i3.fromCatalyst(path)
+          def catalystRepr: DataType = i5.catalystRepr
 
-      @inline def toCatalyst(path: Expression): Expression =
-        i3.toCatalyst(path)
-    })
+          def fromCatalyst(path: Expression): Expression =
+            i5.fromCatalyst(path)
+
+          @inline def toCatalyst(path: Expression): Expression =
+            i5.toCatalyst(path)
+
+          override def toString: String = s"RecordFieldEncoder.valueClass[${cls.getName}]('${fieldName}', ${i5})"
+        },
+        jvmRepr = FramelessInternals.objectTypeFor[F],
+        fromCatalyst = { expr: Expression =>
+          NewInstance(
+            i6.runtimeClass,
+            i5.fromCatalyst(expr) :: Nil,
+            ObjectType(i6.runtimeClass))
+        },
+        toCatalyst = { expr: Expression =>
+          i5.toCatalyst(Invoke(expr, fieldName, jvmr))
+        }
+      )
+  }
 }
 
 private[frameless] sealed trait RecordFieldEncoderLowPriority {
-  implicit def apply[T](implicit e: TypedEncoder[T]): RecordFieldEncoder[T] = new RecordFieldEncoder[T](e)
+  implicit def apply[T](implicit e: TypedEncoder[T]): RecordFieldEncoder[T] = new RecordFieldEncoder[T](e, e.jvmRepr, e.fromCatalyst, e.toCatalyst)
 }
