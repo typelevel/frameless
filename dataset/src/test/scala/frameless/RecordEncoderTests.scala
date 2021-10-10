@@ -2,6 +2,8 @@ package frameless
 
 import org.apache.spark.sql.{Row, functions => F}
 import org.apache.spark.sql.types.{
+  ArrayType,
+  BinaryType,
   DecimalType,
   IntegerType,
   LongType,
@@ -52,6 +54,7 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val schema = TypedEncoder[OptionalNesting].catalystRepr.asInstanceOf[StructType]
     val df = session.createDataFrame(rdd, schema)
     val ds = TypedDataset.createUnsafe(df)(TypedEncoder[OptionalNesting])
+
     ds.firstOption.run.get.o.isEmpty shouldBe true
   }
 
@@ -303,7 +306,130 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
       Student("Foo", grades), Student("Bar", grades))
   }
 
-  // TODO: Test array
+  test("Encode binary array") {
+    val encoder = TypedEncoder[Tuple2[String, Array[Byte]]]
+
+    encoder.jvmRepr shouldBe ObjectType(
+      classOf[Tuple2[String, Array[Byte]]])
+
+    val expectedStructType = StructType(Seq(
+      StructField("_1", StringType, false),
+      StructField("_2", BinaryType, false)))
+
+    encoder.catalystRepr shouldBe expectedStructType
+
+    val ds1: TypedDataset[(String, Array[Byte])] = {
+      val rdd = sc.parallelize(Seq(
+        Row.fromTuple("Foo" -> Array[Byte](3, 4)),
+        Row.fromTuple("Bar" -> Array[Byte](5))
+      ))
+      val df = session.createDataFrame(rdd, expectedStructType)
+
+      TypedDataset.createUnsafe(df)(encoder)
+    }
+
+    val expected = Seq("Foo" -> Seq[Byte](3, 4), "Bar" -> Seq[Byte](5))
+
+    ds1.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected
+
+    val subjects = "lorem".getBytes("UTF-8").toSeq
+
+    val ds2 = ds1.withColumnReplaced('_2, functions.lit(subjects.toArray))
+
+    ds2.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected.map(_.copy(_2 = subjects))
+  }
+
+  test("Encode simple array") {
+    val encoder = TypedEncoder[Tuple2[String, Array[Int]]]
+
+    encoder.jvmRepr shouldBe ObjectType(
+      classOf[Tuple2[String, Array[Int]]])
+
+    val expectedStructType = StructType(Seq(
+      StructField("_1", StringType, false),
+      StructField("_2", ArrayType(IntegerType, false), false)))
+
+    encoder.catalystRepr shouldBe expectedStructType
+
+    val sqlContext = session.sqlContext
+    import sqlContext.implicits._
+
+    val ds1 = TypedDataset.createUnsafe[(String, Array[Int])] {
+      val df = Seq(
+        """{"_1":"Foo", "_2":[3, 4]}""",
+        """{"_1":"Bar", "_2":[5]}""",
+      ).toDF
+
+      df.withColumn(
+        "jsonValue",
+        F.from_json(df.col("value"), expectedStructType)).
+        select("jsonValue.*")
+    }
+
+    val expected = Seq("Foo" -> Seq(3, 4), "Bar" -> Seq(5))
+
+    ds1.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected
+
+    val subjects = Seq(6, 6, 7)
+
+    val ds2 = ds1.withColumnReplaced('_2, functions.lit(subjects.toArray))
+
+    ds2.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected.map(_.copy(_2 = subjects))
+  }
+
+  test("Encode array of Value class") {
+    import RecordEncoderTests._
+
+    val encoder = TypedEncoder[Tuple2[String, Array[Subject]]]
+
+    encoder.jvmRepr shouldBe ObjectType(
+      classOf[Tuple2[String, Array[Subject]]])
+
+    val expectedStructType = StructType(Seq(
+      StructField("_1", StringType, false),
+      StructField("_2", ArrayType(StringType, false), false)))
+
+    encoder.catalystRepr shouldBe expectedStructType
+
+    val sqlContext = session.sqlContext
+    import sqlContext.implicits._
+
+    val ds1 = TypedDataset.createUnsafe[(String, Array[Subject])] {
+      val df = Seq(
+        """{"_1":"Foo", "_2":["math","physics"]}""",
+        """{"_1":"Bar", "_2":["biology","geography"]}""",
+      ).toDF
+
+      df.withColumn(
+        "jsonValue",
+        F.from_json(df.col("value"), expectedStructType)).
+        select("jsonValue.*")
+    }
+
+    val expected = Seq(
+      "Foo" -> Seq(new Subject("math"), new Subject("physics")),
+      "Bar" -> Seq(new Subject("biology"), new Subject("geography")))
+
+    ds1.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected
+
+    val subjects = Seq(new Subject("lorem"), new Subject("ipsum"))
+
+    val ds2 = ds1.withColumnReplaced('_2, functions.lit(subjects.toArray))
+
+    ds2.collect.run().map {
+      case (_1, _2) => _1 -> _2.toSeq
+    } shouldBe expected.map(_.copy(_2 = subjects))
+  }
 }
 
 // ---

@@ -226,23 +226,25 @@ object TypedEncoder {
       )
   }
 
-  // TODO:
-  implicit def arrayEncoder[T: ClassTag](implicit encodeT: TypedEncoder[T]): TypedEncoder[Array[T]] =
+  implicit def arrayEncoder[T: ClassTag](
+    implicit i0: RecordFieldEncoder[T]): TypedEncoder[Array[T]] =
     new TypedEncoder[Array[T]] {
+      import i0.{encoder => encodeT}
+
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = encodeT.jvmRepr match {
+      def jvmRepr: DataType = i0.jvmRepr match {
         case ByteType => BinaryType
         case _        => FramelessInternals.objectTypeFor[Array[T]]
       }
 
-      def catalystRepr: DataType = encodeT.jvmRepr match {
+      def catalystRepr: DataType = i0.jvmRepr match {
         case ByteType => BinaryType
         case _        => ArrayType(encodeT.catalystRepr, encodeT.nullable)
       }
 
       def toCatalyst(path: Expression): Expression =
-        encodeT.jvmRepr match {
+        i0.jvmRepr match {
           case IntegerType | LongType | DoubleType | FloatType |
               ShortType | BooleanType =>
             StaticInvoke(
@@ -252,7 +254,7 @@ object TypedEncoder {
           case ByteType => path
 
           case _ => MapObjects(
-            encodeT.toCatalyst _, path, encodeT.jvmRepr, encodeT.nullable)
+            i0.toCatalyst, path, i0.jvmRepr, encodeT.nullable)
         }
 
       def fromCatalyst(path: Expression): Expression =
@@ -268,12 +270,11 @@ object TypedEncoder {
 
           case _ =>
             Invoke(MapObjects(
-              encodeT.fromCatalyst _, path,
+              i0.fromCatalyst, path,
               encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
         }
 
-      override def toString: String =
-        s"arrayEncoder[${implicitly[ClassTag[T]].runtimeClass.getName}]"
+      override def toString: String = s"arrayEncoder($jvmRepr)"
     }
 
   // TODO:
@@ -368,6 +369,8 @@ object TypedEncoder {
           i1.jvmRepr,
           i1.toCatalyst,
           encodeB.nullable)
+
+      override def toString = s"mapEncoder($jvmRepr)"
     }
 
   implicit def optionEncoder[A](implicit underlying: TypedEncoder[A]): TypedEncoder[Option[A]] =
