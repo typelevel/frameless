@@ -227,24 +227,26 @@ object TypedEncoder {
   }
 
   implicit def arrayEncoder[T: ClassTag](
-    implicit i0: RecordFieldEncoder[T]): TypedEncoder[Array[T]] =
+    implicit i0: Lazy[RecordFieldEncoder[T]]): TypedEncoder[Array[T]] =
     new TypedEncoder[Array[T]] {
-      import i0.{encoder => encodeT}
+      private lazy val encodeT = i0.value.encoder
 
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = i0.jvmRepr match {
+      lazy val jvmRepr: DataType = i0.value.jvmRepr match {
         case ByteType => BinaryType
         case _        => FramelessInternals.objectTypeFor[Array[T]]
       }
 
-      def catalystRepr: DataType = i0.jvmRepr match {
+      lazy val catalystRepr: DataType = i0.value.jvmRepr match {
         case ByteType => BinaryType
         case _        => ArrayType(encodeT.catalystRepr, encodeT.nullable)
       }
 
-      def toCatalyst(path: Expression): Expression =
-        i0.jvmRepr match {
+      def toCatalyst(path: Expression): Expression = {
+        val enc = i0.value
+
+        enc.jvmRepr match {
           case IntegerType | LongType | DoubleType | FloatType |
               ShortType | BooleanType =>
             StaticInvoke(
@@ -254,8 +256,9 @@ object TypedEncoder {
           case ByteType => path
 
           case _ => MapObjects(
-            i0.toCatalyst, path, i0.jvmRepr, encodeT.nullable)
+            enc.toCatalyst, path, enc.jvmRepr, encodeT.nullable)
         }
+      }
 
       def fromCatalyst(path: Expression): Expression =
         encodeT.jvmRepr match {
@@ -270,7 +273,7 @@ object TypedEncoder {
 
           case _ =>
             Invoke(MapObjects(
-              i0.fromCatalyst, path,
+              i0.value.fromCatalyst, path,
               encodeT.catalystRepr, encodeT.nullable), "array", jvmRepr)
         }
 
@@ -282,8 +285,7 @@ object TypedEncoder {
     (implicit
       encodeT: Lazy[TypedEncoder[T]],
       CT: ClassTag[C[T]]
-    ): TypedEncoder[C[T]] =
-      new TypedEncoder[C[T]] {
+    ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
         def nullable: Boolean = false
 
         def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
@@ -306,6 +308,8 @@ object TypedEncoder {
             encodeT.value.nullable,
             Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
           )
+
+      override def toString: String = s"collectEncoder($jvmRepr)"
       }
 
   /**
@@ -315,15 +319,15 @@ object TypedEncoder {
    */
   implicit def mapEncoder[A: NotCatalystNullable, B]
     (implicit
-      i0: RecordFieldEncoder[A],
-      i1: RecordFieldEncoder[B],
+      i0: Lazy[RecordFieldEncoder[A]],
+      i1: Lazy[RecordFieldEncoder[B]],
     ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
       def nullable: Boolean = false
 
       def jvmRepr: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
 
-      import i0.{encoder => encodeA}
-      import i1.{encoder => encodeB}
+      private lazy val encodeA = i0.value.encoder
+      private lazy val encodeB = i1.value.encoder
 
       lazy val catalystRepr: DataType = MapType(
         encodeA.catalystRepr, encodeB.catalystRepr, encodeB.nullable)
@@ -333,7 +337,7 @@ object TypedEncoder {
 
         val keyData = Invoke(
           MapObjects(
-            i0.fromCatalyst,
+            i0.value.fromCatalyst,
             Invoke(path, "keyArray", keyArrayType),
             encodeA.catalystRepr
           ),
@@ -345,7 +349,7 @@ object TypedEncoder {
 
         val valueData = Invoke(
           MapObjects(
-            i1.fromCatalyst,
+            i1.value.fromCatalyst,
             Invoke(path, "valueArray", valueArrayType),
             encodeB.catalystRepr
           ),
@@ -360,15 +364,19 @@ object TypedEncoder {
           keyData :: valueData :: Nil)
       }
 
-      def toCatalyst(path: Expression): Expression =
+      def toCatalyst(path: Expression): Expression = {
+        val encA = i0.value
+        val encB = i1.value
+
         ExternalMapToCatalyst(
           path,
-          i0.jvmRepr,
-          i0.toCatalyst,
+          encA.jvmRepr,
+          encA.toCatalyst,
           false,
-          i1.jvmRepr,
-          i1.toCatalyst,
+          encB.jvmRepr,
+          encB.toCatalyst,
           encodeB.nullable)
+      }
 
       override def toString = s"mapEncoder($jvmRepr)"
     }
