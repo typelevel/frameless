@@ -430,6 +430,80 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
       case (_1, _2) => _1 -> _2.toSeq
     } shouldBe expected.map(_.copy(_2 = subjects))
   }
+
+  test("Encode case class with simple Seq") {
+    import RecordEncoderTests._
+
+    val encoder = TypedEncoder[B]
+
+    encoder.jvmRepr shouldBe ObjectType(classOf[B])
+
+    val expectedStructType = StructType(Seq(
+      StructField("a", ArrayType(StructType(Seq(
+        StructField("x", IntegerType, false))), false), false)))
+
+    encoder.catalystRepr shouldBe expectedStructType
+
+    val ds1: TypedDataset[B] = {
+      val rdd = sc.parallelize(Seq(
+        Row.fromTuple(Tuple1(Seq(
+          Row.fromTuple(Tuple1[Int](1)),
+          Row.fromTuple(Tuple1[Int](3))
+        ))),
+        Row.fromTuple(Tuple1(Seq(
+          Row.fromTuple(Tuple1[Int](2))
+        )))
+      ))
+      val df = session.createDataFrame(rdd, expectedStructType)
+
+      TypedDataset.createUnsafe(df)(encoder)
+    }
+
+    val expected = Seq(B(Seq(A(1), A(3))), B(Seq(A(2))))
+
+    ds1.collect.run() shouldBe expected
+
+    val as = Seq(A(5), A(6))
+
+    val ds2 = ds1.withColumnReplaced('a, functions.lit(as))
+
+    ds2.collect.run() shouldBe expected.map(_.copy(a = as))
+  }
+
+  test("Encode case class with Value class") {
+    import RecordEncoderTests._
+
+    val encoder = TypedEncoder[Tuple2[Int, Seq[Name]]]
+
+    encoder.jvmRepr shouldBe ObjectType(classOf[Tuple2[Int, Seq[Name]]])
+
+    val expectedStructType = StructType(Seq(
+      StructField("_1", IntegerType, false),
+      StructField("_2", ArrayType(StringType, false), false)))
+
+    encoder.catalystRepr shouldBe expectedStructType
+
+    val ds1 = TypedDataset.createUnsafe[(Int, Seq[Name])] {
+      val sqlContext = session.sqlContext
+      import sqlContext.implicits._
+
+      val df = Seq(
+        """{"_1":1, "_2":["foo", "bar"]}""",
+        """{"_1":2, "_2":["lorem"]}""",
+      ).toDF
+
+      df.withColumn(
+        "jsonValue",
+        F.from_json(df.col("value"), expectedStructType)).
+        select("jsonValue.*")
+    }
+
+    val expected = Seq(
+      1 -> Seq(new Name("foo"), new Name("bar")),
+      2 -> Seq(new Name("lorem")))
+
+    ds1.collect.run() shouldBe expected
+  }
 }
 
 // ---
@@ -452,7 +526,7 @@ object RecordEncoderTests {
   case class C(b: B)
 
   class Name(val value: String) extends AnyVal with Serializable {
-    override def toString = value
+    override def toString = s"Name($value)"
   }
 
   case class Person(name: Name, age: Int)

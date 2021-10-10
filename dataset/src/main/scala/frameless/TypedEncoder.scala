@@ -280,42 +280,46 @@ object TypedEncoder {
       override def toString: String = s"arrayEncoder($jvmRepr)"
     }
 
-  // TODO:
   implicit def collectionEncoder[C[X] <: Seq[X], T]
     (implicit
-      encodeT: Lazy[TypedEncoder[T]],
-      CT: ClassTag[C[T]]
-    ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
-        def nullable: Boolean = false
+      i0: Lazy[RecordFieldEncoder[T]],
+      i1: ClassTag[C[T]]): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
+    private lazy val encodeT = i0.value.encoder
 
-        def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](CT)
+    def nullable: Boolean = false
 
-        def catalystRepr: DataType = ArrayType(encodeT.value.catalystRepr, encodeT.value.nullable)
+    def jvmRepr: DataType = FramelessInternals.objectTypeFor[C[T]](i1)
 
-        def toCatalyst(path: Expression): Expression = {
-          if (ScalaReflection.isNativeType(encodeT.value.jvmRepr)) {
-            NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
-          } else MapObjects(
-            encodeT.value.toCatalyst _, path,
-            encodeT.value.jvmRepr, encodeT.value.nullable)
-        }
+    def catalystRepr: DataType =
+      ArrayType(encodeT.catalystRepr, encodeT.nullable)
 
-        def fromCatalyst(path: Expression): Expression =
-          MapObjects(
-            encodeT.value.fromCatalyst,
-            path,
-            encodeT.value.catalystRepr,
-            encodeT.value.nullable,
-            Some(CT.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
-          )
+    def toCatalyst(path: Expression): Expression = {
+      val enc = i0.value
 
-      override def toString: String = s"collectEncoder($jvmRepr)"
+      if (ScalaReflection.isNativeType(enc.jvmRepr)) {
+        NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
+      } else {
+        MapObjects(enc.toCatalyst, path, enc.jvmRepr, encodeT.nullable)
       }
+    }
+
+    def fromCatalyst(path: Expression): Expression =
+      MapObjects(
+        i0.value.fromCatalyst,
+        path,
+        encodeT.catalystRepr,
+        encodeT.nullable,
+        Some(i1.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
+      )
+
+    override def toString: String = s"collectionEncoder($jvmRepr)"
+  }
 
   /**
    * @tparam A the key type
    * @tparam B the value type
-   * @param encodeA the keys encoder
+   * @param i0 the keys encoder
+   * @param i1 the values encoder
    */
   implicit def mapEncoder[A: NotCatalystNullable, B]
     (implicit
