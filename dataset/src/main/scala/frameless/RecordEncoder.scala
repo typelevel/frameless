@@ -1,6 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.FramelessInternals
+
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{
   Invoke, NewInstance, UnwrapOption, WrapOption
@@ -22,6 +23,9 @@ case class RecordEncoderField(
 
 trait RecordEncoderFields[T <: HList] extends Serializable {
   def value: List[RecordEncoderField]
+
+  override def toString: String =
+    s"""RecordEncoderFields${value.mkString("[", ", ", "]")}"""
 }
 
 object RecordEncoderFields {
@@ -164,11 +168,13 @@ class RecordEncoder[F, G <: HList, H <: HList]
 
     def fromCatalyst(path: Expression): Expression = {
       val exprs = fields.value.value.map { field =>
-        field.encoder.fromCatalyst( GetStructField(path, field.ordinal, Some(field.name)) )
+        field.encoder.fromCatalyst(
+          GetStructField(path, field.ordinal, Some(field.name)))
       }
 
       val newArgs = newInstanceExprs.value.from(exprs)
-      val newExpr = NewInstance(classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
+      val newExpr = NewInstance(
+        classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
 
       val nullExpr = Literal.create(null, jvmRepr)
 
