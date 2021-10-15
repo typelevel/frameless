@@ -5,7 +5,7 @@ import scala.reflect.ClassTag
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
-import shapeless.ops.record.Values
+import shapeless.ops.record.{Keys, Values}
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions.Literal
@@ -57,31 +57,33 @@ package object functions extends Udf with UnaryFunctions {
     * @tparam A the value class
     * @tparam T the row type
     */
-  def litValue[A : IsValueClass, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], V, VS <: HList](value: A)(
+  def litValue[A : IsValueClass, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], K <: Symbol, V, KS <: ::[_ <: Symbol, HNil], VS <: HList](value: A)(
     implicit
       i0: LabelledGeneric.Aux[A, G],
       i1: DropUnitValues.Aux[G, H],
-      i2: IsHCons.Aux[H, _ <: FieldType[_, V], HNil],
-      i3: Values.Aux[H, VS],
-      i4: IsHCons.Aux[VS, V, HNil],
-      i5: TypedEncoder[V],
-      i6: ClassTag[A]
+      i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
+      i3: Keys.Aux[H, KS],
+      i4: Values.Aux[H, VS],
+      i5: IsHCons.Aux[KS, K, HNil],
+      i6: IsHCons.Aux[VS, V, HNil],
+      i7: TypedEncoder[V],
+      i8: ClassTag[A]
   ): TypedColumn[T, A] = {
     val expr = {
       val field: H = i1(i0.to(value))
-      val v: V = i4.head(i3(field))
+      val v: V = i6.head(i4(field))
 
-      new Literal(v, i5.jvmRepr)
+      new Literal(v, i7.jvmRepr)
     }
 
     implicit val enc: TypedEncoder[A] =
-      RecordFieldEncoder.valueClass[A, G, H, V].encoder
+      RecordFieldEncoder.valueClass[A, G, H, K, V, KS].encoder
 
     new TypedColumn[T, A](
       Lit(
-        dataType = i5.catalystRepr,
-        nullable = i5.nullable,
-        toCatalyst = i5.toCatalyst(expr).genCode(_),
+        dataType = i7.catalystRepr,
+        nullable = i7.nullable,
+        toCatalyst = i7.toCatalyst(expr).genCode(_),
         show = value.toString
       )
     )

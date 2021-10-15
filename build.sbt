@@ -68,6 +68,8 @@ lazy val dataset = project
 
       // TODO: Remove have version bump
       Seq(
+        imt("frameless.TypedEncoder.mapEncoder"),
+        imt("frameless.TypedEncoder.arrayEncoder"),
         imt("frameless.RecordEncoderFields.deriveRecordCons"),
         imt("frameless.RecordEncoderFields.deriveRecordLast"),
         mc("frameless.functions.FramelessLit"),

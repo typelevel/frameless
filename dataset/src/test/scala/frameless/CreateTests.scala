@@ -97,8 +97,8 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     check(prop[String])
   }
 
-  test("map fields (scala.Predef.Map / scala.collection.immutable.Map)") {
-    def prop[A: Arbitrary: TypedEncoder, B: Arbitrary: TypedEncoder] = forAll {
+  test("Map fields (scala.Predef.Map / scala.collection.immutable.Map)") {
+    def prop[A: Arbitrary: NotCatalystNullable: TypedEncoder, B: Arbitrary: NotCatalystNullable: TypedEncoder] = forAll {
       (d1: Map[A, B], d2: Map[B, A], d3: Map[A, Option[B]],
         d4: Map[A, X1[B]], d5: Map[X1[A], B], d6: Map[X1[A], X1[B]]) =>
 

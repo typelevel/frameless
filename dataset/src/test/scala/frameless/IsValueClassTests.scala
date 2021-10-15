@@ -22,6 +22,7 @@ final class IsValueClassTests extends AnyFunSuite with Matchers {
     illTyped("implicitly[IsValueClass[Byte]]")
     illTyped("implicitly[IsValueClass[Unit]]")
     illTyped("implicitly[IsValueClass[Boolean]]")
+    illTyped("implicitly[IsValueClass[BigDecimal]]")
   }
 
   test("Value class evidence") {
