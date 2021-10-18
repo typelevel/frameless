@@ -24,6 +24,7 @@ jobs:
         os: [ubuntu-latest]
         scala: [2.12.15]
         java: [adopt@1.8]
+        sparkVersion: [3.2.0, 3.1.2]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -60,12 +61,16 @@ jobs:
         run: pip install codecov
 
       - name: Test & Compute Coverage
+        env:
+          SPARK_VERSION: ${{ matrix.sparkVersion }}
         run: sbt ++${{ matrix.scala }} coverage test coverageReport
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
 
       - name: Binary compatibility check
+        env:
+          SPARK_VERSION: ${{ matrix.sparkVersion }}
         run: sbt ++${{ matrix.scala }} mimaReportBinaryIssues
 
   publish:

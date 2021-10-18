@@ -1,4 +1,4 @@
-val sparkVersion = "3.2.0"
+val sparkVersion = sys.env.get("SPARK_VERSION").getOrElse("3.2.0")
 val catsCoreVersion = "2.6.1"
 val catsEffectVersion = "2.4.0"
 val catsMtlVersion = "0.7.1"
@@ -256,25 +256,33 @@ copyReadme := copyReadmeImpl.value
 
 ThisBuild / githubWorkflowArtifactUpload := false
 
+ThisBuild / githubWorkflowBuildMatrixAdditions := Map("sparkVersion" -> List("3.2.0", "3.1.2"))
+
 ThisBuild / githubWorkflowBuild := Seq(
-  WorkflowStep.Use(UseRef.Public("actions", "setup-python", "v2"),
-                   name = Some("Setup Python"),
-                   params = Map("python-version" -> "3.x")
+  WorkflowStep.Use(
+    UseRef.Public("actions", "setup-python", "v2"),
+    name = Some("Setup Python"),
+    params = Map("python-version" -> "3.x")
   ),
-  WorkflowStep.Run(List("pip install codecov"),
-                   name = Some("Setup codecov")
+  WorkflowStep.Run(
+    List("pip install codecov"),
+    name = Some("Setup codecov")
   ),
-  WorkflowStep.Sbt(List("coverage", "test", "coverageReport"),
-                   name = Some("Test & Compute Coverage")
+  WorkflowStep.Sbt(
+    List("coverage", "test", "coverageReport"),
+    name = Some("Test & Compute Coverage"),
+    env  = Map("SPARK_VERSION" -> "${{ matrix.sparkVersion }}")
   ),
-  WorkflowStep.Run(List("codecov -F ${{ matrix.scala }}"),
-                   name = Some("Upload Codecov Results")
+  WorkflowStep.Run(
+    List("codecov -F ${{ matrix.scala }}"),
+    name = Some("Upload Codecov Results")
   )
 )
 
 ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(
   List("mimaReportBinaryIssues"),
-  name = Some("Binary compatibility check")
+  name = Some("Binary compatibility check"),
+  env  = Map("SPARK_VERSION" -> "${{ matrix.sparkVersion }}")
 )
 
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(
@@ -301,8 +309,9 @@ ThisBuild / githubWorkflowAddedJobs ++= Seq(
     "docs",
     "Documentation",
     githubWorkflowJobSetup.value.toList ::: List(
-      WorkflowStep.Sbt(List("doc", "mdoc"),
-                       name = Some("Documentation")
+      WorkflowStep.Sbt(
+        List("doc", "mdoc"),
+        name = Some("Documentation")
       )
     ),
     scalas = List(Scala212)
