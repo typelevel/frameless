@@ -9,9 +9,8 @@ private[frameless] case class Lit[T <: AnyVal](
     dataType: DataType,
     nullable: Boolean,
     toCatalyst: CodegenContext => ExprCode,
-    show: () => String)
-    extends Expression
-    with NonSQLExpression {
+    show: () => String
+) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
   def eval(input: InternalRow): Any = {
@@ -57,4 +56,6 @@ private[frameless] case class Lit[T <: AnyVal](
   override def genCode(ctx: CodegenContext): ExprCode = toCatalyst(ctx)
 
   protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
+
+  protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 }
