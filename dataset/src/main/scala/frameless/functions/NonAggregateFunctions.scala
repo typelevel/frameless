@@ -87,7 +87,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @nowarn // supress sparkFunstion.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
+  @nowarn // supress sparkFunctions.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
   def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
@@ -99,7 +99,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @nowarn // supress sparkFunstion.shiftReft call which is used to maintain Spark 3.1.x backwards compat
+  @nowarn // supress sparkFunctions.shiftReft call which is used to maintain Spark 3.1.x backwards compat
   def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
@@ -111,7 +111,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @nowarn // supress sparkFunstion.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
+  @nowarn // supress sparkFunctions.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
   def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
@@ -495,7 +495,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @nowarn // supress sparkFunstion.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
+  @nowarn // supress sparkFunctions.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
   def bitwiseNOT[A: CatalystBitwise, T](column: AbstractTypedColumn[T, A]): column.ThisType[T, A] =
     column.typed(sparkFunctions.bitwiseNOT(column.untyped))(column.uencoder)
 

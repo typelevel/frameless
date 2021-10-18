@@ -79,7 +79,7 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  @nowarn // supress sparkFunstion.sumDistinct call which is used to maintain Spark 3.1.x backwards compat
+  @nowarn // supress sparkFunctions.sumDistinct call which is used to maintain Spark 3.1.x backwards compat
   def sumDistinct[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],

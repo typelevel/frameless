@@ -182,7 +182,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    @nowarn // supress sparkFunstion.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
+    @nowarn // supress sparkFunctions.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -201,7 +201,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    @nowarn // supress sparkFunstion.shiftRight call which is used to maintain Spark 3.1.x backwards compat
+    @nowarn // supress sparkFunctions.shiftRight call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -220,7 +220,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    @nowarn // supress sparkFunstion.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
+    @nowarn // supress sparkFunctions.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -1657,7 +1657,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    @nowarn // supress sparkFunstion.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
+    @nowarn // supress sparkFunctions.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: CatalystBitwise : TypedEncoder : Encoder]
     (values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
