@@ -7,6 +7,7 @@ val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
 val irrecVersion = "0.4.0"
+val refinedVersion = "0.9.27"
 
 val Scala212 = "2.12.15"
 
@@ -20,21 +21,21 @@ ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(core, cats, dataset, ml, docs)
-  .settings(framelessSettings: _*)
-  .settings(noPublishSettings: _*)
-  .settings(mimaPreviousArtifacts := Set())
+  .aggregate(core, cats, dataset, refined, ml, docs)
+  .settings(framelessSettings)
+  .settings(noPublishSettings)
+  .settings(mimaPreviousArtifacts := Set.empty)
 
 lazy val core = project
   .settings(name := "frameless-core")
-  .settings(framelessSettings: _*)
-  .settings(publishSettings: _*)
+  .settings(framelessSettings)
+  .settings(publishSettings)
 
 
 lazy val cats = project
   .settings(name := "frameless-cats")
-  .settings(framelessSettings: _*)
-  .settings(publishSettings: _*)
+  .settings(framelessSettings)
+  .settings(publishSettings)
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
     scalacOptions += "-Ypartial-unification"
@@ -57,7 +58,7 @@ lazy val dataset = project
     libraryDependencies ++= Seq(
       "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
       "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
-      "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test
+      "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test,
     ),
     mimaBinaryIssueFilters ++= {
       import com.typesafe.tools.mima.core._
@@ -79,6 +80,21 @@ lazy val dataset = project
     }
   ))
   .dependsOn(core % "test->test;compile->compile")
+
+lazy val refined = project
+  .settings(name := "frameless-refined")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(Seq(
+    mimaPreviousArtifacts := Set.empty,
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
+      "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
+      "eu.timepit"       %% "refined"         % refinedVersion
+    )
+  ))
+  .dependsOn(dataset % "test->test;compile->compile")
 
 lazy val ml = project
   .settings(name := "frameless-ml")
