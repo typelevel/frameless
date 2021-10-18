@@ -9,6 +9,8 @@ import org.apache.spark.sql.{Column, Encoder, SaveMode, functions => sparkFuncti
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}
 
+import scala.annotation.nowarn
+
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
   val testTempFiles = "target/testoutput"
 
@@ -180,11 +182,12 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunstion.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftRightUnsigned(typedDS('a), numBits), sparkFunctions.shiftrightunsigned, numBits)
+      propBitShift(typedDS)(shiftRightUnsigned(typedDS('a), numBits), sparkFunctions.shiftRightUnsigned, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -198,11 +201,12 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunstion.shiftRight call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftRight(typedDS('a), numBits), sparkFunctions.shiftright, numBits)
+      propBitShift(typedDS)(shiftRight(typedDS('a), numBits), sparkFunctions.shiftRight, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -216,11 +220,12 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunstion.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftLeft(typedDS('a), numBits), sparkFunctions.shiftleft, numBits)
+      propBitShift(typedDS)(shiftLeft(typedDS('a), numBits), sparkFunctions.shiftLeft, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -1652,11 +1657,12 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunstion.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: CatalystBitwise : TypedEncoder : Encoder]
     (values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)
       val resCompare = cDS
-        .select(sparkFunctions.bitwise_not(cDS("a")))
+        .select(sparkFunctions.bitwiseNOT(cDS("a")))
         .map(_.getAs[A](0))
         .collect().toList
 
