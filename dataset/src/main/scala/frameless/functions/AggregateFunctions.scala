@@ -6,8 +6,6 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{functions => sparkFunctions}
 import frameless.syntax._
 
-import scala.annotation.nowarn
-
 trait AggregateFunctions {
   /** Aggregate function: returns the number of items in a group.
     *
@@ -79,24 +77,14 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
-  @deprecated("Use sum_distinct", "3.2.0")
   def sumDistinct[A, T, Out](column: TypedColumn[T, A])(
-    implicit
-    summable: CatalystSummable[A, Out],
-    oencoder: TypedEncoder[Out],
-    aencoder: TypedEncoder[A]
-  ): TypedAggregate[T, Out] = sum_distinct(column)
-
-  // supress sparkFunstion.sumDistinct call which is used to maintain Spark 3.1.x backwards compat
-  @nowarn
-  def sum_distinct[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],
     oencoder: TypedEncoder[Out],
     aencoder: TypedEncoder[A]
   ): TypedAggregate[T, Out] = {
     val zeroExpr = Literal.create(summable.zero, TypedEncoder[A].catalystRepr)
-    val sumExpr = expr(sparkFunctions.sumDistinct(column.untyped))
+    val sumExpr = expr(sparkFunctions.sum_distinct(column.untyped))
     val sumOrZero = Coalesce(Seq(sumExpr, zeroExpr))
 
     new TypedAggregate[T, Out](sumOrZero)

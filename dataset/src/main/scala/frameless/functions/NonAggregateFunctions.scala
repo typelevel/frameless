@@ -3,7 +3,6 @@ package functions
 
 import org.apache.spark.sql.{Column, functions => sparkFunctions}
 
-import scala.annotation.nowarn
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
@@ -87,61 +86,34 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @deprecated("Use shiftrightunsigned", "3.2.0")
   def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
       i1: TypedEncoder[B]
-    ): column.ThisType[T, B] = shiftrightunsigned(column, numBits)
-
-  // supress sparkFunstion.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
-  @nowarn
-  def shiftrightunsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
     ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.shiftRightUnsigned(column.untyped, numBits))
+      column.typed(sparkFunctions.shiftrightunsigned(column.untyped, numBits))
 
   /** Non-Aggregate function: shift the the given value numBits right. If given long, will return long else it will return an integer.
     *
     * apache/spark
     */
-  @deprecated("Use shiftright", "3.2.0")
   def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
       i1: TypedEncoder[B]
-    ): column.ThisType[T, B] = shiftright(column, numBits)
-
-  // supress sparkFunstion.shiftRight call which is used to maintain Spark 3.1.x backwards compat
-  @nowarn
-  def shiftright[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
     ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.shiftRight(column.untyped, numBits))
+      column.typed(sparkFunctions.shiftright(column.untyped, numBits))
 
   /** Non-Aggregate function: shift the the given value numBits left. If given long, will return long else it will return an integer.
     *
     * apache/spark
     */
-  @deprecated("Use shiftleft", "3.2.0")
   def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
       i1: TypedEncoder[B]
-    ): column.ThisType[T, B] = shiftleft(column, numBits)
-
-  // supress sparkFunstion.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
-  @nowarn
-  def shiftleft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
     ): column.ThisType[T, B] =
-    column.typed(sparkFunctions.shiftLeft(column.untyped, numBits))
+    column.typed(sparkFunctions.shiftleft(column.untyped, numBits))
   
   /** Non-Aggregate function: returns the absolute value of a numeric column
     *
@@ -519,14 +491,8 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  @deprecated("Use bitwise_not", "3.2.0")
   def bitwiseNOT[A: CatalystBitwise, T](column: AbstractTypedColumn[T, A]): column.ThisType[T, A] =
-    bitwise_not(column)
-
-  // supress sparkFunstion.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
-  @nowarn
-  def bitwise_not[A: CatalystBitwise, T](column: AbstractTypedColumn[T, A]): column.ThisType[T, A] =
-    column.typed(sparkFunctions.bitwiseNOT(column.untyped))(column.uencoder)
+    column.typed(sparkFunctions.bitwise_not(column.untyped))(column.uencoder)
 
   /** Non-Aggregate function: file name of the current Spark task. Empty string if row did not originate from
     * a file

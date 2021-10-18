@@ -57,7 +57,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(sparkSchema[Short, Long](sum))
   }
 
-  test("sum_distinct") {
+  test("sumDistinct") {
     case class Sum4Tests[A, B](sum: Seq[A] => B)
 
     def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
@@ -68,7 +68,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
 
-      val datasetSum: List[Out] = dataset.agg(sum_distinct(A)).collect().run().toList
+      val datasetSum: List[Out] = dataset.agg(sumDistinct(A)).collect().run().toList
 
       datasetSum match {
         case x :: Nil => approximatelyEqual(summer.sum(xs), x)

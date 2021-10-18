@@ -176,7 +176,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     res ?= resCompare
   }
 
-  test("shiftrightunsigned") {
+  test("shiftRightUnsigned") {
     val spark = session
     import spark.implicits._
 
@@ -184,7 +184,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftrightunsigned(typedDS('a), numBits), sparkFunctions.shiftrightunsigned, numBits)
+      propBitShift(typedDS)(shiftRightUnsigned(typedDS('a), numBits), sparkFunctions.shiftrightunsigned, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -194,7 +194,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal, Int] _))
   }
 
-  test("shiftright") {
+  test("shiftRight") {
     val spark = session
     import spark.implicits._
 
@@ -202,7 +202,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftright(typedDS('a), numBits), sparkFunctions.shiftright, numBits)
+      propBitShift(typedDS)(shiftRight(typedDS('a), numBits), sparkFunctions.shiftright, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -212,7 +212,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal, Int] _))
   }
 
-  test("shiftleft") {
+  test("shiftLeft") {
     val spark = session
     import spark.implicits._
 
@@ -220,7 +220,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
       val typedDS = TypedDataset.create(values)
-      propBitShift(typedDS)(shiftleft(typedDS('a), numBits), sparkFunctions.shiftleft, numBits)
+      propBitShift(typedDS)(shiftLeft(typedDS('a), numBits), sparkFunctions.shiftleft, numBits)
     }
 
     check(forAll(prop[Byte, Int] _))
@@ -1648,7 +1648,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop _))
   }
 
-  test("bitwise_not"){
+  test("bitwiseNOT"){
     val spark = session
     import spark.implicits._
 
@@ -1662,7 +1662,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       val typedDS = TypedDataset.create(values)
       val res = typedDS
-        .select(bitwise_not(typedDS('a)))
+        .select(bitwiseNOT(typedDS('a)))
         .collect()
         .run()
         .toList
