@@ -8,7 +8,6 @@ val scalatest = "3.2.10"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
-val irrecVersion = "0.4.0"
 val refinedVersion = "0.9.27"
 
 val Scala212 = "2.12.15"
@@ -199,7 +198,6 @@ lazy val catsSettings = Seq(
 )
 
 lazy val datasetSettings = Seq(
-  libraryDependencies += "net.ceedubs" %% "irrec-regex-gen" % irrecVersion % Test,
   mimaBinaryIssueFilters ++= {
     import com.typesafe.tools.mima.core._
 
