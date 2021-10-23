@@ -1,4 +1,6 @@
-val sparkVersion = sys.env.get("SPARK_VERSION").getOrElse("3.2.0")
+val sparkVersion = "3.2.0"
+val spark30Version = "3.0.1"
+val spark31Version = "3.1.2"
 val catsCoreVersion = "2.6.1"
 val catsEffectVersion = "2.4.0"
 val catsMtlVersion = "0.7.1"
@@ -10,6 +12,7 @@ val irrecVersion = "0.4.0"
 val refinedVersion = "0.9.27"
 
 val Scala212 = "2.12.15"
+val Scala213 = "2.13.6"
 
 val previousVersion = "0.10.1"
 
@@ -21,7 +24,22 @@ ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
 ThisBuild / mimaFailOnNoPrevious := false
 
 lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(core, cats, dataset, refined, ml, docs)
+  .aggregate(
+    core,
+    cats,
+    `cats-spark31`,
+    `cats-spark30`,
+    dataset,
+    `dataset-spark31`,
+    `dataset-spark30`,
+    refined,
+    `refined-spark31`,
+    `refined-spark30`,
+    ml,
+    `ml-spark31`,
+    `ml-spark30`,
+    docs
+  )
   .settings(framelessSettings)
   .settings(noPublishSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
@@ -31,54 +49,56 @@ lazy val core = project
   .settings(framelessSettings)
   .settings(publishSettings)
 
-
 lazy val cats = project
   .settings(name := "frameless-cats")
   .settings(framelessSettings)
   .settings(publishSettings)
-  .settings(
-    addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
-    scalacOptions += "-Ypartial-unification"
-  )
-  .settings(libraryDependencies ++= Seq(
-    "org.typelevel"    %% "cats-core"      % catsCoreVersion,
-    "org.typelevel"    %% "cats-effect"    % catsEffectVersion,
-    "org.typelevel"    %% "cats-mtl-core"  % catsMtlVersion,
-    "org.typelevel"    %% "alleycats-core" % catsCoreVersion,
-    "org.apache.spark" %% "spark-core"     % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-sql"      % sparkVersion % Provided))
-  .dependsOn(dataset % "test->test;compile->compile")
+  .settings(catsSettings)
+  .dependsOn(dataset % "test->test;compile->compile;provided->provided")
+
+lazy val `cats-spark31` = project
+  .settings(name := "frameless-cats-spark31")
+  .settings(framelessSettings)
+  .settings(publishSettings)
+  .settings(catsSettings)
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
+
+lazy val `cats-spark30` = project
+  .settings(name := "frameless-cats-spark30")
+  .settings(framelessSettings)
+  .settings(publishSettings)
+  .settings(catsSettings)
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(framelessSettings)
   .settings(framelessTypedDatasetREPL)
   .settings(publishSettings)
-  .settings(Seq(
-    libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
-      "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
-      "net.ceedubs"      %% "irrec-regex-gen" % irrecVersion % Test,
-    ),
-    mimaBinaryIssueFilters ++= {
-      import com.typesafe.tools.mima.core._
+  .settings(datasetSettings)
+  .settings(sparkDependencies(sparkVersion))
+  .dependsOn(core % "test->test;compile->compile")
 
-      val imt = ProblemFilters.exclude[IncompatibleMethTypeProblem](_)
-      val mc = ProblemFilters.exclude[MissingClassProblem](_)
-      val dmm = ProblemFilters.exclude[DirectMissingMethodProblem](_)
+lazy val `dataset-spark31` = project
+  .settings(name := "frameless-dataset-spark31")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark31Version))
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(core % "test->test;compile->compile")
 
-      // TODO: Remove have version bump
-      Seq(
-        imt("frameless.TypedEncoder.mapEncoder"),
-        imt("frameless.TypedEncoder.arrayEncoder"),
-        imt("frameless.RecordEncoderFields.deriveRecordCons"),
-        imt("frameless.RecordEncoderFields.deriveRecordLast"),
-        mc("frameless.functions.FramelessLit"),
-        mc(f"frameless.functions.FramelessLit$$"),
-        dmm("frameless.functions.package.litAggr")
-      )
-    }
-  ))
+lazy val `dataset-spark30` = project
+  .settings(name := "frameless-dataset-spark30")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark30Version))
+  .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val refined = project
@@ -86,29 +106,60 @@ lazy val refined = project
   .settings(framelessSettings)
   .settings(framelessTypedDatasetREPL)
   .settings(publishSettings)
-  .settings(Seq(
-    mimaPreviousArtifacts := Set.empty,
-    libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core"      % sparkVersion % Provided,
-      "org.apache.spark" %% "spark-sql"       % sparkVersion % Provided,
-      "eu.timepit"       %% "refined"         % refinedVersion
-    )
-  ))
-  .dependsOn(dataset % "test->test;compile->compile")
+  .settings(refinedSettings)
+  .dependsOn(dataset % "test->test;compile->compile;provided->provided")
+
+lazy val `refined-spark31` = project
+  .settings(name := "frameless-refined-spark31")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(refinedSettings)
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
+
+lazy val `refined-spark30` = project
+  .settings(name := "frameless-refined-spark30")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(refinedSettings)
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val ml = project
   .settings(name := "frameless-ml")
-  .settings(framelessSettings: _*)
-  .settings(framelessTypedDatasetREPL: _*)
-  .settings(publishSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"  % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-sql"   % sparkVersion % Provided,
-    "org.apache.spark" %% "spark-mllib" % sparkVersion % Provided
-  ))
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(sparkDependenciesMl(sparkVersion))
   .dependsOn(
     core % "test->test;compile->compile",
-    dataset % "test->test;compile->compile"
+    dataset % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark31` = project
+  .settings(name := "frameless-ml-spark31")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(sparkDependenciesMl(spark31Version))
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark31` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark30` = project
+  .settings(name := "frameless-ml-spark30")
+  .settings(framelessSettings)
+  .settings(framelessTypedDatasetREPL)
+  .settings(publishSettings)
+  .settings(sparkDependenciesMl(spark30Version))
+  .settings(mimaPreviousArtifacts := Set.empty)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark30` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val docs = project
@@ -117,20 +168,61 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
-  .settings(libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core"  % sparkVersion,
-    "org.apache.spark" %% "spark-sql"   % sparkVersion,
-    "org.apache.spark" %% "spark-mllib" % sparkVersion
-  ))
+  .settings(sparkDependenciesMl(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
-    scalacOptions ++= Seq(
-      "-Ypartial-unification",
-      "-Ydelambdafy:inline"
-    )
+    scalacOptions ++= Seq("-Ypartial-unification", "-Ydelambdafy:inline")
   )
   .settings(mimaPreviousArtifacts := Set())
   .dependsOn(dataset, cats, ml)
+
+def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = Seq(
+  libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion % scope,
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % scope
+  )
+)
+
+def sparkDependenciesMl(sparkVersion: String, scope: Configuration = Provided) =
+  sparkDependencies(sparkVersion, scope) ++ Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
+
+lazy val catsSettings = Seq(
+  addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
+  scalacOptions += "-Ypartial-unification",
+  libraryDependencies ++= Seq(
+    "org.typelevel" %% "cats-core"      % catsCoreVersion,
+    "org.typelevel" %% "cats-effect"    % catsEffectVersion,
+    "org.typelevel" %% "cats-mtl-core"  % catsMtlVersion,
+    "org.typelevel" %% "alleycats-core" % catsCoreVersion
+  )
+)
+
+lazy val datasetSettings = Seq(
+  libraryDependencies += "net.ceedubs" %% "irrec-regex-gen" % irrecVersion % Test,
+  mimaBinaryIssueFilters ++= {
+    import com.typesafe.tools.mima.core._
+
+    val imt = ProblemFilters.exclude[IncompatibleMethTypeProblem](_)
+    val mc = ProblemFilters.exclude[MissingClassProblem](_)
+    val dmm = ProblemFilters.exclude[DirectMissingMethodProblem](_)
+
+    // TODO: Remove have version bump
+    Seq(
+      imt("frameless.TypedEncoder.mapEncoder"),
+      imt("frameless.TypedEncoder.arrayEncoder"),
+      imt("frameless.RecordEncoderFields.deriveRecordCons"),
+      imt("frameless.RecordEncoderFields.deriveRecordLast"),
+      mc("frameless.functions.FramelessLit"),
+      mc(f"frameless.functions.FramelessLit$$"),
+      dmm("frameless.functions.package.litAggr")
+    )
+  }
+)
+
+lazy val refinedSettings = Seq(
+  mimaPreviousArtifacts := Set.empty,
+  libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
+)
 
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
@@ -157,9 +249,10 @@ lazy val framelessSettings = Seq(
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
-    "org.scalatest" %% "scalatest" % scalatest % "test",
-    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % "test",
-    "org.scalacheck" %% "scalacheck" % scalacheck % "test"),
+    "org.scalatest" %% "scalatest" % scalatest % Test,
+    "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % Test,
+    "org.scalacheck" %% "scalacheck" % scalacheck % Test
+  ),
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
@@ -256,8 +349,6 @@ copyReadme := copyReadmeImpl.value
 
 ThisBuild / githubWorkflowArtifactUpload := false
 
-ThisBuild / githubWorkflowBuildMatrixAdditions := Map("sparkVersion" -> List("3.2.0", "3.1.2"))
-
 ThisBuild / githubWorkflowBuild := Seq(
   WorkflowStep.Use(
     UseRef.Public("actions", "setup-python", "v2"),
@@ -270,8 +361,7 @@ ThisBuild / githubWorkflowBuild := Seq(
   ),
   WorkflowStep.Sbt(
     List("coverage", "test", "coverageReport"),
-    name = Some("Test & Compute Coverage"),
-    env  = Map("SPARK_VERSION" -> "${{ matrix.sparkVersion }}")
+    name = Some("Test & Compute Coverage")
   ),
   WorkflowStep.Run(
     List("codecov -F ${{ matrix.scala }}"),
@@ -281,8 +371,7 @@ ThisBuild / githubWorkflowBuild := Seq(
 
 ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(
   List("mimaReportBinaryIssues"),
-  name = Some("Binary compatibility check"),
-  env  = Map("SPARK_VERSION" -> "${{ matrix.sparkVersion }}")
+  name = Some("Binary compatibility check")
 )
 
 ThisBuild / githubWorkflowPublishTargetBranches := Seq(
