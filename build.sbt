@@ -132,7 +132,7 @@ lazy val ml = project
   .settings(framelessSettings)
   .settings(framelessTypedDatasetREPL)
   .settings(publishSettings)
-  .settings(sparkDependenciesMl(sparkVersion))
+  .settings(sparkMlDependencies(sparkVersion))
   .dependsOn(
     core % "test->test;compile->compile",
     dataset % "test->test;compile->compile;provided->provided"
@@ -143,7 +143,7 @@ lazy val `ml-spark31` = project
   .settings(framelessSettings)
   .settings(framelessTypedDatasetREPL)
   .settings(publishSettings)
-  .settings(sparkDependenciesMl(spark31Version))
+  .settings(sparkMlDependencies(spark31Version))
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(
     core % "test->test;compile->compile",
@@ -155,7 +155,7 @@ lazy val `ml-spark30` = project
   .settings(framelessSettings)
   .settings(framelessTypedDatasetREPL)
   .settings(publishSettings)
-  .settings(sparkDependenciesMl(spark30Version))
+  .settings(sparkMlDependencies(spark30Version))
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(
     core % "test->test;compile->compile",
@@ -168,7 +168,8 @@ lazy val docs = project
   .settings(noPublishSettings: _*)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
-  .settings(sparkDependenciesMl(sparkVersion, Compile))
+  .settings(sparkDependencies(sparkVersion, Compile))
+  .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
     scalacOptions ++= Seq("-Ypartial-unification", "-Ydelambdafy:inline")
@@ -183,8 +184,8 @@ def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = S
   )
 )
 
-def sparkDependenciesMl(sparkVersion: String, scope: Configuration = Provided) =
-  sparkDependencies(sparkVersion, scope) ++ Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
+def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
+  Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
 
 lazy val catsSettings = Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),

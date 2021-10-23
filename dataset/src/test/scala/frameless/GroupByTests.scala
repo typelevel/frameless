@@ -380,18 +380,18 @@ class GroupByTests extends TypedDatasetSuite {
 
   test("groupBy('a).mapGroups(('a, toVector(('a, 'b))") {
     def prop[
-      A: TypedEncoder,
-      B: TypedEncoder
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .groupBy(A)
-        .deserialized.mapGroups((a, xs) => (a, xs.toVector))
+        .deserialized.mapGroups((a, xs) => (a, xs.toVector.sorted))
         .collect().run.toMap
 
-      val dataGrouped = data.groupBy(_.a)
+      val dataGrouped = data.groupBy(_.a).mapValues(_.sorted)
 
       datasetGrouped ?= dataGrouped
     }
