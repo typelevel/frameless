@@ -17,7 +17,7 @@ class TypedIndexToStringTests extends FramelessMlSuite with Matchers {
       val ds = TypedDataset.create(Seq(x2))
       val ds2 = transformer.transform(ds)
 
-      ds2.collect.run() == Seq((x2.a, x2.b, "foo"))
+      ds2.collect().run() == Seq((x2.a, x2.b, "foo"))
     }
 
     check(prop[Double])

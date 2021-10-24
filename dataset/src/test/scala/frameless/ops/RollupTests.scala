@@ -286,7 +286,7 @@ class RollupTests extends TypedDatasetSuite {
         .deserialized.mapGroups((a, xs) => (a, xs.toVector.sorted))
         .collect().run().toMap
 
-      val dataGrouped = data.groupBy(_.a).mapValues(_.sorted)
+      val dataGrouped = data.groupBy(_.a).map { case (k, v) => k -> v.sorted }
 
       datasetGrouped ?= dataGrouped
     }

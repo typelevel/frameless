@@ -41,7 +41,7 @@ class TypedEncoderInstancesTests extends FramelessMlSuite {
 
         val prediction = trainedModel.transform(randomInputDS.dataset)
           .select("prediction")
-          .head
+          .head()
           .getAs[Double](0)
 
         prediction == 0D

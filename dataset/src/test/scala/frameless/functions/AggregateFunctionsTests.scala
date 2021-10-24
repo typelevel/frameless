@@ -197,7 +197,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
       val datasetMax = dataset.agg(max(A)).collect().run().toList
 
-      datasetMax ?= xs.reduceOption(o.max).toList
+      datasetMax ?= xs.reduceOption[A](o.max).toList
     }
 
     check(forAll(prop[Long] _))
@@ -227,7 +227,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       val datasetMin = dataset.agg(min(A)).collect().run().toList
 
-      datasetMin ?= xs.reduceOption(o.min).toList
+      datasetMin ?= xs.reduceOption[A](o.min).toList
     }
 
     check(forAll(prop[Long] _))

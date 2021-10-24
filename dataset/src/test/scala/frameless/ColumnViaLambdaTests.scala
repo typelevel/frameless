@@ -19,37 +19,37 @@ final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
   test("col(_.a)") {
     val col = TypedColumn[MyClass1, Int](_.a)
 
-    ds.select(col).collect.run() shouldEqual Seq(1, 4)
+    ds.select(col).collect().run() shouldEqual Seq(1, 4)
   }
 
   test("col(x => x.a") {
     val col = TypedColumn[MyClass1, Int](x => x.a)
 
-    ds.select(col).collect.run() shouldEqual Seq(1, 4)
+    ds.select(col).collect().run() shouldEqual Seq(1, 4)
   }
 
   test("col((x: MyClass1) => x.a") {
     val col = TypedColumn { (x: MyClass1) => x.a }
 
-    ds.select(col).collect.run() shouldEqual Seq(1, 4)
+    ds.select(col).collect().run() shouldEqual Seq(1, 4)
   }
 
   test("col((x: MyClass1) => x.c.e.f") {
     val col = TypedColumn { (x: MyClass1) => x.c.e.f }
 
-    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
+    ds.select(col).collect().run() shouldEqual Seq(7.0D, 8.0D)
   }
 
   test("col(_.c.d)") {
     val col = TypedColumn[MyClass1, Long](_.c.d)
 
-    ds.select(col).collect.run() shouldEqual Seq(3L, 6L)
+    ds.select(col).collect().run() shouldEqual Seq(3L, 6L)
   }
 
   test("col(_.c.e.f)") {
     val col = TypedColumn[MyClass1, Double](_.c.e.f)
 
-    ds.select(col).collect.run() shouldEqual Seq(7.0D, 8.0D)
+    ds.select(col).collect().run() shouldEqual Seq(7.0D, 8.0D)
   }
 
   test("col(_.c.d) as int does not compile (is long)") {

@@ -20,7 +20,7 @@ class GroupByTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
 
       val datasetSumByA = dataset.groupByMany(A).agg(sum(B)).collect().run.toVector.sortBy(_._1)
-      val sumByA = data.groupBy(_.a).mapValues(_.map(_.b).map(widen).sum).toVector.sortBy(_._1)
+      val sumByA = data.groupBy(_.a).map { case (k, v) => k -> v.map(_.b).map(widen).sum }.toVector.sortBy(_._1)
 
       datasetSumByA ?= sumByA
     }
@@ -391,7 +391,7 @@ class GroupByTests extends TypedDatasetSuite {
         .deserialized.mapGroups((a, xs) => (a, xs.toVector.sorted))
         .collect().run.toMap
 
-      val dataGrouped = data.groupBy(_.a).mapValues(_.sorted)
+      val dataGrouped = data.groupBy(_.a).map { case (k, v) => k -> v.sorted }
 
       datasetGrouped ?= dataGrouped
     }

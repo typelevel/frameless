@@ -17,8 +17,8 @@ val previousVersion = "0.10.1"
 
 ThisBuild / versionScheme := Some("semver-spec")
 
-ThisBuild / crossScalaVersions := Seq(Scala212)
-ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.last
+ThisBuild / crossScalaVersions := Seq(Scala212, Scala213)
+ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.head
 
 ThisBuild / mimaFailOnNoPrevious := false
 
@@ -163,15 +163,15 @@ lazy val `ml-spark30` = project
 
 lazy val docs = project
   .in(file("mdocs"))
-  .settings(framelessSettings: _*)
-  .settings(noPublishSettings: _*)
+  .settings(framelessSettings)
+  .settings(noPublishSettings)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
   .enablePlugins(MdocPlugin)
   .settings(sparkDependencies(sparkVersion, Compile))
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
-    scalacOptions ++= Seq("-Ypartial-unification", "-Ydelambdafy:inline")
+    scalacOptions += "-Ydelambdafy:inline"
   )
   .settings(mimaPreviousArtifacts := Set())
   .dependsOn(dataset, cats, ml)
@@ -188,7 +188,6 @@ def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
 
 lazy val catsSettings = Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
-  scalacOptions += "-Ypartial-unification",
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core"      % catsCoreVersion,
     "org.typelevel" %% "cats-effect"    % catsEffectVersion,
@@ -223,26 +222,54 @@ lazy val refinedSettings = Seq(
   libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
 )
 
+lazy val scalac212Options = Seq(
+  "-Xlint:-missing-interpolator,-unused,_",
+  "-target:jvm-1.8",
+  "-deprecation",
+  "-encoding", "UTF-8",
+  "-feature",
+  "-unchecked",
+  "-Xfatal-warnings",
+  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-unused-import",
+  "-Ywarn-value-discard",
+  "-language:existentials",
+  "-language:implicitConversions",
+  "-language:higherKinds",
+  "-Xfuture",
+  "-Ypartial-unification"
+)
+
+lazy val scalac213Options = {
+  val exclusions = Set(
+    "-Yno-adapted-args",
+    "-Ywarn-unused-import",
+    "-Xfuture",
+    // type TraversableOnce in package scala is deprecated, symbol literal is deprecated; use Symbol("a") instead
+    "-Xfatal-warnings",
+    "-Ypartial-unification"
+  )
+
+  // https://github.com/scala/bug/issues/12072
+  val options = Seq("-Xlint:-byname-implicit")
+  scalac212Options.filter(s => !exclusions.contains(s)) ++ options
+}
+
+val scalacOptionSettings = Def.task {
+  def baseScalacOptions(scalaVersion: String) =
+    CrossVersion.partialVersion(scalaVersion) match {
+      case Some((2, 13)) => scalac213Options
+      case _ => scalac212Options
+    }
+
+  baseScalacOptions(scalaVersion.value)
+}
+
 lazy val framelessSettings = Seq(
   organization := "org.typelevel",
-  scalacOptions ++= Seq(
-    "-Xlint:-missing-interpolator,-unused,_",
-    "-target:jvm-1.8",
-    "-deprecation",
-    "-encoding", "UTF-8",
-    "-feature",
-    "-unchecked",
-    "-Xfatal-warnings",
-    "-Yno-adapted-args",
-    "-Ywarn-dead-code",
-    "-Ywarn-numeric-widen",
-    "-Ywarn-unused-import",
-    "-Ywarn-value-discard",
-    "-language:existentials",
-    "-language:implicitConversions",
-    "-language:higherKinds",
-    "-Xfuture"
-  ),
+  scalacOptions ++= scalacOptionSettings.value,
   licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
   homepage := Some(url("https://typelevel.org/frameless")),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),

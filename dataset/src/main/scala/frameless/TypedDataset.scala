@@ -1,11 +1,10 @@
 package frameless
 
 import java.util
-
 import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql._
+import org.apache.spark.sql.{Column, DataFrame, Dataset, FramelessInternals, SparkSession}
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, JoinHint}
 import org.apache.spark.sql.catalyst.plans.Inner
@@ -209,7 +208,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Differs from `Dataset#count` by wrapping its result into an effect-suspending `F[_]`.
     */
   def count[F[_]]()(implicit F: SparkDelay[F]): F[Long] =
-    F.delay(dataset.count)
+    F.delay(dataset.count())
 
   /** Returns `TypedColumn` of type `A` given its name.
     *
@@ -261,7 +260,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val projectedColumn: Column = encoder.catalystRepr match {
       case StructType(_) =>
         val allColumns: Array[Column] = dataset.columns.map(dataset.col)
-        org.apache.spark.sql.functions.struct(allColumns: _*)
+        org.apache.spark.sql.functions.struct(allColumns.toSeq: _*)
       case _ =>
         dataset.col(dataset.columns.head)
     }
@@ -315,7 +314,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * Differs from `Dataset#collect` by wrapping its result into an effect-suspending `F[_]`.
     */
   def collect[F[_]]()(implicit F: SparkDelay[F]): F[Seq[T]] =
-    F.delay(dataset.collect())
+    F.delay(dataset.collect().toSeq)
 
   /** Optionally returns the first element in this [[TypedDataset]].
     *
@@ -340,7 +339,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     * apache/spark
     */
   def take[F[_]](num: Int)(implicit F: SparkDelay[F]): F[Seq[T]] =
-    F.delay(dataset.take(num))
+    F.delay(dataset.take(num).toSeq)
 
   /** Return an iterator that contains all rows in this [[TypedDataset]].
     *
@@ -1160,7 +1159,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         .toDF()
         .withColumn(newColumnName, ca.untyped)
 
-      val newColumns = i9.apply.to[Seq].map(_.name).map(dfWithNewColumn.col)
+      val newColumns = i9.apply().to[Seq].map(_.name).map(dfWithNewColumn.col)
 
       val selected = dfWithNewColumn
         .select(newColumns: _*)
