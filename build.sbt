@@ -15,6 +15,9 @@ val Scala213 = "2.13.6"
 
 val previousVersion = "0.10.1"
 
+/** A list of projects that can be safely compiled across Scala versions. */
+val projectsCrossVersion = "core" :: "dataset" :: "refined" :: "ml" :: Nil
+
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / crossScalaVersions := Seq(Scala212, Scala213)
@@ -45,26 +48,19 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .settings(
     /** Not all Spark versions support Scala 2.13. These commands are launched for the supported subset of projects only. */
     commands ++= Seq(
-      Command.command("frameless-test") { currentState =>
-        CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, 13)) =>
-            val projects = "core" :: "dataset" :: "refined" :: "ml" :: Nil
-            projects.map(_ + "/test") :::
-            projects.map(_ + "/test/coverageReport") :::
-            currentState
-          case _ => "test" :: "coverageReport" :: currentState
-        }
-      },
-      Command.command("frameless-mimaReportBinaryIssues") { currentState =>
-        CrossVersion.partialVersion(scalaVersion.value) match {
-          case Some((2, 13)) =>
-            val projects = "core" :: "dataset" :: "refined" :: "ml" :: Nil
-            projects.map(_ + "/mimaReportBinaryIssues") ::: currentState
-          case _ => "mimaReportBinaryIssues" :: currentState
-        }
-      }
+      commandCrossVersion("frameless-test")(projectsCrossVersion.map(_ + "/test") ::: projectsCrossVersion.map(_ + "/test/coverageReport"), "test" :: "coverageReport" :: Nil).value,
+      commandCrossVersion("frameless-mimaReportBinaryIssues")(projectsCrossVersion.map(_ + "/mimaReportBinaryIssues"), "mimaReportBinaryIssues" :: Nil).value,
+      commandCrossVersion("frameless-publish")(projectsCrossVersion.map(_ + "/publish"), "publish" :: Nil).value,
+      commandCrossVersion("frameless-publishSigned")(projectsCrossVersion.map(_ + "/publishSigned"), "publishSigned" :: Nil).value,
     )
   )
+
+def commandCrossVersion(name: String)(commands213: List[String], commands212: List[String]) = Def.setting { Command.command(name) { currentState =>
+  CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, 13)) => commands213 ::: currentState
+    case _ => commands212 ::: currentState
+  }
+} }
 
 lazy val core = project
   .settings(name := "frameless-core")
@@ -250,7 +246,7 @@ lazy val scalac213Options = {
   scalac212Options.filter(s => !exclusions.contains(s)) ++ options
 }
 
-lazy val scalacOptionSettings = Def.task {
+lazy val scalacOptionSettings = Def.setting {
   def baseScalacOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) => scalac213Options
