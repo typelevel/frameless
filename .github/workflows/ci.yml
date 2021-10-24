@@ -60,28 +60,14 @@ jobs:
         run: pip install codecov
 
       - name: Test & Compute Coverage
-        run: |
+        run: sbt ++${{ matrix.scala }} coverage frameless-test
 
-          if [[ "${{ matrix.scala }}" =~ ^"2.13"* ]]; then
-              sbt ++${{ matrix.scala }} coverage test-latest coverageReport-latest
-          else
-              sbt ++${{ matrix.scala }} coverage test coverageReport
-          fi
-
-      
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
 
       - name: Binary compatibility check
-        run: |
+        run: sbt ++${{ matrix.scala }} frameless-mimaReportBinaryIssues
 
-          if [[ "${{ matrix.scala }}" =~ ^"2.13"* ]]; then
-              sbt ++${{ matrix.scala }} mimaReportBinaryIssues-latest
-          else
-              sbt ++${{ matrix.scala }} mimaReportBinaryIssues
-          fi
-
-  
   publish:
     name: Publish Artifacts
     needs: [build]
