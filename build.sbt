@@ -42,6 +42,11 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .settings(framelessSettings)
   .settings(noPublishSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(
+    addCommandAlias("test-latest", ";core/test;cats/test;dataset/test;refined/test;ml/test"),
+    addCommandAlias("coverageReport-latest", ";core/coverageReport;cats/coverageReport;dataset/coverageReport;refined/coverageReport;ml/coverageReport"),
+    addCommandAlias("mimaReportBinaryIssues-latest", ";core/mimaReportBinaryIssues;cats/mimaReportBinaryIssues;dataset/mimaReportBinaryIssues;refined/mimaReportBinaryIssues;ml/mimaReportBinaryIssues")
+  )
 
 lazy val core = project
   .settings(name := "frameless-core")
@@ -257,7 +262,7 @@ lazy val scalac213Options = {
   scalac212Options.filter(s => !exclusions.contains(s)) ++ options
 }
 
-val scalacOptionSettings = Def.task {
+lazy val scalacOptionSettings = Def.task {
   def baseScalacOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) => scalac213Options
@@ -282,7 +287,11 @@ lazy val framelessSettings = Seq(
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
-  mimaPreviousArtifacts := Set("org.typelevel" %% name.value % previousVersion)
+  mimaPreviousArtifacts := Def.setting { CrossVersion.partialVersion(scalaVersion.value) match {
+    // TODO: remove once 2.13 artifacts published
+    case Some((2, 13)) => Set.empty[ModuleID]
+    case _             => Set("org.typelevel" %% name.value % previousVersion)
+  } }.value
 ) ++ consoleSettings
 
 lazy val consoleSettings = Seq(
@@ -385,8 +394,16 @@ ThisBuild / githubWorkflowBuild := Seq(
     List("pip install codecov"),
     name = Some("Setup codecov")
   ),
-  WorkflowStep.Sbt(
-    List("coverage", "test", "coverageReport"),
+  WorkflowStep.Run(
+    List(
+      """
+        |if [[ "${{ matrix.scala }}" =~ ^"2.13"* ]]; then
+        |    sbt ++${{ matrix.scala }} coverage test-latest coverageReport-latest
+        |else
+        |    sbt ++${{ matrix.scala }} coverage test coverageReport
+        |fi
+        |""".stripMargin
+    ),
     name = Some("Test & Compute Coverage")
   ),
   WorkflowStep.Run(
@@ -395,8 +412,16 @@ ThisBuild / githubWorkflowBuild := Seq(
   )
 )
 
-ThisBuild / githubWorkflowBuild += WorkflowStep.Sbt(
-  List("mimaReportBinaryIssues"),
+ThisBuild / githubWorkflowBuild += WorkflowStep.Run(
+  List(
+    """
+      |if [[ "${{ matrix.scala }}" =~ ^"2.13"* ]]; then
+      |    sbt ++${{ matrix.scala }} mimaReportBinaryIssues-latest
+      |else
+      |    sbt ++${{ matrix.scala }} mimaReportBinaryIssues
+      |fi
+      |""".stripMargin
+  ),
   name = Some("Binary compatibility check")
 )
 

@@ -329,7 +329,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val tds = TypedDataset.create(xs)
       val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectList(tds('b))).collect().run()
 
-      tdsRes.toMap.mapValues(_.sorted) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toVector.sorted)
+      tdsRes.toMap.map { case (k, v) => k -> v.sorted } ?= xs.groupBy(_.a).map { case (k, v) => k -> v.map(_.b).toVector.sorted }
     }
 
     check(forAll(prop[Long] _))
@@ -343,7 +343,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val tds = TypedDataset.create(xs)
       val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectSet(tds('b))).collect().run()
 
-      tdsRes.toMap.mapValues(_.toSet) ?= xs.groupBy(_.a).mapValues(_.map(_.b).toSet)
+      tdsRes.toMap.map { case (k, v) => k -> v.toSet } ?= xs.groupBy(_.a).map { case (k, v) => k -> v.map(_.b).toSet }
     }
 
     check(forAll(prop[Long] _))
