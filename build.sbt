@@ -18,7 +18,7 @@ val previousVersion = "0.10.1"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / crossScalaVersions := Seq(Scala212, Scala213)
-ThisBuild / scalaVersion := (ThisBuild / crossScalaVersions).value.head
+ThisBuild / scalaVersion := Scala212
 
 ThisBuild / mimaFailOnNoPrevious := false
 
@@ -55,41 +55,29 @@ lazy val core = project
 
 lazy val cats = project
   .settings(name := "frameless-cats")
-  .settings(framelessSettings)
-  .settings(publishSettings)
   .settings(catsSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
 lazy val `cats-spark31` = project
   .settings(name := "frameless-cats-spark31")
-  .settings(framelessSettings)
-  .settings(publishSettings)
   .settings(catsSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `cats-spark30` = project
   .settings(name := "frameless-cats-spark30")
-  .settings(framelessSettings)
-  .settings(publishSettings)
   .settings(catsSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark31` = project
   .settings(name := "frameless-dataset-spark31")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark31Version))
   .settings(mimaPreviousArtifacts := Set.empty)
@@ -97,9 +85,6 @@ lazy val `dataset-spark31` = project
 
 lazy val `dataset-spark30` = project
   .settings(name := "frameless-dataset-spark30")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark30Version))
   .settings(mimaPreviousArtifacts := Set.empty)
@@ -107,35 +92,22 @@ lazy val `dataset-spark30` = project
 
 lazy val refined = project
   .settings(name := "frameless-refined")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(refinedSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
 lazy val `refined-spark31` = project
   .settings(name := "frameless-refined-spark31")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(refinedSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `refined-spark30` = project
   .settings(name := "frameless-refined-spark30")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
   .settings(refinedSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val ml = project
   .settings(name := "frameless-ml")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
+  .settings(mlSettings)
   .settings(sparkMlDependencies(sparkVersion))
   .dependsOn(
     core % "test->test;compile->compile",
@@ -144,9 +116,7 @@ lazy val ml = project
 
 lazy val `ml-spark31` = project
   .settings(name := "frameless-ml-spark31")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
+  .settings(mlSettings)
   .settings(sparkMlDependencies(spark31Version))
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(
@@ -156,9 +126,7 @@ lazy val `ml-spark31` = project
 
 lazy val `ml-spark30` = project
   .settings(name := "frameless-ml-spark30")
-  .settings(framelessSettings)
-  .settings(framelessTypedDatasetREPL)
-  .settings(publishSettings)
+  .settings(mlSettings)
   .settings(sparkMlDependencies(spark30Version))
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(
@@ -191,7 +159,7 @@ def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = S
 def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
   Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
 
-lazy val catsSettings = Seq(
+lazy val catsSettings = framelessSettings ++ publishSettings ++ Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core"      % catsCoreVersion,
@@ -201,7 +169,7 @@ lazy val catsSettings = Seq(
   )
 )
 
-lazy val datasetSettings = Seq(
+lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings ++ Seq(
   mimaBinaryIssueFilters ++= {
     import com.typesafe.tools.mima.core._
 
@@ -222,10 +190,12 @@ lazy val datasetSettings = Seq(
   }
 )
 
-lazy val refinedSettings = Seq(
+lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings ++ Seq(
   mimaPreviousArtifacts := Set.empty,
   libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
 )
+
+lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings
 
 lazy val scalac212Options = Seq(
   "-Xlint:-missing-interpolator,-unused,_",
