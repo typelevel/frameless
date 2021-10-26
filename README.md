@@ -40,7 +40,7 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 
 Starting 0.11 we introduced Spark cross published artifacts: 
 * By default, frameless artifacts depend on the most recent Spark version
-* Suffix `-spark-{major}{minor}` is added to artifacts that are released for the previous Spark version(s)
+* Suffix `-spark{major}{minor}` is added to artifacts that are released for the previous Spark version(s)
 
 Artifact names examples:
 
