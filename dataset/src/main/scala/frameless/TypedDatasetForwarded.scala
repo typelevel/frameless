@@ -161,7 +161,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     *
     * apache/spark
     */
-  def sample(withReplacement: Boolean, fraction: Double, seed: Long = Random.nextLong): TypedDataset[T] =
+  def sample(withReplacement: Boolean, fraction: Double, seed: Long = Random.nextLong()): TypedDataset[T] =
     TypedDataset.create(dataset.sample(withReplacement, fraction, seed))
 
   /** Returns a new [[TypedDataset]] that contains only the unique elements of this [[TypedDataset]].
@@ -172,7 +172,7 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     * apache/spark
     */
   def distinct: TypedDataset[T] =
-    TypedDataset.create(dataset.distinct)
+    TypedDataset.create(dataset.distinct())
 
   /**
     * Returns a best-effort snapshot of the files that compose this [[TypedDataset]]. This method simply

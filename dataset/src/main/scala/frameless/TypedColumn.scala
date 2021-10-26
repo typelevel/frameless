@@ -27,7 +27,7 @@ sealed class TypedColumn[T, U](expr: Expression)(
 
   type ThisType[A, B] = TypedColumn[A, B]
 
-  def this(column: Column)(implicit uencoder: TypedEncoder[U]) {
+  def this(column: Column)(implicit uencoder: TypedEncoder[U]) = {
     this(FramelessInternals.expr(column))
   }
 
@@ -44,7 +44,7 @@ sealed class TypedAggregate[T, U](expr: Expression)(
 
   type ThisType[A, B] = TypedAggregate[A, B]
 
-  def this(column: Column)(implicit uencoder: TypedEncoder[U]) {
+  def this(column: Column)(implicit uencoder: TypedEncoder[U]) = {
     this(FramelessInternals.expr(column))
   }
 
@@ -853,7 +853,7 @@ sealed class SortedTypedColumn[T, U](val expr: Expression)(
   val uencoder: TypedEncoder[U]
 ) extends UntypedExpression[T] {
 
-  def this(column: Column)(implicit e: TypedEncoder[U]) {
+  def this(column: Column)(implicit e: TypedEncoder[U]) = {
     this(FramelessInternals.expr(column))
   }
 

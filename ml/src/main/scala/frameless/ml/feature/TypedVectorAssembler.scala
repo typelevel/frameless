@@ -46,7 +46,7 @@ private[ml] object TypedVectorAssemblerInputsChecker {
     inputsValues: Values.Aux[InputsRec, InputsVals],
     inputsTypeCheck: TypedVectorAssemblerInputsValueChecker[InputsVals]
   ): TypedVectorAssemblerInputsChecker[Inputs] = new TypedVectorAssemblerInputsChecker[Inputs] {
-    val inputCols: Seq[String] = inputsKeys.apply.to[Seq].map(_.name)
+    val inputCols: Seq[String] = inputsKeys.apply().to[Seq].map(_.name)
   }
 }
 

@@ -42,7 +42,7 @@ object SmartProject {
       i5: UVals =:= TProj,
       i6: ToTraversable.Aux[UKeys, Seq, Symbol]
     ): SmartProject[T,U] = SmartProject[T, U]({ from =>
-      val names = implicitly[Keys.Aux[URec, UKeys]].apply.to[Seq].map(_.name).map(from.dataset.col)
+      val names = implicitly[Keys.Aux[URec, UKeys]].apply().to[Seq].map(_.name).map(from.dataset.col)
       TypedDataset.create(from.dataset.toDF().select(names: _*).as[U](TypedExpressionEncoder[U]))
     })
 }

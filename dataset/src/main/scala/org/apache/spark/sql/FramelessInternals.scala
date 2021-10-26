@@ -16,7 +16,7 @@ object FramelessInternals {
   def objectTypeFor[A](implicit classTag: ClassTag[A]): ObjectType = ObjectType(classTag.runtimeClass)
 
   def resolveExpr(ds: Dataset[_], colNames: Seq[String]): NamedExpression = {
-    ds.toDF.queryExecution.analyzed.resolve(colNames, ds.sparkSession.sessionState.analyzer.resolver).getOrElse {
+    ds.toDF().queryExecution.analyzed.resolve(colNames, ds.sparkSession.sessionState.analyzer.resolver).getOrElse {
       throw new AnalysisException(
         s"""Cannot resolve column name "$colNames" among (${ds.schema.fieldNames.mkString(", ")})""")
     }
@@ -59,6 +59,7 @@ object FramelessInternals {
     def dataType: DataType = tagged.dataType
     protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
     override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 
   /** Expression to tag columns from the right hand side of join expression. */
@@ -69,5 +70,6 @@ object FramelessInternals {
     def dataType: DataType = tagged.dataType
     protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
     override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 }

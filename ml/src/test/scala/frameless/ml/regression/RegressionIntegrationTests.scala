@@ -19,7 +19,7 @@ class RegressionIntegrationTests extends FramelessMlSuite with Matchers {
     val vectorAssembler = TypedVectorAssembler[Features]
 
     case class DataWithFeatures(field1: Double, field2: Int, field3: Double, features: Vector)
-    val dataWithFeatures = vectorAssembler.transform(trainingDataDs).as[DataWithFeatures]
+    val dataWithFeatures = vectorAssembler.transform(trainingDataDs).as[DataWithFeatures]()
 
     case class RFInputs(field3: Double, features: Vector)
     val rf = TypedRandomForestRegressor[RFInputs]
@@ -31,12 +31,12 @@ class RegressionIntegrationTests extends FramelessMlSuite with Matchers {
     val testData = TypedDataset.create(Seq(
       Data(0D, 10, 0D)
     ))
-    val testDataWithFeatures = vectorAssembler.transform(testData).as[DataWithFeatures]
+    val testDataWithFeatures = vectorAssembler.transform(testData).as[DataWithFeatures]()
 
     case class PredictionResult(field1: Double, field2: Int, field3: Double, features: Vector, predictedField3: Double)
-    val predictionDs = model.transform(testDataWithFeatures).as[PredictionResult]
+    val predictionDs = model.transform(testDataWithFeatures).as[PredictionResult]()
 
-    val prediction = predictionDs.select(predictionDs.col('predictedField3)).collect.run().toList
+    val prediction = predictionDs.select(predictionDs.col('predictedField3)).collect().run().toList
 
     prediction mustEqual List(0D)
   }

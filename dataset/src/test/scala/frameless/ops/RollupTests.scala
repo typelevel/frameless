@@ -275,18 +275,18 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a).mapGroups(('a, toVector(('a, 'b))") {
     def prop[
-    A: TypedEncoder,
-    B: TypedEncoder
+    A: TypedEncoder: Ordering,
+    B: TypedEncoder: Ordering
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .rollup(A)
-        .deserialized.mapGroups((a, xs) => (a, xs.toVector))
+        .deserialized.mapGroups((a, xs) => (a, xs.toVector.sorted))
         .collect().run().toMap
 
-      val dataGrouped = data.groupBy(_.a)
+      val dataGrouped = data.groupBy(_.a).map { case (k, v) => k -> v.sorted }
 
       datasetGrouped ?= dataGrouped
     }

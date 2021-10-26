@@ -6,6 +6,8 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.{functions => sparkFunctions}
 import frameless.syntax._
 
+import scala.annotation.nowarn
+
 trait AggregateFunctions {
   /** Aggregate function: returns the number of items in a group.
     *
@@ -77,6 +79,7 @@ trait AggregateFunctions {
     *
     * apache/spark
     */
+  @nowarn // supress sparkFunctions.sumDistinct call which is used to maintain Spark 3.1.x backwards compat
   def sumDistinct[A, T, Out](column: TypedColumn[T, A])(
     implicit
     summable: CatalystSummable[A, Out],

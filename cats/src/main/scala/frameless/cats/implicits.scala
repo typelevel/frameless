@@ -20,7 +20,7 @@ object implicits extends FramelessSyntax with SparkDelayInstances {
       )
 
     def cmin(implicit o: Order[A], e: Empty[A]): A = {
-      if (lhs.isEmpty) e.empty
+      if (lhs.isEmpty()) e.empty
       else lhs.reduce(_ min _)
     }
     def cminOption(implicit o: Order[A]): Option[A] =
@@ -29,7 +29,7 @@ object implicits extends FramelessSyntax with SparkDelayInstances {
       })
 
     def cmax(implicit o: Order[A], e: Empty[A]): A = {
-      if (lhs.isEmpty) e.empty
+      if (lhs.isEmpty()) e.empty
       else lhs.reduce(_ max _)
     }
     def cmaxOption(implicit o: Order[A]): Option[A] =

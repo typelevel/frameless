@@ -3,6 +3,7 @@ package functions
 
 import org.apache.spark.sql.{Column, functions => sparkFunctions}
 
+import scala.annotation.nowarn
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
@@ -86,6 +87,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
+  @nowarn // supress sparkFunctions.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
   def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
@@ -97,6 +99,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
+  @nowarn // supress sparkFunctions.shiftReft call which is used to maintain Spark 3.1.x backwards compat
   def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
@@ -108,12 +111,13 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
+  @nowarn // supress sparkFunctions.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
   def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
     (implicit
       i0: CatalystBitShift[A, B],
       i1: TypedEncoder[B]
     ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.shiftLeft(column.untyped, numBits))
+    column.typed(sparkFunctions.shiftLeft(column.untyped, numBits))
   
   /** Non-Aggregate function: returns the absolute value of a numeric column
     *
@@ -491,6 +495,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
+  @nowarn // supress sparkFunctions.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
   def bitwiseNOT[A: CatalystBitwise, T](column: AbstractTypedColumn[T, A]): column.ThisType[T, A] =
     column.typed(sparkFunctions.bitwiseNOT(column.untyped))(column.uencoder)
 
@@ -499,9 +504,8 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def inputFileName[T](): TypedColumn[T, String] = {
+  def inputFileName[T](): TypedColumn[T, String] =
     new TypedColumn[T, String](sparkFunctions.input_file_name())
-  }
 
   /** Non-Aggregate function: generates monotonically increasing id
     *

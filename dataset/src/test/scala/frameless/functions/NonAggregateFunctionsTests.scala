@@ -9,6 +9,8 @@ import org.apache.spark.sql.{Column, Encoder, SaveMode, functions => sparkFuncti
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}
 
+import scala.annotation.nowarn
+
 class NonAggregateFunctionsTests extends TypedDatasetSuite {
   val testTempFiles = "target/testoutput"
 
@@ -180,6 +182,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunctions.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -198,6 +201,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunctions.shiftRight call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -216,6 +220,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunctions.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: TypedEncoder : Encoder, B: TypedEncoder : Encoder]
     (values: List[X1[A]], numBits: Int)
     (implicit catalystBitShift: CatalystBitShift[A, B], encX1: Encoder[X1[A]]) = {
@@ -1652,6 +1657,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
+    @nowarn // supress sparkFunctions.bitwiseNOT call which is used to maintain Spark 3.1.x backwards compat
     def prop[A: CatalystBitwise : TypedEncoder : Encoder]
     (values:List[X1[A]])(implicit encX1:Encoder[X1[A]]) = {
       val cDS = session.createDataset(values)

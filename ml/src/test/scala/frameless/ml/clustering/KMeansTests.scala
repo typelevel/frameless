@@ -27,7 +27,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x1))
       val model = km.fit(ds).run()
-      val pDs = model.transform(ds).as[X2[Vector, Int]]
+      val pDs = model.transform(ds).as[X2[Vector, Int]]()
 
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
     }
@@ -36,9 +36,9 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x2))
       val model = km.fit(ds).run()
-      val pDs = model.transform(ds).as[X3[Vector, A, Int]]
+      val pDs = model.transform(ds).as[X3[Vector, A, Int]]()
 
-      pDs.select(pDs.col('a), pDs.col('b)).collect.run() == Seq((x2.a, x2.b))
+      pDs.select(pDs.col('a), pDs.col('b)).collect().run() == Seq((x2.a, x2.b))
     }
 
     check(prop)

@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.propspec.AnyPropSpec
 
 trait SparkTests {
-  val appID: String = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
+  val appID: String = new java.util.Date().toString + math.floor(math.random() * 10E4).toLong.toString
 
   val conf: SparkConf = new SparkConf()
     .setMaster("local[*]")
@@ -44,21 +44,21 @@ object Tests {
     val xs = sc.parallelize(mx.toSeq)
     val ys = sc.parallelize(my.toSeq)
 
-    val mz0 = (xs |+| ys).collectAsMap
-    val mz1 = (xs join ys).mapValues { case (x, y) => x |+| y }.collectAsMap
+    val mz0 = (xs |+| ys).collectAsMap()
+    val mz1 = (xs join ys).mapValues { case (x, y) => x |+| y }.collectAsMap()
     val mz2 = (for { (k, x) <- mx; y <- my.get(k) } yield (k, x + y)).toMap
     check(mz0, mz1)
     check(mz1, mz2)
 
     val zs = sc.parallelize(mx.values.toSeq)
-    check(xs.csumByKey.collectAsMap, mx)
-    check(zs.csum, zs.collect.sum)
+    check(xs.csumByKey.collectAsMap(), mx)
+    check(zs.csum, zs.collect().sum)
 
     if (mx.nonEmpty) {
-      check(xs.cminByKey.collectAsMap, mx)
-      check(xs.cmaxByKey.collectAsMap, mx)
-      check(zs.cmin, zs.collect.min)
-      check(zs.cmax, zs.collect.max)
+      check(xs.cminByKey.collectAsMap(), mx)
+      check(xs.cmaxByKey.collectAsMap(), mx)
+      check(zs.cmin, zs.collect().min)
+      check(zs.cmax, zs.collect().max)
     } else check(1, 1)
   }
 }
@@ -68,7 +68,7 @@ class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with 
     PropertyCheckConfiguration(minSize = PosInt(10))
 
   property("spark is working") {
-    sc.parallelize(Array(1, 2, 3)).collect shouldBe Array(1,2,3)
+    sc.parallelize(Seq(1, 2, 3)).collect() shouldBe Array(1,2,3)
   }
 
   property("inner pairwise monoid") {
@@ -122,8 +122,8 @@ class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with 
     import frameless.cats.implicits._
     val seq = Seq( ("a",2), ("b",3), ("d",6), ("b",2), ("d",1) )
     val rdd = seq.toRdd
-    rdd.cminByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",2), ("d",1) )
-    rdd.cmaxByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",3), ("d",6) )
-    rdd.csumByKey.collect.toSeq should contain theSameElementsAs Seq( ("a",2), ("b",5), ("d",7) )
+    rdd.cminByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",2), ("d",1) )
+    rdd.cmaxByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",3), ("d",6) )
+    rdd.csumByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",5), ("d",7) )
   }
 }

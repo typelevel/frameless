@@ -33,11 +33,20 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | 0.5.2     | 2.2.1 | 1.x      | 0.8         | 2.11
 | 0.6.1     | 2.3.0 | 1.x      | 0.8         | 2.11
 | 0.7.0     | 2.3.1 | 1.x      | 1.x         | 2.11
-| 0.8.0     | 2.4.0 | 1.x      | 1.x         | 2.11/2.12
+| 0.8.0     | 2.4.0 | 1.x      | 1.x         | 2.11 / 2.12
 | 0.9.0     | 3.0.0 | 1.x      | 1.x         | 2.12
 | 0.10.1    | 3.1.0 | 2.x      | 2.x         | 2.12
-| 0.11.0    | 3.1.0 | 2.x      | 2.x         | 2.12
+| 0.11.0    | 3.2.0 / 3.1.2 / 3.0.1 | 2.x      | 2.x         | 2.12 / 2.13
 
+Starting 0.11 we introduced Spark cross published artifacts: 
+* By default, frameless artifacts depend on the most recent Spark version
+* Suffix `-spark-{major}{minor}` is added to artifacts that are released for the previous Spark version(s)
+
+Artifact names examples:
+
+* `frameless-dataset` (the latest Spark dependency)
+* `frameless-dataset-spark31` (Spark 3.1.x dependency)
+* `frameless-dataset-spark30` (Spark 3.0.x dependency)
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
 

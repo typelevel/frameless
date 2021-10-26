@@ -28,7 +28,7 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expected = Seq(nes)
 
-    unsafeDs.collect.run() shouldBe expected
+    unsafeDs.collect().run() shouldBe expected
   }
 
   test("Encode case class with a refined field") {
@@ -56,12 +56,12 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expected = Seq(as)
 
-    unsafeDs.collect.run() shouldBe expected
+    unsafeDs.collect().run() shouldBe expected
 
     // Check safe
     val safeDs = TypedDataset.create(expected)
 
-    safeDs.collect.run() shouldBe expected
+    safeDs.collect().run() shouldBe expected
   }
 
   test("Encode case class with a refined optional field") {
@@ -91,12 +91,12 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expected = Seq(bs, B(2, None))
 
-    unsafeDs.collect.run() shouldBe expected
+    unsafeDs.collect().run() shouldBe expected
 
     // Check safe
     val safeDs = TypedDataset.create(expected)
 
-    safeDs.collect.run() shouldBe expected
+    safeDs.collect().run() shouldBe expected
   }
 }
 

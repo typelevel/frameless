@@ -174,6 +174,8 @@ case class FramelessUdf[T, R](
       isNull = resultEval.isNull
     )
   }
+
+  protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(children = newChildren)
 }
 
 case class Spark2_4_LambdaVariable(
