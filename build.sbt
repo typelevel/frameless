@@ -271,7 +271,8 @@ lazy val framelessSettings = Seq(
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
-  mimaPreviousArtifacts := Def.setting { CrossVersion.partialVersion(scalaVersion.value) match {
+  mimaPreviousArtifacts := Def.setting {
+    CrossVersion.partialVersion(scalaVersion.value) match {
     // TODO: remove once 2.13 artifacts published
     case Some((2, 13)) => Set.empty[ModuleID]
     case _             => Set("org.typelevel" %% name.value % previousVersion)
