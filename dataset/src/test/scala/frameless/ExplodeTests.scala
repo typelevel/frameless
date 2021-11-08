@@ -7,7 +7,6 @@ import org.scalacheck.Prop._
 
 import scala.reflect.ClassTag
 
-
 class ExplodeTests extends TypedDatasetSuite {
   test("simple explode test") {
     val ds = TypedDataset.create(Seq((1,Array(1,2))))
@@ -49,18 +48,33 @@ class ExplodeTests extends TypedDatasetSuite {
     check(forAll(prop[String] _))
   }
 
-  test("explode on Maps") {
-    def prop[A: TypedEncoder: ClassTag](xs: List[X1[Map[A, A]]]): Prop = {
+  test("explode on maps") {
+    def prop[A: TypedEncoder: ClassTag, B: TypedEncoder: ClassTag](xs: List[X1[Map[A, B]]]): Prop = {
       val tds = TypedDataset.create(xs)
 
       val framelessResults = tds.explodeMap('a).collect().run().toVector
-      val scalaResults = xs.flatMap(_.a.toList).map(t => Tuple2(t._1, t._2)).toVector
+      val scalaResults = xs.flatMap(_.a.toList).map(t => Tuple1(Tuple2(t._1, t._2))).toVector
 
       framelessResults ?= scalaResults
     }
 
-    check(forAll(prop[Long] _))
-    check(forAll(prop[Int] _))
-    check(forAll(prop[String] _))
+    check(forAll(prop[Long, String] _))
+    check(forAll(prop[Int, Long] _))
+    check(forAll(prop[String, Int] _))
+  }
+
+  test("explode on maps preserving other columns") {
+    def prop[K: TypedEncoder: ClassTag, A: TypedEncoder: ClassTag, B: TypedEncoder: ClassTag](xs: List[X2[K, Map[A, B]]]): Prop = {
+      val tds = TypedDataset.create(xs)
+
+      val framelessResults = tds.explodeMap('b).collect().run().toVector
+      val scalaResults = xs.flatMap { x2 => x2.b.toList.map((x2.a, _)) }.toVector
+
+      framelessResults ?= scalaResults
+    }
+
+    check(forAll(prop[Int, Long, String] _))
+    check(forAll(prop[String, Int, Long] _))
+    check(forAll(prop[Long, String, Int] _))
   }
 }
