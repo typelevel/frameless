@@ -72,14 +72,16 @@ lazy val cats = project
   .settings(catsSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
-lazy val `cats-spark31` = project
+lazy val `cats-spark31` = (project in file("cats"))
   .settings(name := "frameless-cats-spark31")
+  .settings(target := file("cats-spark31/target"))
   .settings(catsSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
-lazy val `cats-spark30` = project
+lazy val `cats-spark30` = (project in file("cats"))
   .settings(name := "frameless-cats-spark30")
+  .settings(target := file("cats-spark30/target"))
   .settings(catsSettings)
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
@@ -90,15 +92,17 @@ lazy val dataset = project
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
 
-lazy val `dataset-spark31` = project
+lazy val `dataset-spark31` = (project in file("dataset"))
   .settings(name := "frameless-dataset-spark31")
+  .settings(target := file("dataset-spark31/target"))
   .settings(datasetSettings)
   .settings(sparkDependencies(spark31Version))
   .settings(mimaPreviousArtifacts := Set.empty)
   .dependsOn(core % "test->test;compile->compile")
 
-lazy val `dataset-spark30` = project
+lazy val `dataset-spark30` = (project in file("dataset"))
   .settings(name := "frameless-dataset-spark30")
+  .settings(target := file("dataset-spark30/target"))
   .settings(datasetSettings)
   .settings(sparkDependencies(spark30Version))
   .settings(mimaPreviousArtifacts := Set.empty)
@@ -109,13 +113,15 @@ lazy val refined = project
   .settings(refinedSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
-lazy val `refined-spark31` = project
+lazy val `refined-spark31` = (project in file("refined"))
   .settings(name := "frameless-refined-spark31")
+  .settings(target := file("refined-spark31/target"))
   .settings(refinedSettings)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
-lazy val `refined-spark30` = project
+lazy val `refined-spark30` = (project in file("refined"))
   .settings(name := "frameless-refined-spark30")
+  .settings(target := file("refined-spark30/target"))
   .settings(refinedSettings)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
@@ -128,8 +134,9 @@ lazy val ml = project
     dataset % "test->test;compile->compile;provided->provided"
   )
 
-lazy val `ml-spark31` = project
+lazy val `ml-spark31` = (project in file("ml"))
   .settings(name := "frameless-ml-spark31")
+  .settings(target := file("ml-spark31/target"))
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark31Version))
   .settings(mimaPreviousArtifacts := Set.empty)
@@ -138,8 +145,9 @@ lazy val `ml-spark31` = project
     `dataset-spark31` % "test->test;compile->compile;provided->provided"
   )
 
-lazy val `ml-spark30` = project
+lazy val `ml-spark30` = (project in file("ml"))
   .settings(name := "frameless-ml-spark30")
+  .settings(target := file("ml-spark30/target"))
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark30Version))
   .settings(mimaPreviousArtifacts := Set.empty)
