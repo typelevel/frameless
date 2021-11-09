@@ -313,43 +313,17 @@ lazy val framelessTypedDatasetREPL = Seq(
 
 lazy val publishSettings = Seq(
   Test / publishArtifact := false,
-  pomExtra in Global := {
-    <scm>
-      <url>git@github.com:typelevel/frameless.git</url>
-      <connection>scm:git:git@github.com:typelevel/frameless.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>OlivierBlanvillain</id>
-        <name>Olivier Blanvillain</name>
-        <url>https://github.com/OlivierBlanvillain/</url>
-      </developer>
-      <developer>
-        <id>adelbertc</id>
-        <name>Adelbert Chang</name>
-        <url>https://github.com/adelbertc/</url>
-      </developer>
-      <developer>
-        <id>imarios</id>
-        <name>Marios Iliofotou</name>
-        <url>https://github.com/imarios/</url>
-      </developer>
-      <developer>
-        <id>kanterov</id>
-        <name>Gleb Kanterov</name>
-        <url>https://github.com/kanterov/</url>
-      </developer>
-      <developer>
-        <id>non</id>
-        <name>Erik Osheim</name>
-        <url>https://github.com/non/</url>
-      </developer>
-      <developer>
-        <id>jeremyrsmith</id>
-        <name>Jeremy Smith</name>
-        <url>https://github.com/jeremyrsmith/</url>
-      </developer>
-    </developers>
+  ThisBuild / developers ++= List(
+    "OlivierBlanvillain" -> "Olivier Blanvillain",
+    "adelbertc" -> "Adelbert Chang",
+    "imarios" -> "Marios Iliofotou",
+    "kanterov" -> "Gleb Kanterov",
+    "non" -> "Erik Osheim",
+    "jeremyrsmith" -> "Jeremy Smith",
+    "cchantep" -> "Cédric Chantepie",
+    "pomadchin" -> "Grigory Pomadchin"
+  ).map { case (username, fullName) =>
+    Developer(username, fullName, s"@$username", url(s"https://github.com/$username"))
   }
 )
 
