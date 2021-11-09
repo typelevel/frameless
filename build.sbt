@@ -313,7 +313,7 @@ lazy val framelessTypedDatasetREPL = Seq(
 
 lazy val publishSettings = Seq(
   Test / publishArtifact := false,
-  ThisBuild / developers ++= List(
+  ThisBuild / developers := List(
     "OlivierBlanvillain" -> "Olivier Blanvillain",
     "adelbertc" -> "Adelbert Chang",
     "imarios" -> "Marios Iliofotou",
