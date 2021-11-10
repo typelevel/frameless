@@ -7,7 +7,7 @@ import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -225,6 +225,68 @@ object TypedEncoder {
         staticObject = SQLTimestamp.getClass,
         dataType = jvmRepr,
         functionName = "apply",
+        arguments = path :: Nil,
+        propagateNull = true
+      )
+  }
+
+  implicit val timeInstantTimestamp: TypedEncoder[java.time.Instant] = new TypedEncoder[java.time.Instant] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Instant]
+    def catalystRepr: DataType = TimestampType
+
+    def toCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        DateTimeUtils.getClass,
+        TimestampType,
+        "instantToMicros",
+        path :: Nil,
+        returnNullable = false)
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        staticObject = DateTimeUtils.getClass,
+        dataType = jvmRepr,
+        functionName = "microsToInstant",
+        arguments = path :: Nil,
+        propagateNull = true
+      )
+  }
+
+  implicit val timeDurationTimestamp: TypedEncoder[java.time.Duration] = new TypedEncoder[java.time.Duration] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Duration]
+    def catalystRepr: DataType = LongType
+
+    def toCatalyst(path: Expression): Expression =
+      Invoke(path, "toMillis", LongType)
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        staticObject = classOf[java.time.Duration],
+        dataType = jvmRepr,
+        functionName = "ofMillis",
+        arguments = path :: Nil,
+        propagateNull = true
+      )
+  }
+
+  implicit val timePeriodTimestamp: TypedEncoder[java.time.Period] = new TypedEncoder[java.time.Period] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Period]
+    def catalystRepr: DataType = IntegerType
+
+    def toCatalyst(path: Expression): Expression =
+      Invoke(path, "getDays", IntegerType)
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        staticObject = classOf[java.time.Period],
+        dataType = jvmRepr,
+        functionName = "ofDays",
         arguments = path :: Nil,
         propagateNull = true
       )
