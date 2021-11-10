@@ -55,9 +55,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.15, 2.13.7]
         java: [adopt@1.8]
     runs-on: ${{ matrix.os }}
+    env:
+      PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      PGP_SECRET: ${{ secrets.PGP_SECRET }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      CI_SNAPSHOT_RELEASE: "frameless-publish"
+      CI_RELEASE: "frameless-publishSigned"
+
     steps:
       - uses: actions/checkout@v2
         with:
@@ -67,15 +74,18 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
 
-      - name: Publish artifacts
-        run: sbt ++${{ matrix.scala }} ci-release
+      # Sequentially publish different artifacts for different Scala versions.
+      # Doing that in parallel may cause unclosed staging repositories drop.
+      - name: Publish Scala 2.12.15 artifacts
+        run: sbt ++$SCALA_VERSION ci-release
         env:
-          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
-          PGP_SECRET: ${{ secrets.PGP_SECRET }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          CI_SNAPSHOT_RELEASE: "frameless-publish"
-          CI_RELEASE: "frameless-publishSigned"
+          SCALA_VERSION: 2.12.15
+        if: ${{ env.SONATYPE_PASSWORD != '' && env.SONATYPE_USERNAME != '' }}
+
+      - name: Publish Scala 2.13.7 artifacts
+        run: sbt ++$SCALA_VERSION ci-release
+        env:
+          SCALA_VERSION: 2.13.7
         if: ${{ env.SONATYPE_PASSWORD != '' && env.SONATYPE_USERNAME != '' }}
 
   docs:
