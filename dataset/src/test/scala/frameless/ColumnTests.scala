@@ -14,9 +14,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
     implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
-    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(
-      Gen.chooseNum(0L, Instant.MAX.getEpochSecond)
-        .map(Instant.ofEpochSecond))
+    implicit val arbInstant: Arbitrary[Instant] =
+      Arbitrary(Gen.choose[Instant](Instant.EPOCH, Instant.now()))
     implicit val instantAsLongInjection: Injection[Instant, Long] =
       Injection(_.getEpochSecond, Instant.ofEpochSecond)
   }
