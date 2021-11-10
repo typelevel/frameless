@@ -36,7 +36,10 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | 0.8.0     | 2.4.0 | 1.x      | 1.x         | 2.11 / 2.12
 | 0.9.0     | 3.0.0 | 1.x      | 1.x         | 2.12
 | 0.10.1    | 3.1.0 | 2.x      | 2.x         | 2.12
-| 0.11.0    | 3.2.0 / 3.1.2 / 3.0.1 | 2.x      | 2.x         | 2.12 / 2.13
+| 0.11.0*    | 3.2.0 / 3.1.2 / 3.0.1| 2.x      | 2.x         | 2.12 / 2.13
+| 0.11.1    | 3.2.0 / 3.1.2 / 3.0.1 | 2.x      | 2.x         | 2.12 / 2.13
+
+_\* 0.11.0 has broken Spark 3.1.2 and 3.0.1 artifacts published._
 
 Starting 0.11 we introduced Spark cross published artifacts: 
 * By default, frameless artifacts depend on the most recent Spark version
