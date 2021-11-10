@@ -36,6 +36,12 @@ jobs:
       - name: Test & Compute Coverage
         run: sbt ++${{ matrix.scala }} coverage frameless-test
 
+      - name: Test & Compute Coverage Spark 3.1.x
+        run: sbt ++${{ matrix.scala }} coverage frameless-test-spark31
+
+      - name: Test & Compute Coverage Spark 3.0.x
+        run: sbt ++${{ matrix.scala }} coverage frameless-test-spark30
+
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
 

@@ -16,7 +16,9 @@ val Scala213 = "2.13.7"
 val previousVersion = "0.10.1"
 
 /** A list of projects that can be safely compiled across Scala versions. */
-val projectsCrossVersion = "core" :: "dataset" :: "refined" :: "ml" :: Nil
+val projectsCrossVersion = "core" :: "cats" :: "dataset" :: "refined" :: "ml" :: Nil
+val projectsSpark31 = projectsCrossVersion.head :: projectsCrossVersion.tail.map(_ + "-spark31")
+val projectsSpark30 = projectsCrossVersion.head :: projectsCrossVersion.tail.map(_ + "-spark30")
 
 ThisBuild / versionScheme := Some("semver-spec")
 
@@ -48,13 +50,18 @@ lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
   .settings(
     /** Not all Spark versions support Scala 2.13. These commands are launched for the supported subset of projects only. */
     commands ++= Seq(
-      commandCrossVersion("frameless-test")(projectsCrossVersion.map(_ + "/test") ::: projectsCrossVersion.map(_ + "/test/coverageReport"), "test" :: "coverageReport" :: Nil).value,
+      // run tests separately for different Spark versions to reduce pressure on CI
+      command("frameless-test")(projectsCrossVersion.map(_ + "/test") ::: projectsCrossVersion.map(_ + "/test/coverageReport")).value,
+      command212("frameless-test-spark31")(projectsSpark31.map(_ + "/test") ::: projectsSpark31.map(_ + "/test/coverageReport")).value,
+      command212("frameless-test-spark30")(projectsSpark30.map(_ + "/test") ::: projectsSpark30.map(_ + "/test/coverageReport")).value,
       commandCrossVersion("frameless-mimaReportBinaryIssues")(projectsCrossVersion.map(_ + "/mimaReportBinaryIssues"), "mimaReportBinaryIssues" :: Nil).value,
       commandCrossVersion("frameless-publish")(projectsCrossVersion.map(_ + "/publish"), "publish" :: Nil).value,
       commandCrossVersion("frameless-publishSigned")(projectsCrossVersion.map(_ + "/publishSigned"), "publishSigned" :: Nil).value,
     )
   )
 
+def command(name: String)(commands: List[String]) = commandCrossVersion(name)(commands, commands)
+def command212(name: String)(commands212: List[String]) = commandCrossVersion(name)(Nil, commands212)
 def commandCrossVersion(name: String)(commands213: List[String], commands212: List[String]) = Def.setting { Command.command(name) { currentState =>
   CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => commands213 ::: currentState
