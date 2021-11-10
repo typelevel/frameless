@@ -230,7 +230,7 @@ object TypedEncoder {
       )
   }
 
-  implicit val timeInstantTimestamp: TypedEncoder[java.time.Instant] = new TypedEncoder[java.time.Instant] {
+  implicit val timeInstant: TypedEncoder[java.time.Instant] = new TypedEncoder[java.time.Instant] {
     def nullable: Boolean = false
 
     def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Instant]
@@ -254,7 +254,7 @@ object TypedEncoder {
       )
   }
 
-  implicit val timeDurationTimestamp: TypedEncoder[java.time.Duration] = new TypedEncoder[java.time.Duration] {
+  implicit val timeDuration: TypedEncoder[java.time.Duration] = new TypedEncoder[java.time.Duration] {
     def nullable: Boolean = false
 
     def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Duration]
@@ -273,7 +273,7 @@ object TypedEncoder {
       )
   }
 
-  implicit val timePeriodTimestamp: TypedEncoder[java.time.Period] = new TypedEncoder[java.time.Period] {
+  implicit val timePeriod: TypedEncoder[java.time.Period] = new TypedEncoder[java.time.Period] {
     def nullable: Boolean = false
 
     def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Period]
