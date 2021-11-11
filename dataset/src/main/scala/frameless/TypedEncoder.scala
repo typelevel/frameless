@@ -1,5 +1,6 @@
 package frameless
 
+import java.time.{Duration, Instant, Period}
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
@@ -230,10 +231,10 @@ object TypedEncoder {
       )
   }
 
-  implicit val timeInstant: TypedEncoder[java.time.Instant] = new TypedEncoder[java.time.Instant] {
+  implicit val timeInstant: TypedEncoder[Instant] = new TypedEncoder[Instant] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Instant]
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[Instant]
     def catalystRepr: DataType = TimestampType
 
     def toCatalyst(path: Expression): Expression =
@@ -254,10 +255,10 @@ object TypedEncoder {
       )
   }
 
-  implicit val timeDuration: TypedEncoder[java.time.Duration] = new TypedEncoder[java.time.Duration] {
+  implicit val timeDuration: TypedEncoder[Duration] = new TypedEncoder[Duration] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Duration]
+    def jvmRepr: DataType = FramelessInternals.objectTypeFor[Duration]
     def catalystRepr: DataType = LongType
 
     def toCatalyst(path: Expression): Expression =
@@ -265,7 +266,7 @@ object TypedEncoder {
 
     def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
-        staticObject = classOf[java.time.Duration],
+        staticObject = classOf[Duration],
         dataType = jvmRepr,
         functionName = "ofMillis",
         arguments = path :: Nil,
@@ -273,10 +274,10 @@ object TypedEncoder {
       )
   }
 
-  implicit val timePeriod: TypedEncoder[java.time.Period] = new TypedEncoder[java.time.Period] {
+  implicit val timePeriod: TypedEncoder[Period] = new TypedEncoder[Period] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.time.Period]
+    def jvmRepr: DataType = FramelessInternals.objectTypeFor[Period]
     def catalystRepr: DataType = IntegerType
 
     def toCatalyst(path: Expression): Expression =
@@ -284,7 +285,7 @@ object TypedEncoder {
 
     def fromCatalyst(path: Expression): Expression =
       StaticInvoke(
-        staticObject = classOf[java.time.Period],
+        staticObject = classOf[Period],
         dataType = jvmRepr,
         functionName = "ofDays",
         arguments = path :: Nil,
