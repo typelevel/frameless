@@ -1195,8 +1195,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
    i6: Tupler.Aux[OutModValues, Out],
    i7: TypedEncoder[Out]
   ): TypedDataset[Out] = {
-    val df = dataset.toDF()
     import org.apache.spark.sql.functions.{explode => sparkExplode}
+    val df = dataset.toDF()
 
     val trans =
       df
@@ -1231,8 +1231,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
    i6: Tupler.Aux[OutModValues, Out],
    i7: TypedEncoder[Out]
   ): TypedDataset[Out] = {
-    val df = dataset.toDF()
     import org.apache.spark.sql.functions.{explode => sparkExplode, struct => sparkStruct, col => sparkCol}
+    val df = dataset.toDF()
 
     // preserve the original list of columns
     val columns = df.columns.toSeq.map(sparkCol)
