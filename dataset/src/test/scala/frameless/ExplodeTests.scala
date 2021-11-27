@@ -77,4 +77,19 @@ class ExplodeTests extends TypedDatasetSuite {
     check(forAll(prop[String, Int, Long] _))
     check(forAll(prop[Long, String, Int] _))
   }
+
+  test("explode on maps making sure no key / value naming collision happens") {
+    def prop[K: TypedEncoder: ClassTag, V: TypedEncoder: ClassTag, A: TypedEncoder: ClassTag, B: TypedEncoder: ClassTag](xs: List[X3KV[K, V, Map[A, B]]]): Prop = {
+      val tds = TypedDataset.create(xs)
+
+      val framelessResults = tds.explodeMap('c).collect().run().toVector
+      val scalaResults = xs.flatMap { x3 => x3.c.toList.map((x3.key, x3.value, _)) }.toVector
+
+      framelessResults ?= scalaResults
+    }
+
+    check(forAll(prop[String, Int, Long, String] _))
+    check(forAll(prop[Long, String, Int, Long] _))
+    check(forAll(prop[Int, Long, String, Int] _))
+  }
 }

@@ -52,6 +52,19 @@ object X3U {
     Ordering.Tuple3[A, B, C].on(x => (x.a, x.b, x.c))
 }
 
+case class X3KV[A, B, C](key: A, value: B, c: C)
+
+object X3KV {
+  implicit def arbitrary[A: Arbitrary, B: Arbitrary, C: Arbitrary]: Arbitrary[X3KV[A, B, C]] =
+    Arbitrary(Arbitrary.arbTuple3[A, B, C].arbitrary.map((X3KV.apply[A, B, C] _).tupled))
+
+  implicit def cogen[A, B, C](implicit A: Cogen[A], B: Cogen[B], C: Cogen[C]): Cogen[X3KV[A, B, C]] =
+    Cogen.tuple3(A, B, C).contramap(x => (x.key, x.value, x.c))
+
+  implicit def ordering[A: Ordering, B: Ordering, C: Ordering]: Ordering[X3KV[A, B, C]] =
+    Ordering.Tuple3[A, B, C].on(x => (x.key, x.value, x.c))
+}
+
 case class X4[A, B, C, D](a: A, b: B, c: C, d: D)
 
 object X4 {
