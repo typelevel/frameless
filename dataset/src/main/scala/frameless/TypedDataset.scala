@@ -1234,20 +1234,30 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     import org.apache.spark.sql.functions.{explode => sparkExplode, struct => sparkStruct, col => sparkCol}
     val df = dataset.toDF()
 
-    // preserve the original list of columns
-    val columns = df.columns.toSeq.map(sparkCol)
     // select all columns, all original columns and [key, value] columns appeared after the map explode
     // .withColumn(column.value.name, sparkExplode(df(column.value.name))) in this case would not work
     // since the map explode produces two columns
-    val exploded = df.select(sparkCol("*"), sparkExplode(df(column.value.name)))
+    val columnNames = df.columns.toSeq
+    val columnNamesRenamed = columnNames.map(c => s"frameless_$c")
+
+    // preserve the original list of renamed columns
+    val columns = columnNamesRenamed.map(sparkCol)
+
+    val columnRenamed = s"frameless_${column.value.name}"
+    // explode of a map adds "key" and "value" columns into the Row
+    // this may cause col namings collision: row could already contain key / value columns
+    // we rename the original Row columns to avoid this collision
+    val dfr = df.toDF(columnNamesRenamed: _*)
+    val exploded = dfr.select(sparkCol("*"), sparkExplode(dfr(columnRenamed)))
     val trans =
       exploded
         // map explode explodes it into [key, value] columns
         // the only way to put it into a column is to create a struct
-        // TODO: handle org.apache.spark.sql.AnalysisException: Reference 'key / value' is ambiguous, could be: key / value, key / value
-        .withColumn(column.value.name, sparkStruct(exploded("key"), exploded("value")))
+        .withColumn(columnRenamed, sparkStruct(exploded("key"), exploded("value")))
         // selecting only original columns, we don't need [key, value] columns left in the DataFrame after the map explode
         .select(columns: _*)
+        // rename columns back and form the result
+        .toDF(columnNames: _*)
         .as[Out](TypedExpressionEncoder[Out])
     TypedDataset.create[Out](trans)
   }
