@@ -1195,12 +1195,60 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
    i6: Tupler.Aux[OutModValues, Out],
    i7: TypedEncoder[Out]
   ): TypedDataset[Out] = {
-    val df = dataset.toDF()
     import org.apache.spark.sql.functions.{explode => sparkExplode}
+    val df = dataset.toDF()
 
     val trans =
-      df.withColumn(column.value.name,
-        sparkExplode(df(column.value.name))).as[Out](TypedExpressionEncoder[Out])
+      df
+        .withColumn(column.value.name, sparkExplode(df(column.value.name)))
+        .as[Out](TypedExpressionEncoder[Out])
+    TypedDataset.create[Out](trans)
+  }
+
+  /**
+    * Explodes a single column at a time. It only compiles if the type of column supports this operation.
+    *
+    * @example
+    *
+    * {{{
+    *   case class X(i: Int, j: Map[Int, Int])
+    *   case class Y(i: Int, j: (Int, Int))
+    *
+    *   val f: TypedDataset[X] = ???
+    *   val fNew: TypedDataset[Y] = f.explodeMap('j).as[Y]
+    * }}}
+    * @param column the column we wish to explode
+    */
+  def explodeMap[A, B, V[_, _], TRep <: HList, OutMod <: HList, OutModValues <: HList, Out]
+  (column: Witness.Lt[Symbol])
+  (implicit
+   i0: TypedColumn.Exists[T, column.T, V[A, B]],
+   i1: TypedEncoder[A],
+   i2: TypedEncoder[B],
+   i3: LabelledGeneric.Aux[T, TRep],
+   i4: Modifier.Aux[TRep, column.T, V[A,B], (A, B), OutMod],
+   i5: Values.Aux[OutMod, OutModValues],
+   i6: Tupler.Aux[OutModValues, Out],
+   i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    import org.apache.spark.sql.functions.{explode => sparkExplode, struct => sparkStruct, col => sparkCol}
+    val df = dataset.toDF()
+
+    // preserve the original list of columns
+    val columns = df.columns.toSeq.map(sparkCol)
+    // select all columns, all original columns and [key, value] columns appeared after the map explode
+    // .withColumn(column.value.name, sparkExplode(df(column.value.name))) in this case would not work
+    // since the map explode produces two columns
+    val exploded = df.select(sparkCol("*"), sparkExplode(df(column.value.name)))
+    val trans =
+      exploded
+        // map explode explodes it into [key, value] columns
+        // the only way to put it into a column is to create a struct
+        // TODO: handle org.apache.spark.sql.AnalysisException: Reference 'key / value' is ambiguous, could be: key / value, key / value
+        .withColumn(column.value.name, sparkStruct(exploded("key"), exploded("value")))
+        // selecting only original columns, we don't need [key, value] columns left in the DataFrame after the map explode
+        .select(columns: _*)
+        .as[Out](TypedExpressionEncoder[Out])
     TypedDataset.create[Out](trans)
   }
 
