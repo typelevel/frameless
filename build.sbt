@@ -8,7 +8,7 @@ val scalatest = "3.2.10"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
-val refinedVersion = "0.9.27"
+val refinedVersion = "0.9.28"
 
 val Scala212 = "2.12.15"
 val Scala213 = "2.13.7"
