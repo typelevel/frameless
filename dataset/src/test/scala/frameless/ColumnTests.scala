@@ -1,7 +1,6 @@
 package frameless
 
 import java.time.Instant
-
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers
@@ -14,10 +13,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
     implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
-    implicit val arbInstant: Arbitrary[Instant] =
-      Arbitrary(Gen.choose[Instant](Instant.EPOCH, Instant.now()))
-    implicit val instantAsLongInjection: Injection[Instant, Long] =
-      Injection(_.getEpochSecond, Instant.ofEpochSecond)
+    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(Gen.choose[Instant](Instant.EPOCH, Instant.now))
   }
 
   test("select('a < 'b, 'a <= 'b, 'a > 'b, 'a >= 'b)") {
