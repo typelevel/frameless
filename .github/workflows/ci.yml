@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.12.15, 2.13.7]
+        scala: [2.12.15, 2.13.8]
         java: [8]
         distribution: [temurin]
     runs-on: ${{ matrix.os }}
@@ -86,10 +86,10 @@ jobs:
           SCALA_VERSION: 2.12.15
         if: ${{ env.SONATYPE_PASSWORD != '' && env.SONATYPE_USERNAME != '' }}
 
-      - name: Publish Scala 2.13.7 artifacts
+      - name: Publish Scala 2.13.8 artifacts
         run: sbt ++$SCALA_VERSION ci-release
         env:
-          SCALA_VERSION: 2.13.7
+          SCALA_VERSION: 2.13.8
         if: ${{ env.SONATYPE_PASSWORD != '' && env.SONATYPE_USERNAME != '' }}
 
   docs:
