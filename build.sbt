@@ -307,6 +307,7 @@ ThisBuild / developers := List(
 
 ThisBuild / tlCiReleaseBranches := Seq("master")
 
+ThisBuild / githubWorkflowEnv += "SPARK_LOCAL_IP" -> "localhost"
 ThisBuild / githubWorkflowBuildPreamble ++= Seq(
   WorkflowStep.Use(
     UseRef.Public("actions", "setup-python", "v2"),
@@ -330,8 +331,7 @@ ThisBuild / githubWorkflowBuild ~= { steps =>
     case _ @ WorkflowStep.Sbt(List("test"), _, _, _, _, _) =>
       WorkflowStep.Sbt(
         List("coverage", "test", "test/coverageReport"),
-        name = Some("Test & Compute Coverage Spark"),
-        env = Map("SPARK_LOCAL_IP" -> "localhost")
+        name = Some("Test & Compute Coverage Spark")
       )
     case step => step
   }

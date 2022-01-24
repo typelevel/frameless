@@ -20,6 +20,7 @@ env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
   PGP_SECRET: ${{ secrets.PGP_SECRET }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SPARK_LOCAL_IP: localhost
 
 jobs:
   build:
@@ -68,8 +69,6 @@ jobs:
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' 'project /' githubWorkflowCheck
 
       - name: Test & Compute Coverage Spark
-        env:
-          SPARK_LOCAL_IP: localhost
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' coverage test test/coverageReport
 
       - name: Check binary compatibility
