@@ -14,15 +14,11 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 
   val appID: String = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
 
-  val conf: SparkConf = {
-    val c = new SparkConf()
-      .setMaster("local[*]")
-      .setAppName("test")
-      .set("spark.ui.enabled", "false")
-      .set("spark.app.id", appID)
-
-    Option(System.getenv("SPARK_LOCAL_IP")).fold(c)(c.set("spark.driver.host", _))
-  }
+  val conf: SparkConf = new SparkConf()
+    .setMaster("local[*]")
+    .setAppName("test")
+    .set("spark.ui.enabled", "false")
+    .set("spark.app.id", appID)
 
   private var s: SparkSession = _
 
