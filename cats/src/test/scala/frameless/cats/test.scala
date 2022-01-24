@@ -28,6 +28,7 @@ trait SparkTests {
     .setAppName("test")
     .set("spark.ui.enabled", "false")
     .set("spark.app.id", appID)
+    .set("spark.driver.host", "127.0.0.1")
 
   implicit def session: SparkSession = SparkSession.builder().config(conf).getOrCreate()
   implicit def sc: SparkContext = session.sparkContext
