@@ -50,14 +50,14 @@ lazy val `cats-spark31` = project
   .settings(name := "frameless-cats-spark31")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
   .settings(catsSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `cats-spark30` = project
   .settings(name := "frameless-cats-spark30")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
   .settings(catsSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val dataset = project
@@ -71,7 +71,7 @@ lazy val `dataset-spark31` = project
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark31Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark30` = project
@@ -79,7 +79,7 @@ lazy val `dataset-spark30` = project
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark30Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val refined = project
@@ -91,12 +91,14 @@ lazy val `refined-spark31` = project
   .settings(name := "frameless-refined-spark31")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
   .settings(refinedSettings)
+  .settings(spark31Settings)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `refined-spark30` = project
   .settings(name := "frameless-refined-spark30")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
   .settings(refinedSettings)
+  .settings(spark30Settings)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val ml = project
@@ -113,7 +115,7 @@ lazy val `ml-spark31` = project
   .settings(sourceDirectory := (ml / sourceDirectory).value)
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark31Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark31` % "test->test;compile->compile;provided->provided"
@@ -124,7 +126,7 @@ lazy val `ml-spark30` = project
   .settings(sourceDirectory := (ml / sourceDirectory).value)
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark30Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark30` % "test->test;compile->compile;provided->provided"
@@ -257,6 +259,14 @@ lazy val framelessSettings = Seq(
     else mimaPreviousArtifacts.value
   },
 ) ++ consoleSettings
+
+lazy val spark30Settings = Seq(
+  crossScalaVersions := Seq(Scala212)
+)
+
+lazy val spark31Settings = Seq(
+  crossScalaVersions := Seq(Scala212)
+)
 
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
