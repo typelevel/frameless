@@ -322,11 +322,13 @@ ThisBuild / githubWorkflowBuildPreamble ++= Seq(
   )
 )
 
+val roots = List("root-spark30", "root-spark31", "root-spark32")
 ThisBuild / githubWorkflowBuildMatrixAdditions +=
-  "project" -> List("root-spark30", "root-spark31", "root-spark32")
+  "project" -> roots
 ThisBuild / githubWorkflowBuildSbtStepPreamble += s"project $${{ matrix.project }}"
-ThisBuild / githubWorkflowBuildMatrixExclusions +=
-  MatrixExclude(Map("scala" -> Scala213, "project" -> "root-spark30"))
+ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
+  MatrixExclude(Map("scala" -> Scala213, "project" -> project))
+}
 
 ThisBuild / githubWorkflowBuild ~= { steps =>
   steps.map { // replace the test step
