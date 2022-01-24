@@ -73,7 +73,7 @@ jobs:
       - name: Check that workflows are up to date
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' 'project /' githubWorkflowCheck
 
-      - name: Test & Compute Coverage Spark
+      - name: Test & Compute Coverage
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' coverage test test/coverageReport
 
       - name: Check binary compatibility
@@ -203,7 +203,7 @@ jobs:
         run: sbt '++${{ matrix.scala }}' tlSite
 
       - name: Publish site
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
