@@ -23,11 +23,15 @@ import org.scalatest.propspec.AnyPropSpec
 trait SparkTests {
   val appID: String = new java.util.Date().toString + math.floor(math.random() * 10E4).toLong.toString
 
-  val conf: SparkConf = new SparkConf()
-    .setMaster("local[*]")
-    .setAppName("test")
-    .set("spark.ui.enabled", "false")
-    .set("spark.app.id", appID)
+  val conf: SparkConf = {
+    val c = new SparkConf()
+      .setMaster("local[*]")
+      .setAppName("test")
+      .set("spark.ui.enabled", "false")
+      .set("spark.app.id", appID)
+
+    Option(System.getenv("SPARK_LOCAL_IP")).fold(c)(c.set("spark.driver.host", _))
+  }
 
   implicit def session: SparkSession = SparkSession.builder().config(conf).getOrCreate()
   implicit def sc: SparkContext = session.sparkContext
