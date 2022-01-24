@@ -248,6 +248,9 @@ lazy val framelessSettings = Seq(
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
+  mimaPreviousArtifacts ~= {
+    _.filterNot(_.revision == "0.11.0") // didn't release properly
+  },
   mimaPreviousArtifacts := {
     if (scalaBinaryVersion.value == "2.13")
       Set.empty
