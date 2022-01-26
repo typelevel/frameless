@@ -187,7 +187,6 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
 )
 
 lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
-  mimaPreviousArtifacts := Set.empty,
   libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
 )
 
@@ -252,11 +251,6 @@ lazy val framelessSettings = Seq(
   Test / parallelExecution := false,
   mimaPreviousArtifacts ~= {
     _.filterNot(_.revision == "0.11.0") // didn't release properly
-  },
-  mimaPreviousArtifacts := {
-    if (scalaBinaryVersion.value == "2.13")
-      Set.empty
-    else mimaPreviousArtifacts.value
   },
 ) ++ consoleSettings
 
@@ -357,4 +351,17 @@ ThisBuild / githubWorkflowBuildPostamble ++= Seq(
     List(s"codecov -F $${{ matrix.scala }}"),
     name = Some("Upload Codecov Results")
   )
+)
+
+def crossCommand(command: String) =
+  List(s"++$Scala212", s"root/$command", s"++$Scala213", s"root-spark32/$command")
+
+tlReplaceCommandAlias(
+  "tlReleaseLocal",
+  ("reload" :: crossCommand("publishLocal")).mkString("; ")
+)
+
+tlReplaceCommandAlias(
+  "tlRelease",
+  ("reload" :: crossCommand("mimaReportBinaryIssues") ::: crossCommand("publish") ::: List("tlSonatypeBundleReleaseIfRelevant")).mkString("; ")
 )
