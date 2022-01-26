@@ -77,24 +77,29 @@ jobs:
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' coverage test test/coverageReport
 
       - name: Check binary compatibility
+        if: matrix.java == 'temurin@8'
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' mimaReportBinaryIssues
 
       - name: Generate API documentation
+        if: matrix.java == 'temurin@8'
         run: sbt '++${{ matrix.scala }}' 'project ${{ matrix.project }}' doc
 
       - name: Upload Codecov Results
         run: codecov -F ${{ matrix.scala }}
 
       - name: Make target directories
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master')
         run: mkdir -p refined-spark30/target refined/target ml-spark30/target target mdocs/target ml-spark31/target refined-spark31/target .spark31/target ml/target cats-spark31/target dataset-spark31/target dataset/target cats-spark30/target .spark30/target .spark32/target cats/target core/target dataset-spark30/target project/target
 
       - name: Compress target directories
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master')
         run: tar cf targets.tar refined-spark30/target refined/target ml-spark30/target target mdocs/target ml-spark31/target refined-spark31/target .spark31/target ml/target cats-spark31/target dataset-spark31/target dataset/target cats-spark30/target .spark30/target .spark32/target cats/target core/target dataset-spark30/target project/target
 
       - name: Upload target directories
+        if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master')
         uses: actions/upload-artifact@v2
         with:
-          name: target-${{ matrix.os }}-${{ matrix.scala }}-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-${{ matrix.scala }}-${{ matrix.project }}
           path: targets.tar
 
   publish:
@@ -132,22 +137,12 @@ jobs:
             ~/Library/Caches/Coursier/v1
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
-      - name: Download target directories (2.13.8)
+      - name: Download target directories (2.12.15, root-spark30)
         uses: actions/download-artifact@v2
         with:
-          name: target-${{ matrix.os }}-2.13.8-${{ matrix.java }}
+          name: target-${{ matrix.os }}-${{ matrix.java }}-2.12.15-root-spark30
 
-      - name: Inflate target directories (2.13.8)
-        run: |
-          tar xf targets.tar
-          rm targets.tar
-
-      - name: Download target directories (2.12.15)
-        uses: actions/download-artifact@v2
-        with:
-          name: target-${{ matrix.os }}-2.12.15-${{ matrix.java }}
-
-      - name: Inflate target directories (2.12.15)
+      - name: Inflate target directories (2.12.15, root-spark30)
         run: |
           tar xf targets.tar
           rm targets.tar
@@ -200,7 +195,7 @@ jobs:
           key: ${{ runner.os }}-sbt-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
 
       - name: Generate site
-        run: sbt '++${{ matrix.scala }}' tlSite
+        run: sbt '++${{ matrix.scala }}' docs/tlSite
 
       - name: Publish site
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
