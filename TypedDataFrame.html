@@ -1,430 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Laika 0.18.1 + Helium Theme" />
+    <title>Proof of Concept: TypedDataFrame</title>
+    
+    
+      <meta name="description" content="docs"/>
+    
+    
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.207/distr/fira_code.css">
+    
+    <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
+    <script src="helium/laika-helium.js"></script>
+    
+    
+    <script> /* for avoiding page load transitions */ </script>
+  </head>
 
-<!DOCTYPE HTML>
-<html lang="" >
-    <head>
-        <meta charset="UTF-8">
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Proof of Concept: TypedDataFrame · GitBook</title>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="description" content="">
-        <meta name="generator" content="GitBook 3.2.2">
-        
-        
-        
-    
-    <link rel="stylesheet" href="gitbook/style.css">
+  <body>
 
-    
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
-                
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
-                
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
-                
-            
-        
+    <header id="top-bar">
 
-    
-
-    
-        
-    
-        
-    
-        
-    
-        
-    
-        
-    
-        
-    
-
-        
-    
-    
-    <meta name="HandheldFriendly" content="true"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
-    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
-
-    
-    
-    <link rel="prev" href="TypedML.html" />
-    
-
-    </head>
-    <body>
-        
-<div class="book">
-    <div class="book-summary">
-        
-            
-<div id="book-search-input" role="search">
-    <input type="text" placeholder="Type to search" />
-</div>
-
-            
-                <nav role="navigation">
-                
-
-
-<ul class="summary">
-    
-    
-
-    
-
-    
-        
-        
-    
-        <li class="chapter " data-level="1.1" data-path="./">
-            
-                <a href="./">
-            
-                    
-                    Introduction
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.2" data-path="FeatureOverview.html">
-            
-                <a href="FeatureOverview.html">
-            
-                    
-                    TypedDataset: Feature Overview
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.3" data-path="TypedDatasetVsSparkDataset.html">
-            
-                <a href="TypedDatasetVsSparkDataset.html">
-            
-                    
-                    Comparing TypedDatasets with Spark's Datasets
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.4" data-path="TypedEncoder.html">
-            
-                <a href="TypedEncoder.html">
-            
-                    
-                    Typed Encoders in Frameless
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.5" data-path="Injection.html">
-            
-                <a href="Injection.html">
-            
-                    
-                    Injection: Creating Custom Encoders
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.6" data-path="Job.html">
-            
-                <a href="Job.html">
-            
-                    
-                    Job[A]
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.7" data-path="Cats.html">
-            
-                <a href="Cats.html">
-            
-                    
-                    Using Cats with RDDs
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.8" data-path="TypedML.html">
-            
-                <a href="TypedML.html">
-            
-                    
-                    Using Spark ML with TypedDataset
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter active" data-level="1.9" data-path="TypedDataFrame.html">
-            
-                <a href="TypedDataFrame.html">
-            
-                    
-                    Proof of Concept: TypedDataFrame
-            
-                </a>
-            
-
-            
-        </li>
-    
-
-    
-
-    <li class="divider"></li>
-
-    <li>
-        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
-            Published with GitBook
+      <div class="row">
+        <a id="nav-icon">
+          <i class="icofont-laika" title="Navigation">&#xefa2;</i>
         </a>
-    </li>
-</ul>
-
-
-                </nav>
-            
         
-    </div>
+      </div>
+  
+      <a class="image-link" href="https://typelevel.org"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KCjxzdmcKICAgIHdpZHRoPSIxMjBweCIKICAgIGhlaWdodD0iNDBweCIKICAgIHZpZXdCb3g9IjAgMCAxMDU0IDM0OCIKICAgIHZlcnNpb249IjEuMSIKICAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KCiAgICA8ZGVmcz4KICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjAlIiB5MT0iNjElIiB4Mj0iMTAwJSIgeTI9IjM3JSIgaWQ9ImJhY2tncm91bmQtZ3JhZGllbnQiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkY0QzYxIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGNTFDMkIiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8L2RlZnM+CgogICAgPGc+CiAgICAgICAgPHBhdGggZD0iTTQxOS43NjU3MTQsNTUuMTEwNjM4MyBMNDE5Ljc2NTcxNCwxMzMuMTI3NjYgTDM5OC41MjU3MTQsMTMzLjEyNzY2IEwzOTguNTI1NzE0LDU1LjExMDYzODMgTDM4MS4wNzg1NzEsNTUuMTEwNjM4MyBMMzgxLjA3ODU3MSwzNi45MzE5MTQ5IEw0MzcuOTcxNDI5LDM2LjkzMTkxNDkgTDQzNy45NzE0MjksNTUuMTEwNjM4MyBMNDE5Ljc2NTcxNCw1NS4xMTA2MzgzIEw0MTkuNzY1NzE0LDU1LjExMDYzODMgWiBNNDk1LjYyMjg1Nyw5OC4yODUxMDY0IEw0OTUuNjIyODU3LDEzMy4xMjc2NiBMNDc0LjM4Mjg1NywxMzMuMTI3NjYgTDQ3NC4zODI4NTcsOTguMjg1MTA2NCBMNDUwLjEwODU3MSwzNi4xNzQ0NjgxIEw0NzMuNjI0Mjg2LDM2LjE3NDQ2ODEgTDQ4NS4wMDI4NTcsNzYuMzE5MTQ4OSBMNDk2LjM4MTQyOSwzNi4xNzQ0NjgxIEw1MTkuODk3MTQzLDM2LjE3NDQ2ODEgTDQ5NS42MjI4NTcsOTguMjg1MTA2NCBMNDk1LjYyMjg1Nyw5OC4yODUxMDY0IFogTTYwMC4zMDU3MTQsNjcuMjI5Nzg3MiBDNjAwLjMwNTcxNCw3Mi41MzE5MTQ5IDU5OS41NDcxNDMsNzcuMDc2NTk1NyA1OTguMDMsODAuODYzODI5OCBDNTk2LjUxMjg1Nyw4NC42NTEwNjM4IDU5NC4yMzcxNDMsODcuNjgwODUxMSA1OTEuMjAyODU3LDkwLjcxMDYzODMgQzU4OC4xNjg1NzEsOTMuNzQwNDI1NSA1ODUuMTM0Mjg2LDk1LjI1NTMxOTEgNTgyLjEsOTYuMDEyNzY2IEM1NzkuMDY1NzE0LDk2Ljc3MDIxMjggNTc1LjI3Mjg1Nyw5Ny41Mjc2NTk2IDU3MS40OCw5Ny41Mjc2NTk2IEw1NjIuMzc3MTQzLDk3LjUyNzY1OTYgTDU2Mi4zNzcxNDMsMTMyLjM3MDIxMyBMNTQxLjEzNzE0MywxMzIuMzcwMjEzIEw1NDEuMTM3MTQzLDM2LjkzMTkxNDkgTDU3MS40OCwzNi45MzE5MTQ5IEM1NzUuMjcyODU3LDM2LjkzMTkxNDkgNTc4LjMwNzE0MywzNy42ODkzNjE3IDU4Mi4xLDM4LjQ0NjgwODUgQzU4NS44OTI4NTcsMzkuMjA0MjU1MyA1ODguOTI3MTQzLDQxLjQ3NjU5NTcgNTkxLjk2MTQyOSw0My43NDg5MzYyIEM1OTQuOTk1NzE0LDQ2LjAyMTI3NjYgNTk3LjI3MTQyOSw0OS4wNTEwNjM4IDU5OC43ODg1NzEsNTIuODM4Mjk3OSBDNTk5LjU0NzE0Myw1Ni42MjU1MzE5IDYwMC4zMDU3MTQsNjEuMTcwMjEyOCA2MDAuMzA1NzE0LDY3LjIyOTc4NzIgTDYwMC4zMDU3MTQsNjcuMjI5Nzg3MiBaIE01NzkuODI0Mjg2LDY3LjIyOTc4NzIgQzU3OS44MjQyODYsNjIuNjg1MTA2NCA1NzkuMDY1NzE0LDU5LjY1NTMxOTEgNTc2Ljc5LDU4LjE0MDQyNTUgQzU3NC41MTQyODYsNTUuODY4MDg1MSA1NzIuMjM4NTcxLDU1LjExMDYzODMgNTY5LjIwNDI4Niw1NS4xMTA2MzgzIEw1NjIuMzc3MTQzLDU1LjExMDYzODMgTDU2Mi4zNzcxNDMsODAuMTA2MzgzIEw1NjkuMjA0Mjg2LDgwLjEwNjM4MyBDNTcyLjIzODU3MSw4MC4xMDYzODMgNTc0LjUxNDI4Niw3OS4zNDg5MzYyIDU3Ni43OSw3Ny4wNzY1OTU3IEM1NzkuMDY1NzE0LDc0LjgwNDI1NTMgNTc5LjgyNDI4Niw3MS43NzQ0NjgxIDU3OS44MjQyODYsNjcuMjI5Nzg3MiBMNTc5LjgyNDI4Niw2Ny4yMjk3ODcyIFogTTYyMi4zMDQyODYsMTMzLjEyNzY2IEw2MjIuMzA0Mjg2LDM2LjkzMTkxNDkgTDY2OS4zMzU3MTQsMzYuOTMxOTE0OSBMNjY5LjMzNTcxNCw1NS44NjgwODUxIEw2NDIuNzg1NzE0LDU1Ljg2ODA4NTEgTDY0Mi43ODU3MTQsNzQuODA0MjU1MyBMNjY2LjMwMTQyOSw3NC44MDQyNTUzIEw2NjYuMzAxNDI5LDkyLjk4Mjk3ODcgTDY0Mi43ODU3MTQsOTIuOTgyOTc4NyBMNjQyLjc4NTcxNCwxMTMuNDM0MDQzIEw2NzAuMDk0Mjg2LDExMy40MzQwNDMgTDY3MC4wOTQyODYsMTMzLjEyNzY2IEw2MjIuMzA0Mjg2LDEzMy4xMjc2NiBMNjIyLjMwNDI4NiwxMzMuMTI3NjYgWiBNNjk2LjY0NDI4NiwxMzMuMTI3NjYgTDY5Ni42NDQyODYsMzYuOTMxOTE0OSBMNzE4LjY0Mjg1NywzNi45MzE5MTQ5IEw3MTguNjQyODU3LDExMy40MzQwNDMgTDc0NC40MzQyODYsMTEzLjQzNDA0MyBMNzQ0LjQzNDI4NiwxMzMuODg1MTA2IEw2OTYuNjQ0Mjg2LDEzMy44ODUxMDYgTDY5Ni42NDQyODYsMTMzLjEyNzY2IFogTTc2Ny45NSwxMzMuMTI3NjYgTDc2Ny45NSwzNi45MzE5MTQ5IEw4MTQuOTgxNDI5LDM2LjkzMTkxNDkgTDgxNC45ODE0MjksNTUuODY4MDg1MSBMNzg5LjE5LDU1Ljg2ODA4NTEgTDc4OS4xOSw3NC44MDQyNTUzIEw4MTIuNzA1NzE0LDc0LjgwNDI1NTMgTDgxMi43MDU3MTQsOTIuOTgyOTc4NyBMNzg5LjE5LDkyLjk4Mjk3ODcgTDc4OS4xOSwxMTMuNDM0MDQzIEw4MTYuNDk4NTcxLDExMy40MzQwNDMgTDgxNi40OTg1NzEsMTMzLjEyNzY2IEw3NjcuOTUsMTMzLjEyNzY2IEw3NjcuOTUsMTMzLjEyNzY2IFogTTg4NS41Mjg1NzEsMTMzLjEyNzY2IEw4NTcuNDYxNDI5LDEzMy4xMjc2NiBMODMzLjk0NTcxNCwzNi45MzE5MTQ5IEw4NTguOTc4NTcxLDM2LjkzMTkxNDkgTDg3MS44NzQyODYsMTA3LjM3NDQ2OCBMODg0Ljc3LDM2LjkzMTkxNDkgTDkwOC4yODU3MTQsMzYuOTMxOTE0OSBMODg1LjUyODU3MSwxMzMuMTI3NjYgTDg4NS41Mjg1NzEsMTMzLjEyNzY2IFogTTkzMS4wNDI4NTcsMTMzLjEyNzY2IEw5MzEuMDQyODU3LDM2LjkzMTkxNDkgTDk3OC4wNzQyODYsMzYuOTMxOTE0OSBMOTc4LjA3NDI4Niw1NS44NjgwODUxIEw5NTIuMjgyODU3LDU1Ljg2ODA4NTEgTDk1Mi4yODI4NTcsNzQuODA0MjU1MyBMOTc1Ljc5ODU3MSw3NC44MDQyNTUzIEw5NzUuNzk4NTcxLDkyLjk4Mjk3ODcgTDk1Mi4yODI4NTcsOTIuOTgyOTc4NyBMOTUyLjI4Mjg1NywxMTMuNDM0MDQzIEw5NzkuNTkxNDI5LDExMy40MzQwNDMgTDk3OS41OTE0MjksMTMzLjEyNzY2IEw5MzEuMDQyODU3LDEzMy4xMjc2NiBMOTMxLjA0Mjg1NywxMzMuMTI3NjYgWiBNMTAwNi4xNDE0MywxMzMuMTI3NjYgTDEwMDYuMTQxNDMsMzYuOTMxOTE0OSBMMTAyOC4xNCwzNi45MzE5MTQ5IEwxMDI4LjE0LDExMy40MzQwNDMgTDEwNTMuOTMxNDMsMTEzLjQzNDA0MyBMMTA1My45MzE0MywxMzMuODg1MTA2IEwxMDA2LjE0MTQzLDEzMy44ODUxMDYgTDEwMDYuMTQxNDMsMTMzLjEyNzY2IFogTTQyOS42MjcxNDMsMjMzLjg2ODA4NSBDNDI4LjExLDIzMS41OTU3NDUgNDI1LjgzNDI4NiwyMzAuODM4Mjk4IDQyMy41NTg1NzEsMjI5LjMyMzQwNCBDNDIxLjI4Mjg1NywyMjguNTY1OTU3IDQxOS4wMDcxNDMsMjI3LjgwODUxMSA0MTYuNzMxNDI5LDIyNy44MDg1MTEgQzQxNC40NTU3MTQsMjI3LjgwODUxMSA0MTIuMTgsMjI4LjU2NTk1NyA0MDkuOTA0Mjg2LDIzMC4wODA4NTEgQzQwNy42Mjg1NzEsMjMxLjU5NTc0NSA0MDYuODcsMjMzLjg2ODA4NSA0MDYuODcsMjM3LjY1NTMxOSBDNDA2Ljg3LDI0MC42ODUxMDYgNDA3LjYyODU3MSwyNDIuOTU3NDQ3IDQwOS45MDQyODYsMjQ0LjQ3MjM0IEM0MTIuMTgsMjQ1Ljk4NzIzNCA0MTUuMjE0Mjg2LDI0OC4yNTk1NzQgNDE5LjAwNzE0MywyNDkuNzc0NDY4IEM0MjEuMjgyODU3LDI1MC41MzE5MTUgNDIzLjU1ODU3MSwyNTIuMDQ2ODA5IDQyNS44MzQyODYsMjUzLjU2MTcwMiBDNDI4LjExLDI1NS4wNzY1OTYgNDMwLjM4NTcxNCwyNTYuNTkxNDg5IDQzMi42NjE0MjksMjU4Ljg2MzgzIEM0MzQuOTM3MTQzLDI2MS4xMzYxNyA0MzYuNDU0Mjg2LDI2My40MDg1MTEgNDM3Ljk3MTQyOSwyNjYuNDM4Mjk4IEM0MzkuNDg4NTcxLDI2OS40NjgwODUgNDQwLjI0NzE0MywyNzMuMjU1MzE5IDQ0MC4yNDcxNDMsMjc3LjA0MjU1MyBDNDQwLjI0NzE0MywyODIuMzQ0NjgxIDQzOS40ODg1NzEsMjg2Ljg4OTM2MiA0MzcuOTcxNDI5LDI5MC42NzY1OTYgQzQzNi40NTQyODYsMjk0LjQ2MzgzIDQzNC4xNzg1NzEsMjk4LjI1MTA2NCA0MzEuMTQ0Mjg2LDMwMC41MjM0MDQgQzQyOC4xMSwzMDIuNzk1NzQ1IDQyNS4wNzU3MTQsMzA1LjA2ODA4NSA0MjEuMjgyODU3LDMwNi41ODI5NzkgQzQxNy40OSwzMDguMDk3ODcyIDQxMy42OTcxNDMsMzA4Ljg1NTMxOSA0MDkuOTA0Mjg2LDMwOC44NTUzMTkgQzQwMy44MzU3MTQsMzA4Ljg1NTMxOSAzOTguNTI1NzE0LDMwOC4wOTc4NzIgMzkzLjk3NDI4NiwzMDUuODI1NTMyIEMzODkuNDIyODU3LDMwMy41NTMxOTEgMzg1LjYzLDMwMS4yODA4NTEgMzgyLjU5NTcxNCwyOTguMjUxMDY0IEwzOTMuOTc0Mjg2LDI4MS41ODcyMzQgQzM5Ni4yNSwyODMuODU5NTc0IDM5OC41MjU3MTQsMjg1LjM3NDQ2OCA0MDEuNTYsMjg2Ljg4OTM2MiBDNDA0LjU5NDI4NiwyODguNDA0MjU1IDQwNi44NywyODkuMTYxNzAyIDQwOS45MDQyODYsMjg5LjE2MTcwMiBDNDEyLjE4LDI4OS4xNjE3MDIgNDE0LjQ1NTcxNCwyODguNDA0MjU1IDQxNi43MzE0MjksMjg2Ljg4OTM2MiBDNDE4LjI0ODU3MSwyODUuMzc0NDY4IDQxOS43NjU3MTQsMjgzLjEwMjEyOCA0MTkuNzY1NzE0LDI3OS4zMTQ4OTQgQzQxOS43NjU3MTQsMjc2LjI4NTEwNiA0MTkuMDA3MTQzLDI3My4yNTUzMTkgNDE2LjczMTQyOSwyNzEuNzQwNDI2IEM0MTQuNDU1NzE0LDI3MC4yMjU1MzIgNDExLjQyMTQyOSwyNjcuOTUzMTkxIDQwNi44NywyNjUuNjgwODUxIEwzOTkuMjg0Mjg2LDI2MS4xMzYxNyBDMzk3LjAwODU3MSwyNTkuNjIxMjc3IDM5NC43MzI4NTcsMjU4LjEwNjM4MyAzOTMuMjE1NzE0LDI1NS44MzQwNDMgQzM5MS42OTg1NzEsMjUzLjU2MTcwMiAzOTAuMTgxNDI5LDI1MS4yODkzNjIgMzg5LjQyMjg1NywyNDguMjU5NTc0IEMzODguNjY0Mjg2LDI0NS4yMjk3ODcgMzg3LjkwNTcxNCwyNDIuMiAzODcuOTA1NzE0LDIzNy42NTUzMTkgQzM4Ny45MDU3MTQsMjMyLjM1MzE5MSAzODguNjY0Mjg2LDIyNy44MDg1MTEgMzkwLjk0LDIyNC4wMjEyNzcgQzM5Mi40NTcxNDMsMjIwLjIzNDA0MyAzOTQuNzMyODU3LDIxNy4yMDQyNTUgMzk3Ljc2NzE0MywyMTQuMTc0NDY4IEM0MDAuODAxNDI5LDIxMS45MDIxMjggNDAzLjgzNTcxNCwyMDkuNjI5Nzg3IDQwNy42Mjg1NzEsMjA4Ljg3MjM0IEM0MTEuNDIxNDI5LDIwNy4zNTc0NDcgNDE0LjQ1NTcxNCwyMDcuMzU3NDQ3IDQxOC4yNDg1NzEsMjA3LjM1NzQ0NyBDNDIzLjU1ODU3MSwyMDcuMzU3NDQ3IDQyOC4xMSwyMDguMTE0ODk0IDQzMi42NjE0MjksMjA5LjYyOTc4NyBDNDM3LjIxMjg1NywyMTEuMTQ0NjgxIDQ0MC4yNDcxNDMsMjEzLjQxNzAyMSA0NDMuMjgxNDI5LDIxNi40NDY4MDkgTDQyOS42MjcxNDMsMjMzLjg2ODA4NSBMNDI5LjYyNzE0MywyMzMuODY4MDg1IFogTTUxMS41NTI4NTcsMzA1LjgyNTUzMiBDNTA3LjAwMTQyOSwzMDguMDk3ODcyIDUwMS42OTE0MjksMzA5LjYxMjc2NiA0OTQuODY0Mjg2LDMwOS42MTI3NjYgQzQ4OS41NTQyODYsMzA5LjYxMjc2NiA0ODQuMjQ0Mjg2LDMwOC4wOTc4NzIgNDc5LjY5Mjg1NywzMDUuODI1NTMyIEM0NzUuMTQxNDI5LDMwMy41NTMxOTEgNDcxLjM0ODU3MSwyOTkuNzY1OTU3IDQ2Ny41NTU3MTQsMjk1LjIyMTI3NyBDNDYzLjc2Mjg1NywyOTAuNjc2NTk2IDQ2MS40ODcxNDMsMjg1LjM3NDQ2OCA0NTkuOTcsMjc5LjMxNDg5NCBDNDU4LjQ1Mjg1NywyNzMuMjU1MzE5IDQ1Ni45MzU3MTQsMjY2LjQzODI5OCA0NTYuOTM1NzE0LDI1OC44NjM4MyBDNDU2LjkzNTcxNCwyNTEuMjg5MzYyIDQ1Ny42OTQyODYsMjQ0LjQ3MjM0IDQ1OS45NywyMzguNDEyNzY2IEM0NjEuNDg3MTQzLDIzMi4zNTMxOTEgNDY0LjUyMTQyOSwyMjcuMDUxMDY0IDQ2Ny41NTU3MTQsMjIyLjUwNjM4MyBDNDcwLjU5LDIxNy45NjE3MDIgNDc1LjE0MTQyOSwyMTQuOTMxOTE1IDQ3OS42OTI4NTcsMjExLjkwMjEyOCBDNDg0LjI0NDI4NiwyMDkuNjI5Nzg3IDQ4OS41NTQyODYsMjA4LjExNDg5NCA0OTQuODY0Mjg2LDIwOC4xMTQ4OTQgQzUwMS42OTE0MjksMjA4LjExNDg5NCA1MDcuMDAxNDI5LDIwOS42Mjk3ODcgNTEwLjc5NDI4NiwyMTEuOTAyMTI4IEM1MTQuNTg3MTQzLDIxNC4xNzQ0NjggNTE4LjM4LDIxNy4yMDQyNTUgNTIxLjQxNDI4NiwyMjAuMjM0MDQzIEw1MTAuMDM1NzE0LDIzNi4xNDA0MjYgQzUwOC41MTg1NzEsMjMzLjg2ODA4NSA1MDYuMjQyODU3LDIzMi4zNTMxOTEgNTA0LjcyNTcxNCwyMzAuODM4Mjk4IEM1MDMuMjA4NTcxLDIyOS4zMjM0MDQgNTAwLjE3NDI4NiwyMjguNTY1OTU3IDQ5Ny4xNCwyMjguNTY1OTU3IEM0OTQuMTA1NzE0LDIyOC41NjU5NTcgNDkxLjgzLDIyOS4zMjM0MDQgNDg5LjU1NDI4NiwyMzAuODM4Mjk4IEM0ODcuMjc4NTcxLDIzMi4zNTMxOTEgNDg1Ljc2MTQyOSwyMzQuNjI1NTMyIDQ4NC4yNDQyODYsMjM2Ljg5Nzg3MiBDNDgyLjcyNzE0MywyMzkuOTI3NjYgNDgxLjk2ODU3MSwyNDIuOTU3NDQ3IDQ4MS4yMSwyNDYuNzQ0NjgxIEM0ODAuNDUxNDI5LDI1MC41MzE5MTUgNDgwLjQ1MTQyOSwyNTQuMzE5MTQ5IDQ4MC40NTE0MjksMjU4Ljg2MzgzIEM0ODAuNDUxNDI5LDI2My40MDg1MTEgNDgwLjQ1MTQyOSwyNjcuMTk1NzQ1IDQ4MS4yMSwyNzAuMjI1NTMyIEM0ODEuOTY4NTcxLDI3NC4wMTI3NjYgNDgyLjcyNzE0MywyNzcuMDQyNTUzIDQ4NC4yNDQyODYsMjgwLjA3MjM0IEM0ODUuNzYxNDI5LDI4My4xMDIxMjggNDg3LjI3ODU3MSwyODQuNjE3MDIxIDQ4OS41NTQyODYsMjg2LjEzMTkxNSBDNDkxLjgzLDI4Ny42NDY4MDkgNDk0LjEwNTcxNCwyODguNDA0MjU1IDQ5Ny4xNCwyODguNDA0MjU1IEM1MDAuMTc0Mjg2LDI4OC40MDQyNTUgNTAyLjQ1LDI4Ny42NDY4MDkgNTA0LjcyNTcxNCwyODYuMTMxOTE1IEM1MDcuMDAxNDI5LDI4NC42MTcwMjEgNTA4LjUxODU3MSwyODMuMTAyMTI4IDUxMC4wMzU3MTQsMjgwLjgyOTc4NyBMNTIyLjE3Mjg1NywyOTUuOTc4NzIzIEM1MTkuODk3MTQzLDMwMC41MjM0MDQgNTE2LjEwNDI4NiwzMDMuNTUzMTkxIDUxMS41NTI4NTcsMzA1LjgyNTUzMiBMNTExLjU1Mjg1NywzMDUuODI1NTMyIFogTTU4NS44OTI4NTcsMzA3LjM0MDQyNiBMNTgyLjEsMjg5LjkxOTE0OSBMNTYwLjEwMTQyOSwyODkuOTE5MTQ5IEw1NTYuMzA4NTcxLDMwNy4zNDA0MjYgTDUzNC4zMSwzMDcuMzQwNDI2IEw1NTcuODI1NzE0LDIxMS4xNDQ2ODEgTDU4NS4xMzQyODYsMjExLjE0NDY4MSBMNjA4LjY1LDMwNy4zNDA0MjYgTDU4NS44OTI4NTcsMzA3LjM0MDQyNiBMNTg1Ljg5Mjg1NywzMDcuMzQwNDI2IFogTTU3MS40OCwyMzEuNTk1NzQ1IEw1NjIuMzc3MTQzLDI3Mi40OTc4NzIgTDU3OS4wNjU3MTQsMjcyLjQ5Nzg3MiBMNTcxLjQ4LDIzMS41OTU3NDUgTDU3MS40OCwyMzEuNTk1NzQ1IFogTTYzMC42NDg1NzEsMzA3LjM0MDQyNiBMNjMwLjY0ODU3MSwyMTEuMTQ0NjgxIEw2NTIuNjQ3MTQzLDIxMS4xNDQ2ODEgTDY1Mi42NDcxNDMsMjg3LjY0NjgwOSBMNjc4LjQzODU3MSwyODcuNjQ2ODA5IEw2NzguNDM4NTcxLDMwOC4wOTc4NzIgTDYzMC42NDg1NzEsMzA4LjA5Nzg3MiBMNjMwLjY0ODU3MSwzMDcuMzQwNDI2IFogTTc0NS4xOTI4NTcsMzA3LjM0MDQyNiBMNzQxLjQsMjg5LjkxOTE0OSBMNzE5LjQwMTQyOSwyODkuOTE5MTQ5IEw3MTUuNjA4NTcxLDMwNy4zNDA0MjYgTDY5My42MSwzMDcuMzQwNDI2IEw3MTcuMTI1NzE0LDIxMS4xNDQ2ODEgTDc0NC40MzQyODYsMjExLjE0NDY4MSBMNzY3Ljk1LDMwNy4zNDA0MjYgTDc0NS4xOTI4NTcsMzA3LjM0MDQyNiBMNzQ1LjE5Mjg1NywzMDcuMzQwNDI2IFogTTczMC4wMjE0MjksMjMxLjU5NTc0NSBMNzIwLjkxODU3MSwyNzIuNDk3ODcyIEw3MzcuNjA3MTQzLDI3Mi40OTc4NzIgTDczMC4wMjE0MjksMjMxLjU5NTc0NSBMNzMwLjAyMTQyOSwyMzEuNTk1NzQ1IFoiIGZpbGw9IiMyMTMwM0YiIC8+CgogICAgICAgIDxnIGlkPSJsb2dvIj4KICAgICAgICAgICAgPHBvbHlnb24gZmlsbD0idXJsKCNiYWNrZ3JvdW5kLWdyYWRpZW50KSIgcG9pbnRzPSIxNTEgMzQ4IDAgMjYwIDAgODggMTUxIDAgMzAyIDg4IDMwMiAyNjAiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRjYxNjkiIHBvaW50cz0iOTkgMjE0IDk5IDI1NCAxOTMgMTk5IDE5MyAxNTkiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRjYxNjkiIHBvaW50cz0iMTM0IDE5NCA5OSAxNzQgMTkzIDExOSAyMjggMTM5IiAvPgogICAgICAgICAgICA8cG9seWdvbiBmaWxsPSIjRkY2MTY5IiBwb2ludHM9Ijk5IDEzNCA2NCAxMTQgMTU4IDU5IDE5MyA3OSIgLz4KICAgICAgICAgICAgPHBvbHlnb24gZmlsbD0iI0ZGQjRCNSIgcG9pbnRzPSIxMzQgMTk0IDEzNCAyMzQgMjI4IDE3OSAyMjggMTM5IiAvPgogICAgICAgICAgICA8cG9seWdvbiBmaWxsPSIjRkZCNEI1IiBwb2ludHM9Ijk5IDEzNCA5OSAxNzQgMTkzIDExOSAxOTMgNzkiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRkZGRkYiIHBvaW50cz0iNjQgMjM0IDk5IDI1NCA5OSAyMTQgMTM0IDIzNCAxMzQgMTk0IDk5IDE3NCA5OSAxMzQgNjQgMTE0IiAvPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+Cg=="></a>
+      
+      <span class="row links"><a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://twitter.com/typelevel"><i class="icofont-laika" title="Twitter">&#xed7a;</i></a></span>
+      
+    </header>
 
-    <div class="book-body">
+    <nav id="sidebar">
+
+      <div class="row">
+        <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://twitter.com/typelevel"><i class="icofont-laika" title="Twitter">&#xed7a;</i></a>
+      </div>
+      
+      <ul class="nav-list">
+        <li class="level1"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
+        <li class="level1"><a href="TypedDatasetVsSparkDataset.html">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
+        <li class="level1"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
+        <li class="level1"><a href="Injection.html">Injection: Creating Custom Encoders</a></li>
+        <li class="level1"><a href="Job.html">Job[A]</a></li>
+        <li class="level1"><a href="Cats.html">Using Cats with Frameless</a></li>
+        <li class="level1"><a href="TypedML.html">Typed Spark ML</a></li>
+        <li class="level1 active"><a href="#">Proof of Concept: TypedDataFrame</a></li>
+        <li class="level1"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
+      </ul>
+      
+    </nav>
+
+    <div id="container">
+
+      <nav id="page-nav">
+        <p class="header"><a href="#">Proof of Concept: TypedDataFrame</a></p>
         
-            <div class="body-inner">
-                
-                    
+        <ul class="nav-list">
+          <li class="level1"><a href="#diving-in">Diving in</a></li>
+          <li class="level1"><a href="#type-level-column-referencing">Type-level column referencing</a></li>
+          <li class="level1"><a href="#type-level-joins">Type-level joins</a></li>
+          <li class="level1"><a href="#complete-example">Complete example</a></li>
+          <li class="level1"><a href="#limitations">Limitations</a></li>
+        </ul>
+        
+        <p class="footer"></p>
+      </nav>
 
-<div class="book-header" role="navigation">
-    
+      <main class="content">
 
-    <!-- Title -->
-    <h1>
-        <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Proof of Concept: TypedDataFrame</a>
-    </h1>
-</div>
+        <h1 id="proof-of-concept-typeddataframe" class="title">Proof of Concept: TypedDataFrame</h1>
+        <p><code>TypedDataFrame</code> is the API developed in the early stages of Frameless to manipulate Spark <code>DataFrame</code>s in a type-safe manner. With the introduction of <code>Dataset</code> in Spark 1.6, <code>DataFrame</code> seems deprecated and won&#39;t be the focus of future development of Frameless. However, the design is interesting enough to document.</p>
+        <p>To safely manipulate <code>DataFrame</code>s we use a technique called a <em>shadow type</em>, which consists in storing additional information about a value in a &quot;dummy&quot; type. Mirroring value-level computation at the type-level lets us leverage the type system to catch common mistakes at compile time.</p>
+        
+        <h3 id="diving-in" class="section">Diving in<a class="anchor-link right" href="#diving-in"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <p>In <code>TypedDataFrame</code>, we use a single <code>Schema &lt;: Product</code> to model the number, the types and the names of columns. Here is a what the definition of <code>TypedDataFrame</code> looks like, with simplified type signatures:</p>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">DataFrame</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">shapeless</span><span>.</span><span class="type-name">HList</span><span>
 
+</span><span class="keyword">class</span><span> </span><span class="type-name">TDataFrame</span><span>[</span><span class="type-name">Schema</span><span> &lt;: </span><span class="type-name">Product</span><span>](</span><span class="identifier">df</span><span>: </span><span class="type-name">DataFrame</span><span>) {
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">filter</span><span>(</span><span class="identifier">predicate</span><span>: </span><span class="type-name">Schema</span><span> =&gt; </span><span class="type-name">Boolean</span><span>): </span><span class="type-name">TDataFrame</span><span>[</span><span class="type-name">Schema</span><span>] = ???
 
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">select</span><span>[</span><span class="type-name">C</span><span> &lt;: </span><span class="type-name">HList</span><span>, </span><span class="type-name">Out</span><span> &lt;: </span><span class="type-name">Product</span><span>](</span><span class="identifier">columns</span><span>: </span><span class="type-name">C</span><span>): </span><span class="type-name">TDataFrame</span><span>[</span><span class="type-name">Out</span><span>] = ???
 
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">innerJoin</span><span>[</span><span class="type-name">OtherS</span><span> &lt;: </span><span class="type-name">Product</span><span>, </span><span class="type-name">Out</span><span> &lt;: </span><span class="type-name">Product</span><span>]
+    (</span><span class="identifier">other</span><span>: </span><span class="type-name">TDataFrame</span><span>[</span><span class="type-name">OtherS</span><span>]): </span><span class="type-name">TDataFrame</span><span>[</span><span class="type-name">Out</span><span>] = ???
 
-                    <div class="page-wrapper" tabindex="-1" role="main">
-                        <div class="page-inner">
-                            
-<div id="book-search-results">
-    <div class="search-noresults">
-    
-                                <section class="normal markdown-section">
-                                
-                                <h1 id="proof-of-concept-typeddataframe">Proof of Concept: TypedDataFrame</h1>
-<p><code>TypedDataFrame</code> is the API developed in the early stages of Frameless to manipulate Spark <code>DataFrame</code>s in a type-safe manner. With the introduction of <code>Dataset</code> in Spark 1.6, <code>DataFrame</code> seems deprecated and won&apos;t be the focus of future development of Frameless. However, the design is interesting enough to document.</p>
-<p>To safely manipulate <code>DataFrame</code>s we use a technique called a <em>shadow type</em>, which consists in storing additional information about a value in a &quot;dummy&quot; type. Mirroring value-level computation at the type-level lets us leverage the type system to catch common mistakes at compile time.</p>
-<h3 id="diving-in">Diving in</h3>
-<p>In <code>TypedDataFrame</code>, we use a single <code>Schema &lt;: Product</code> to model the number, the types and the names of columns. Here is a what the definition of <code>TypedDataFrame</code> looks like, with simplified type signatures:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">DataFrame</span>
-<span class="hljs-keyword">import</span> shapeless.<span class="hljs-type">HList</span>
+  </span><span class="comment">// Followed by equivalent of every DataFrame method with improved signature
+</span><span>}</span></code></pre>
+        <p>As you can see, instead of the <code>def filter(conditionExpr: String): DataFrame</code> defined in Spark, the <code>TypedDataFrame</code> version expects a function from <code>Schema</code> to <code>Boolean</code>, and models the fact that resulting <code>DataFrame</code> will still hold elements of type <code>Schema</code>.</p>
+        
+        <h3 id="type-level-column-referencing" class="section">Type-level column referencing<a class="anchor-link right" href="#type-level-column-referencing"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <p>For Spark&#39;s <code>DataFrame</code>s, column referencing is done directly by <code>String</code>s or using the <code>Column</code> type which provides no additional type safety. <code>TypedDataFrame</code> improves on that by catching invalid column references compile type. When everything goes well, Frameless select is very similar to vanilla select, except that it keeps track of the selected column types:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="type-name">TypedDataFrame</span><span>
 
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TDataFrame</span>[<span class="hljs-type">Schema</span> &lt;: <span class="hljs-type">Product</span>](<span class="hljs-params">df: <span class="hljs-type">DataFrame</span></span>) </span>{
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">filter</span></span>(predicate: <span class="hljs-type">Schema</span> =&gt; <span class="hljs-type">Boolean</span>): <span class="hljs-type">TDataFrame</span>[<span class="hljs-type">Schema</span>] = ???
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Foo</span><span>(</span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>)
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">select</span></span>[<span class="hljs-type">C</span> &lt;: <span class="hljs-type">HList</span>, <span class="hljs-type">Out</span> &lt;: <span class="hljs-type">Product</span>](columns: <span class="hljs-type">C</span>): <span class="hljs-type">TDataFrame</span>[<span class="hljs-type">Out</span>] = ???
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">selectIntString</span><span>(</span><span class="identifier">tf</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Foo</span><span>]): </span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] =
+  </span><span class="identifier">tf</span><span>.</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;i</span><span>, </span><span class="symbol-literal">&#39;s</span><span>)</span></code></pre>
+        <p>However, in case of typo, it gets caught right away:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">selectIntStringTypo</span><span>(</span><span class="identifier">tf</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Foo</span><span>]): </span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>)] =
+  </span><span class="identifier">tf</span><span>.</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;j</span><span>, </span><span class="symbol-literal">&#39;s</span><span>)</span></code></pre>
+        
+        <h3 id="type-level-joins" class="section">Type-level joins<a class="anchor-link right" href="#type-level-joins"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <p>Joins can available with two different syntaxes. The first lets you reference different columns on each <code>TypedDataFrame</code>, and ensures that they all exist and have compatible types:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">j</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">Boolean</span><span>)
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">innerJoin</span></span>[<span class="hljs-type">OtherS</span> &lt;: <span class="hljs-type">Product</span>, <span class="hljs-type">Out</span> &lt;: <span class="hljs-type">Product</span>]
-    (other: <span class="hljs-type">TDataFrame</span>[<span class="hljs-type">OtherS</span>]): <span class="hljs-type">TDataFrame</span>[<span class="hljs-type">Out</span>] = ???
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">join1</span><span>(</span><span class="identifier">tf1</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Foo</span><span>], </span><span class="identifier">tf2</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Bar</span><span>])
+    : </span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Double</span><span>, </span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Boolean</span><span>)] =
+  </span><span class="identifier">tf1</span><span>.</span><span class="identifier">innerJoin</span><span>(</span><span class="identifier">tf2</span><span>).</span><span class="identifier">on</span><span>(</span><span class="symbol-literal">&#39;s</span><span>).</span><span class="identifier">and</span><span>(</span><span class="symbol-literal">&#39;j</span><span>)</span></code></pre>
+        <p>The second syntax brings some convenience when the joining columns have identical names in both tables:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">join2</span><span>(</span><span class="identifier">tf1</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Foo</span><span>], </span><span class="identifier">tf2</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Bar</span><span>])
+    : </span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Double</span><span>, </span><span class="type-name">Int</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Boolean</span><span>)] =
+  </span><span class="identifier">tf1</span><span>.</span><span class="identifier">innerJoin</span><span>(</span><span class="identifier">tf2</span><span>).</span><span class="identifier">using</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)</span></code></pre>
+        <p>Further example are available in the <a href="https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/JoinTests.scala">TypedDataFrame join tests.</a></p>
+        
+        <h3 id="complete-example" class="section">Complete example<a class="anchor-link right" href="#complete-example"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <p>We now consider a complete example to see how the Frameless types can improve not only correctness but also the readability of Spark jobs. Consider the following domain of phonebooks, city maps and neighborhoods:</p>
+        <pre><code class="nohighlight"><span class="keyword">type</span><span> </span><span class="type-name">Neighborhood</span><span> = </span><span class="type-name">String</span><span>
+</span><span class="keyword">type</span><span> </span><span class="type-name">Address</span><span> = </span><span class="type-name">String</span><span>
 
-  <span class="hljs-comment">// Followed by equivalent of every DataFrame method with improved signature</span>
-}
-</code></pre>
-<p>As you can see, instead of the <code>def filter(conditionExpr: String): DataFrame</code> defined in Spark, the <code>TypedDataFrame</code> version expects a function from <code>Schema</code> to <code>Boolean</code>, and models the fact that resulting <code>DataFrame</code> will still hold elements of type <code>Schema</code>.</p>
-<h3 id="type-level-column-referencing">Type-level column referencing</h3>
-<p>For Spark&apos;s <code>DataFrame</code>s, column referencing is done directly by <code>String</code>s or using the <code>Column</code> type which provides no additional type safety. <code>TypedDataFrame</code> improves on that by catching invalid column references compile type. When everything goes well, Frameless select is very similar to vanilla select, except that it keeps track of the selected column types:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataFrame</span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">PhoneBookEntry</span><span>(
+  </span><span class="identifier">address</span><span>: </span><span class="type-name">Address</span><span>,
+  </span><span class="identifier">residents</span><span>: </span><span class="type-name">String</span><span>,
+  </span><span class="identifier">phoneNumber</span><span>: </span><span class="type-name">Double</span><span>
+)
 
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span>(<span class="hljs-params">s: <span class="hljs-type">String</span>, d: <span class="hljs-type">Double</span>, i: <span class="hljs-type">Int</span></span>)</span>
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">CityMapEntry</span><span>(
+  </span><span class="identifier">address</span><span>: </span><span class="type-name">Address</span><span>,
+  </span><span class="identifier">neighborhood</span><span>: </span><span class="type-name">Neighborhood</span><span>
+)</span></code></pre>
+        <p>Our goal will be to compute the neighborhood with unique names, approximating &quot;unique&quot; with names containing less common
+        letters in the alphabet: &#39;x&#39;, &#39;q&#39;, and &#39;z&#39;. We are going to need a natural language processing library at some point, so
+        let&#39;s use the following for the example:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">object</span><span> </span><span class="type-name">NLPLib</span><span> {
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">uniqueName</span><span>(</span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>): </span><span class="type-name">Boolean</span><span> = </span><span class="identifier">name</span><span>.</span><span class="identifier">exists</span><span>(</span><span class="type-name">Set</span><span>(</span><span class="char-literal">&#39;x&#39;</span><span>, </span><span class="char-literal">&#39;q&#39;</span><span>, </span><span class="char-literal">&#39;z&#39;</span><span>))
+}</span></code></pre>
+        <p>Suppose we manage to obtain public data for a <code>TypedDataFrame[PhoneBookEntry]</code> and <code>TypedDataFrame[CityMapEntry]</code>. Here is what our Spark job could look like with Frameless:</p>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">SQLContext</span><span>
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">selectIntString</span></span>(tf: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Foo</span>]): <span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">String</span>)] =
-  tf.select(<span class="hljs-symbol">&apos;i</span>, <span class="hljs-symbol">&apos;s</span>)
-</code></pre>
-<p>However, in case of typo, it gets caught right away:</p>
-<pre><code class="lang-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">selectIntStringTypo</span></span>(tf: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Foo</span>]): <span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">Int</span>, <span class="hljs-type">String</span>)] =
-  tf.select(<span class="hljs-symbol">&apos;j</span>, <span class="hljs-symbol">&apos;s</span>)
-</code></pre>
-<h3 id="type-level-joins">Type-level joins</h3>
-<p>Joins can available with two different syntaxes. The first lets you reference different columns on each <code>TypedDataFrame</code>, and ensures that they all exist and have compatible types:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span>(<span class="hljs-params">i: <span class="hljs-type">Int</span>, j: <span class="hljs-type">String</span>, b: <span class="hljs-type">Boolean</span></span>)</span>
+</span><span class="comment">// These case classes are used to hold intermediate results
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Family</span><span>(</span><span class="identifier">residents</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">neighborhood</span><span>: </span><span class="type-name">Neighborhood</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Person</span><span>(</span><span class="identifier">name</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">neighborhood</span><span>: </span><span class="type-name">Neighborhood</span><span>)
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">NeighborhoodCount</span><span>(</span><span class="identifier">neighborhood</span><span>: </span><span class="type-name">Neighborhood</span><span>, </span><span class="identifier">count</span><span>: </span><span class="type-name">Long</span><span>)
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">join1</span></span>(tf1: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Foo</span>], tf2: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Bar</span>])
-    : <span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Double</span>, <span class="hljs-type">Int</span>, <span class="hljs-type">Int</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Boolean</span>)] =
-  tf1.innerJoin(tf2).on(<span class="hljs-symbol">&apos;s</span>).and(<span class="hljs-symbol">&apos;j</span>)
-</code></pre>
-<p>The second syntax brings some convenience when the joining columns have identical names in both tables:</p>
-<pre><code class="lang-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">join2</span></span>(tf1: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Foo</span>], tf2: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Bar</span>])
-    : <span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Double</span>, <span class="hljs-type">Int</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Boolean</span>)] =
-  tf1.innerJoin(tf2).using(<span class="hljs-symbol">&apos;i</span>)
-</code></pre>
-<p>Further example are available in the <a href="https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/JoinTests.scala" target="_blank">TypedDataFrame join tests.</a></p>
-<h3 id="complete-example">Complete example</h3>
-<p>We now consider a complete example to see how the Frameless types can improve not only correctness but also the readability of Spark jobs. Consider the following domain of phonebooks, city maps and neighborhoods:</p>
-<pre><code class="lang-scala"><span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Neighborhood</span> </span>= <span class="hljs-type">String</span>
-<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Address</span> </span>= <span class="hljs-type">String</span>
-
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PhoneBookEntry</span>(<span class="hljs-params">
-  address: <span class="hljs-type">Address</span>,
-  residents: <span class="hljs-type">String</span>,
-  phoneNumber: <span class="hljs-type">Double</span>
-</span>)</span>
-
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">CityMapEntry</span>(<span class="hljs-params">
-  address: <span class="hljs-type">Address</span>,
-  neighborhood: <span class="hljs-type">Neighborhood</span>
-</span>)</span>
-</code></pre>
-<p>Our goal will be to compute the neighborhood with unique names, approximating &quot;unique&quot; with names containing less common
-letters in the alphabet: &apos;x&apos;, &apos;q&apos;, and &apos;z&apos;. We are going to need a natural language processing library at some point, so
-let&apos;s use the following for the example:</p>
-<pre><code class="lang-scala"><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">NLPLib</span> </span>{
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">uniqueName</span></span>(name: <span class="hljs-type">String</span>): <span class="hljs-type">Boolean</span> = name.exists(<span class="hljs-type">Set</span>(&apos;x&apos;, &apos;q&apos;, &apos;z&apos;))
-}
-</code></pre>
-<p>Suppose we manage to obtain public data for a <code>TypedDataFrame[PhoneBookEntry]</code> and <code>TypedDataFrame[CityMapEntry]</code>. Here is what our Spark job could look like with Frameless:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> org.apache.spark.sql.<span class="hljs-type">SQLContext</span>
-
-<span class="hljs-comment">// These case classes are used to hold intermediate results</span>
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Family</span>(<span class="hljs-params">residents: <span class="hljs-type">String</span>, neighborhood: <span class="hljs-type">Neighborhood</span></span>)</span>
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span>(<span class="hljs-params">name: <span class="hljs-type">String</span>, neighborhood: <span class="hljs-type">Neighborhood</span></span>)</span>
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">NeighborhoodCount</span>(<span class="hljs-params">neighborhood: <span class="hljs-type">Neighborhood</span>, count: <span class="hljs-type">Long</span></span>)</span>
-
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bestNeighborhood</span></span>
-  (phoneBookTF: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">PhoneBookEntry</span>], cityMapTF: <span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">CityMapEntry</span>])
-  (<span class="hljs-keyword">implicit</span> c: <span class="hljs-type">SQLContext</span>): <span class="hljs-type">String</span> = {
+</span><span class="keyword">def</span><span> </span><span class="declaration-name">bestNeighborhood</span><span>
+  (</span><span class="identifier">phoneBookTF</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">PhoneBookEntry</span><span>], </span><span class="identifier">cityMapTF</span><span>: </span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">CityMapEntry</span><span>])
+  (</span><span class="keyword">implicit</span><span> </span><span class="identifier">c</span><span>: </span><span class="type-name">SQLContext</span><span>): </span><span class="type-name">String</span><span> = {
                                           (((((((((
-  phoneBookTF
-    .innerJoin(cityMapTF).using(<span class="hljs-symbol">&apos;address</span>) :<span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">Address</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Double</span>, <span class="hljs-type">String</span>)])
-    .select(<span class="hljs-symbol">&apos;_2</span>, <span class="hljs-symbol">&apos;_4</span>)                     :<span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">String</span>)])
-    .as[<span class="hljs-type">Family</span>]()                         :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Family</span>])
-    .flatMap { f =&gt;
-      f.residents.split(&apos; &apos;).map(r =&gt; <span class="hljs-type">Person</span>(r, f.neighborhood))
-    }                                     :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Person</span>])
-    .filter { p =&gt;
-      <span class="hljs-type">NLPLib</span>.uniqueName(p.name)
-    }                                     :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Person</span>])
-    .groupBy(<span class="hljs-symbol">&apos;neighborhood</span>).count()       :<span class="hljs-type">TypedDataFrame</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Long</span>)])
-    .as[<span class="hljs-type">NeighborhoodCount</span>]()              :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">NeighborhoodCount</span>])
-    .sortDesc(<span class="hljs-symbol">&apos;count</span>)                     :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">NeighborhoodCount</span>])
-    .select(<span class="hljs-symbol">&apos;neighborhood</span>)                :<span class="hljs-type">TypedDataFrame</span>[<span class="hljs-type">Tuple1</span>[<span class="hljs-type">String</span>]])
-    .head._1
-}
-</code></pre>
-<p>If you compare this version to vanilla Spark where every line is a <code>DataFrame</code>, you see how much types can improve readability. An executable version of this example is available in the <a href="https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/BestNeighborhood.scala" target="_blank">BestNeighborhood test</a>.</p>
-<h3 id="limitations">Limitations</h3>
-<p>The main limitation of this approach comes from Scala 2.10, which limits the arity of class classes to 22. Because of the way <code>DataFrame</code> models joins, joining two table with more that 11 fields results in a <code>DataFrame</code> which not representable with <code>Schema</code> of type <code>Product</code>.</p>
-<p>In the <code>Dataset</code> API introduced in Spark 1.6, the way join are handled was rethought to return a pair of both schemas instead of a flat table, which moderates the trouble caused by case class limitations. Alternatively, since Scala 2.11, it is possible to define Tuple23 and onward. Sadly, due to the way Spark is commonly packaged in various systems, the amount Spark users having to Scala 2.11 and <em>not</em> to Spark 1.6 is essentially zero. For this reasons, further development in Frameless will target Spark 1.6+, deprecating the early work on<code>TypedDataFrame</code>.</p>
-
-                                
-                                </section>
-                            
-    </div>
-    <div class="search-results">
-        <div class="has-results">
-            
-            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
-            <ul class="search-results-list"></ul>
-            
-        </div>
-        <div class="no-results">
-            
-            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
-            
-        </div>
-    </div>
-</div>
-
-                        </div>
-                    </div>
-                
-            </div>
-
-            
-                
-                <a href="TypedML.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Using Spark ML with TypedDataset">
-                    <i class="fa fa-angle-left"></i>
-                </a>
-                
-                
-            
+  </span><span class="identifier">phoneBookTF</span><span>
+    .</span><span class="identifier">innerJoin</span><span>(</span><span class="identifier">cityMapTF</span><span>).</span><span class="identifier">using</span><span>(</span><span class="symbol-literal">&#39;address</span><span>) :</span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">Address</span><span>, </span><span class="type-name">String</span><span>, </span><span class="type-name">Double</span><span>, </span><span class="type-name">String</span><span>)])
+    .</span><span class="identifier">select</span><span>(&#39;</span><span class="identifier">_2</span><span>, &#39;</span><span class="identifier">_4</span><span>)                     :</span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">String</span><span>)])
+    .</span><span class="identifier">as</span><span>[</span><span class="type-name">Family</span><span>]()                         :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Family</span><span>])
+    .</span><span class="identifier">flatMap</span><span> { </span><span class="identifier">f</span><span> =&gt;
+      </span><span class="identifier">f</span><span>.</span><span class="identifier">residents</span><span>.</span><span class="identifier">split</span><span>(</span><span class="char-literal">&#39; &#39;</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">r</span><span> =&gt; </span><span class="type-name">Person</span><span>(</span><span class="identifier">r</span><span>, </span><span class="identifier">f</span><span>.</span><span class="identifier">neighborhood</span><span>))
+    }                                     :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Person</span><span>])
+    .</span><span class="identifier">filter</span><span> { </span><span class="identifier">p</span><span> =&gt;
+      </span><span class="type-name">NLPLib</span><span>.</span><span class="identifier">uniqueName</span><span>(</span><span class="identifier">p</span><span>.</span><span class="identifier">name</span><span>)
+    }                                     :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Person</span><span>])
+    .</span><span class="identifier">groupBy</span><span>(</span><span class="symbol-literal">&#39;neighborhood</span><span>).</span><span class="identifier">count</span><span>()       :</span><span class="type-name">TypedDataFrame</span><span>[(</span><span class="type-name">String</span><span>, </span><span class="type-name">Long</span><span>)])
+    .</span><span class="identifier">as</span><span>[</span><span class="type-name">NeighborhoodCount</span><span>]()              :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">NeighborhoodCount</span><span>])
+    .</span><span class="identifier">sortDesc</span><span>(</span><span class="symbol-literal">&#39;count</span><span>)                     :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">NeighborhoodCount</span><span>])
+    .</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;neighborhood</span><span>)                :</span><span class="type-name">TypedDataFrame</span><span>[</span><span class="type-name">Tuple1</span><span>[</span><span class="type-name">String</span><span>]])
+    .</span><span class="identifier">head</span><span class="number-literal">._1</span><span>
+}</span></code></pre>
+        <p>If you compare this version to vanilla Spark where every line is a <code>DataFrame</code>, you see how much types can improve readability. An executable version of this example is available in the <a href="https://github.com/typelevel/frameless/blob/17194d2172e75f8994e9481181e85b4c8dcc0f69/dataframe/src/test/scala/BestNeighborhood.scala">BestNeighborhood test</a>.</p>
         
+        <h3 id="limitations" class="section">Limitations<a class="anchor-link right" href="#limitations"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <p>The main limitation of this approach comes from Scala 2.10, which limits the arity of class classes to 22. Because of the way <code>DataFrame</code> models joins, joining two table with more that 11 fields results in a <code>DataFrame</code> which not representable with <code>Schema</code> of type <code>Product</code>.</p>
+        <p>In the <code>Dataset</code> API introduced in Spark 1.6, the way join are handled was rethought to return a pair of both schemas instead of a flat table, which moderates the trouble caused by case class limitations. Alternatively, since Scala 2.11, it is possible to define Tuple23 and onward. Sadly, due to the way Spark is commonly packaged in various systems, the amount Spark users having to Scala 2.11 and <em>not</em> to Spark 1.6 is essentially zero. For this reasons, further development in Frameless will target Spark 1.6+, deprecating the early work on<code>TypedDataFrame</code>.</p>
+
+      </main>
+
     </div>
 
-    <script>
-        var gitbook = gitbook || [];
-        gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Proof of Concept: TypedDataFrame","level":"1.9","depth":1,"previous":{"title":"Using Spark ML with TypedDataset","level":"1.8","depth":1,"path":"TypedML.md","ref":"TypedML.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedDataFrame.md","mtime":"2021-01-20T04:28:33.412Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
-        });
-    </script>
-</div>
-
-        
-    <script src="gitbook/gitbook.js"></script>
-    <script src="gitbook/theme.js"></script>
-    
-        
-        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-search/search.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
-        
-    
-
-    </body>
+  </body>
 </html>
-

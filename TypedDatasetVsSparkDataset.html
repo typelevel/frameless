@@ -1,664 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Laika 0.18.1 + Helium Theme" />
+    <title>Comparing TypedDatasets with Spark&#39;s Datasets</title>
+    
+    
+      <meta name="description" content="docs"/>
+    
+    
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@1.207/distr/fira_code.css">
+    
+    <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
+    <script src="helium/laika-helium.js"></script>
+    
+    
+    <script> /* for avoiding page load transitions */ </script>
+  </head>
 
-<!DOCTYPE HTML>
-<html lang="" >
-    <head>
-        <meta charset="UTF-8">
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-        <title>Comparing TypedDatasets with Spark's Datasets · GitBook</title>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="description" content="">
-        <meta name="generator" content="GitBook 3.2.2">
-        
-        
-        
-    
-    <link rel="stylesheet" href="gitbook/style.css">
+  <body>
 
-    
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-highlight/website.css">
-                
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-search/search.css">
-                
-            
-                
-                <link rel="stylesheet" href="gitbook/gitbook-plugin-fontsettings/website.css">
-                
-            
-        
+    <header id="top-bar">
 
-    
-
-    
-        
-    
-        
-    
-        
-    
-        
-    
-        
-    
-        
-    
-
-        
-    
-    
-    <meta name="HandheldFriendly" content="true"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="gitbook/images/apple-touch-icon-precomposed-152.png">
-    <link rel="shortcut icon" href="gitbook/images/favicon.ico" type="image/x-icon">
-
-    
-    <link rel="next" href="TypedEncoder.html" />
-    
-    
-    <link rel="prev" href="FeatureOverview.html" />
-    
-
-    </head>
-    <body>
-        
-<div class="book">
-    <div class="book-summary">
-        
-            
-<div id="book-search-input" role="search">
-    <input type="text" placeholder="Type to search" />
-</div>
-
-            
-                <nav role="navigation">
-                
-
-
-<ul class="summary">
-    
-    
-
-    
-
-    
-        
-        
-    
-        <li class="chapter " data-level="1.1" data-path="./">
-            
-                <a href="./">
-            
-                    
-                    Introduction
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.2" data-path="FeatureOverview.html">
-            
-                <a href="FeatureOverview.html">
-            
-                    
-                    TypedDataset: Feature Overview
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter active" data-level="1.3" data-path="TypedDatasetVsSparkDataset.html">
-            
-                <a href="TypedDatasetVsSparkDataset.html">
-            
-                    
-                    Comparing TypedDatasets with Spark's Datasets
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.4" data-path="TypedEncoder.html">
-            
-                <a href="TypedEncoder.html">
-            
-                    
-                    Typed Encoders in Frameless
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.5" data-path="Injection.html">
-            
-                <a href="Injection.html">
-            
-                    
-                    Injection: Creating Custom Encoders
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.6" data-path="Job.html">
-            
-                <a href="Job.html">
-            
-                    
-                    Job[A]
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.7" data-path="Cats.html">
-            
-                <a href="Cats.html">
-            
-                    
-                    Using Cats with RDDs
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.8" data-path="TypedML.html">
-            
-                <a href="TypedML.html">
-            
-                    
-                    Using Spark ML with TypedDataset
-            
-                </a>
-            
-
-            
-        </li>
-    
-        <li class="chapter " data-level="1.9" data-path="TypedDataFrame.html">
-            
-                <a href="TypedDataFrame.html">
-            
-                    
-                    Proof of Concept: TypedDataFrame
-            
-                </a>
-            
-
-            
-        </li>
-    
-
-    
-
-    <li class="divider"></li>
-
-    <li>
-        <a href="https://www.gitbook.com" target="blank" class="gitbook-link">
-            Published with GitBook
+      <div class="row">
+        <a id="nav-icon">
+          <i class="icofont-laika" title="Navigation">&#xefa2;</i>
         </a>
-    </li>
-</ul>
-
-
-                </nav>
-            
         
+      </div>
+  
+      <a class="image-link" href="https://typelevel.org"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KCjxzdmcKICAgIHdpZHRoPSIxMjBweCIKICAgIGhlaWdodD0iNDBweCIKICAgIHZpZXdCb3g9IjAgMCAxMDU0IDM0OCIKICAgIHZlcnNpb249IjEuMSIKICAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj4KCiAgICA8ZGVmcz4KICAgICAgICA8bGluZWFyR3JhZGllbnQgeDE9IjAlIiB5MT0iNjElIiB4Mj0iMTAwJSIgeTI9IjM3JSIgaWQ9ImJhY2tncm91bmQtZ3JhZGllbnQiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRkY0QzYxIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNGNTFDMkIiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8L2RlZnM+CgogICAgPGc+CiAgICAgICAgPHBhdGggZD0iTTQxOS43NjU3MTQsNTUuMTEwNjM4MyBMNDE5Ljc2NTcxNCwxMzMuMTI3NjYgTDM5OC41MjU3MTQsMTMzLjEyNzY2IEwzOTguNTI1NzE0LDU1LjExMDYzODMgTDM4MS4wNzg1NzEsNTUuMTEwNjM4MyBMMzgxLjA3ODU3MSwzNi45MzE5MTQ5IEw0MzcuOTcxNDI5LDM2LjkzMTkxNDkgTDQzNy45NzE0MjksNTUuMTEwNjM4MyBMNDE5Ljc2NTcxNCw1NS4xMTA2MzgzIEw0MTkuNzY1NzE0LDU1LjExMDYzODMgWiBNNDk1LjYyMjg1Nyw5OC4yODUxMDY0IEw0OTUuNjIyODU3LDEzMy4xMjc2NiBMNDc0LjM4Mjg1NywxMzMuMTI3NjYgTDQ3NC4zODI4NTcsOTguMjg1MTA2NCBMNDUwLjEwODU3MSwzNi4xNzQ0NjgxIEw0NzMuNjI0Mjg2LDM2LjE3NDQ2ODEgTDQ4NS4wMDI4NTcsNzYuMzE5MTQ4OSBMNDk2LjM4MTQyOSwzNi4xNzQ0NjgxIEw1MTkuODk3MTQzLDM2LjE3NDQ2ODEgTDQ5NS42MjI4NTcsOTguMjg1MTA2NCBMNDk1LjYyMjg1Nyw5OC4yODUxMDY0IFogTTYwMC4zMDU3MTQsNjcuMjI5Nzg3MiBDNjAwLjMwNTcxNCw3Mi41MzE5MTQ5IDU5OS41NDcxNDMsNzcuMDc2NTk1NyA1OTguMDMsODAuODYzODI5OCBDNTk2LjUxMjg1Nyw4NC42NTEwNjM4IDU5NC4yMzcxNDMsODcuNjgwODUxMSA1OTEuMjAyODU3LDkwLjcxMDYzODMgQzU4OC4xNjg1NzEsOTMuNzQwNDI1NSA1ODUuMTM0Mjg2LDk1LjI1NTMxOTEgNTgyLjEsOTYuMDEyNzY2IEM1NzkuMDY1NzE0LDk2Ljc3MDIxMjggNTc1LjI3Mjg1Nyw5Ny41Mjc2NTk2IDU3MS40OCw5Ny41Mjc2NTk2IEw1NjIuMzc3MTQzLDk3LjUyNzY1OTYgTDU2Mi4zNzcxNDMsMTMyLjM3MDIxMyBMNTQxLjEzNzE0MywxMzIuMzcwMjEzIEw1NDEuMTM3MTQzLDM2LjkzMTkxNDkgTDU3MS40OCwzNi45MzE5MTQ5IEM1NzUuMjcyODU3LDM2LjkzMTkxNDkgNTc4LjMwNzE0MywzNy42ODkzNjE3IDU4Mi4xLDM4LjQ0NjgwODUgQzU4NS44OTI4NTcsMzkuMjA0MjU1MyA1ODguOTI3MTQzLDQxLjQ3NjU5NTcgNTkxLjk2MTQyOSw0My43NDg5MzYyIEM1OTQuOTk1NzE0LDQ2LjAyMTI3NjYgNTk3LjI3MTQyOSw0OS4wNTEwNjM4IDU5OC43ODg1NzEsNTIuODM4Mjk3OSBDNTk5LjU0NzE0Myw1Ni42MjU1MzE5IDYwMC4zMDU3MTQsNjEuMTcwMjEyOCA2MDAuMzA1NzE0LDY3LjIyOTc4NzIgTDYwMC4zMDU3MTQsNjcuMjI5Nzg3MiBaIE01NzkuODI0Mjg2LDY3LjIyOTc4NzIgQzU3OS44MjQyODYsNjIuNjg1MTA2NCA1NzkuMDY1NzE0LDU5LjY1NTMxOTEgNTc2Ljc5LDU4LjE0MDQyNTUgQzU3NC41MTQyODYsNTUuODY4MDg1MSA1NzIuMjM4NTcxLDU1LjExMDYzODMgNTY5LjIwNDI4Niw1NS4xMTA2MzgzIEw1NjIuMzc3MTQzLDU1LjExMDYzODMgTDU2Mi4zNzcxNDMsODAuMTA2MzgzIEw1NjkuMjA0Mjg2LDgwLjEwNjM4MyBDNTcyLjIzODU3MSw4MC4xMDYzODMgNTc0LjUxNDI4Niw3OS4zNDg5MzYyIDU3Ni43OSw3Ny4wNzY1OTU3IEM1NzkuMDY1NzE0LDc0LjgwNDI1NTMgNTc5LjgyNDI4Niw3MS43NzQ0NjgxIDU3OS44MjQyODYsNjcuMjI5Nzg3MiBMNTc5LjgyNDI4Niw2Ny4yMjk3ODcyIFogTTYyMi4zMDQyODYsMTMzLjEyNzY2IEw2MjIuMzA0Mjg2LDM2LjkzMTkxNDkgTDY2OS4zMzU3MTQsMzYuOTMxOTE0OSBMNjY5LjMzNTcxNCw1NS44NjgwODUxIEw2NDIuNzg1NzE0LDU1Ljg2ODA4NTEgTDY0Mi43ODU3MTQsNzQuODA0MjU1MyBMNjY2LjMwMTQyOSw3NC44MDQyNTUzIEw2NjYuMzAxNDI5LDkyLjk4Mjk3ODcgTDY0Mi43ODU3MTQsOTIuOTgyOTc4NyBMNjQyLjc4NTcxNCwxMTMuNDM0MDQzIEw2NzAuMDk0Mjg2LDExMy40MzQwNDMgTDY3MC4wOTQyODYsMTMzLjEyNzY2IEw2MjIuMzA0Mjg2LDEzMy4xMjc2NiBMNjIyLjMwNDI4NiwxMzMuMTI3NjYgWiBNNjk2LjY0NDI4NiwxMzMuMTI3NjYgTDY5Ni42NDQyODYsMzYuOTMxOTE0OSBMNzE4LjY0Mjg1NywzNi45MzE5MTQ5IEw3MTguNjQyODU3LDExMy40MzQwNDMgTDc0NC40MzQyODYsMTEzLjQzNDA0MyBMNzQ0LjQzNDI4NiwxMzMuODg1MTA2IEw2OTYuNjQ0Mjg2LDEzMy44ODUxMDYgTDY5Ni42NDQyODYsMTMzLjEyNzY2IFogTTc2Ny45NSwxMzMuMTI3NjYgTDc2Ny45NSwzNi45MzE5MTQ5IEw4MTQuOTgxNDI5LDM2LjkzMTkxNDkgTDgxNC45ODE0MjksNTUuODY4MDg1MSBMNzg5LjE5LDU1Ljg2ODA4NTEgTDc4OS4xOSw3NC44MDQyNTUzIEw4MTIuNzA1NzE0LDc0LjgwNDI1NTMgTDgxMi43MDU3MTQsOTIuOTgyOTc4NyBMNzg5LjE5LDkyLjk4Mjk3ODcgTDc4OS4xOSwxMTMuNDM0MDQzIEw4MTYuNDk4NTcxLDExMy40MzQwNDMgTDgxNi40OTg1NzEsMTMzLjEyNzY2IEw3NjcuOTUsMTMzLjEyNzY2IEw3NjcuOTUsMTMzLjEyNzY2IFogTTg4NS41Mjg1NzEsMTMzLjEyNzY2IEw4NTcuNDYxNDI5LDEzMy4xMjc2NiBMODMzLjk0NTcxNCwzNi45MzE5MTQ5IEw4NTguOTc4NTcxLDM2LjkzMTkxNDkgTDg3MS44NzQyODYsMTA3LjM3NDQ2OCBMODg0Ljc3LDM2LjkzMTkxNDkgTDkwOC4yODU3MTQsMzYuOTMxOTE0OSBMODg1LjUyODU3MSwxMzMuMTI3NjYgTDg4NS41Mjg1NzEsMTMzLjEyNzY2IFogTTkzMS4wNDI4NTcsMTMzLjEyNzY2IEw5MzEuMDQyODU3LDM2LjkzMTkxNDkgTDk3OC4wNzQyODYsMzYuOTMxOTE0OSBMOTc4LjA3NDI4Niw1NS44NjgwODUxIEw5NTIuMjgyODU3LDU1Ljg2ODA4NTEgTDk1Mi4yODI4NTcsNzQuODA0MjU1MyBMOTc1Ljc5ODU3MSw3NC44MDQyNTUzIEw5NzUuNzk4NTcxLDkyLjk4Mjk3ODcgTDk1Mi4yODI4NTcsOTIuOTgyOTc4NyBMOTUyLjI4Mjg1NywxMTMuNDM0MDQzIEw5NzkuNTkxNDI5LDExMy40MzQwNDMgTDk3OS41OTE0MjksMTMzLjEyNzY2IEw5MzEuMDQyODU3LDEzMy4xMjc2NiBMOTMxLjA0Mjg1NywxMzMuMTI3NjYgWiBNMTAwNi4xNDE0MywxMzMuMTI3NjYgTDEwMDYuMTQxNDMsMzYuOTMxOTE0OSBMMTAyOC4xNCwzNi45MzE5MTQ5IEwxMDI4LjE0LDExMy40MzQwNDMgTDEwNTMuOTMxNDMsMTEzLjQzNDA0MyBMMTA1My45MzE0MywxMzMuODg1MTA2IEwxMDA2LjE0MTQzLDEzMy44ODUxMDYgTDEwMDYuMTQxNDMsMTMzLjEyNzY2IFogTTQyOS42MjcxNDMsMjMzLjg2ODA4NSBDNDI4LjExLDIzMS41OTU3NDUgNDI1LjgzNDI4NiwyMzAuODM4Mjk4IDQyMy41NTg1NzEsMjI5LjMyMzQwNCBDNDIxLjI4Mjg1NywyMjguNTY1OTU3IDQxOS4wMDcxNDMsMjI3LjgwODUxMSA0MTYuNzMxNDI5LDIyNy44MDg1MTEgQzQxNC40NTU3MTQsMjI3LjgwODUxMSA0MTIuMTgsMjI4LjU2NTk1NyA0MDkuOTA0Mjg2LDIzMC4wODA4NTEgQzQwNy42Mjg1NzEsMjMxLjU5NTc0NSA0MDYuODcsMjMzLjg2ODA4NSA0MDYuODcsMjM3LjY1NTMxOSBDNDA2Ljg3LDI0MC42ODUxMDYgNDA3LjYyODU3MSwyNDIuOTU3NDQ3IDQwOS45MDQyODYsMjQ0LjQ3MjM0IEM0MTIuMTgsMjQ1Ljk4NzIzNCA0MTUuMjE0Mjg2LDI0OC4yNTk1NzQgNDE5LjAwNzE0MywyNDkuNzc0NDY4IEM0MjEuMjgyODU3LDI1MC41MzE5MTUgNDIzLjU1ODU3MSwyNTIuMDQ2ODA5IDQyNS44MzQyODYsMjUzLjU2MTcwMiBDNDI4LjExLDI1NS4wNzY1OTYgNDMwLjM4NTcxNCwyNTYuNTkxNDg5IDQzMi42NjE0MjksMjU4Ljg2MzgzIEM0MzQuOTM3MTQzLDI2MS4xMzYxNyA0MzYuNDU0Mjg2LDI2My40MDg1MTEgNDM3Ljk3MTQyOSwyNjYuNDM4Mjk4IEM0MzkuNDg4NTcxLDI2OS40NjgwODUgNDQwLjI0NzE0MywyNzMuMjU1MzE5IDQ0MC4yNDcxNDMsMjc3LjA0MjU1MyBDNDQwLjI0NzE0MywyODIuMzQ0NjgxIDQzOS40ODg1NzEsMjg2Ljg4OTM2MiA0MzcuOTcxNDI5LDI5MC42NzY1OTYgQzQzNi40NTQyODYsMjk0LjQ2MzgzIDQzNC4xNzg1NzEsMjk4LjI1MTA2NCA0MzEuMTQ0Mjg2LDMwMC41MjM0MDQgQzQyOC4xMSwzMDIuNzk1NzQ1IDQyNS4wNzU3MTQsMzA1LjA2ODA4NSA0MjEuMjgyODU3LDMwNi41ODI5NzkgQzQxNy40OSwzMDguMDk3ODcyIDQxMy42OTcxNDMsMzA4Ljg1NTMxOSA0MDkuOTA0Mjg2LDMwOC44NTUzMTkgQzQwMy44MzU3MTQsMzA4Ljg1NTMxOSAzOTguNTI1NzE0LDMwOC4wOTc4NzIgMzkzLjk3NDI4NiwzMDUuODI1NTMyIEMzODkuNDIyODU3LDMwMy41NTMxOTEgMzg1LjYzLDMwMS4yODA4NTEgMzgyLjU5NTcxNCwyOTguMjUxMDY0IEwzOTMuOTc0Mjg2LDI4MS41ODcyMzQgQzM5Ni4yNSwyODMuODU5NTc0IDM5OC41MjU3MTQsMjg1LjM3NDQ2OCA0MDEuNTYsMjg2Ljg4OTM2MiBDNDA0LjU5NDI4NiwyODguNDA0MjU1IDQwNi44NywyODkuMTYxNzAyIDQwOS45MDQyODYsMjg5LjE2MTcwMiBDNDEyLjE4LDI4OS4xNjE3MDIgNDE0LjQ1NTcxNCwyODguNDA0MjU1IDQxNi43MzE0MjksMjg2Ljg4OTM2MiBDNDE4LjI0ODU3MSwyODUuMzc0NDY4IDQxOS43NjU3MTQsMjgzLjEwMjEyOCA0MTkuNzY1NzE0LDI3OS4zMTQ4OTQgQzQxOS43NjU3MTQsMjc2LjI4NTEwNiA0MTkuMDA3MTQzLDI3My4yNTUzMTkgNDE2LjczMTQyOSwyNzEuNzQwNDI2IEM0MTQuNDU1NzE0LDI3MC4yMjU1MzIgNDExLjQyMTQyOSwyNjcuOTUzMTkxIDQwNi44NywyNjUuNjgwODUxIEwzOTkuMjg0Mjg2LDI2MS4xMzYxNyBDMzk3LjAwODU3MSwyNTkuNjIxMjc3IDM5NC43MzI4NTcsMjU4LjEwNjM4MyAzOTMuMjE1NzE0LDI1NS44MzQwNDMgQzM5MS42OTg1NzEsMjUzLjU2MTcwMiAzOTAuMTgxNDI5LDI1MS4yODkzNjIgMzg5LjQyMjg1NywyNDguMjU5NTc0IEMzODguNjY0Mjg2LDI0NS4yMjk3ODcgMzg3LjkwNTcxNCwyNDIuMiAzODcuOTA1NzE0LDIzNy42NTUzMTkgQzM4Ny45MDU3MTQsMjMyLjM1MzE5MSAzODguNjY0Mjg2LDIyNy44MDg1MTEgMzkwLjk0LDIyNC4wMjEyNzcgQzM5Mi40NTcxNDMsMjIwLjIzNDA0MyAzOTQuNzMyODU3LDIxNy4yMDQyNTUgMzk3Ljc2NzE0MywyMTQuMTc0NDY4IEM0MDAuODAxNDI5LDIxMS45MDIxMjggNDAzLjgzNTcxNCwyMDkuNjI5Nzg3IDQwNy42Mjg1NzEsMjA4Ljg3MjM0IEM0MTEuNDIxNDI5LDIwNy4zNTc0NDcgNDE0LjQ1NTcxNCwyMDcuMzU3NDQ3IDQxOC4yNDg1NzEsMjA3LjM1NzQ0NyBDNDIzLjU1ODU3MSwyMDcuMzU3NDQ3IDQyOC4xMSwyMDguMTE0ODk0IDQzMi42NjE0MjksMjA5LjYyOTc4NyBDNDM3LjIxMjg1NywyMTEuMTQ0NjgxIDQ0MC4yNDcxNDMsMjEzLjQxNzAyMSA0NDMuMjgxNDI5LDIxNi40NDY4MDkgTDQyOS42MjcxNDMsMjMzLjg2ODA4NSBMNDI5LjYyNzE0MywyMzMuODY4MDg1IFogTTUxMS41NTI4NTcsMzA1LjgyNTUzMiBDNTA3LjAwMTQyOSwzMDguMDk3ODcyIDUwMS42OTE0MjksMzA5LjYxMjc2NiA0OTQuODY0Mjg2LDMwOS42MTI3NjYgQzQ4OS41NTQyODYsMzA5LjYxMjc2NiA0ODQuMjQ0Mjg2LDMwOC4wOTc4NzIgNDc5LjY5Mjg1NywzMDUuODI1NTMyIEM0NzUuMTQxNDI5LDMwMy41NTMxOTEgNDcxLjM0ODU3MSwyOTkuNzY1OTU3IDQ2Ny41NTU3MTQsMjk1LjIyMTI3NyBDNDYzLjc2Mjg1NywyOTAuNjc2NTk2IDQ2MS40ODcxNDMsMjg1LjM3NDQ2OCA0NTkuOTcsMjc5LjMxNDg5NCBDNDU4LjQ1Mjg1NywyNzMuMjU1MzE5IDQ1Ni45MzU3MTQsMjY2LjQzODI5OCA0NTYuOTM1NzE0LDI1OC44NjM4MyBDNDU2LjkzNTcxNCwyNTEuMjg5MzYyIDQ1Ny42OTQyODYsMjQ0LjQ3MjM0IDQ1OS45NywyMzguNDEyNzY2IEM0NjEuNDg3MTQzLDIzMi4zNTMxOTEgNDY0LjUyMTQyOSwyMjcuMDUxMDY0IDQ2Ny41NTU3MTQsMjIyLjUwNjM4MyBDNDcwLjU5LDIxNy45NjE3MDIgNDc1LjE0MTQyOSwyMTQuOTMxOTE1IDQ3OS42OTI4NTcsMjExLjkwMjEyOCBDNDg0LjI0NDI4NiwyMDkuNjI5Nzg3IDQ4OS41NTQyODYsMjA4LjExNDg5NCA0OTQuODY0Mjg2LDIwOC4xMTQ4OTQgQzUwMS42OTE0MjksMjA4LjExNDg5NCA1MDcuMDAxNDI5LDIwOS42Mjk3ODcgNTEwLjc5NDI4NiwyMTEuOTAyMTI4IEM1MTQuNTg3MTQzLDIxNC4xNzQ0NjggNTE4LjM4LDIxNy4yMDQyNTUgNTIxLjQxNDI4NiwyMjAuMjM0MDQzIEw1MTAuMDM1NzE0LDIzNi4xNDA0MjYgQzUwOC41MTg1NzEsMjMzLjg2ODA4NSA1MDYuMjQyODU3LDIzMi4zNTMxOTEgNTA0LjcyNTcxNCwyMzAuODM4Mjk4IEM1MDMuMjA4NTcxLDIyOS4zMjM0MDQgNTAwLjE3NDI4NiwyMjguNTY1OTU3IDQ5Ny4xNCwyMjguNTY1OTU3IEM0OTQuMTA1NzE0LDIyOC41NjU5NTcgNDkxLjgzLDIyOS4zMjM0MDQgNDg5LjU1NDI4NiwyMzAuODM4Mjk4IEM0ODcuMjc4NTcxLDIzMi4zNTMxOTEgNDg1Ljc2MTQyOSwyMzQuNjI1NTMyIDQ4NC4yNDQyODYsMjM2Ljg5Nzg3MiBDNDgyLjcyNzE0MywyMzkuOTI3NjYgNDgxLjk2ODU3MSwyNDIuOTU3NDQ3IDQ4MS4yMSwyNDYuNzQ0NjgxIEM0ODAuNDUxNDI5LDI1MC41MzE5MTUgNDgwLjQ1MTQyOSwyNTQuMzE5MTQ5IDQ4MC40NTE0MjksMjU4Ljg2MzgzIEM0ODAuNDUxNDI5LDI2My40MDg1MTEgNDgwLjQ1MTQyOSwyNjcuMTk1NzQ1IDQ4MS4yMSwyNzAuMjI1NTMyIEM0ODEuOTY4NTcxLDI3NC4wMTI3NjYgNDgyLjcyNzE0MywyNzcuMDQyNTUzIDQ4NC4yNDQyODYsMjgwLjA3MjM0IEM0ODUuNzYxNDI5LDI4My4xMDIxMjggNDg3LjI3ODU3MSwyODQuNjE3MDIxIDQ4OS41NTQyODYsMjg2LjEzMTkxNSBDNDkxLjgzLDI4Ny42NDY4MDkgNDk0LjEwNTcxNCwyODguNDA0MjU1IDQ5Ny4xNCwyODguNDA0MjU1IEM1MDAuMTc0Mjg2LDI4OC40MDQyNTUgNTAyLjQ1LDI4Ny42NDY4MDkgNTA0LjcyNTcxNCwyODYuMTMxOTE1IEM1MDcuMDAxNDI5LDI4NC42MTcwMjEgNTA4LjUxODU3MSwyODMuMTAyMTI4IDUxMC4wMzU3MTQsMjgwLjgyOTc4NyBMNTIyLjE3Mjg1NywyOTUuOTc4NzIzIEM1MTkuODk3MTQzLDMwMC41MjM0MDQgNTE2LjEwNDI4NiwzMDMuNTUzMTkxIDUxMS41NTI4NTcsMzA1LjgyNTUzMiBMNTExLjU1Mjg1NywzMDUuODI1NTMyIFogTTU4NS44OTI4NTcsMzA3LjM0MDQyNiBMNTgyLjEsMjg5LjkxOTE0OSBMNTYwLjEwMTQyOSwyODkuOTE5MTQ5IEw1NTYuMzA4NTcxLDMwNy4zNDA0MjYgTDUzNC4zMSwzMDcuMzQwNDI2IEw1NTcuODI1NzE0LDIxMS4xNDQ2ODEgTDU4NS4xMzQyODYsMjExLjE0NDY4MSBMNjA4LjY1LDMwNy4zNDA0MjYgTDU4NS44OTI4NTcsMzA3LjM0MDQyNiBMNTg1Ljg5Mjg1NywzMDcuMzQwNDI2IFogTTU3MS40OCwyMzEuNTk1NzQ1IEw1NjIuMzc3MTQzLDI3Mi40OTc4NzIgTDU3OS4wNjU3MTQsMjcyLjQ5Nzg3MiBMNTcxLjQ4LDIzMS41OTU3NDUgTDU3MS40OCwyMzEuNTk1NzQ1IFogTTYzMC42NDg1NzEsMzA3LjM0MDQyNiBMNjMwLjY0ODU3MSwyMTEuMTQ0NjgxIEw2NTIuNjQ3MTQzLDIxMS4xNDQ2ODEgTDY1Mi42NDcxNDMsMjg3LjY0NjgwOSBMNjc4LjQzODU3MSwyODcuNjQ2ODA5IEw2NzguNDM4NTcxLDMwOC4wOTc4NzIgTDYzMC42NDg1NzEsMzA4LjA5Nzg3MiBMNjMwLjY0ODU3MSwzMDcuMzQwNDI2IFogTTc0NS4xOTI4NTcsMzA3LjM0MDQyNiBMNzQxLjQsMjg5LjkxOTE0OSBMNzE5LjQwMTQyOSwyODkuOTE5MTQ5IEw3MTUuNjA4NTcxLDMwNy4zNDA0MjYgTDY5My42MSwzMDcuMzQwNDI2IEw3MTcuMTI1NzE0LDIxMS4xNDQ2ODEgTDc0NC40MzQyODYsMjExLjE0NDY4MSBMNzY3Ljk1LDMwNy4zNDA0MjYgTDc0NS4xOTI4NTcsMzA3LjM0MDQyNiBMNzQ1LjE5Mjg1NywzMDcuMzQwNDI2IFogTTczMC4wMjE0MjksMjMxLjU5NTc0NSBMNzIwLjkxODU3MSwyNzIuNDk3ODcyIEw3MzcuNjA3MTQzLDI3Mi40OTc4NzIgTDczMC4wMjE0MjksMjMxLjU5NTc0NSBMNzMwLjAyMTQyOSwyMzEuNTk1NzQ1IFoiIGZpbGw9IiMyMTMwM0YiIC8+CgogICAgICAgIDxnIGlkPSJsb2dvIj4KICAgICAgICAgICAgPHBvbHlnb24gZmlsbD0idXJsKCNiYWNrZ3JvdW5kLWdyYWRpZW50KSIgcG9pbnRzPSIxNTEgMzQ4IDAgMjYwIDAgODggMTUxIDAgMzAyIDg4IDMwMiAyNjAiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRjYxNjkiIHBvaW50cz0iOTkgMjE0IDk5IDI1NCAxOTMgMTk5IDE5MyAxNTkiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRjYxNjkiIHBvaW50cz0iMTM0IDE5NCA5OSAxNzQgMTkzIDExOSAyMjggMTM5IiAvPgogICAgICAgICAgICA8cG9seWdvbiBmaWxsPSIjRkY2MTY5IiBwb2ludHM9Ijk5IDEzNCA2NCAxMTQgMTU4IDU5IDE5MyA3OSIgLz4KICAgICAgICAgICAgPHBvbHlnb24gZmlsbD0iI0ZGQjRCNSIgcG9pbnRzPSIxMzQgMTk0IDEzNCAyMzQgMjI4IDE3OSAyMjggMTM5IiAvPgogICAgICAgICAgICA8cG9seWdvbiBmaWxsPSIjRkZCNEI1IiBwb2ludHM9Ijk5IDEzNCA5OSAxNzQgMTkzIDExOSAxOTMgNzkiIC8+CiAgICAgICAgICAgIDxwb2x5Z29uIGZpbGw9IiNGRkZGRkYiIHBvaW50cz0iNjQgMjM0IDk5IDI1NCA5OSAyMTQgMTM0IDIzNCAxMzQgMTk0IDk5IDE3NCA5OSAxMzQgNjQgMTE0IiAvPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+Cg=="></a>
+      
+      <span class="row links"><a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://twitter.com/typelevel"><i class="icofont-laika" title="Twitter">&#xed7a;</i></a></span>
+      
+    </header>
+
+    <nav id="sidebar">
+
+      <div class="row">
+        <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <g class="svg-shape">
+    <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
+  </g>
+</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://twitter.com/typelevel"><i class="icofont-laika" title="Twitter">&#xed7a;</i></a>
+      </div>
+      
+      <ul class="nav-list">
+        <li class="level1"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
+        <li class="level1 active"><a href="#">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
+        <li class="level1"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
+        <li class="level1"><a href="Injection.html">Injection: Creating Custom Encoders</a></li>
+        <li class="level1"><a href="Job.html">Job[A]</a></li>
+        <li class="level1"><a href="Cats.html">Using Cats with Frameless</a></li>
+        <li class="level1"><a href="TypedML.html">Typed Spark ML</a></li>
+        <li class="level1"><a href="TypedDataFrame.html">Proof of Concept: TypedDataFrame</a></li>
+        <li class="level1"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
+      </ul>
+      
+    </nav>
+
+    <div id="container">
+
+      <nav id="page-nav">
+        <p class="header"><a href="#">Comparing TypedDatasets with Spark&#39;s Datasets</a></p>
+        
+        <ul class="nav-list">
+          <li class="level1"><a href="#differences-in-encoders">Differences in Encoders</a></li>
+          <li class="level1"><a href="#aggregate-vs-projected-columns">Aggregate vs Projected columns</a></li>
+        </ul>
+        
+        <p class="footer"></p>
+      </nav>
+
+      <main class="content">
+
+        <h1 id="comparing-typeddatasets-with-spark-s-datasets" class="title">Comparing TypedDatasets with Spark&#39;s Datasets</h1>
+        <p><strong>Goal:</strong>
+          This tutorial compares the standard Spark Datasets API with the one provided by
+          Frameless&#39; <code>TypedDataset</code>. It shows how <code>TypedDataset</code>s allow for an expressive and
+          type-safe api with no compromises on performance.</p>
+        <p>For this tutorial we first create a simple dataset and save it on disk as a parquet file.
+        <a href="https://parquet.apache.org/">Parquet</a> is a popular columnar format and well supported by Spark.
+        It&#39;s important to note that when operating on parquet datasets, Spark knows that each column is stored
+        separately, so if we only need a subset of the columns Spark will optimize for this and avoid reading
+        the entire dataset. This is a rather simplistic view of how Spark and parquet work together but it
+        will serve us well for the context of this discussion.</p>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">spark</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">_</span><span>
+
+</span><span class="comment">// Our example case class Foo acting here as a schema
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Foo</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Long</span><span>, </span><span class="identifier">j</span><span>: </span><span class="type-name">String</span><span>)
+
+</span><span class="comment">// Assuming spark is loaded and SparkSession is bind to spark
+</span><span class="keyword">val</span><span> </span><span class="identifier">initialDs</span><span> = </span><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>( </span><span class="type-name">Foo</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;Q&quot;</span><span>) :: </span><span class="type-name">Foo</span><span>(</span><span class="number-literal">10</span><span>, </span><span class="string-literal">&quot;W&quot;</span><span>) :: </span><span class="type-name">Foo</span><span>(</span><span class="number-literal">100</span><span>, </span><span class="string-literal">&quot;E&quot;</span><span>) :: </span><span class="type-name">Nil</span><span> )
+</span><span class="comment">// initialDs: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]
+</span><span>
+</span><span class="comment">// Assuming you are on Linux or Mac OS
+</span><span class="identifier">initialDs</span><span>.</span><span class="identifier">write</span><span>.</span><span class="identifier">parquet</span><span>(</span><span class="string-literal">&quot;/tmp/foo&quot;</span><span>)
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span> = </span><span class="identifier">spark</span><span>.</span><span class="identifier">read</span><span>.</span><span class="identifier">parquet</span><span>(</span><span class="string-literal">&quot;/tmp/foo&quot;</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">Foo</span><span>]
+</span><span class="comment">// ds: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]
+</span><span>
+</span><span class="identifier">ds</span><span>.</span><span class="identifier">show</span><span>()
+</span><span class="comment">// +---+---+
+// |  i|  j|
+// +---+---+
+// | 10|  W|
+// |100|  E|
+// |  1|  Q|
+// +---+---+
+//</span></code></pre>
+        <p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
+        Let&#39;s try to only use field <code>i</code> from Foo and see how Spark&#39;s Catalyst (the query optimizer)
+        optimizes this.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// Using a standard Spark TypedColumn in select()
+</span><span class="keyword">val</span><span> </span><span class="identifier">filteredDs</span><span> = </span><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span> === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>.</span><span class="identifier">as</span><span>[</span><span class="type-name">Long</span><span>])
+</span><span class="comment">// filteredDs: org.apache.spark.sql.Dataset[Long] = [i: bigint]
+</span><span>
+</span><span class="identifier">filteredDs</span><span>.</span><span class="identifier">show</span><span>()
+</span><span class="comment">// +---+
+// |  i|
+// +---+
+// | 10|
+// +---+
+//</span></code></pre>
+        <p>The <code>filteredDs</code> is of type <code>Dataset[Long]</code>. Since we only access field <code>i</code> from <code>Foo</code> the type is correct.
+        Unfortunately, this syntax requires handholding by explicitly setting the <code>TypedColumn</code> in the <code>select</code> statement
+        to return type <code>Long</code> (look at the <code>as[Long]</code> statement). We will discuss this limitation next in more detail.
+        Now, let&#39;s take a quick look at the optimized Physical Plan that Spark&#39;s Catalyst generated.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">filteredDs</span><span>.</span><span class="identifier">explain</span><span>()
+</span><span class="comment">// == Physical Plan ==
+// *(1) Filter (isnotnull(i#2063L) AND (i#2063L = 10))
+// +- *(1) ColumnarToRow
+//    +- FileScan parquet [i#2063L] Batched: true, DataFilters: [isnotnull(i#2063L), (i#2063L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+// 
+//</span></code></pre>
+        <p>The last line is very important (see <code>ReadSchema</code>). The schema read
+        from the parquet file only required reading column <code>i</code> without needing to access column <code>j</code>.
+        This is great! We have both an optimized query plan and type-safety!</p>
+        <p>Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
+        a non existing column <code>x</code>:</p>
+        <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span> === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;x&quot;</span><span>.</span><span class="identifier">as</span><span>[</span><span class="type-name">Long</span><span>])
+</span><span class="comment">// org.apache.spark.sql.AnalysisException: cannot resolve &#39;x&#39; given input columns: [i, j];
+// &#39;Project [&#39;x]
+// +- Filter (i#2063L = cast(10 as bigint))
+//    +- Relation [i#2063L,j#2064] parquet
+// 
+// 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:54)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$$nestedInanonfun$checkAnalysis$1$2.applyOrElse(CheckAnalysis.scala:179)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis$$anonfun$$nestedInanonfun$checkAnalysis$1$2.applyOrElse(CheckAnalysis.scala:175)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.$anonfun$transformUpWithPruning$2(TreeNode.scala:535)
+// 	at org.apache.spark.sql.catalyst.trees.CurrentOrigin$.withOrigin(TreeNode.scala:82)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.transformUpWithPruning(TreeNode.scala:535)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.$anonfun$transformExpressionsUpWithPruning$1(QueryPlan.scala:181)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.$anonfun$mapExpressions$1(QueryPlan.scala:193)
+// 	at org.apache.spark.sql.catalyst.trees.CurrentOrigin$.withOrigin(TreeNode.scala:82)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.transformExpression$1(QueryPlan.scala:193)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.recursiveTransform$1(QueryPlan.scala:204)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.$anonfun$mapExpressions$3(QueryPlan.scala:209)
+// 	at scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:286)
+// 	at scala.collection.immutable.List.foreach(List.scala:431)
+// 	at scala.collection.TraversableLike.map(TraversableLike.scala:286)
+// 	at scala.collection.TraversableLike.map$(TraversableLike.scala:279)
+// 	at scala.collection.immutable.List.map(List.scala:305)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.recursiveTransform$1(QueryPlan.scala:209)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.$anonfun$mapExpressions$4(QueryPlan.scala:214)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.mapProductIterator(TreeNode.scala:323)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.mapExpressions(QueryPlan.scala:214)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.transformExpressionsUpWithPruning(QueryPlan.scala:181)
+// 	at org.apache.spark.sql.catalyst.plans.QueryPlan.transformExpressionsUp(QueryPlan.scala:161)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:175)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:94)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:263)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:94)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:91)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:172)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:195)
+// 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:192)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:88)
+// 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:196)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:775)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:196)
+// 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:88)
+// 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:86)
+// 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:78)
+// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:205)
+// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:211)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1509)
+// 	at repl.MdocSession$App0$$anonfun$15.apply(TypedDatasetVsSparkDataset.md:78)
+// 	at repl.MdocSession$App0$$anonfun$15.apply(TypedDatasetVsSparkDataset.md:78)</span></code></pre>
+        <p>There are two things to improve here. First, we would want to avoid the <code>as[Long]</code> casting that we are required
+        to type for type-safety. This is clearly an area where we may introduce a bug by casting to an incompatible
+        type. Second, we want a solution where reference to a non existing column name fails at compilation time.
+        The standard Spark Dataset can achieve this using the following syntax.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span>).</span><span class="identifier">show</span><span>()
+</span><span class="comment">// +-----+
+// |value|
+// +-----+
+// |   10|
+// +-----+
+//</span></code></pre>
+        <p>This looks great! It reminds us the familiar syntax from Scala.
+        The two closures in filter and map are functions that operate on <code>Foo</code> and the
+        compiler will helps us capture all the mistakes we mentioned above.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">x</span><span>).</span><span class="identifier">show</span><span>()
+</span><span class="comment">// error: value x is not a member of repl.MdocSession.App0.Foo
+// ds.filter(_.i == 10).map(_.x).show()
+//                          ^^^</span></code></pre>
+        <p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span>).</span><span class="identifier">explain</span><span>()
+</span><span class="comment">// == Physical Plan ==
+// *(1) SerializeFromObject [input[0, bigint, false] AS value#2114L]
+// +- *(1) MapElements &lt;function1&gt;, obj#2113: bigint
+//    +- *(1) Filter &lt;function1&gt;.apply
+//       +- *(1) DeserializeToObject newInstance(class repl.MdocSession$App0$Foo), obj#2112: repl.MdocSession$App0$Foo
+//          +- *(1) ColumnarToRow
+//             +- FileScan parquet [i#2063L,j#2064] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;
+// 
+//</span></code></pre>
+        <p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
+        Reading the parquet file will required loading all the fields of <code>Foo</code>. This might be ok for
+        small datasets or for datasets with few columns, but will be extremely slow for most practical
+        applications. Intuitively, Spark currently does not have a way to look inside the code we pass in these two
+        closures. It only knows that they both take one argument of type <code>Foo</code>, but it has no way of knowing if
+        we use just one or all of <code>Foo</code>&#39;s fields.</p>
+        <p>The <code>TypedDataset</code> in Frameless solves this problem. It allows for a simple and type-safe syntax
+        with a fully optimized query plan.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="type-name">TypedDataset</span><span>
+</span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">_</span><span>
+</span><span class="keyword">val</span><span> </span><span class="identifier">fds</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">ds</span><span>)
+</span><span class="comment">// fds: TypedDataset[Foo] = [i: bigint, j: string]
+</span><span>
+</span><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
+</span><span class="comment">// +-----+
+// |value|
+// +-----+
+// |   10|
+// +-----+
+//</span></code></pre>
+        <p>And the optimized Physical Plan:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)).</span><span class="identifier">explain</span><span>()
+</span><span class="comment">// == Physical Plan ==
+// *(1) Project [i#2063L AS value#2198L]
+// +- *(1) Filter (isnotnull(i#2063L) AND (i#2063L = 10))
+//    +- *(1) ColumnarToRow
+//       +- FileScan parquet [i#2063L] Batched: true, DataFilters: [isnotnull(i#2063L), (i#2063L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+// 
+//</span></code></pre>
+        <p>And the compiler is our friend.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;x</span><span>))
+</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;x&quot;)] of type A in repl.MdocSession.App0.Foo
+// fds.filter(fds(&#39;i) === 10).select(fds(&#39;x))
+//                                      ^</span></code></pre>
+        
+        <h2 id="differences-in-encoders" class="section">Differences in Encoders<a class="anchor-link right" href="#differences-in-encoders"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <p>Encoders in Spark&#39;s <code>Datasets</code> are partially type-safe. If you try to create a <code>Dataset</code> using  a type that is not 
+         a Scala <code>Product</code> then you get a compilation error:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>)</span></code></pre>
+        <p><code>Bar</code> is neither a case class nor a <code>Product</code>, so the following correctly gives a compilation error in Spark:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="keyword">new</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="number-literal">1</span><span>)))
+</span><span class="comment">// error: Unable to find encoder for type repl.MdocSession.App0.Bar. An implicit Encoder[repl.MdocSession.App0.Bar] is needed to store repl.MdocSession.App0.Bar instances in a Dataset. Primitive types (Int, String, etc) and Product types (case classes) are supported by importing spark.implicits._  Support for serializing other types will be added in future releases.
+// spark.createDataset(Seq(new Bar(1)))
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+        <p>However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
+        For example, using the following case class leads to a runtime failure:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">MyDate</span><span>(</span><span class="identifier">jday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)</span></code></pre>
+        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">myDateDs</span><span> = </span><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))))
+</span><span class="comment">// java.lang.UnsupportedOperationException: No Encoder found for java.util.Date
+// - field (class: &quot;java.util.Date&quot;, name: &quot;jday&quot;)
+// - root class: &quot;repl.MdocSession.App0.MyDate&quot;
+// 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1000)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:617)
+// 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$6(ScalaReflection.scala:604)
+// 	at scala.collection.immutable.List.map(List.scala:293)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:589)
+// 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerForType$1(ScalaReflection.scala:437)
+// 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerForType(ScalaReflection.scala:429)
+// 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:55)
+// 	at org.apache.spark.sql.Encoders$.product(Encoders.scala:300)
+// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:261)
+// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:261)
+// 	at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)
+// 	at repl.MdocSession$App0$$anonfun$41.apply$mcV$sp(TypedDatasetVsSparkDataset.md:151)
+// 	at repl.MdocSession$App0$$anonfun$41.apply(TypedDatasetVsSparkDataset.md:150)
+// 	at repl.MdocSession$App0$$anonfun$41.apply(TypedDatasetVsSparkDataset.md:150)</span></code></pre>
+        <p>In comparison, a TypedDataset will notify about the encoding problem at compile time: </p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))))
+</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.App0.MyDate]
+// TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+        
+        <h2 id="aggregate-vs-projected-columns" class="section">Aggregate vs Projected columns<a class="anchor-link right" href="#aggregate-vs-projected-columns"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <p>Spark&#39;s <code>Dataset</code> do not distinguish between columns created from aggregate operations, 
+        such as summing or averaging, and simple projections/selections. 
+        This is problematic when you start mixing the two.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="identifier">functions</span><span>.</span><span class="identifier">sum</span></code></pre>
+        <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">sum</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>), </span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>*</span><span class="number-literal">2</span><span>)
+</span><span class="comment">// org.apache.spark.sql.AnalysisException: grouping expressions sequence is empty, and &#39;i&#39; is not an aggregate function. Wrap &#39;(sum(i) AS `sum(i)`)&#39; in windowing function(s) or wrap &#39;i&#39; in first() (or first_value) if you don&#39;t care which value you get.;
+// Aggregate [sum(i#2063L) AS sum(i)#2204L, (i#2063L * cast(2 as bigint)) AS (i * 2)#2205L]
+// +- Relation [i#2063L,j#2064] parquet
+// 
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis(CheckAnalysis.scala:51)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis$(CheckAnalysis.scala:50)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.failAnalysis(Analyzer.scala:172)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:296)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$13(CheckAnalysis.scala:311)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$13$adapted(CheckAnalysis.scala:311)
+// 	at scala.collection.Iterator.foreach(Iterator.scala:943)
+// 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
+// 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
+// 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
+// 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
+// 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:311)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$13(CheckAnalysis.scala:311)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$13$adapted(CheckAnalysis.scala:311)
+// 	at scala.collection.Iterator.foreach(Iterator.scala:943)
+// 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
+// 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
+// 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
+// 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
+// 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:311)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$16(CheckAnalysis.scala:338)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$16$adapted(CheckAnalysis.scala:338)
+// 	at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)
+// 	at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)
+// 	at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:338)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:94)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:263)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:94)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:91)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:172)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:195)
+// 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:192)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:88)
+// 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:196)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:775)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:196)
+// 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:88)
+// 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:86)
+// 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:78)
+// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:775)
+// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:3734)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1454)
+// 	at repl.MdocSession$App0$$anonfun$44.apply(TypedDatasetVsSparkDataset.md:173)
+// 	at repl.MdocSession$App0$$anonfun$44.apply(TypedDatasetVsSparkDataset.md:173)</span></code></pre>
+        <p>In Frameless, mixing the two results in a compilation error.</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// To avoid confusing frameless&#39; sum with the standard Spark&#39;s sum
+</span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">functions</span><span>.</span><span class="identifier">aggregate</span><span>.{</span><span class="identifier">sum</span><span> =&gt; </span><span class="identifier">fsum</span><span>}</span></code></pre>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)))
+</span><span class="comment">// error: polymorphic expression cannot be instantiated to expected type;
+//  found   : [Out]frameless.TypedAggregate[repl.MdocSession.App0.Foo,Out]
+//  required: frameless.TypedColumn[repl.MdocSession.App0.Foo,?]
+// fds.select(fsum(fds(&#39;i)))
+//            ^^^^^^^^^^^^^</span></code></pre>
+        <p>As the error suggests, we expected a <code>TypedColumn</code> but we got a <code>TypedAggregate</code> instead. </p>
+        <p>Here is how you apply an aggregation method in Frameless: </p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">agg</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>))+</span><span class="number-literal">22</span><span>).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
+</span><span class="comment">// +-----+
+// |value|
+// +-----+
+// |  133|
+// +-----+
+//</span></code></pre>
+        <p>Similarly, mixing projections while aggregating does not make sense, and in Frameless
+        you get a compilation error.<br></p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">agg</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)), </span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
+</span><span class="comment">// error: polymorphic expression cannot be instantiated to expected type;
+//  found   : [A]frameless.TypedColumn[repl.MdocSession.App0.Foo,A]
+//  required: frameless.TypedAggregate[repl.MdocSession.App0.Foo,?]
+// fds.agg(fsum(fds(&#39;i)), fds(&#39;i)).show().run()
+//                        ^^^^^^^</span></code></pre>
+
+      </main>
+
     </div>
 
-    <div class="book-body">
-        
-            <div class="body-inner">
-                
-                    
-
-<div class="book-header" role="navigation">
-    
-
-    <!-- Title -->
-    <h1>
-        <i class="fa fa-circle-o-notch fa-spin"></i>
-        <a href="." >Comparing TypedDatasets with Spark's Datasets</a>
-    </h1>
-</div>
-
-
-
-
-                    <div class="page-wrapper" tabindex="-1" role="main">
-                        <div class="page-inner">
-                            
-<div id="book-search-results">
-    <div class="search-noresults">
-    
-                                <section class="normal markdown-section">
-                                
-                                <h1 id="comparing-typeddatasets-with-sparks-datasets">Comparing TypedDatasets with Spark&apos;s Datasets</h1>
-<p><strong>Goal:</strong>
-  This tutorial compares the standard Spark Datasets API with the one provided by
-  Frameless&apos; <code>TypedDataset</code>. It shows how <code>TypedDataset</code>s allow for an expressive and
-  type-safe api with no compromises on performance.</p>
-<p>For this tutorial we first create a simple dataset and save it on disk as a parquet file.
-<a href="https://parquet.apache.org/" target="_blank">Parquet</a> is a popular columnar format and well supported by Spark.
-It&apos;s important to note that when operating on parquet datasets, Spark knows that each column is stored
-separately, so if we only need a subset of the columns Spark will optimize for this and avoid reading
-the entire dataset. This is a rather simplistic view of how Spark and parquet work together but it
-will serve us well for the context of this discussion.</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> spark.implicits._
-<span class="hljs-comment">// import spark.implicits._</span>
-
-<span class="hljs-comment">// Our example case class Foo acting here as a schema</span>
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span>(<span class="hljs-params">i: <span class="hljs-type">Long</span>, j: <span class="hljs-type">String</span></span>)</span>
-<span class="hljs-comment">// defined class Foo</span>
-
-<span class="hljs-comment">// Assuming spark is loaded and SparkSession is bind to spark</span>
-<span class="hljs-keyword">val</span> initialDs = spark.createDataset( <span class="hljs-type">Foo</span>(<span class="hljs-number">1</span>, <span class="hljs-string">&quot;Q&quot;</span>) :: <span class="hljs-type">Foo</span>(<span class="hljs-number">10</span>, <span class="hljs-string">&quot;W&quot;</span>) :: <span class="hljs-type">Foo</span>(<span class="hljs-number">100</span>, <span class="hljs-string">&quot;E&quot;</span>) :: <span class="hljs-type">Nil</span> )
-<span class="hljs-comment">// initialDs: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]</span>
-
-<span class="hljs-comment">// Assuming you are on Linux or Mac OS</span>
-initialDs.write.parquet(<span class="hljs-string">&quot;/tmp/foo&quot;</span>)
-
-<span class="hljs-keyword">val</span> ds = spark.read.parquet(<span class="hljs-string">&quot;/tmp/foo&quot;</span>).as[<span class="hljs-type">Foo</span>]
-<span class="hljs-comment">// ds: org.apache.spark.sql.Dataset[Foo] = [i: bigint, j: string]</span>
-
-ds.show()
-<span class="hljs-comment">// +---+---+</span>
-<span class="hljs-comment">// |  i|  j|</span>
-<span class="hljs-comment">// +---+---+</span>
-<span class="hljs-comment">// |100|  E|</span>
-<span class="hljs-comment">// | 10|  W|</span>
-<span class="hljs-comment">// |  1|  Q|</span>
-<span class="hljs-comment">// +---+---+</span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
-Let&apos;s try to only use field <code>i</code> from Foo and see how Spark&apos;s Catalyst (the query optimizer)
-optimizes this.</p>
-<pre><code class="lang-scala"><span class="hljs-comment">// Using a standard Spark TypedColumn in select()</span>
-<span class="hljs-keyword">val</span> filteredDs = ds.filter($<span class="hljs-string">&quot;i&quot;</span> === <span class="hljs-number">10</span>).select($<span class="hljs-string">&quot;i&quot;</span>.as[<span class="hljs-type">Long</span>])
-<span class="hljs-comment">// filteredDs: org.apache.spark.sql.Dataset[Long] = [i: bigint]</span>
-
-filteredDs.show()
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// |  i|</span>
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">// | 10|</span>
-<span class="hljs-comment">// +---+</span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>The <code>filteredDs</code> is of type <code>Dataset[Long]</code>. Since we only access field <code>i</code> from <code>Foo</code> the type is correct.
-Unfortunately, this syntax requires handholding by explicitly setting the <code>TypedColumn</code> in the <code>select</code> statement
-to return type <code>Long</code> (look at the <code>as[Long]</code> statement). We will discuss this limitation next in more detail.
-Now, let&apos;s take a quick look at the optimized Physical Plan that Spark&apos;s Catalyst generated.</p>
-<pre><code class="lang-scala">filteredDs.explain()
-<span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *(1) Filter (isnotnull(i#23L) AND (i#23L = 10))</span>
-<span class="hljs-comment">// +- *(1) ColumnarToRow</span>
-<span class="hljs-comment">//    +- FileScan parquet [i#23L] Batched: true, DataFilters: [isnotnull(i#23L), (i#23L = 10)], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
-<span class="hljs-comment">// </span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>The last line is very important (see <code>ReadSchema</code>). The schema read
-from the parquet file only required reading column <code>i</code> without needing to access column <code>j</code>.
-This is great! We have both an optimized query plan and type-safety!</p>
-<p>Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
-a non existing column <code>x</code>:</p>
-<pre><code class="lang-scala">scala&gt; ds.filter($<span class="hljs-string">&quot;i&quot;</span> === <span class="hljs-number">10</span>).select($<span class="hljs-string">&quot;x&quot;</span>.as[<span class="hljs-type">Long</span>])
-org.apache.spark.sql.<span class="hljs-type">AnalysisException</span>: cannot resolve &apos;`x`&apos; given input columns: [i, j];
-<span class="hljs-symbol">&apos;Project</span> [<span class="hljs-symbol">&apos;x</span>]
-+- <span class="hljs-type">Filter</span> (i#<span class="hljs-number">23</span>L = cast(<span class="hljs-number">10</span> as bigint))
-   +- <span class="hljs-type">Relation</span>[i#<span class="hljs-number">23</span>L,j#<span class="hljs-number">24</span>] parquet
-
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-keyword">package</span>$<span class="hljs-type">AnalysisErrorAt</span>.failAnalysis(<span class="hljs-keyword">package</span>.scala:<span class="hljs-number">42</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$$nestedInanonfun$checkAnalysis$<span class="hljs-number">1</span>$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">155</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>$$anonfun$$nestedInanonfun$checkAnalysis$<span class="hljs-number">1</span>$<span class="hljs-number">2.</span>applyOrElse(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">152</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.$anonfun$transformUp$<span class="hljs-number">2</span>(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">341</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">73</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.transformUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">341</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$transformExpressionsUp$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">104</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">116</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">CurrentOrigin</span>$.withOrigin(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">73</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpression$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">116</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">127</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">3</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">132</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>.$anonfun$map$<span class="hljs-number">1</span>(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">285</span>)
-  at scala.collection.immutable.<span class="hljs-type">List</span>.foreach(<span class="hljs-type">List</span>.scala:<span class="hljs-number">431</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>.map(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">285</span>)
-  at scala.collection.<span class="hljs-type">TraversableLike</span>.map$(<span class="hljs-type">TraversableLike</span>.scala:<span class="hljs-number">278</span>)
-  at scala.collection.immutable.<span class="hljs-type">List</span>.map(<span class="hljs-type">List</span>.scala:<span class="hljs-number">305</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.recursiveTransform$<span class="hljs-number">1</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">132</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.$anonfun$mapExpressions$<span class="hljs-number">4</span>(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">137</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.mapProductIterator(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">243</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.mapExpressions(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">137</span>)
-  at org.apache.spark.sql.catalyst.plans.<span class="hljs-type">QueryPlan</span>.transformExpressionsUp(<span class="hljs-type">QueryPlan</span>.scala:<span class="hljs-number">104</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.$anonfun$checkAnalysis$<span class="hljs-number">1</span>(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">152</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.$anonfun$checkAnalysis$<span class="hljs-number">1</span>$adapted(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">93</span>)
-  at org.apache.spark.sql.catalyst.trees.<span class="hljs-type">TreeNode</span>.foreachUp(<span class="hljs-type">TreeNode</span>.scala:<span class="hljs-number">183</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.checkAnalysis(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">93</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">CheckAnalysis</span>.checkAnalysis$(<span class="hljs-type">CheckAnalysis</span>.scala:<span class="hljs-number">90</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.checkAnalysis(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">154</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.$anonfun$executeAndCheck$<span class="hljs-number">1</span>(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">175</span>)
-  at org.apache.spark.sql.catalyst.plans.logical.<span class="hljs-type">AnalysisHelper</span>$.markInAnalyzer(<span class="hljs-type">AnalysisHelper</span>.scala:<span class="hljs-number">228</span>)
-  at org.apache.spark.sql.catalyst.analysis.<span class="hljs-type">Analyzer</span>.executeAndCheck(<span class="hljs-type">Analyzer</span>.scala:<span class="hljs-number">172</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.$anonfun$analyzed$<span class="hljs-number">1</span>(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">73</span>)
-  at org.apache.spark.sql.catalyst.<span class="hljs-type">QueryPlanningTracker</span>.measurePhase(<span class="hljs-type">QueryPlanningTracker</span>.scala:<span class="hljs-number">111</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.$anonfun$executePhase$<span class="hljs-number">1</span>(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">143</span>)
-  at org.apache.spark.sql.<span class="hljs-type">SparkSession</span>.withActive(<span class="hljs-type">SparkSession</span>.scala:<span class="hljs-number">772</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.executePhase(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">143</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.analyzed$lzycompute(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">73</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.analyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">71</span>)
-  at org.apache.spark.sql.execution.<span class="hljs-type">QueryExecution</span>.assertAnalyzed(<span class="hljs-type">QueryExecution</span>.scala:<span class="hljs-number">63</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">210</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.&lt;init&gt;(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">216</span>)
-  at org.apache.spark.sql.<span class="hljs-type">Dataset</span>.select(<span class="hljs-type">Dataset</span>.scala:<span class="hljs-number">1517</span>)
-  ... <span class="hljs-number">42</span> elided
-</code></pre>
-<p>There are two things to improve here. First, we would want to avoid the <code>as[Long]</code> casting that we are required
-to type for type-safety. This is clearly an area where we may introduce a bug by casting to an incompatible
-type. Second, we want a solution where reference to a non existing column name fails at compilation time.
-The standard Spark Dataset can achieve this using the following syntax.</p>
-<pre><code class="lang-scala">ds.filter(_.i == <span class="hljs-number">10</span>).map(_.i).show()
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |value|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |   10|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>This looks great! It reminds us the familiar syntax from Scala.
-The two closures in filter and map are functions that operate on <code>Foo</code> and the
-compiler will helps us capture all the mistakes we mentioned above.</p>
-<pre><code class="lang-scala">scala&gt; ds.filter(_.i == <span class="hljs-number">10</span>).map(_.x).show()
-&lt;console&gt;:<span class="hljs-number">20</span>: error: value x is not a member of <span class="hljs-type">Foo</span>
-       ds.filter(_.i == <span class="hljs-number">10</span>).map(_.x).show()
-                                  ^
-</code></pre>
-<p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
-<pre><code class="lang-scala">ds.filter(_.i == <span class="hljs-number">10</span>).map(_.i).explain()
-<span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *(1) SerializeFromObject [input[0, bigint, false] AS value#74L]</span>
-<span class="hljs-comment">// +- *(1) MapElements &lt;function1&gt;, obj#73: bigint</span>
-<span class="hljs-comment">//    +- *(1) Filter &lt;function1&gt;.apply</span>
-<span class="hljs-comment">//       +- *(1) DeserializeToObject newInstance(class $line14.$read$$iw$$iw$$iw$$iw$Foo), obj#72: $line14.$read$$iw$$iw$$iw$$iw$Foo</span>
-<span class="hljs-comment">//          +- *(1) ColumnarToRow</span>
-<span class="hljs-comment">//             +- FileScan parquet [i#23L,j#24] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;</span>
-<span class="hljs-comment">// </span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
-Reading the parquet file will required loading all the fields of <code>Foo</code>. This might be ok for
-small datasets or for datasets with few columns, but will be extremely slow for most practical
-applications. Intuitively, Spark currently does not have a way to look inside the code we pass in these two
-closures. It only knows that they both take one argument of type <code>Foo</code>, but it has no way of knowing if
-we use just one or all of <code>Foo</code>&apos;s fields.</p>
-<p>The <code>TypedDataset</code> in Frameless solves this problem. It allows for a simple and type-safe syntax
-with a fully optimized query plan.</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> frameless.<span class="hljs-type">TypedDataset</span>
-<span class="hljs-comment">// import frameless.TypedDataset</span>
-
-<span class="hljs-keyword">import</span> frameless.syntax._
-<span class="hljs-comment">// import frameless.syntax._</span>
-
-<span class="hljs-keyword">val</span> fds = <span class="hljs-type">TypedDataset</span>.create(ds)
-<span class="hljs-comment">// fds: frameless.TypedDataset[Foo] = [i: bigint, j: string]</span>
-
-fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;i</span>)).show().run()
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |value|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |   10|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>And the optimized Physical Plan:</p>
-<pre><code class="lang-scala">fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;i</span>)).explain()
-<span class="hljs-comment">// == Physical Plan ==</span>
-<span class="hljs-comment">// *(1) Project [i#23L AS value#158L]</span>
-<span class="hljs-comment">// +- *(1) Filter (isnotnull(i#23L) AND (i#23L = 10))</span>
-<span class="hljs-comment">//    +- *(1) ColumnarToRow</span>
-<span class="hljs-comment">//       +- FileScan parquet [i#23L] Batched: true, DataFilters: [isnotnull(i#23L), (i#23L = 10)], Format: Parquet, Location: InMemoryFileIndex[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;</span>
-<span class="hljs-comment">// </span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>And the compiler is our friend.</p>
-<pre><code class="lang-scala">scala&gt; fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;x</span>))
-&lt;console&gt;:<span class="hljs-number">24</span>: error: <span class="hljs-type">No</span> column <span class="hljs-type">Symbol</span> <span class="hljs-keyword">with</span> shapeless.tag.<span class="hljs-type">Tagged</span>[<span class="hljs-type">String</span>(<span class="hljs-string">&quot;x&quot;</span>)] of <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">A</span> <span class="hljs-title">in</span> <span class="hljs-title">Foo</span></span>
-       fds.filter(fds(<span class="hljs-symbol">&apos;i</span>) === <span class="hljs-number">10</span>).select(fds(<span class="hljs-symbol">&apos;x</span>))
-                                            ^
-</code></pre>
-<h2 id="differences-in-encoders">Differences in Encoders</h2>
-<p>Encoders in Spark&apos;s <code>Datasets</code> are partially type-safe. If you try to create a <code>Dataset</code> using  a type that is not 
- a Scala <code>Product</code> then you get a compilation error:</p>
-<pre><code class="lang-scala"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span>(<span class="hljs-params">i: <span class="hljs-type">Int</span></span>)</span>
-<span class="hljs-comment">// defined class Bar</span>
-</code></pre>
-<p><code>Bar</code> is neither a case class nor a <code>Product</code>, so the following correctly gives a compilation error in Spark:</p>
-<pre><code class="lang-scala">scala&gt; spark.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-keyword">new</span> <span class="hljs-type">Bar</span>(<span class="hljs-number">1</span>)))
-&lt;console&gt;:<span class="hljs-number">24</span>: error: <span class="hljs-type">Unable</span> to find encoder <span class="hljs-keyword">for</span> <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Bar</span>. <span class="hljs-title">An</span> <span class="hljs-title">implicit</span> <span class="hljs-title">Encoder</span>[<span class="hljs-type">Bar</span>] <span class="hljs-title">is</span> <span class="hljs-title">needed</span> <span class="hljs-title">to</span> <span class="hljs-title">store</span> <span class="hljs-title">Bar</span> <span class="hljs-title">instances</span> <span class="hljs-title">in</span> <span class="hljs-title">a</span> <span class="hljs-title">Dataset</span>. <span class="hljs-title">Primitive</span> <span class="hljs-title">types</span> (<span class="hljs-params"><span class="hljs-type">Int</span>, <span class="hljs-type">String</span>, etc</span>) <span class="hljs-title">and</span> <span class="hljs-title">Product</span> <span class="hljs-title">types</span> (<span class="hljs-params">case classes</span>) <span class="hljs-title">are</span> <span class="hljs-title">supported</span> <span class="hljs-title">by</span> <span class="hljs-title">importing</span> <span class="hljs-title">spark</span>.<span class="hljs-title">implicits</span>.<span class="hljs-title">_</span>  <span class="hljs-title">Support</span> <span class="hljs-title">for</span> <span class="hljs-title">serializing</span> <span class="hljs-title">other</span> <span class="hljs-title">types</span> <span class="hljs-title">will</span> <span class="hljs-title">be</span> <span class="hljs-title">added</span> <span class="hljs-title">in</span> <span class="hljs-title">future</span> <span class="hljs-title">releases</span>.</span>
-       spark.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-keyword">new</span> <span class="hljs-type">Bar</span>(<span class="hljs-number">1</span>)))
-                          ^
-</code></pre>
-<p>However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
-For example, using the following case class leads to a runtime failure:</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyDate</span>(<span class="hljs-params">jday: java.util.<span class="hljs-type">Date</span></span>)</span>
-<span class="hljs-comment">// defined class MyDate</span>
-</code></pre>
-<pre><code class="lang-scala"><span class="hljs-keyword">val</span> myDateDs = spark.createDataset(<span class="hljs-type">Seq</span>(<span class="hljs-type">MyDate</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>(<span class="hljs-type">System</span>.currentTimeMillis))))
-<span class="hljs-comment">// java.lang.UnsupportedOperationException: No Encoder found for java.util.Date</span>
-<span class="hljs-comment">// - field (class: &quot;java.util.Date&quot;, name: &quot;jday&quot;)</span>
-<span class="hljs-comment">// - root class: &quot;MyDate&quot;</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:591)</span>
-<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:432)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$6(ScalaReflection.scala:577)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.map(List.scala:293)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:562)</span>
-<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:432)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerForType$1(ScalaReflection.scala:421)</span>
-<span class="hljs-comment">//   at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:904)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:903)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:49)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.ScalaReflection$.serializerForType(ScalaReflection.scala:413)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:56)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Encoders$.product(Encoders.scala:285)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:251)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:251)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)</span>
-<span class="hljs-comment">//   ... 42 elided</span>
-</code></pre>
-<p>In comparison, a TypedDataset will notify about the encoding problem at compile time: </p>
-<pre><code class="lang-scala"><span class="hljs-type">TypedDataset</span>.create(<span class="hljs-type">Seq</span>(<span class="hljs-type">MyDate</span>(<span class="hljs-keyword">new</span> java.util.<span class="hljs-type">Date</span>(<span class="hljs-type">System</span>.currentTimeMillis))))
-<span class="hljs-comment">// &lt;console&gt;:25: error: could not find implicit value for parameter encoder: frameless.TypedEncoder[MyDate]</span>
-<span class="hljs-comment">//        TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))</span>
-<span class="hljs-comment">//                           ^</span>
-</code></pre>
-<h2 id="aggregate-vs-projected-columns">Aggregate vs Projected columns</h2>
-<p>Spark&apos;s <code>Dataset</code> do not distinguish between columns created from aggregate operations, 
-such as summing or averaging, and simple projections/selections. 
-This is problematic when you start mixing the two.</p>
-<pre><code class="lang-scala"><span class="hljs-keyword">import</span> org.apache.spark.sql.functions.sum
-<span class="hljs-comment">// import org.apache.spark.sql.functions.sum</span>
-</code></pre>
-<pre><code class="lang-scala">ds.select(sum($<span class="hljs-string">&quot;i&quot;</span>), $<span class="hljs-string">&quot;i&quot;</span>*<span class="hljs-number">2</span>)
-<span class="hljs-comment">// org.apache.spark.sql.AnalysisException: grouping expressions sequence is empty, and &apos;`i`&apos; is not an aggregate function. Wrap &apos;(sum(`i`) AS `sum(i)`)&apos; in windowing function(s) or wrap &apos;`i`&apos; in first() (or first_value) if you don&apos;t care which value you get.;</span>
-<span class="hljs-comment">// Aggregate [sum(i#23L) AS sum(i)#164L, (i#23L * cast(2 as bigint)) AS (i * 2)#165L]</span>
-<span class="hljs-comment">// +- Relation[i#23L,j#24] parquet</span>
-<span class="hljs-comment">// </span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis(CheckAnalysis.scala:50)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis$(CheckAnalysis.scala:49)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.failAnalysis(Analyzer.scala:154)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:263)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12$adapted(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:431)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$12$adapted(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at scala.collection.immutable.List.foreach(List.scala:431)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:272)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$15(CheckAnalysis.scala:299)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$15$adapted(CheckAnalysis.scala:299)</span>
-<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)</span>
-<span class="hljs-comment">//   at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)</span>
-<span class="hljs-comment">//   at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:299)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:93)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:183)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:93)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:90)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:154)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:175)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:228)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:172)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:73)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:143)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:772)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:143)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:73)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:71)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:63)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:772)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:3715)</span>
-<span class="hljs-comment">//   at org.apache.spark.sql.Dataset.select(Dataset.scala:1462)</span>
-<span class="hljs-comment">//   ... 42 elided</span>
-</code></pre>
-<p>In Frameless, mixing the two results in a compilation error.</p>
-<pre><code class="lang-scala"><span class="hljs-comment">// To avoid confusing frameless&apos; sum with the standard Spark&apos;s sum</span>
-<span class="hljs-keyword">import</span> frameless.functions.aggregate.{sum =&gt; fsum}
-<span class="hljs-comment">// import frameless.functions.aggregate.{sum=&gt;fsum}</span>
-</code></pre>
-<pre><code class="lang-scala">fds.select(fsum(fds(<span class="hljs-symbol">&apos;i</span>)))
-<span class="hljs-comment">// &lt;console&gt;:26: error: polymorphic expression cannot be instantiated to expected type;</span>
-<span class="hljs-comment">//  found   : [Out]frameless.TypedAggregate[Foo,Out]</span>
-<span class="hljs-comment">//  required: frameless.TypedColumn[Foo,?]</span>
-<span class="hljs-comment">//        fds.select(fsum(fds(&apos;i)))</span>
-<span class="hljs-comment">//                       ^</span>
-</code></pre>
-<p>As the error suggests, we expected a <code>TypedColumn</code> but we got a <code>TypedAggregate</code> instead. </p>
-<p>Here is how you apply an aggregation method in Frameless: </p>
-<pre><code class="lang-scala">fds.agg(fsum(fds(<span class="hljs-symbol">&apos;i</span>))+<span class="hljs-number">22</span>).show().run()
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |value|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">// |  133|</span>
-<span class="hljs-comment">// +-----+</span>
-<span class="hljs-comment">//</span>
-</code></pre>
-<p>Similarly, mixing projections while aggregating does not make sense, and in Frameless
-you get a compilation error.  </p>
-<pre><code class="lang-scala">fds.agg(fsum(fds(<span class="hljs-symbol">&apos;i</span>)), fds(<span class="hljs-symbol">&apos;i</span>)).show().run()
-<span class="hljs-comment">// &lt;console&gt;:26: error: polymorphic expression cannot be instantiated to expected type;</span>
-<span class="hljs-comment">//  found   : [A]frameless.TypedColumn[Foo,A]</span>
-<span class="hljs-comment">//  required: frameless.TypedAggregate[Foo,?]</span>
-<span class="hljs-comment">//        fds.agg(fsum(fds(&apos;i)), fds(&apos;i)).show().run()</span>
-<span class="hljs-comment">//                                  ^</span>
-</code></pre>
-
-                                
-                                </section>
-                            
-    </div>
-    <div class="search-results">
-        <div class="has-results">
-            
-            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
-            <ul class="search-results-list"></ul>
-            
-        </div>
-        <div class="no-results">
-            
-            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
-            
-        </div>
-    </div>
-</div>
-
-                        </div>
-                    </div>
-                
-            </div>
-
-            
-                
-                <a href="FeatureOverview.html" class="navigation navigation-prev " aria-label="Previous page: TypedDataset: Feature Overview">
-                    <i class="fa fa-angle-left"></i>
-                </a>
-                
-                
-                <a href="TypedEncoder.html" class="navigation navigation-next " aria-label="Next page: Typed Encoders in Frameless">
-                    <i class="fa fa-angle-right"></i>
-                </a>
-                
-            
-        
-    </div>
-
-    <script>
-        var gitbook = gitbook || [];
-        gitbook.push(function() {
-            gitbook.page.hasChanged({"page":{"title":"Comparing TypedDatasets with Spark's Datasets","level":"1.3","depth":1,"next":{"title":"Typed Encoders in Frameless","level":"1.4","depth":1,"path":"TypedEncoder.md","ref":"TypedEncoder.md","articles":[]},"previous":{"title":"TypedDataset: Feature Overview","level":"1.2","depth":1,"path":"FeatureOverview.md","ref":"FeatureOverview.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":[],"pluginsConfig":{"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"sharing":{"facebook":true,"twitter":true,"google":false,"weibo":false,"instapaper":false,"vk":false,"all":["facebook","google","twitter","weibo","instapaper"]},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56}},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"TypedDatasetVsSparkDataset.md","mtime":"2021-01-20T04:28:44.110Z","type":"markdown"},"gitbook":{"version":"3.2.2","time":"2021-01-20T04:29:45.388Z"},"basePath":".","book":{"language":""}});
-        });
-    </script>
-</div>
-
-        
-    <script src="gitbook/gitbook.js"></script>
-    <script src="gitbook/theme.js"></script>
-    
-        
-        <script src="gitbook/gitbook-plugin-search/search-engine.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-search/search.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-sharing/buttons.js"></script>
-        
-    
-        
-        <script src="gitbook/gitbook-plugin-fontsettings/fontsettings.js"></script>
-        
-    
-
-    </body>
+  </body>
 </html>
-
