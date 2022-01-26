@@ -358,3 +358,16 @@ ThisBuild / githubWorkflowBuildPostamble ++= Seq(
     name = Some("Upload Codecov Results")
   )
 )
+
+def crossCommand(command: String) =
+  List(s"++$Scala212", s"root/$command", s"++$Scala213", s"root-spark32/$command")
+
+tlReplaceCommandAlias(
+  "tlReleaseLocal",
+  ("reload" :: crossCommand("publishLocal")).mkString("; ")
+)
+
+tlReplaceCommandAlias(
+  "tlRelease",
+  ("reload" :: crossCommand("mimaReportBinaryIssues") ::: crossCommand("publish") ::: List("tlSonatypeBundleReleaseIfRelevant")).mkString("; ")
+)
