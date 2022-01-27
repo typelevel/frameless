@@ -1,78 +1,45 @@
-val sparkVersion = "3.2.0"
+val sparkVersion = "3.2.1"
 val spark31Version = "3.1.2"
-val spark30Version = "3.0.1"
-val catsCoreVersion = "2.7.0"
+val spark30Version = "3.0.3"
+val catsCoreVersion = "2.6.1"
 val catsEffectVersion = "2.4.0"
 val catsMtlVersion = "0.7.1"
-val scalatest = "3.2.10"
+val scalatest = "3.2.11"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
-val refinedVersion = "0.9.27"
+val refinedVersion = "0.9.28"
 
 val Scala212 = "2.12.15"
-val Scala213 = "2.13.7"
+val Scala213 = "2.13.8"
 
-val previousVersion = "0.10.1"
+ThisBuild / tlBaseVersion := "0.11"
 
-/** A list of projects that can be safely compiled across Scala versions. */
-val projectsCrossVersion = "core" :: "cats" :: "dataset" :: "refined" :: "ml" :: Nil
-val projectsSpark31 = projectsCrossVersion.head :: projectsCrossVersion.tail.map(_ + "-spark31")
-val projectsSpark30 = projectsCrossVersion.head :: projectsCrossVersion.tail.map(_ + "-spark30")
-
-ThisBuild / versionScheme := Some("semver-spec")
-
-ThisBuild / crossScalaVersions := Seq(Scala212, Scala213)
+ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
 
-ThisBuild / mimaFailOnNoPrevious := false
+lazy val root = project.in(file("."))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(`root-spark32`, `root-spark31`, `root-spark30`, docs)
 
-lazy val root = Project("frameless", file("." + "frameless")).in(file("."))
-  .aggregate(
-    core,
-    cats,
-    `cats-spark31`,
-    `cats-spark30`,
-    dataset,
-    `dataset-spark31`,
-    `dataset-spark30`,
-    refined,
-    `refined-spark31`,
-    `refined-spark30`,
-    ml,
-    `ml-spark31`,
-    `ml-spark30`,
-    docs
-  )
-  .settings(framelessSettings)
-  .settings(noPublishSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
-  .settings(
-    /** Not all Spark versions support Scala 2.13. These commands are launched for the supported subset of projects only. */
-    commands ++= Seq(
-      // run tests separately for different Spark versions to reduce pressure on CI
-      command("frameless-test")(projectsCrossVersion.map(_ + "/test") ::: projectsCrossVersion.map(_ + "/test/coverageReport")).value,
-      command212("frameless-test-spark31")(projectsSpark31.map(_ + "/test") ::: projectsSpark31.map(_ + "/test/coverageReport")).value,
-      command212("frameless-test-spark30")(projectsSpark30.map(_ + "/test") ::: projectsSpark30.map(_ + "/test/coverageReport")).value,
-      commandCrossVersion("frameless-mimaReportBinaryIssues")(projectsCrossVersion.map(_ + "/mimaReportBinaryIssues"), "mimaReportBinaryIssues" :: Nil).value,
-      commandCrossVersion("frameless-publish")(projectsCrossVersion.map(_ + "/publish"), "publish" :: Nil).value,
-      commandCrossVersion("frameless-publishSigned")(projectsCrossVersion.map(_ + "/publishSigned"), "publishSigned" :: Nil).value,
-    )
-  )
+lazy val `root-spark32` = project
+  .in(file(".spark32"))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(core, cats, dataset, refined, ml)
 
-def command(name: String)(commands: List[String]) = commandCrossVersion(name)(commands, commands)
-def command212(name: String)(commands212: List[String]) = commandCrossVersion(name)(Nil, commands212)
-def commandCrossVersion(name: String)(commands213: List[String], commands212: List[String]) = Def.setting { Command.command(name) { currentState =>
-  CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => commands213 ::: currentState
-    case _ => commands212 ::: currentState
-  }
-} }
+lazy val `root-spark31` = project
+  .in(file(".spark31"))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(core, `cats-spark31`, `dataset-spark31`, `refined-spark31`, `ml-spark31`)
+
+lazy val `root-spark30` = project
+  .in(file(".spark30"))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(core, `cats-spark30`, `dataset-spark30`, `refined-spark30`, `ml-spark30`)
 
 lazy val core = project
   .settings(name := "frameless-core")
   .settings(framelessSettings)
-  .settings(publishSettings)
 
 lazy val cats = project
   .settings(name := "frameless-cats")
@@ -83,14 +50,14 @@ lazy val `cats-spark31` = project
   .settings(name := "frameless-cats-spark31")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
   .settings(catsSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `cats-spark30` = project
   .settings(name := "frameless-cats-spark30")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
   .settings(catsSettings)
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val dataset = project
@@ -104,7 +71,7 @@ lazy val `dataset-spark31` = project
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark31Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark30` = project
@@ -112,7 +79,7 @@ lazy val `dataset-spark30` = project
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(datasetSettings)
   .settings(sparkDependencies(spark30Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val refined = project
@@ -124,12 +91,14 @@ lazy val `refined-spark31` = project
   .settings(name := "frameless-refined-spark31")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
   .settings(refinedSettings)
+  .settings(spark31Settings)
   .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val `refined-spark30` = project
   .settings(name := "frameless-refined-spark30")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
   .settings(refinedSettings)
+  .settings(spark30Settings)
   .dependsOn(`dataset-spark30` % "test->test;compile->compile;provided->provided")
 
 lazy val ml = project
@@ -146,7 +115,7 @@ lazy val `ml-spark31` = project
   .settings(sourceDirectory := (ml / sourceDirectory).value)
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark31Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark31Settings)
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark31` % "test->test;compile->compile;provided->provided"
@@ -157,7 +126,7 @@ lazy val `ml-spark30` = project
   .settings(sourceDirectory := (ml / sourceDirectory).value)
   .settings(mlSettings)
   .settings(sparkMlDependencies(spark30Version))
-  .settings(mimaPreviousArtifacts := Set.empty)
+  .settings(spark30Settings)
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark30` % "test->test;compile->compile;provided->provided"
@@ -166,16 +135,14 @@ lazy val `ml-spark30` = project
 lazy val docs = project
   .in(file("mdocs"))
   .settings(framelessSettings)
-  .settings(noPublishSettings)
   .settings(scalacOptions --= Seq("-Xfatal-warnings", "-Ywarn-unused-import"))
-  .enablePlugins(MdocPlugin)
+  .enablePlugins(TypelevelSitePlugin)
   .settings(sparkDependencies(sparkVersion, Compile))
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
     scalacOptions += "-Ydelambdafy:inline"
   )
-  .settings(mimaPreviousArtifacts := Set())
   .dependsOn(dataset, cats, ml)
 
 def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = Seq(
@@ -188,7 +155,7 @@ def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = S
 def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
   Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
 
-lazy val catsSettings = framelessSettings ++ publishSettings ++ Seq(
+lazy val catsSettings = framelessSettings ++ Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core"      % catsCoreVersion,
@@ -198,7 +165,7 @@ lazy val catsSettings = framelessSettings ++ publishSettings ++ Seq(
   )
 )
 
-lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings ++ Seq(
+lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
   mimaBinaryIssueFilters ++= {
     import com.typesafe.tools.mima.core._
 
@@ -219,12 +186,11 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ pub
   }
 )
 
-lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings ++ Seq(
-  mimaPreviousArtifacts := Set.empty,
+lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
   libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
 )
 
-lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL ++ publishSettings
+lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL
 
 lazy val scalac212Options = Seq(
   "-Xlint:-missing-interpolator,-unused,_",
@@ -272,10 +238,7 @@ lazy val scalacOptionSettings = Def.setting {
 }
 
 lazy val framelessSettings = Seq(
-  organization := "org.typelevel",
   scalacOptions ++= scalacOptionSettings.value,
-  licenses += ("Apache-2.0", url("http://opensource.org/licenses/Apache-2.0")),
-  homepage := Some(url("https://typelevel.org/frameless")),
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
@@ -286,13 +249,18 @@ lazy val framelessSettings = Seq(
   Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
   Test / fork := true,
   Test / parallelExecution := false,
-  mimaPreviousArtifacts := Def.setting {
-    CrossVersion.partialVersion(scalaVersion.value) match {
-    // TODO: remove once 2.13 artifacts published
-    case Some((2, 13)) => Set.empty[ModuleID]
-    case _             => Set("org.typelevel" %% name.value % previousVersion)
-  } }.value
+  mimaPreviousArtifacts ~= {
+    _.filterNot(_.revision == "0.11.0") // didn't release properly
+  },
 ) ++ consoleSettings
+
+lazy val spark30Settings = Seq(
+  crossScalaVersions := Seq(Scala212)
+)
+
+lazy val spark31Settings = Seq(
+  crossScalaVersions := Seq(Scala212)
+)
 
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
@@ -326,32 +294,75 @@ lazy val framelessTypedDatasetREPL = Seq(
     """.stripMargin
 )
 
-lazy val publishSettings = Seq(
-  Test / publishArtifact := false,
-  ThisBuild / developers := List(
-    "OlivierBlanvillain" -> "Olivier Blanvillain",
-    "adelbertc" -> "Adelbert Chang",
-    "imarios" -> "Marios Iliofotou",
-    "kanterov" -> "Gleb Kanterov",
-    "non" -> "Erik Osheim",
-    "jeremyrsmith" -> "Jeremy Smith",
-    "cchantep" -> "Cédric Chantepie",
-    "pomadchin" -> "Grigory Pomadchin"
-  ).map { case (username, fullName) =>
-    Developer(username, fullName, s"@$username", url(s"https://github.com/$username"))
-  }
-)
-
-lazy val noPublishSettings = Seq(
-  publish := (()),
-  publishLocal := (()),
-  publishArtifact := false
-)
-
-lazy val copyReadme = taskKey[Unit]("copy for website generation")
-lazy val copyReadmeImpl = Def.task {
-  val from = baseDirectory.value / "README.md"
-  val to   = baseDirectory.value / "docs" / "src" / "main" / "tut" / "README.md"
-  sbt.IO.copy(List((from, to)), overwrite = true, preserveLastModified = true, preserveExecutable = true)
+ThisBuild / organization := "org.typelevel"
+ThisBuild / licenses := List("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
+ThisBuild / developers := List(
+  "OlivierBlanvillain" -> "Olivier Blanvillain",
+  "adelbertc" -> "Adelbert Chang",
+  "imarios" -> "Marios Iliofotou",
+  "kanterov" -> "Gleb Kanterov",
+  "non" -> "Erik Osheim",
+  "jeremyrsmith" -> "Jeremy Smith",
+  "cchantep" -> "Cédric Chantepie",
+  "pomadchin" -> "Grigory Pomadchin"
+).map { case (username, fullName) =>
+  tlGitHubDev(username, fullName)
 }
-copyReadme := copyReadmeImpl.value
+
+ThisBuild / tlCiReleaseBranches := Seq("master")
+ThisBuild / tlSitePublishBranch := Some("master")
+
+ThisBuild / githubWorkflowEnv += "SPARK_LOCAL_IP" -> "localhost"
+ThisBuild / githubWorkflowBuildPreamble ++= Seq(
+  WorkflowStep.Use(
+    UseRef.Public("actions", "setup-python", "v2"),
+    name = Some("Setup Python"),
+    params = Map(
+      "python-version" -> "3.x"
+    )
+  ),
+  WorkflowStep.Run(
+    List("pip install codecov"),
+    name = Some("Setup codecov")
+  )
+)
+
+val roots = List("root-spark30", "root-spark31", "root-spark32")
+ThisBuild / githubWorkflowBuildMatrixAdditions +=
+  "project" -> roots
+ThisBuild / githubWorkflowArtifactDownloadExtraKeys += "project"
+ThisBuild / githubWorkflowBuildSbtStepPreamble += s"project $${{ matrix.project }}"
+ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
+  MatrixExclude(Map("scala" -> Scala213, "project" -> project))
+}
+
+ThisBuild / githubWorkflowBuild ~= { steps =>
+  steps.map { // replace the test step
+    case _ @ WorkflowStep.Sbt(List("test"), _, _, _, _, _) =>
+      WorkflowStep.Sbt(
+        List("coverage", "test", "test/coverageReport"),
+        name = Some("Test & Compute Coverage")
+      )
+    case step => step
+  }
+}
+
+ThisBuild / githubWorkflowBuildPostamble ++= Seq(
+  WorkflowStep.Run(
+    List(s"codecov -F $${{ matrix.scala }}"),
+    name = Some("Upload Codecov Results")
+  )
+)
+
+def crossCommand(command: String) =
+  List(s"++$Scala212", s"root/$command", s"++$Scala213", s"root-spark32/$command")
+
+tlReplaceCommandAlias(
+  "tlReleaseLocal",
+  ("reload" :: crossCommand("publishLocal")).mkString("; ")
+)
+
+tlReplaceCommandAlias(
+  "tlRelease",
+  ("reload" :: crossCommand("mimaReportBinaryIssues") ::: crossCommand("publish") ::: List("tlSonatypeBundleReleaseIfRelevant")).mkString("; ")
+)
