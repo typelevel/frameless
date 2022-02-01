@@ -6,6 +6,7 @@ import _root_.cats.effect.IO
 import frameless.{ TypedDataset, TypedDatasetSuite, TypedEncoder, X2 }
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop, Prop._
+import _root_.cats.effect.unsafe.implicits.global
 
 class FramelessSyntaxTests extends TypedDatasetSuite {
   override val sparkDelay = null
