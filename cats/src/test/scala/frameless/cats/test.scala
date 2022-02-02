@@ -2,7 +2,7 @@ package frameless
 package cats
 
 import _root_.cats.Foldable
-import _root_.cats.implicits._
+import _root_.cats.syntax.all._
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession

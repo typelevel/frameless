@@ -6,10 +6,10 @@
 [![Maven Badge](https://img.shields.io/maven-central/v/org.typelevel/frameless-core_2.12?color=blue)](https://search.maven.org/search?q=g:org.typelevel%20and%20frameless)
 [![Snapshots Badge](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.typelevel/frameless-core_2.12)](https://oss.sonatype.org/content/repositories/snapshots/org/typelevel/)
 
-Frameless is a Scala library for working with [Spark](http://spark.apache.org/) using more expressive types. 
+Frameless is a Scala library for working with [Spark](http://spark.apache.org/) using more expressive types.
 It consists of the following modules:
 
-* `frameless-dataset` for a more strongly typed `Dataset`/`DataFrame` API   
+* `frameless-dataset` for a more strongly typed `Dataset`/`DataFrame` API
 * `frameless-ml` for a more strongly typed Spark ML API based on `frameless-dataset`
 * `frameless-cats` for using Spark's `RDD` API with [cats](https://github.com/typelevel/cats)
 
@@ -20,11 +20,10 @@ The Frameless project and contributors support the
 [Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
 associated channels (e.g. GitHub, Discord) to be a safe and friendly environment for contributing and learning.
 
-
 ## Versions and dependencies
 
-The compatible versions of [Spark](http://spark.apache.org/) and 
-[cats](https://github.com/typelevel/cats) are as follows:   
+The compatible versions of [Spark](http://spark.apache.org/) and
+[cats](https://github.com/typelevel/cats) are as follows:
 
 | Frameless | Spark | Cats     | Cats-Effect | Scala
 | --------- | ----- | -------- | ----------- | ---
@@ -38,10 +37,12 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 | 0.10.1    | 3.1.0 | 2.x      | 2.x         | 2.12
 | 0.11.0*    | 3.2.0 / 3.1.2 / 3.0.1| 2.x      | 2.x         | 2.12 / 2.13
 | 0.11.1    | 3.2.0 / 3.1.2 / 3.0.1 | 2.x      | 2.x         | 2.12 / 2.13
+| 0.12.0    | 3.2.0 / 3.1.2 / 3.0.1 | 2.x      | 3.x         | 2.12 / 2.13
 
 _\* 0.11.0 has broken Spark 3.1.2 and 3.0.1 artifacts published._
 
-Starting 0.11 we introduced Spark cross published artifacts: 
+Starting 0.11 we introduced Spark cross published artifacts:
+
 * By default, frameless artifacts depend on the most recent Spark version
 * Suffix `-spark{major}{minor}` is added to artifacts that are released for the previous Spark version(s)
 
@@ -51,35 +52,35 @@ Artifact names examples:
 * `frameless-dataset-spark31` (Spark 3.1.x dependency)
 * `frameless-dataset-spark30` (Spark 3.0.x dependency)
 
-Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. 
+Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0.
 
-The **only** dependency of the `frameless-dataset` module is on [shapeless](https://github.com/milessabin/shapeless) 2.3.2. 
-Therefore, depending on `frameless-dataset`, has a minimal overhead on your Spark's application jar. 
-Only the `frameless-cats` module depends on cats and cats-effect, so if you prefer to work just with `Datasets` and not with `RDD`s, 
-you may choose not to depend on `frameless-cats`. 
+The **only** dependency of the `frameless-dataset` module is on [shapeless](https://github.com/milessabin/shapeless) 2.3.2.
+Therefore, depending on `frameless-dataset`, has a minimal overhead on your Spark's application jar.
+Only the `frameless-cats` module depends on cats and cats-effect, so if you prefer to work just with `Datasets` and not with `RDD`s,
+you may choose not to depend on `frameless-cats`.
 
-Frameless intentionally **does not** have a compile dependency on Spark. 
-This essentially allows you to use any version of Frameless with any version of Spark. 
-The aforementioned table simply provides the versions of Spark we officially compile 
-and test Frameless with, but other versions may probably work as well. 
+Frameless intentionally **does not** have a compile dependency on Spark.
+This essentially allows you to use any version of Frameless with any version of Spark.
+The aforementioned table simply provides the versions of Spark we officially compile
+and test Frameless with, but other versions may probably work as well.
 
-### Breaking changes in 0.9 
+### Breaking changes in 0.9
 
-* Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame's is now ["value"](https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270) not "_1".  
+* Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame's is now ["value"](https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270) not "_1".
 
 ## Why?
 
-Frameless introduces a new Spark API, called `TypedDataset`. 
+Frameless introduces a new Spark API, called `TypedDataset`.
 The benefits of using `TypedDataset` compared to the standard Spark `Dataset` API are as follows:
 
 * Typesafe columns referencing (e.g., no more runtime errors when accessing non-existing columns)
-* Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile) 
-* Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you 
+* Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile)
+* Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you
 get a compilation error)
 * Typesafe casting and projections
 
-Click [here](http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html) for a 
-detailed comparison of `TypedDataset` with Spark's `Dataset` API. 
+Click [here](http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html) for a
+detailed comparison of `TypedDataset` with Spark's `Dataset` API.
 
 ## Documentation
 
@@ -93,6 +94,7 @@ detailed comparison of `TypedDataset` with Spark's `Dataset` API.
 * [Proof of Concept: TypedDataFrame](http://typelevel.org/frameless/TypedDataFrame.html)
 
 ## Quick Start
+
 Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.
 
 To use Frameless in your project add the following in your `build.sbt` file as needed:
@@ -103,17 +105,18 @@ val framelessVersion = "0.9.0" // for Spark 3.0.0
 libraryDependencies ++= List(
   "org.typelevel" %% "frameless-dataset" % framelessVersion,
   "org.typelevel" %% "frameless-ml"      % framelessVersion,
-  "org.typelevel" %% "frameless-cats"    % framelessVersion  
+  "org.typelevel" %% "frameless-cats"    % framelessVersion
 )
 ```
 
 An easy way to bootstrap a Frameless sbt project:
 
-- if you have [Giter8][g8] installed then simply:
+* if you have [Giter8][g8] installed then simply:
 
 ```bash
 g8 imarios/frameless.g8
 ```
+
 - with sbt >= 0.13.13:
 
 ```bash
@@ -125,12 +128,12 @@ and all its dependencies loaded (including Spark).
 
 ## Need help?
 
-Feel free to messages us on our [discord](https://discord.gg/ZDZsxWcBJt) 
+Feel free to messages us on our [discord](https://discord.gg/ZDZsxWcBJt)
 channel for any issues/questions.
 
-
 ## Development
-We require at least *one* sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
+
+We require at least _one_ sign-off (thumbs-up, +1, or similar) to merge pull requests. The current maintainers
 (people who can merge pull requests) are:
 
 * [adelbertc](https://github.com/adelbertc)
@@ -151,7 +154,8 @@ be set to adjust the size of generated collections in the `TypedDataSet` suite:
 | FRAMELESS_GEN_SIZE_RANGE    |      20 |
 
 ## License
-Code is provided under the Apache 2.0 license available at http://opensource.org/licenses/Apache-2.0,
+
+Code is provided under the Apache 2.0 license available at <http://opensource.org/licenses/Apache-2.0>,
 as well as in the LICENSE file. This is the same license used as Spark.
 
 [g8]: http://www.foundweekends.org/giter8/

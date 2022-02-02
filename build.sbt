@@ -2,8 +2,8 @@ val sparkVersion = "3.2.1"
 val spark31Version = "3.1.3"
 val spark30Version = "3.0.3"
 val catsCoreVersion = "2.7.0"
-val catsEffectVersion = "2.4.0"
-val catsMtlVersion = "0.7.1"
+val catsEffectVersion = "3.3.5"
+val catsMtlVersion = "1.2.0"
 val scalatest = "3.2.11"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
@@ -13,7 +13,7 @@ val refinedVersion = "0.9.28"
 val Scala212 = "2.12.15"
 val Scala213 = "2.13.8"
 
-ThisBuild / tlBaseVersion := "0.11"
+ThisBuild / tlBaseVersion := "0.12"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
@@ -162,7 +162,7 @@ lazy val catsSettings = framelessSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core"      % catsCoreVersion,
     "org.typelevel" %% "cats-effect"    % catsEffectVersion,
-    "org.typelevel" %% "cats-mtl-core"  % catsMtlVersion,
+    "org.typelevel" %% "cats-mtl"       % catsMtlVersion,
     "org.typelevel" %% "alleycats-core" % catsCoreVersion
   )
 )
