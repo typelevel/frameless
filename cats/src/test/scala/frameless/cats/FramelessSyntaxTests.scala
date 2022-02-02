@@ -3,9 +3,11 @@ package cats
 
 import _root_.cats.data.ReaderT
 import _root_.cats.effect.IO
+import _root_.cats.effect.unsafe.implicits.global
 import frameless.{ TypedDataset, TypedDatasetSuite, TypedEncoder, X2 }
 import org.apache.spark.sql.SparkSession
 import org.scalacheck.Prop, Prop._
+
 
 class FramelessSyntaxTests extends TypedDatasetSuite {
   override val sparkDelay = null
@@ -30,8 +32,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
 
   test("properties can be read back") {
     import implicits._
-    import _root_.cats.implicits._
-    import _root_.cats.mtl.implicits._
+    import _root_.cats.syntax.all._
 
     check {
       forAll { (k:String, v: String) =>

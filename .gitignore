@@ -32,3 +32,5 @@ node_modules
 .history
 .metals
 .vscode
+.bloop
+metals.sbt
