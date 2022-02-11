@@ -17,6 +17,8 @@ ThisBuild / tlBaseVersion := "0.11"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
+ThisBuild / tlSkipIrrelevantScalas := true
+ThisBuild / githubWorkflowArtifactUpload := false // doesn't work with scoverage
 
 lazy val root = project.in(file("."))
   .enablePlugins(NoPublishPlugin)
@@ -352,17 +354,4 @@ ThisBuild / githubWorkflowBuildPostamble ++= Seq(
     List(s"codecov -F $${{ matrix.scala }}"),
     name = Some("Upload Codecov Results")
   )
-)
-
-def crossCommand(command: String) =
-  List(s"++$Scala212", s"root/$command", s"++$Scala213", s"root-spark32/$command")
-
-tlReplaceCommandAlias(
-  "tlReleaseLocal",
-  ("reload" :: crossCommand("publishLocal")).mkString("; ")
-)
-
-tlReplaceCommandAlias(
-  "tlRelease",
-  ("reload" :: crossCommand("mimaReportBinaryIssues") ::: crossCommand("publish") ::: List("tlSonatypeBundleReleaseIfRelevant")).mkString("; ")
 )
