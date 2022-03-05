@@ -1,6 +1,6 @@
 package frameless
 
-import java.time.Instant
+import java.time.{Instant, Period, Duration}
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers
@@ -13,7 +13,17 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
     implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
-    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(Gen.choose[Instant](Instant.EPOCH, Instant.now))
+    implicit val periodOrdering: Ordering[Period] = Ordering.by(p => (p.getYears, p.getMonths, p.getDays))
+    /**
+      * DateTimeUtils.instantToMicros supports dates starting 1970-01-01T00:00:00Z, which is Instant.EPOCH.
+      * This function also overflows on Instant.MAX, to be sure it never overflows we use Instant.MAX / 4.
+      * For implementation details check the org.apache.spark.sql.catalyst.util.DateTimeUtils.instantToMicros function details.
+      */
+
+    val genInstant = Gen.choose[Instant](Instant.EPOCH, Instant.ofEpochMilli(Instant.MAX.getEpochSecond / 4))
+    implicit val arbInstant: Arbitrary[Instant] = Arbitrary(genInstant)
+    implicit val arbDuration: Arbitrary[Duration] = Arbitrary(genInstant.map(i => Duration.ofMillis(i.toEpochMilli)))
+    implicit val arbPeriod: Arbitrary[Period] = Arbitrary(Gen.chooseNum(0, Int.MaxValue).map(l => Period.of(l, l, l)))
   }
 
   test("select('a < 'b, 'a <= 'b, 'a > 'b, 'a >= 'b)") {
@@ -44,6 +54,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[Instant] _))
+    check(forAll(prop[Duration] _))
+    check(forAll(prop[Period] _))
   }
 
   test("between") {
@@ -71,6 +83,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[String] _))
     check(forAll(prop[Instant] _))
+    check(forAll(prop[Duration] _))
+    check(forAll(prop[Period] _))
   }
 
   test("toString") {
