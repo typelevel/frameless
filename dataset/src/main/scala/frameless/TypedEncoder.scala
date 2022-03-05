@@ -1,5 +1,6 @@
 package frameless
 
+import java.time.{Duration, Instant, Period}
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
@@ -7,7 +8,7 @@ import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -229,6 +230,45 @@ object TypedEncoder {
         propagateNull = true
       )
   }
+
+  /** java.time Encoders, Spark uses https://github.com/apache/spark/blob/v3.2.0/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/util/DateTimeUtils.scala for encoding / decoding. */
+  implicit val timeInstant: TypedEncoder[Instant] = new TypedEncoder[Instant] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[Instant]
+    def catalystRepr: DataType = TimestampType
+
+    def toCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        DateTimeUtils.getClass,
+        TimestampType,
+        "instantToMicros",
+        path :: Nil,
+        returnNullable = false)
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        staticObject = DateTimeUtils.getClass,
+        dataType = jvmRepr,
+        functionName = "microsToInstant",
+        arguments = path :: Nil,
+        propagateNull = true
+      )
+  }
+
+  /**
+    * DayTimeIntervalType and YearMonthIntervalType in Spark 3.2.0.
+    * We maintain Spark 3.x cross compilation and handle Duration and Period as an injections to be compatible with Spark versions < 3.2
+    * See
+    *  * https://github.com/apache/spark/blob/v3.2.0/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/util/IntervalUtils.scala#L1031-L1047
+    *  * https://github.com/apache/spark/blob/v3.2.0/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/util/IntervalUtils.scala#L1075-L1087
+    */
+  // DayTimeIntervalType
+  implicit val timeDurationInjection: Injection[Duration, Long] = Injection(_.toMillis, Duration.ofMillis)
+  // YearMonthIntervalType
+  implicit val timePeriodInjection: Injection[Period, Int] = Injection(_.getDays, Period.ofDays)
+  implicit val timePeriodEncoder: TypedEncoder[Period] = TypedEncoder.usingInjection
+  implicit val timeDurationEncoder: TypedEncoder[Duration] = TypedEncoder.usingInjection
 
   implicit def arrayEncoder[T: ClassTag](
     implicit i0: Lazy[RecordFieldEncoder[T]]): TypedEncoder[Array[T]] =
