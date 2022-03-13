@@ -4,12 +4,13 @@ package cats
 import _root_.cats.data.ReaderT
 import _root_.cats.effect.IO
 import _root_.cats.effect.unsafe.implicits.global
-import frameless.{ TypedDataset, TypedDatasetSuite, TypedEncoder, X2 }
 import org.apache.spark.sql.SparkSession
+import org.scalatest.matchers.should.Matchers
+import org.scalacheck.{Test => PTest}
 import org.scalacheck.Prop, Prop._
+import org.scalacheck.effect.PropF, PropF._
 
-
-class FramelessSyntaxTests extends TypedDatasetSuite {
+class FramelessSyntaxTests extends TypedDatasetSuite with Matchers {
   override val sparkDelay = null
 
   def prop[A, B](data: Vector[X2[A, B]])(
@@ -34,18 +35,19 @@ class FramelessSyntaxTests extends TypedDatasetSuite {
     import implicits._
     import _root_.cats.syntax.all._
 
-    check {
-      forAll { (k:String, v: String) =>
-        val scopedKey = "frameless.tests." + k
-        1.pure[ReaderT[IO, SparkSession, *]].withLocalProperty(scopedKey,v).run(session).unsafeRunSync()
-        sc.getLocalProperty(scopedKey) ?= v
-
-        1.pure[ReaderT[IO, SparkSession, *]].withGroupId(v).run(session).unsafeRunSync()
-        sc.getLocalProperty("spark.jobGroup.id") ?= v
-
-        1.pure[ReaderT[IO, SparkSession, *]].withDescription(v).run(session).unsafeRunSync()
-        sc.getLocalProperty("spark.job.description") ?= v
-      }
-    }
+    forAllF { (k: String, v: String) =>
+      val scopedKey = "frameless.tests." + k
+      1
+        .pure[ReaderT[IO, SparkSession, *]]
+        .withLocalProperty(scopedKey, v)
+        .withGroupId(v)
+        .withDescription(v)
+        .run(session)
+        .map { _ =>
+          sc.getLocalProperty(scopedKey) shouldBe v
+          sc.getLocalProperty("spark.jobGroup.id") shouldBe v
+          sc.getLocalProperty("spark.job.description") shouldBe v
+        }.void
+    }.check().unsafeRunSync().status shouldBe PTest.Passed
   }
 }

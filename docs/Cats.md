@@ -70,6 +70,8 @@ As with `Job`, note that nothing has been run yet. The effect has been properly 
 run our program, we must first supply the `SparkSession` to the `ReaderT` layer and then
 run the `IO` effect:
 ```scala mdoc
+import cats.effect.unsafe.implicits.global
+
 result.run(spark).unsafeRunSync()
 ```
 

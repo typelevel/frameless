@@ -19,6 +19,6 @@ trait FramelessSyntax extends frameless.FramelessSyntax {
 
     def withGroupId(groupId: String): F[A] = withLocalProperty("spark.jobGroup.id", groupId)
 
-    def withDescription(description: String) = withLocalProperty("spark.job.description", description)
+    def withDescription(description: String): F[A] = withLocalProperty("spark.job.description", description)
   }
 }

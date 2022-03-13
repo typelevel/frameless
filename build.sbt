@@ -8,6 +8,7 @@ val scalatest = "3.2.11"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.7"
 val scalacheck = "1.15.4"
+val scalacheckEffect = "1.0.3"
 val refinedVersion = "0.9.28"
 
 val Scala212 = "2.12.15"
@@ -160,10 +161,11 @@ def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
 lazy val catsSettings = framelessSettings ++ Seq(
   addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
   libraryDependencies ++= Seq(
-    "org.typelevel" %% "cats-core"      % catsCoreVersion,
-    "org.typelevel" %% "cats-effect"    % catsEffectVersion,
-    "org.typelevel" %% "cats-mtl"       % catsMtlVersion,
-    "org.typelevel" %% "alleycats-core" % catsCoreVersion
+    "org.typelevel" %% "cats-core"         % catsCoreVersion,
+    "org.typelevel" %% "cats-effect"       % catsEffectVersion,
+    "org.typelevel" %% "cats-mtl"          % catsMtlVersion,
+    "org.typelevel" %% "alleycats-core"    % catsCoreVersion,
+    "org.typelevel" %% "scalacheck-effect" % scalacheckEffect % Test
   )
 )
 
