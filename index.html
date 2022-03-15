@@ -123,10 +123,10 @@
         <a href="https://discord.gg/ZDZsxWcBJt"><img src="https://img.shields.io/badge/chat-on%20discord-46BC99" alt="Discord Badge"></a>
         <a href="https://search.maven.org/search?q=g:org.typelevel%20and%20frameless"><img src="https://img.shields.io/maven-central/v/org.typelevel/frameless-core_2.12?color=blue" alt="Maven Badge"></a>
         <a href="https://oss.sonatype.org/content/repositories/snapshots/org/typelevel/"><img src="https://img.shields.io/nexus/s/https/oss.sonatype.org/org.typelevel/frameless-core_2.12" alt="Snapshots Badge"></a></p>
-        <p>Frameless is a Scala library for working with <a href="http://spark.apache.org/">Spark</a> using more expressive types. 
+        <p>Frameless is a Scala library for working with <a href="http://spark.apache.org/">Spark</a> using more expressive types.
         It consists of the following modules:</p>
         <ul>
-          <li><code>frameless-dataset</code> for a more strongly typed <code>Dataset</code>/<code>DataFrame</code> API <br></li>
+          <li><code>frameless-dataset</code> for a more strongly typed <code>Dataset</code>/<code>DataFrame</code> API</li>
           <li><code>frameless-ml</code> for a more strongly typed Spark ML API based on <code>frameless-dataset</code></li>
           <li><code>frameless-cats</code> for using Spark&#39;s <code>RDD</code> API with <a href="https://github.com/typelevel/cats">cats</a></li>
         </ul>
@@ -137,8 +137,8 @@
         associated channels (e.g. GitHub, Discord) to be a safe and friendly environment for contributing and learning.</p>
         
         <h2 id="versions-and-dependencies" class="section">Versions and dependencies<a class="anchor-link right" href="#versions-and-dependencies"><i class="icofont-laika">&#xef71;</i></a></h2>
-        <p>The compatible versions of <a href="http://spark.apache.org/">Spark</a> and 
-        <a href="https://github.com/typelevel/cats">cats</a> are as follows: <br></p>
+        <p>The compatible versions of <a href="http://spark.apache.org/">Spark</a> and
+        <a href="https://github.com/typelevel/cats">cats</a> are as follows:</p>
         <table>
           <thead>
             <tr>
@@ -220,45 +220,54 @@
               <td>2.x</td>
               <td>2.12 / 2.13</td>
             </tr>
+            <tr>
+              <td>0.12.0</td>
+              <td>3.2.0 / 3.1.2 / 3.0.1</td>
+              <td>2.x</td>
+              <td>3.x</td>
+              <td>2.12 / 2.13</td>
+            </tr>
           </tbody>
         </table>
         <p><em>* 0.11.0 has broken Spark 3.1.2 and 3.0.1 artifacts published.</em></p>
-        <p>Starting 0.11 we introduced Spark cross published artifacts: 
-        * By default, frameless artifacts depend on the most recent Spark version
-        * Suffix <code>-spark{major}{minor}</code> is added to artifacts that are released for the previous Spark version(s)</p>
+        <p>Starting 0.11 we introduced Spark cross published artifacts:</p>
+        <ul>
+          <li>By default, frameless artifacts depend on the most recent Spark version</li>
+          <li>Suffix <code>-spark{major}{minor}</code> is added to artifacts that are released for the previous Spark version(s)</li>
+        </ul>
         <p>Artifact names examples:</p>
         <ul>
           <li><code>frameless-dataset</code> (the latest Spark dependency)</li>
           <li><code>frameless-dataset-spark31</code> (Spark 3.1.x dependency)</li>
           <li><code>frameless-dataset-spark30</code> (Spark 3.0.x dependency)</li>
         </ul>
-        <p>Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0. </p>
-        <p>The <strong>only</strong> dependency of the <code>frameless-dataset</code> module is on <a href="https://github.com/milessabin/shapeless">shapeless</a> 2.3.2. 
-        Therefore, depending on <code>frameless-dataset</code>, has a minimal overhead on your Spark&#39;s application jar. 
-        Only the <code>frameless-cats</code> module depends on cats and cats-effect, so if you prefer to work just with <code>Datasets</code> and not with <code>RDD</code>s, 
-        you may choose not to depend on <code>frameless-cats</code>. </p>
-        <p>Frameless intentionally <strong>does not</strong> have a compile dependency on Spark. 
-        This essentially allows you to use any version of Frameless with any version of Spark. 
-        The aforementioned table simply provides the versions of Spark we officially compile 
-        and test Frameless with, but other versions may probably work as well. </p>
+        <p>Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0.</p>
+        <p>The <strong>only</strong> dependency of the <code>frameless-dataset</code> module is on <a href="https://github.com/milessabin/shapeless">shapeless</a> 2.3.2.
+        Therefore, depending on <code>frameless-dataset</code>, has a minimal overhead on your Spark&#39;s application jar.
+        Only the <code>frameless-cats</code> module depends on cats and cats-effect, so if you prefer to work just with <code>Datasets</code> and not with <code>RDD</code>s,
+        you may choose not to depend on <code>frameless-cats</code>.</p>
+        <p>Frameless intentionally <strong>does not</strong> have a compile dependency on Spark.
+        This essentially allows you to use any version of Frameless with any version of Spark.
+        The aforementioned table simply provides the versions of Spark we officially compile
+        and test Frameless with, but other versions may probably work as well.</p>
         
         <h3 id="breaking-changes-in-0-9" class="section">Breaking changes in 0.9<a class="anchor-link right" href="#breaking-changes-in-0-9"><i class="icofont-laika">&#xef71;</i></a></h3>
         <ul>
-          <li>Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame&#39;s is now <a href="https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270">&quot;value&quot;</a> not &quot;_1&quot;.<br></li>
+          <li>Spark 3 introduces a new ExpressionEncoder approach, the schema for single value DataFrame&#39;s is now <a href="https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/encoders/ExpressionEncoder.scala#L270">&quot;value&quot;</a> not &quot;_1&quot;.</li>
         </ul>
         
         <h2 id="why" class="section">Why?<a class="anchor-link right" href="#why"><i class="icofont-laika">&#xef71;</i></a></h2>
-        <p>Frameless introduces a new Spark API, called <code>TypedDataset</code>. 
+        <p>Frameless introduces a new Spark API, called <code>TypedDataset</code>.
         The benefits of using <code>TypedDataset</code> compared to the standard Spark <code>Dataset</code> API are as follows:</p>
         <ul>
           <li>Typesafe columns referencing (e.g., no more runtime errors when accessing non-existing columns)</li>
-          <li>Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile) </li>
-          <li>Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you 
+          <li>Customizable, typesafe encoders (e.g., if a type does not have an encoder, it should not compile)</li>
+          <li>Enhanced type signature for built-in functions (e.g., if you apply an arithmetic operation on a non-numeric column, you
           get a compilation error)</li>
           <li>Typesafe casting and projections</li>
         </ul>
-        <p>Click <a href="http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html">here</a> for a 
-        detailed comparison of <code>TypedDataset</code> with Spark&#39;s <code>Dataset</code> API. </p>
+        <p>Click <a href="http://typelevel.org/frameless/TypedDatasetVsSparkDataset.html">here</a> for a
+        detailed comparison of <code>TypedDataset</code> with Spark&#39;s <code>Dataset</code> API.</p>
         
         <h2 id="documentation" class="section">Documentation<a class="anchor-link right" href="#documentation"><i class="icofont-laika">&#xef71;</i></a></h2>
         <ul>
@@ -280,7 +289,7 @@
 </span><span class="identifier">libraryDependencies</span><span> ++= </span><span class="type-name">List</span><span>(
   </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;frameless-dataset&quot;</span><span> % </span><span class="identifier">framelessVersion</span><span>,
   </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;frameless-ml&quot;</span><span>      % </span><span class="identifier">framelessVersion</span><span>,
-  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;frameless-cats&quot;</span><span>    % </span><span class="identifier">framelessVersion</span><span>  
+  </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;frameless-cats&quot;</span><span>    % </span><span class="identifier">framelessVersion</span><span>
 )</span></code></pre>
         <p>An easy way to bootstrap a Frameless sbt project:</p>
         <ul>
@@ -295,7 +304,7 @@
         and all its dependencies loaded (including Spark).</p>
         
         <h2 id="need-help" class="section">Need help?<a class="anchor-link right" href="#need-help"><i class="icofont-laika">&#xef71;</i></a></h2>
-        <p>Feel free to messages us on our <a href="https://discord.gg/ZDZsxWcBJt">discord</a> 
+        <p>Feel free to messages us on our <a href="https://discord.gg/ZDZsxWcBJt">discord</a>
         channel for any issues/questions.</p>
         
         <h2 id="development" class="section">Development<a class="anchor-link right" href="#development"><i class="icofont-laika">&#xef71;</i></a></h2>

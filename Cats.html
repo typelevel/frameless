@@ -118,15 +118,15 @@
         - <code>RDD</code> enhancements using algebraic typeclasses in <code>cats-kernel</code></p>
         <p>All the examples below assume you have previously imported <code>cats.implicits</code> and <code>frameless.cats.implicits</code>.</p>
         <p><em>Note that you should not import <code>frameless.syntax._</code> together with <code>frameless.cats.implicits._</code>.</em></p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">_</span><span>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.</span><span class="identifier">_</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">_</span></code></pre>
         
         <h2 id="effect-suspension-in-typed-datasets" class="section">Effect Suspension in typed datasets<a class="anchor-link right" href="#effect-suspension-in-typed-datasets"><i class="icofont-laika">&#xef71;</i></a></h2>
-        <p>As noted in the section about <code>Job</code>, all operations on <code>TypedDataset</code> are lazy. The results of 
-        operations that would normally block on plain Spark APIs are wrapped in a type constructor <code>F[_]</code>, 
-        for which there exists an instance of <code>SparkDelay[F]</code>. This typeclass represents the operation of 
-        delaying a computation and capturing an implicit <code>SparkSession</code>. </p>
-        <p>In the <code>cats</code> module, we utilize the typeclasses from <code>cats-effect</code> for abstracting over these 
+        <p>As noted in the section about <code>Job</code>, all operations on <code>TypedDataset</code> are lazy. The results of
+        operations that would normally block on plain Spark APIs are wrapped in a type constructor <code>F[_]</code>,
+        for which there exists an instance of <code>SparkDelay[F]</code>. This typeclass represents the operation of
+        delaying a computation and capturing an implicit <code>SparkSession</code>.</p>
+        <p>In the <code>cats</code> module, we utilize the typeclasses from <code>cats-effect</code> for abstracting over these
         effect types - namely, we provide an implicit <code>SparkDelay</code> instance for all <code>F[_]</code> for which exists
         an instance of <code>cats.effect.Sync[F]</code>.</p>
         <p>This allows one to run operations on <code>TypedDataset</code> in an existing monad stack. For example, given
@@ -145,12 +145,14 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">typedDs</span><span>.</span><span class="identifier">count</span><span>[</span><span class="type-name">Action</span><span>]()
 } </span><span class="keyword">yield</span><span> (</span><span class="identifier">sample</span><span>, </span><span class="identifier">count</span><span>)
 </span><span class="comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$$Lambda$12217/1354641235@33aad24b
+//   cats.data.Kleisli$$$Lambda$13050/1169762347@62de2665
 // )</span></code></pre>
         <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
         run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
         run the <code>IO</code> effect:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">result</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">global</span><span>
+
+</span><span class="identifier">result</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="comment">// res5: (Seq[(Int, String)], Long) = (WrappedArray((1, &quot;string&quot;)), 2L)</span></code></pre>
         
         <h3 id="convenience-methods-for-modifying-spark-thread-local-variables" class="section">Convenience methods for modifying Spark thread-local variables<a class="anchor-link right" href="#convenience-methods-for-modifying-spark-thread-local-variables"><i class="icofont-laika">&#xef71;</i></a></h3>
@@ -170,7 +172,7 @@
        }
 } </span><span class="keyword">yield</span><span> </span><span class="identifier">r</span><span>
 </span><span class="comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$$Lambda$12217/1354641235@2461e7f5
+//   cats.data.Kleisli$$$Lambda$13050/1169762347@7fd30cf7
 // )
 </span><span>
 </span><span class="identifier">resultWithDescription</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
@@ -186,7 +188,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">data</span><span>: </span><span class="type-name">RDD</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>)] = </span><span class="identifier">sc</span><span>.</span><span class="identifier">makeRDD</span><span>((</span><span class="number-literal">1</span><span>, </span><span class="number-literal">2</span><span>, </span><span class="number-literal">3</span><span>) :: (</span><span class="number-literal">1</span><span>, </span><span class="number-literal">5</span><span>, </span><span class="number-literal">3</span><span>) :: (</span><span class="number-literal">8</span><span>, </span><span class="number-literal">2</span><span>, </span><span class="number-literal">3</span><span>) :: </span><span class="type-name">Nil</span><span>)
-</span><span class="comment">// data: RDD[(Int, Int, Int)] = ParallelCollectionRDD[12] at makeRDD at Cats.md:127
+</span><span class="comment">// data: RDD[(Int, Int, Int)] = ParallelCollectionRDD[12] at makeRDD at Cats.md:130
 </span><span>
 </span><span class="identifier">println</span><span>(</span><span class="identifier">data</span><span>.</span><span class="identifier">csum</span><span>)
 </span><span class="comment">// (10,9,9)
@@ -198,7 +200,7 @@
         elements inside the RDD. There are counterpart operations to those that have an <code>Option</code> return type
         to deal with the case of an empty RDD:</p>
         <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">data</span><span>: </span><span class="type-name">RDD</span><span>[(</span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>, </span><span class="type-name">Int</span><span>)] = </span><span class="identifier">sc</span><span>.</span><span class="identifier">emptyRDD</span><span>
-</span><span class="comment">// data: RDD[(Int, Int, Int)] = EmptyRDD[13] at emptyRDD at Cats.md:143
+</span><span class="comment">// data: RDD[(Int, Int, Int)] = EmptyRDD[13] at emptyRDD at Cats.md:146
 </span><span>
 </span><span class="identifier">println</span><span>(</span><span class="identifier">data</span><span>.</span><span class="identifier">csum</span><span>)
 </span><span class="comment">// (0,0,0)
@@ -218,7 +220,7 @@
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">allData</span><span>: </span><span class="type-name">RDD</span><span>[(</span><span class="type-name">User</span><span>,</span><span class="type-name">TransactionCount</span><span>)] =
    </span><span class="identifier">sc</span><span>.</span><span class="identifier">makeRDD</span><span>((</span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="number-literal">12</span><span>) :: (</span><span class="string-literal">&quot;Joe&quot;</span><span>, </span><span class="number-literal">1</span><span>) :: (</span><span class="string-literal">&quot;Anna&quot;</span><span>, </span><span class="number-literal">100</span><span>) :: (</span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="number-literal">20</span><span>) :: (</span><span class="string-literal">&quot;Joe&quot;</span><span>, </span><span class="number-literal">2</span><span>) :: </span><span class="type-name">Nil</span><span>)
-</span><span class="comment">// allData: RDD[(User, TransactionCount)] = ParallelCollectionRDD[14] at makeRDD at Cats.md:174
+</span><span class="comment">// allData: RDD[(User, TransactionCount)] = ParallelCollectionRDD[14] at makeRDD at Cats.md:177
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">totalPerUser</span><span> =  </span><span class="identifier">allData</span><span>.</span><span class="identifier">csumByKey</span><span>
 </span><span class="comment">// totalPerUser: RDD[(User, TransactionCount)] = ShuffledRDD[15] at reduceByKey at implicits.scala:42
@@ -235,7 +237,7 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">allDataComplexKeu</span><span> =
    </span><span class="identifier">sc</span><span>.</span><span class="identifier">makeRDD</span><span>( (</span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="type-name">SortedMap</span><span>(</span><span class="string-literal">&quot;task1&quot;</span><span> -&gt; </span><span class="number-literal">10</span><span>)) ::
     (</span><span class="string-literal">&quot;Joe&quot;</span><span>, </span><span class="type-name">SortedMap</span><span>(</span><span class="string-literal">&quot;task1&quot;</span><span> -&gt; </span><span class="number-literal">1</span><span>, </span><span class="string-literal">&quot;task2&quot;</span><span> -&gt; </span><span class="number-literal">3</span><span>)) :: (</span><span class="string-literal">&quot;Bob&quot;</span><span>, </span><span class="type-name">SortedMap</span><span>(</span><span class="string-literal">&quot;task1&quot;</span><span> -&gt; </span><span class="number-literal">10</span><span>, </span><span class="string-literal">&quot;task2&quot;</span><span> -&gt; </span><span class="number-literal">1</span><span>)) :: (</span><span class="string-literal">&quot;Joe&quot;</span><span>, </span><span class="type-name">SortedMap</span><span>(</span><span class="string-literal">&quot;task3&quot;</span><span> -&gt; </span><span class="number-literal">4</span><span>)) :: </span><span class="type-name">Nil</span><span> )
-</span><span class="comment">// allDataComplexKeu: RDD[(String, SortedMap[String, Int])] = ParallelCollectionRDD[16] at makeRDD at Cats.md:190
+</span><span class="comment">// allDataComplexKeu: RDD[(String, SortedMap[String, Int])] = ParallelCollectionRDD[16] at makeRDD at Cats.md:193
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">overalTasksPerUser</span><span> = </span><span class="identifier">allDataComplexKeu</span><span>.</span><span class="identifier">csumByKey</span><span>
 </span><span class="comment">// overalTasksPerUser: RDD[(String, SortedMap[String, Int])] = ShuffledRDD[17] at reduceByKey at implicits.scala:42
@@ -254,9 +256,9 @@
         <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">cats</span><span>.</span><span class="identifier">outer</span><span>.</span><span class="identifier">_</span><span>
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">day1</span><span>: </span><span class="type-name">RDD</span><span>[(</span><span class="type-name">UserName</span><span>,</span><span class="type-name">TimeSeries</span><span>)] = </span><span class="identifier">sc</span><span>.</span><span class="identifier">makeRDD</span><span>( (</span><span class="string-literal">&quot;John&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">2</span><span>, </span><span class="number-literal">1</span><span> -&gt; </span><span class="number-literal">4</span><span>)) :: (</span><span class="string-literal">&quot;Chris&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span> -&gt; </span><span class="number-literal">2</span><span>)) :: (</span><span class="string-literal">&quot;Sam&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">1</span><span>)) :: </span><span class="type-name">Nil</span><span> )
-</span><span class="comment">// day1: RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[18] at makeRDD at Cats.md:215
+</span><span class="comment">// day1: RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[18] at makeRDD at Cats.md:218
 </span><span class="keyword">val</span><span> </span><span class="identifier">day2</span><span>: </span><span class="type-name">RDD</span><span>[(</span><span class="type-name">UserName</span><span>,</span><span class="type-name">TimeSeries</span><span>)] = </span><span class="identifier">sc</span><span>.</span><span class="identifier">makeRDD</span><span>( (</span><span class="string-literal">&quot;John&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">10</span><span>, </span><span class="number-literal">1</span><span> -&gt; </span><span class="number-literal">11</span><span>)) :: (</span><span class="string-literal">&quot;Chris&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span> -&gt; </span><span class="number-literal">2</span><span>)) :: (</span><span class="string-literal">&quot;Joe&quot;</span><span>, </span><span class="type-name">Map</span><span>(</span><span class="number-literal">0</span><span> -&gt; </span><span class="number-literal">1</span><span>, </span><span class="number-literal">1</span><span> -&gt; </span><span class="number-literal">2</span><span>)) :: </span><span class="type-name">Nil</span><span> )
-</span><span class="comment">// day2: RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[19] at makeRDD at Cats.md:218
+</span><span class="comment">// day2: RDD[(UserName, TimeSeries)] = ParallelCollectionRDD[19] at makeRDD at Cats.md:221
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">daysCombined</span><span> = </span><span class="identifier">day1</span><span> |+| </span><span class="identifier">day2</span><span>
 </span><span class="comment">// daysCombined: RDD[(UserName, TimeSeries)] = MapPartitionsRDD[23] at mapValues at implicits.scala:67
