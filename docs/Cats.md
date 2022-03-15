@@ -17,7 +17,7 @@ System.setProperty("spark.cleaner.ttl", "300")
 
 import spark.implicits._
 
-import cats.implicits._
+import cats.syntax.all._
 import cats.effect.{IO, Sync}
 import cats.data.ReaderT
 ```
@@ -31,18 +31,18 @@ All the examples below assume you have previously imported `cats.implicits` and 
 *Note that you should not import `frameless.syntax._` together with `frameless.cats.implicits._`.*
 
 ```scala mdoc
-import cats.implicits._
+import cats.syntax.all._
 import frameless.cats.implicits._
 ```
 
 ## Effect Suspension in typed datasets
 
-As noted in the section about `Job`, all operations on `TypedDataset` are lazy. The results of 
-operations that would normally block on plain Spark APIs are wrapped in a type constructor `F[_]`, 
-for which there exists an instance of `SparkDelay[F]`. This typeclass represents the operation of 
-delaying a computation and capturing an implicit `SparkSession`. 
+As noted in the section about `Job`, all operations on `TypedDataset` are lazy. The results of
+operations that would normally block on plain Spark APIs are wrapped in a type constructor `F[_]`,
+for which there exists an instance of `SparkDelay[F]`. This typeclass represents the operation of
+delaying a computation and capturing an implicit `SparkSession`.
 
-In the `cats` module, we utilize the typeclasses from `cats-effect` for abstracting over these 
+In the `cats` module, we utilize the typeclasses from `cats-effect` for abstracting over these
 effect types - namely, we provide an implicit `SparkDelay` instance for all `F[_]` for which exists
 an instance of `cats.effect.Sync[F]`.
 
@@ -70,6 +70,8 @@ As with `Job`, note that nothing has been run yet. The effect has been properly 
 run our program, we must first supply the `SparkSession` to the `ReaderT` layer and then
 run the `IO` effect:
 ```scala mdoc
+import cats.effect.unsafe.implicits.global
+
 result.run(spark).unsafeRunSync()
 ```
 
@@ -132,7 +134,7 @@ println(data.cmax)
 println(data.cmaxOption)
 println(data.cmin)
 println(data.cminOption)
-``` 
+```
 
 The following example aggregates all the elements with a common key.
 

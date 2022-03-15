@@ -3,7 +3,7 @@ package cats
 
 import _root_.cats._
 import _root_.cats.kernel.{CommutativeMonoid, CommutativeSemigroup}
-import _root_.cats.implicits._
+import _root_.cats.syntax.all._
 import alleycats.Empty
 
 import scala.reflect.ClassTag
