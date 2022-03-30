@@ -100,7 +100,7 @@ Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
-val framelessVersion = "<latest version>" // for Spark 3.0.0
+val framelessVersion = "<latest version>"
 
 resolvers ++= Seq(
   // for snapshot artifacts only
