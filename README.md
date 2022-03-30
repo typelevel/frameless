@@ -100,7 +100,12 @@ Since the 0.9.x release, Frameless is compiled only against Scala 2.12.x.
 To use Frameless in your project add the following in your `build.sbt` file as needed:
 
 ```scala
-val framelessVersion = "0.9.0" // for Spark 3.0.0
+val framelessVersion = "<latest version>" // for Spark 3.0.0
+
+resolvers ++= Seq(
+  // for snapshot artifacts only
+  "s01-oss-sonatype" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+)
 
 libraryDependencies ++= List(
   "org.typelevel" %% "frameless-dataset" % framelessVersion,
