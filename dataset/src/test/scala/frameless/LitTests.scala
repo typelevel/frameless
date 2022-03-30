@@ -69,6 +69,23 @@ class LitTests extends TypedDatasetSuite with Matchers {
       collect.run() shouldBe initial.map(_.copy(name = lorem))
   }
 
+  test("support optional value class") {
+    val initial = Seq(
+      R(name = "Foo", id = 1, alias = None),
+      R(name = "Bar", id = 2, alias = Some(new Name("Lorem"))))
+    val ds = TypedDataset.create(initial)
+
+    ds.collect.run() shouldBe initial
+
+    val someIpsum: Option[Name] = Some(new Name("Ipsum"))
+
+    ds.withColumnReplaced('alias, functions.litValue(someIpsum)).
+      collect.run() shouldBe initial.map(_.copy(alias = someIpsum))
+
+    ds.withColumnReplaced('alias, functions.litValue(Option.empty[Name])).
+      collect.run() shouldBe initial.map(_.copy(alias = None))
+  }
+
   test("#205: comparing literals encoded using Injection") {
     import org.apache.spark.sql.catalyst.util.DateTimeUtils
     implicit val dateAsInt: Injection[java.sql.Date, Int] =
@@ -85,3 +102,5 @@ class LitTests extends TypedDatasetSuite with Matchers {
 final case class P(i: Int, d: java.sql.Date)
 
 final case class Q(id: Int, name: Name)
+
+final case class R(id: Int, name: String, alias: Option[Name])

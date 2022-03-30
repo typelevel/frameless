@@ -88,4 +88,47 @@ package object functions extends Udf with UnaryFunctions {
       )
     )
   }
+
+  /** Creates a [[frameless.TypedColumn]] of literal value 
+    * for an optional Value class `A`.
+    * 
+    * @tparam A the value class
+    * @tparam T the row type
+    */
+  def litValue[A : IsValueClass, T, G <: ::[_, HNil], H <: ::[_ <: FieldType[_ <: Symbol, _], HNil], K <: Symbol, V, KS <: ::[_ <: Symbol, HNil], VS <: HList](value: Option[A])(
+    implicit
+      i0: LabelledGeneric.Aux[A, G],
+      i1: DropUnitValues.Aux[G, H],
+      i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
+      i3: Keys.Aux[H, KS],
+      i4: Values.Aux[H, VS],
+      i5: IsHCons.Aux[KS, K, HNil],
+      i6: IsHCons.Aux[VS, V, HNil],
+      i7: TypedEncoder[V],
+      i8: ClassTag[A]
+  ): TypedColumn[T, Option[A]] = {
+    val expr = value match {
+      case Some(some) => {
+        val field: H = i1(i0.to(some))
+        val v: V = i6.head(i4(field))
+
+        new Literal(v, i7.jvmRepr)
+      }
+
+      case _ =>
+        Literal.create(null, i7.jvmRepr)
+    }
+
+    implicit val enc: TypedEncoder[A] =
+      RecordFieldEncoder.valueClass[A, G, H, K, V, KS].encoder
+
+    new TypedColumn[T, Option[A]](
+      Lit(
+        dataType = i7.catalystRepr,
+        nullable = true,
+        toCatalyst = i7.toCatalyst(expr).genCode(_),
+        show = () => value.toString
+      )
+    )
+  }
 }
