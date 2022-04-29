@@ -8,7 +8,7 @@ val scalatest = "3.2.12"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.9"
 val scalacheck = "1.16.0"
-val scalacheckEffect = "1.0.3"
+val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.9.28"
 
 val Scala212 = "2.12.15"
