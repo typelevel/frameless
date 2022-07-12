@@ -118,25 +118,25 @@
 </span><span class="comment">// java.lang.UnsupportedOperationException: No Encoder found for java.util.Date
 // - field (class: &quot;java.util.Date&quot;, name: &quot;s&quot;)
 // - root class: &quot;repl.MdocSession.App0.DateRange&quot;
-// 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1000)
+// 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1167)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:617)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$6(ScalaReflection.scala:604)
 // 	at scala.collection.immutable.List.map(List.scala:293)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:589)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerForType$1(ScalaReflection.scala:437)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:946)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerForType(ScalaReflection.scala:429)
 // 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:55)
@@ -164,7 +164,7 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">Foo</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">Foo</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="type-name">Bar</span><span>(</span><span class="number-literal">1.1</span><span>, </span><span class="string-literal">&quot;s&quot;</span><span>))))
 </span><span class="comment">// ds: TypedDataset[Foo] = [i: int, b: struct&lt;d: double, s: string&gt;]
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">collect</span><span>()
-</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@4132f889</span></code></pre>
+</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@46d5e4b8</span></code></pre>
         <p>But any non-encodable in the case class hierarchy will be detected at compile time:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">BarDate</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">t</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">FooDate</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">BarDate</span><span>)</span></code></pre>
