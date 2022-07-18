@@ -263,7 +263,7 @@ lazy val spark31Settings = Seq(
 )
 
 lazy val spark32Settings = Seq(
-  mimaPreviousArtifacts := Set.empty
+  tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
 lazy val consoleSettings = Seq(
