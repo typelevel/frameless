@@ -14,7 +14,7 @@ val refinedVersion = "0.10.1"
 val Scala212 = "2.12.16"
 val Scala213 = "2.13.8"
 
-ThisBuild / tlBaseVersion := "0.12"
+ThisBuild / tlBaseVersion := "0.13"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
