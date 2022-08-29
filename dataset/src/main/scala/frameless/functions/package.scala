@@ -9,6 +9,8 @@ import shapeless.ops.record.{Keys, Values}
 
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.expressions.Literal
+import org.apache.spark.sql.functions.{ col => sparkCol }
+import shapeless.Witness
 
 package object functions extends Udf with UnaryFunctions {
 
@@ -130,5 +132,13 @@ package object functions extends Udf with UnaryFunctions {
         show = () => value.toString
       )
     )
+  }
+
+  def col[T, A](column: Witness.Lt[Symbol])(
+    implicit
+    exists: TypedColumn.Exists[T, column.T, A],
+    encoder: TypedEncoder[A]): TypedColumn[T, A] = {
+    val untypedExpr = sparkCol(column.value.name).as[A](TypedExpressionEncoder[A])
+    new TypedColumn[T, A](untypedExpr)
   }
 }

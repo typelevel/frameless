@@ -17,9 +17,10 @@ class SelectTests extends TypedDatasetSuite {
       val A = dataset.col[A]('a)
 
       val dataset2 = dataset.select(A).collect().run().toVector
+      val symDataset2 = dataset.select(functions.col('a)).collect().run().toVector
       val data2 = data.map { case X4(a, _, _, _) => a }
 
-      dataset2 ?= data2
+      (dataset2 ?= data2) && (symDataset2 ?= data2)
     }
 
     check(forAll(prop[Int, Int, Int, Int] _))
