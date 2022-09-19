@@ -11,11 +11,10 @@ val scalacheck = "1.17.0"
 val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.10.2"
 
-val Scala212 = "2.12.16"
+val Scala212 = "2.12.17"
 val Scala213 = "2.13.10"
 
 ThisBuild / tlBaseVersion := "0.13"
-
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
 ThisBuild / tlSkipIrrelevantScalas := true
@@ -144,6 +143,7 @@ lazy val docs = project
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
+    libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
     scalacOptions += "-Ydelambdafy:inline"
   )
   .dependsOn(dataset, cats, ml)
@@ -185,7 +185,18 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
       imt("frameless.RecordEncoderFields.deriveRecordLast"),
       mc("frameless.functions.FramelessLit"),
       mc(f"frameless.functions.FramelessLit$$"),
-      dmm("frameless.functions.package.litAggr")
+      dmm("frameless.functions.package.litAggr"),
+      imt("frameless.RecordEncoder.this"),
+      imt("frameless.TypedEncoder.usingDerivation"),
+      imt("frameless.TypedEncoder.collectionEncoder"),
+      imt("frameless.TypedEncoder.collectionEncoder"),
+      imt("frameless.TypedEncoder.usingDerivation"),
+      imt("frameless.ops.As.equivGeneric"),
+      imt("frameless.ops.As.equivHList"),
+      imt("frameless.ops.As.equivHList"),
+      imt("frameless.ops.As.equivGeneric"),
+      dmm("frameless.ops.LowPriorityAs.equivHList"),
+      dmm("frameless.ops.LowPriorityAs.equivGeneric")
     )
   }
 )
@@ -251,9 +262,25 @@ lazy val scalacOptionSettings = Def.setting {
   baseScalacOptions(scalaVersion.value)
 }
 
+def unmanaged(ver: String, base: File): Seq[File] =
+  CrossVersion.partialVersion(ver) match {
+    case Some((2, n)) if n < 13 =>
+      Seq(base / "scala-2.13-")
+
+    case _ =>
+      Seq(base / "scala-2.13+")
+
+  }
+
 lazy val framelessSettings = Seq(
   scalacOptions ++= scalacOptionSettings.value,
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
+  Compile / unmanagedSourceDirectories ++= {
+    unmanaged(scalaVersion.value, (Compile / sourceDirectory).value)
+  },
+  Test / unmanagedSourceDirectories ++= {
+    unmanaged(scalaVersion.value, (Test / sourceDirectory).value)
+  },
   libraryDependencies ++= Seq(
     "com.chuusai" %% "shapeless" % shapeless,
     "org.scalatest" %% "scalatest" % scalatest % Test,

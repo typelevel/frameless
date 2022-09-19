@@ -119,69 +119,6 @@ object DropUnitValues {
     }
 }
 
-class RecordEncoder[F, G <: HList, H <: HList]
-  (implicit
-    i0: LabelledGeneric.Aux[F, G],
-    i1: DropUnitValues.Aux[G, H],
-    i2: IsHCons[H],
-    fields: Lazy[RecordEncoderFields[H]],
-    newInstanceExprs: Lazy[NewInstanceExprs[G]],
-    classTag: ClassTag[F]
-  ) extends TypedEncoder[F] {
-    def nullable: Boolean = false
-
-    def jvmRepr: DataType = FramelessInternals.objectTypeFor[F]
-
-    def catalystRepr: DataType = {
-      val structFields = fields.value.value.map { field =>
-        StructField(
-          name = field.name,
-          dataType = field.encoder.catalystRepr,
-          nullable = field.encoder.nullable,
-          metadata = Metadata.empty
-        )
-      }
-
-      StructType(structFields)
-    }
-
-    def toCatalyst(path: Expression): Expression = {
-      val nameExprs = fields.value.value.map { field =>
-        Literal(field.name)
-      }
-
-      val valueExprs = fields.value.value.map { field =>
-        val fieldPath = Invoke(path, field.name, field.encoder.jvmRepr, Nil)
-        field.encoder.toCatalyst(fieldPath)
-      }
-
-      // the way exprs are encoded in CreateNamedStruct
-      val exprs = nameExprs.zip(valueExprs).flatMap {
-        case (nameExpr, valueExpr) => nameExpr :: valueExpr :: Nil
-      }
-
-      val createExpr = CreateNamedStruct(exprs)
-      val nullExpr = Literal.create(null, createExpr.dataType)
-
-      If(IsNull(path), nullExpr, createExpr)
-    }
-
-    def fromCatalyst(path: Expression): Expression = {
-      val exprs = fields.value.value.map { field =>
-        field.encoder.fromCatalyst(
-          GetStructField(path, field.ordinal, Some(field.name)))
-      }
-
-      val newArgs = newInstanceExprs.value.from(exprs)
-      val newExpr = NewInstance(
-        classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
-
-      val nullExpr = Literal.create(null, jvmRepr)
-
-      If(IsNull(path), nullExpr, newExpr)
-    }
-}
-
 final class RecordFieldEncoder[T](
   val encoder: TypedEncoder[T],
   private[frameless] val jvmRepr: DataType,
