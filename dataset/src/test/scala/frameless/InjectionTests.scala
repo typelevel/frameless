@@ -164,12 +164,7 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[I[Option[Int]]].nullable)
   }
 
-  test("TypedEncoder[Person] is ambiguous") {
-    illTyped("implicitly[TypedEncoder[Person]]", "ambiguous implicit values.*")
-  }
-
-  test("Resolve ambiguity by importing usingInjection") {
-    import TypedEncoder.usingInjection
+  test("Resolve implicit with usingInjection by default") {
 
     check(forAll(prop[X1[Person]] _))
     check(forAll(prop[X1[X1[Person]]] _))
@@ -179,7 +174,7 @@ class InjectionTests extends TypedDatasetSuite {
     assert(TypedEncoder[Person].catalystRepr == TypedEncoder[(Int, String)].catalystRepr)
   }
 
-  test("Resolve ambiguity by importing usingDerivation") {
+  test("force to use usingDerivation by importing usingDerivation") {
     import TypedEncoder.usingDerivation
     assert(implicitly[TypedEncoder[Person]].isInstanceOf[RecordEncoder[Person, _, _]])
     check(forAll(prop[Person] _))
