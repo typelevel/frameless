@@ -1,4 +1,4 @@
 val sbtTypelevelVersion = "0.4.18"
 addSbtPlugin("org.typelevel" % "sbt-typelevel-ci-release" % sbtTypelevelVersion)
 addSbtPlugin("org.typelevel" % "sbt-typelevel-site"       % sbtTypelevelVersion)
-addSbtPlugin("org.scoverage" % "sbt-scoverage"            % "2.0.6")
+addSbtPlugin("org.scoverage" % "sbt-scoverage"            % "2.0.7")
