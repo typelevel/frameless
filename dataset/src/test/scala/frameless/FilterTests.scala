@@ -1,9 +1,11 @@
 package frameless
 
+import org.scalatest.matchers.should.Matchers
+
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
-class FilterTests extends TypedDatasetSuite {
+final class FilterTests extends TypedDatasetSuite with Matchers {
   test("filter('a == lit(b))") {
     def prop[A: TypedEncoder](elem: A, data: Vector[X1[A]])(implicit ex1: TypedEncoder[X1[A]]): Prop = {
       val dataset = TypedDataset.create(data)
@@ -143,6 +145,24 @@ class FilterTests extends TypedDatasetSuite {
     check(forAll(prop[Option[X1[String]]] _))
     check(forAll(prop[Option[X1[X1[String]]]] _))
     check(forAll(prop[Option[X1[X1[Vector[Option[Int]]]]]] _))
+  }
+
+  test("Option content filter") {
+    val data = (Option(1L), Option(2L)) :: (Option(0L), Option(1L)) :: (None, None) :: Nil
+
+    val ds = TypedDataset.create(data)
+
+    val l = functions.lit[Long, (Option[Long], Option[Long])](0L)
+    val exists = ds('_1).isSome[Long](_ <= l)
+    val forall = ds('_1).isSomeOrNone[Long](_ <= l)
+
+    ds.select(exists).collect().run() shouldEqual Seq(false, true, false)
+    ds.select(forall).collect().run() shouldEqual Seq(false, true, true)
+
+    ds.filter(exists).collect().run() shouldEqual Seq(Option(0L) -> Option(1L))
+
+    ds.filter(forall).collect().run() shouldEqual Seq(
+      Option(0L) -> Option(1L), (None -> None))
   }
 
   test("filter with isin values") {

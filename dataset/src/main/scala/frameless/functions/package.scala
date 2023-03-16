@@ -36,6 +36,7 @@ package object functions extends Udf with UnaryFunctions {
 
     if (ScalaReflection.isNativeType(encoder.jvmRepr) && encoder.catalystRepr == encoder.jvmRepr) {
       val expr = Literal(value, encoder.catalystRepr)
+
       new TypedColumn(expr)
     } else {
       val expr = new Literal(value, encoder.jvmRepr)
