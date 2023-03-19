@@ -389,7 +389,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   test("asCol with numeric operators") {
     def prop(a: Seq[Long]) = {
       val ds: TypedDataset[Long] = TypedDataset.create(a)
-      val (first,second) = (2L,5L)
+      val (first, second) = (2L, 5L)
       val frameless: Seq[(Long, Long, Long)] =
         ds.select(ds.asCol, ds.asCol+first, ds.asCol*second).collect().run()
 
@@ -400,6 +400,22 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     }
 
     check(forAll(prop _))
+  }
+
+  test("reference Value class so can join on") {
+    import RecordEncoderTests.{ Name, Person }
+
+    val bar = new Name("bar")
+
+    val ds1: TypedDataset[Person] = TypedDataset.create(
+      Seq(Person(bar, 23), Person(new Name("foo"), 11)))
+
+    val ds2: TypedDataset[Name] =
+      TypedDataset.create(Seq(new Name("lorem"), bar))
+
+    val joined = ds1.joinLeftSemi(ds2)(ds1.col('name) === ds2.asJoinColValue)
+
+    joined.collect().run() shouldEqual Seq(Person(bar, 23))
   }
 
   test("unary_!") {
