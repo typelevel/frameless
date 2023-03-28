@@ -1,5 +1,6 @@
-val sparkVersion = "3.3.2"
+val sparkVersion = "3.4.0"
 val spark32Version = "3.2.3"
+val spark33Version = "3.3.2"
 val spark31Version = "3.1.3"
 val catsCoreVersion = "2.9.0"
 val catsEffectVersion = "3.4.8"
@@ -49,6 +50,13 @@ lazy val cats = project
   .settings(catsSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
+lazy val `cats-spark33` = project
+  .settings(name := "frameless-cats-spark33")
+  .settings(sourceDirectory := (cats / sourceDirectory).value)
+  .settings(catsSettings)
+  .settings(spark33Settings)
+  .dependsOn(`dataset-spark33` % "test->test;compile->compile;provided->provided")
+
 lazy val `cats-spark32` = project
   .settings(name := "frameless-cats-spark32")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
@@ -67,6 +75,14 @@ lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
+  .dependsOn(core % "test->test;compile->compile")
+
+lazy val `dataset-spark33` = project
+  .settings(name := "frameless-dataset-spark33")
+  .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark33Version))
+  .settings(spark32Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark32` = project
@@ -90,6 +106,13 @@ lazy val refined = project
   .settings(refinedSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
+lazy val `refined-spark33` = project
+  .settings(name := "frameless-refined-spark33")
+  .settings(sourceDirectory := (refined / sourceDirectory).value)
+  .settings(refinedSettings)
+  .settings(spark33Settings)
+  .dependsOn(`dataset-spark33` % "test->test;compile->compile;provided->provided")
+
 lazy val `refined-spark32` = project
   .settings(name := "frameless-refined-spark32")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
@@ -111,6 +134,17 @@ lazy val ml = project
   .dependsOn(
     core % "test->test;compile->compile",
     dataset % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark33` = project
+  .settings(name := "frameless-ml-spark33")
+  .settings(sourceDirectory := (ml / sourceDirectory).value)
+  .settings(mlSettings)
+  .settings(sparkMlDependencies(spark33Version))
+  .settings(spark33Settings)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val `ml-spark32` = project
@@ -148,12 +182,20 @@ lazy val docs = project
   )
   .dependsOn(dataset, cats, ml)
 
-def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = Seq(
-  libraryDependencies ++= Seq(
-    "org.apache.spark" %% "spark-core" % sparkVersion % scope,
-    "org.apache.spark" %% "spark-sql"  % sparkVersion % scope
+def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) =
+  Seq(
+    libraryDependencies ++= Seq(
+      "org.apache.spark" %% "spark-core" % sparkVersion % scope,
+      "org.apache.spark" %% "spark-sql"  % sparkVersion % scope
+    )
+  ) ++ (
+    if (sparkVersion.startsWith("3.4"))
+      Seq(
+        libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+      )
+    else
+      Seq()
   )
-)
 
 def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
   Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
@@ -276,6 +318,10 @@ lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
+lazy val spark33Settings = Seq(
+  tlVersionIntroduced := Map("2.12" -> "0.14.0", "2.13" -> "0.14.0")
+)
+
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
   Test / console / scalacOptions := (Compile / console / scalacOptions).value
@@ -341,7 +387,7 @@ ThisBuild / githubWorkflowBuildPreamble ++= Seq(
   )
 )
 
-val roots = List("root-spark31", "root-spark32", "root-spark33")
+val roots = List("root-spark31", "root-spark32", "root-spark33", "root-spark34")
 ThisBuild / githubWorkflowBuildMatrixAdditions +=
   "project" -> roots
 ThisBuild / githubWorkflowArtifactDownloadExtraKeys += "project"
@@ -367,3 +413,6 @@ ThisBuild / githubWorkflowBuildPostamble ++= Seq(
     name = Some("Upload Codecov Results")
   )
 )
+
+//resolvers += Resolver.url("Spark34_rc4", url("https://repository.apache.org/content/repositories/orgapachespark-1438"))(Resolver.mavenStylePatterns)
+//resolvers += "Spark34_rc4" at ""
