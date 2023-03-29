@@ -187,6 +187,7 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
         f,
         keyAttributes,
         dataAttributes,
+        Seq(), // #689 - possibly enough to provide a default of asc's for all keys?
         executed.analyzed
       )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
 
