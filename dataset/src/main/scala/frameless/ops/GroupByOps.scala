@@ -2,10 +2,12 @@ package frameless
 package ops
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
-import org.apache.spark.sql.catalyst.plans.logical.{MapGroups, Project}
+import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
 import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
+
+import frameless.MapGroups
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
   (self: TypedDataset[T], groupedBy: TK)
@@ -187,7 +189,6 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
         f,
         keyAttributes,
         dataAttributes,
-        Seq(), // #689 - possibly enough to provide a default of asc's for all keys?
         executed.analyzed
       )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
 

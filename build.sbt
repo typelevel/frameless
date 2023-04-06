@@ -24,12 +24,17 @@ ThisBuild / githubWorkflowArtifactUpload := false // doesn't work with scoverage
 
 lazy val root = project.in(file("."))
   .enablePlugins(NoPublishPlugin)
-  .aggregate(`root-spark33`, `root-spark32`, `root-spark31`, docs)
+  .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, `root-spark31`, docs)
+
+lazy val `root-spark34` = project
+  .in(file(".spark34"))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(core, cats, dataset, refined, ml)
 
 lazy val `root-spark33` = project
   .in(file(".spark33"))
   .enablePlugins(NoPublishPlugin)
-  .aggregate(core, cats, dataset, refined, ml)
+  .aggregate(core, `cats-spark33`, `dataset-spark33`, `refined-spark33`, `ml-spark33`)
 
 lazy val `root-spark32` = project
   .in(file(".spark32"))
@@ -74,12 +79,14 @@ lazy val `cats-spark31` = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(datasetSettings)
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "spark34_src")
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "pre34_src")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
   .settings(spark32Settings)
@@ -88,6 +95,7 @@ lazy val `dataset-spark33` = project
 lazy val `dataset-spark32` = project
   .settings(name := "frameless-dataset-spark32")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "pre34_src")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark32Version))
   .settings(spark32Settings)
@@ -96,6 +104,7 @@ lazy val `dataset-spark32` = project
 lazy val `dataset-spark31` = project
   .settings(name := "frameless-dataset-spark31")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "pre34_src")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark31Version))
   .settings(spark31Settings)
