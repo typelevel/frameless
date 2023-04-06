@@ -8,7 +8,7 @@ object MapGroups {
   def apply[K : Encoder, T : Encoder, U : Encoder](
                                                     func: (K, Iterator[T]) => TraversableOnce[U],
                                                     groupingAttributes: Seq[Attribute],
-                                                    dataAttributes: Seq[Attribute]
+                                                    dataAttributes: Seq[Attribute],
                                                       child: LogicalPlan): LogicalPlan =
     SMapGroups(func, groupingAttributes, dataAttributes, child)
 }

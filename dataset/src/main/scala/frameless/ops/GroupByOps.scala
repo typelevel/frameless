@@ -7,8 +7,6 @@ import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGrou
 import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
 
-import frameless.MapGroups
-
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
   (self: TypedDataset[T], groupedBy: TK)
   (implicit
