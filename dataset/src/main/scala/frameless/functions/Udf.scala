@@ -197,7 +197,7 @@ case class Spark2_4_LambdaVariable(
     }
   }
 
-  override def genCode(ctx: CodegenContext): ExprCode = {
+  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     val isNullValue = if (nullable) {
       JavaCode.isNullVariable(isNull)
     } else {
@@ -205,10 +205,6 @@ case class Spark2_4_LambdaVariable(
     }
     ExprCode(value = JavaCode.variable(value, dataType), isNull = isNullValue)
   }
-
-  // This won't be called as `genCode` is overridden, just overriding it to make
-  // `LambdaVariable` non-abstract.
-  override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ev
 }
 
 object FramelessUdf {

@@ -53,9 +53,7 @@ private[frameless] case class Lit[T <: AnyVal](
 
   def children: Seq[Expression] = Nil
 
-  override def genCode(ctx: CodegenContext): ExprCode = toCatalyst(ctx)
-
-  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
+  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = toCatalyst(ctx)
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 }
