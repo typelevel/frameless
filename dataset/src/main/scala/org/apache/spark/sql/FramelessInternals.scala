@@ -57,8 +57,7 @@ object FramelessInternals {
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
-    override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 
@@ -68,8 +67,7 @@ object FramelessInternals {
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
-    override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 }
