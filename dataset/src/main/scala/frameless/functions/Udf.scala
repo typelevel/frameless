@@ -206,7 +206,7 @@ case class Spark2_4_LambdaVariable(
     ExprCode(value = JavaCode.variable(value, dataType), isNull = isNullValue)
   }
 
-  // This won't be called as `genCode` is overrided, just overriding it to make
+  // This won't be called as `genCode` is overridden, just overriding it to make
   // `LambdaVariable` non-abstract.
   override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ev
 }
