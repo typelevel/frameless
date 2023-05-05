@@ -22,23 +22,38 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       )
     }
 
+  /**
+   * copies a vector as we need two rows of the right dimension for 3.4's alg
+   */
+  def copyVector(vect: Vector): Vector = {
+    val dubs = vect.toArray.map(_ % 2) // k is two
+    val dense = Vectors.dense(dubs)
+    vect match {
+      case _: SparseVector => dense.toSparse
+      case _ => dense
+    }
+  }
+
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x1: X1[Vector] =>
+      val x1a = X1(copyVector(x1.a))
       val km = TypedKMeans[X1[Vector]]
-      val ds = TypedDataset.create(Seq(x1))
+      val ds = TypedDataset.create(Seq(x1, x1a))
+
       val model = km.fit(ds).run()
       val pDs = model.transform(ds).as[X2[Vector, Int]]()
 
-      pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a)
+      pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a, x1a.a)
     }
 
     def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
+      val x2a = x2.copy(a = copyVector(x2.a))
       val km = TypedKMeans[X1[Vector]]
-      val ds = TypedDataset.create(Seq(x2))
+      val ds = TypedDataset.create(Seq(x2, x2a))
       val model = km.fit(ds).run()
       val pDs = model.transform(ds).as[X3[Vector, A, Int]]()
 
-      pDs.select(pDs.col('a), pDs.col('b)).collect().run() == Seq((x2.a, x2.b))
+      pDs.select(pDs.col('a), pDs.col('b)).collect().run().toList == Seq((x2.a, x2.b),(x2a.a, x2a.b))
     }
 
     check(prop)
