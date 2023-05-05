@@ -78,8 +78,8 @@ lazy val `cats-spark31` = project
 
 lazy val dataset = project
   .settings(name := "frameless-dataset")
-  .settings(datasetSettings)
   .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark34")
+  .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
 
@@ -87,6 +87,7 @@ lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "pre34")
+  .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
   .settings(spark32Settings)
   .dependsOn(core % "test->test;compile->compile")
@@ -421,6 +422,3 @@ ThisBuild / githubWorkflowBuildPostamble ++= Seq(
     name = Some("Upload Codecov Results")
   )
 )
-
-//resolvers += Resolver.url("Spark34_rc4", url("https://repository.apache.org/content/repositories/orgapachespark-1438"))(Resolver.mavenStylePatterns)
-//resolvers += "Spark34_rc4" at ""
