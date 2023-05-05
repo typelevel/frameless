@@ -25,7 +25,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
   /**
    * copies a vector as we need two rows of the right dimension for 3.4's alg
    */
-  def copyVector(vect: Vector): Vector = {
+  def newRowWithSameDimension(vect: Vector): Vector = {
     val dubs = vect.toArray.map(_ % 2) // k is two
     val dense = Vectors.dense(dubs)
     vect match {
@@ -36,22 +36,36 @@ class KMeansTests extends FramelessMlSuite with Matchers {
 
   test("fit() returns a correct TypedTransformer") {
     val prop = forAll { x1: X1[Vector] =>
-      val x1a = X1(copyVector(x1.a))
+      val x1a = X1(newRowWithSameDimension(x1.a))
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x1, x1a))
 
-      val model = km.fit(ds).run()
+      val model =
+        try {
+          km.fit(ds).run()
+        } catch {
+          case t: Throwable =>
+            println(s"KMeans fit fail with vector size ${x1a.a.size}")
+            throw t
+        }
       val pDs = model.transform(ds).as[X2[Vector, Int]]()
 
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a, x1a.a)
     }
 
     def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
-      val x2a = x2.copy(a = copyVector(x2.a))
+      val x2a = x2.copy(a = newRowWithSameDimension(x2.a))
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x2, x2a))
-      val model = km.fit(ds).run()
-      val pDs = model.transform(ds).as[X3[Vector, A, Int]]()
+      val model =
+        try {
+          km.fit(ds).run()
+        } catch {
+          case t: Throwable =>
+            println(s"KMeans fit fail with vector size ${x2a.a.size}")
+            throw t
+        }
+    val pDs = model.transform(ds).as[X3[Vector, A, Int]]()
 
       pDs.select(pDs.col('a), pDs.col('b)).collect().run().toList == Seq((x2.a, x2.b),(x2a.a, x2a.b))
     }
