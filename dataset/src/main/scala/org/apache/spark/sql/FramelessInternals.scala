@@ -5,7 +5,7 @@ import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
 import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.ScalaReflection.{cleanUpReflectionObjects, getClassFromType, getClassNameFromType, localTypeOf}
+import org.apache.spark.sql.catalyst.ScalaReflection.{cleanUpReflectionObjects, getClassFromType, localTypeOf}
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
@@ -19,12 +19,6 @@ private[sql] object ScalaSubtypeLock
 object FramelessInternals {
 
   val universe: scala.reflect.runtime.universe.type = scala.reflect.runtime.universe
-  // Since we are creating a runtime mirror using the class loader of current thread,
-  // we need to use def at here. So, every time we call mirror, it is using the
-  // class loader of the current thread.
-  def mirror: universe.Mirror = {
-    universe.runtimeMirror(Thread.currentThread().getContextClassLoader)
-  }
 
   import universe._
 
@@ -65,62 +59,12 @@ object FramelessInternals {
       case t if isSubtype(t, localTypeOf[CalendarInterval]) => CalendarIntervalType
       case t if isSubtype(t, localTypeOf[Decimal]) => DecimalType.SYSTEM_DEFAULT
       case _ =>
-        val className = getClassNameFromType(tpe)
-        className match {
-          case "scala.Array" =>
-            val TypeRef(_, _, Seq(elementType)) = tpe.dealias
-            arrayClassFor(elementType)
-          case other =>
-            val clazz = getClassFromType(tpe)
-            ObjectType(clazz)
-        }
+        /* original Spark code checked for scala.Array vs ObjectType,
+           this (and associated code) isn't needed due to TypedEncoders arrayEncoder */
+        val clazz = getClassFromType(tpe)
+        ObjectType(clazz)
     }
   }
-
-  /**
-   * Given a type `T` this function constructs `ObjectType` that holds a class of type
-   * `Array[T]`.
-   *
-   * Special handling is performed for primitive types to map them back to their raw
-   * JVM form instead of the Scala Array that handles auto boxing.
-   */
-  private def arrayClassFor(tpe: `Type`): ObjectType = cleanUpReflectionObjects {
-    val cls = tpe.dealias match {
-      case t if isSubtype(t, definitions.IntTpe) => classOf[Array[Int]]
-      case t if isSubtype(t, definitions.LongTpe) => classOf[Array[Long]]
-      case t if isSubtype(t, definitions.DoubleTpe) => classOf[Array[Double]]
-      case t if isSubtype(t, definitions.FloatTpe) => classOf[Array[Float]]
-      case t if isSubtype(t, definitions.ShortTpe) => classOf[Array[Short]]
-      case t if isSubtype(t, definitions.ByteTpe) => classOf[Array[Byte]]
-      case t if isSubtype(t, definitions.BooleanTpe) => classOf[Array[Boolean]]
-      case t if isSubtype(t, localTypeOf[Array[Byte]]) => classOf[Array[Array[Byte]]]
-      case t if isSubtype(t, localTypeOf[CalendarInterval]) => classOf[Array[CalendarInterval]]
-      case t if isSubtype(t, localTypeOf[Decimal]) => classOf[Array[Decimal]]
-      case other =>
-        // There is probably a better way to do this, but I couldn't find it...
-        val elementType = dataTypeFor(other).asInstanceOf[ObjectType].cls
-        java.lang.reflect.Array.newInstance(elementType, 0).getClass
-
-    }
-    ObjectType(cls)
-  }
-
-  /**
-   * Returns true if the value of this data type is same between internal and external.
-   */
-  def isNativeType(dt: DataType): Boolean = dt match {
-    case NullType | BooleanType | ByteType | ShortType | IntegerType | LongType |
-         FloatType | DoubleType | BinaryType | CalendarIntervalType => true
-    case _ => false
-  }
-
-  private def baseType(tpe: `Type`): `Type` = {
-    tpe.dealias match {
-      case annotatedType: AnnotatedType => annotatedType.underlying
-      case other => other
-    }
-  }
-
 
   def objectTypeFor[A](implicit classTag: ClassTag[A]): ObjectType = ObjectType(classTag.runtimeClass)
 
@@ -132,8 +76,6 @@ object FramelessInternals {
   }
 
   def expr(column: Column): Expression = column.expr
-
-  def column(column: Column): Expression = column.expr
 
   def logicalPlan(ds: Dataset[_]): LogicalPlan = ds.logicalPlan
 

@@ -204,8 +204,18 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     val spark = session
     import spark.implicits._
 
+    val regex =
+      arbitrary[String].suchThat{ str =>
+        try {
+          str.r
+          true
+        } catch {
+          case _: Throwable => false
+        }
+      }
+
     check {
-      forAll(Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString), arbitrary[String]) { (a, b) =>
+      forAll(Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString), regex) { (a, b) =>
         val ds = TypedDataset.create(X2(a, b) :: Nil)
 
         val typedLike = ds
