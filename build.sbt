@@ -329,7 +329,7 @@ lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
-lazy val spark33Settings = Seq(
+lazy val spark33Settings = Seq[Setting[_]](
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0"),
   // frameless-dataset-spark33 was originally frameless-dataset
   mimaPreviousArtifacts := Set(organization.value %% moduleName.value.split("-").dropRight(1).mkString("-") % "0.14.0")
