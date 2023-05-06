@@ -81,6 +81,7 @@ lazy val dataset = project
   .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark34")
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
+  .settings(spark32Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark33` = project
@@ -327,9 +328,7 @@ lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
-lazy val spark33Settings = Seq(
-  tlVersionIntroduced := Map("2.12" -> "0.14.0", "2.13" -> "0.14.0")
-)
+lazy val spark33Settings = spark32Settings
 
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
