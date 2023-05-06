@@ -90,7 +90,7 @@ lazy val `dataset-spark33` = project
   .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "pre34")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
-  .settings(spark32Settings)
+  .settings(spark33Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark32` = project
@@ -329,7 +329,11 @@ lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
-lazy val spark33Settings = spark32Settings
+lazy val spark33Settings = Seq(
+  tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0"),
+  // frameless-dataset-spark33 was originally frameless-dataset
+  mimaPreviousArtifacts := Set(organization.value %% moduleName.value.split("-").dropRight(1).mkString("-") % "0.14.0")
+)
 
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {_.filterNot("-Ywarn-unused-import" == _)},
