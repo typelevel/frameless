@@ -205,7 +205,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     import spark.implicits._
 
     val regex =
-      arbitrary[String].suchThat{ str =>
+      Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat{ str =>
         try {
           str.r
           true
@@ -215,7 +215,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       }
 
     check {
-      forAll(Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString), regex) { (a, b) =>
+      forAll(regex, arbitrary[String]) { (a, b) =>
         val ds = TypedDataset.create(X2(a, b) :: Nil)
 
         val typedLike = ds
