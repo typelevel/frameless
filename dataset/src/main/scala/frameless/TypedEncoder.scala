@@ -360,6 +360,22 @@ object TypedEncoder {
   }
 
   /**
+   * @param i1 implicit lazy `RecordFieldEncoder[T]` to encode individual elements of the set.
+   * @param i2 implicit `ClassTag[Set[T]]` to provide runtime information about the set type.
+   * @tparam T the element type of the set.
+   * @return a `TypedEncoder` instance for `Set[T]`.
+   */
+  implicit def setEncoder[T](
+    implicit
+      i1: shapeless.Lazy[RecordFieldEncoder[T]],
+    i2: ClassTag[Set[T]],
+  ): TypedEncoder[Set[T]] = {
+    implicit val inj: Injection[Set[T], Seq[T]] = Injection(_.toSeq, _.toSet)
+
+    TypedEncoder.usingInjection
+  }
+
+  /**
    * @tparam A the key type
    * @tparam B the value type
    * @param i0 the keys encoder
