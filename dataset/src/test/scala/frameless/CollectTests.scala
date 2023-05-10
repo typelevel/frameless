@@ -59,6 +59,7 @@ class CollectTests extends TypedDatasetSuite {
     check(forAll(prop[Vector[Char]] _))
     check(forAll(prop[List[Char]] _))
     check(forAll(prop[Seq[Char]] _))
+    check(forAll(prop[Set[Char]] _))
     check(forAll(prop[Seq[Seq[Seq[Char]]]] _))
     check(forAll(prop[Seq[Option[String]]] _))
     check(forAll(prop[Seq[Map[String, Long]]] _))

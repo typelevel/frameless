@@ -27,11 +27,12 @@ trait InjectionEnum {
         case Inl(_) => dataConstructorName
         case Inr(t) => tInjectionEnum.apply(t)
       },
-      name =>
+      { name =>
         if (name == dataConstructorName)
           Inl(gen.from(HNil))
         else
           Inr(tInjectionEnum.invert(name))
+      }
     )
   }
 
@@ -41,9 +42,7 @@ trait InjectionEnum {
     rInjectionEnum: Injection[R, String]
     ): Injection[A, String] =
     Injection(
-      value =>
-        rInjectionEnum.apply(gen.to(value)),
-      name =>
-        gen.from(rInjectionEnum.invert(name))
+      value => rInjectionEnum(gen.to(value)),
+      name => gen.from(rInjectionEnum.invert(name))
     )
 }

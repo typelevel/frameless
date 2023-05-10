@@ -67,11 +67,23 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     ds.firstOption.run.get shouldBe X2(true, Some(X2(None, None)))
   }
 
-  test("Nesting with collection") {
+  test("Nesting with Seq") {
     import RecordEncoderTests._
+
     val obj = C(B(Seq(A(1))))
     val rdd = sc.parallelize(Seq(obj))
     val ds = session.createDataset(rdd)(TypedExpressionEncoder[C])
+
+    ds.collect.head shouldBe obj
+  }
+
+  test("Nesting with Set") {
+    import RecordEncoderTests._
+
+    val obj = E(Set(B(Seq(A(1)))))
+    val rdd = sc.parallelize(Seq(obj))
+    val ds = session.createDataset(rdd)(TypedExpressionEncoder[E])
+
     ds.collect.head shouldBe obj
   }
 
@@ -534,6 +546,7 @@ object RecordEncoderTests {
   case class User(id: Long, name: Option[Name])
 
   case class D(m: Map[String, Int])
+  case class E(b: Set[B])
 
   final class Subject(val name: String) extends AnyVal with Serializable
 
