@@ -240,7 +240,8 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
       dmm("frameless.functions.package.litAggr"),
       dmm("org.apache.spark.sql.FramelessInternals.column")
     )
-  }
+  },
+  coverageExcludedPackages := "org.apache.spark.sql.reflection"
 )
 
 lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(

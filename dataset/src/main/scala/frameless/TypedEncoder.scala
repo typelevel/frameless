@@ -4,8 +4,8 @@ import java.time.{Duration, Instant, Period}
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.FramelessInternals.{dataTypeFor, UserDefinedType}
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.FramelessInternals.UserDefinedType
+import org.apache.spark.sql.{reflection => ScalaReflection}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
 import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
@@ -163,7 +163,7 @@ object TypedEncoder {
     new TypedEncoder[BigDecimal] {
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = dataTypeFor[BigDecimal]
+      def jvmRepr: DataType = ScalaReflection.dataTypeFor[BigDecimal]
       def catalystRepr: DataType = DecimalType.SYSTEM_DEFAULT
 
       def toCatalyst(path: Expression): Expression =
@@ -180,7 +180,7 @@ object TypedEncoder {
     new TypedEncoder[java.math.BigDecimal] {
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = dataTypeFor[java.math.BigDecimal]
+      def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.math.BigDecimal]
       def catalystRepr: DataType = DecimalType.SYSTEM_DEFAULT
 
       def toCatalyst(path: Expression): Expression =
@@ -196,7 +196,7 @@ object TypedEncoder {
   implicit val sqlDate: TypedEncoder[SQLDate] = new TypedEncoder[SQLDate] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = dataTypeFor[SQLDate]
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[SQLDate]
     def catalystRepr: DataType = DateType
 
     def toCatalyst(path: Expression): Expression =
@@ -215,7 +215,7 @@ object TypedEncoder {
   implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] = new TypedEncoder[SQLTimestamp] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = dataTypeFor[SQLTimestamp]
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[SQLTimestamp]
     def catalystRepr: DataType = TimestampType
 
     def toCatalyst(path: Expression): Expression =
@@ -235,7 +235,7 @@ object TypedEncoder {
   implicit val timeInstant: TypedEncoder[Instant] = new TypedEncoder[Instant] {
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = dataTypeFor[Instant]
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[Instant]
     def catalystRepr: DataType = TimestampType
 
     def toCatalyst(path: Expression): Expression =
@@ -444,44 +444,44 @@ object TypedEncoder {
           case IntegerType =>
             Invoke(
               UnwrapOption(
-                dataTypeFor[java.lang.Integer], path),
+                ScalaReflection.dataTypeFor[java.lang.Integer], path),
               "intValue",
               IntegerType)
 
           case LongType =>
             Invoke(
-              UnwrapOption(dataTypeFor[java.lang.Long], path),
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Long], path),
               "longValue",
               LongType)
 
           case DoubleType =>
             Invoke(
-              UnwrapOption(dataTypeFor[java.lang.Double], path),
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Double], path),
               "doubleValue",
               DoubleType)
 
           case FloatType =>
             Invoke(
-              UnwrapOption(dataTypeFor[java.lang.Float], path),
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Float], path),
               "floatValue",
               FloatType)
 
           case ShortType =>
             Invoke(
-              UnwrapOption(dataTypeFor[java.lang.Short], path),
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Short], path),
               "shortValue",
               ShortType)
 
           case ByteType =>
             Invoke(
-              UnwrapOption(dataTypeFor[java.lang.Byte], path),
+              UnwrapOption(ScalaReflection.dataTypeFor[java.lang.Byte], path),
               "byteValue",
               ByteType)
 
           case BooleanType =>
             Invoke(
               UnwrapOption(
-                dataTypeFor[java.lang.Boolean], path),
+                ScalaReflection.dataTypeFor[java.lang.Boolean], path),
               "booleanValue",
               BooleanType)
 
