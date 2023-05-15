@@ -1,8 +1,11 @@
 package org.apache.spark.sql
 
-import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct, Expression, _}
+import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
+import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
@@ -46,6 +49,8 @@ object FramelessInternals {
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
   type UserDefinedType[A >: Null] =  org.apache.spark.sql.types.UserDefinedType[A]
 
+  // below only tested in SelfJoinTests.colLeft and colRight are equivalent to col outside of joins
+  //  - via files (codegen) forces doGenCode eval.
   /** Expression to tag columns from the left hand side of join expression. */
   case class DisambiguateLeft[T](tagged: Expression) extends Expression with NonSQLExpression {
     def eval(input: InternalRow): Any = tagged.eval(input)
