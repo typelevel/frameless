@@ -17,7 +17,7 @@ Note that while Frameless is still getting off the ground, it is very possible t
 made for at least the next few versions.
 
 The Frameless project and contributors support the
-[Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/conduct.html) and want all its
+[Typelevel](http://typelevel.org/) [Code of Conduct](http://typelevel.org/code-of-conduct.html) and want all its
 associated channels (e.g. GitHub, Discord) to be a safe and friendly environment for contributing and learning.
 
 ## Versions and dependencies
