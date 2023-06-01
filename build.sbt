@@ -1,7 +1,6 @@
 val sparkVersion = "3.4.0"
-val spark32Version = "3.2.4"
 val spark33Version = "3.3.2"
-val spark31Version = "3.1.3"
+val spark32Version = "3.2.4"
 val catsCoreVersion = "2.9.0"
 val catsEffectVersion = "3.4.10"
 val catsMtlVersion = "1.3.1"
@@ -24,7 +23,7 @@ ThisBuild / githubWorkflowArtifactUpload := false // doesn't work with scoverage
 
 lazy val root = project.in(file("."))
   .enablePlugins(NoPublishPlugin)
-  .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, `root-spark31`, docs)
+  .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, docs)
 
 lazy val `root-spark34` = project
   .in(file(".spark34"))
@@ -40,11 +39,6 @@ lazy val `root-spark32` = project
   .in(file(".spark32"))
   .enablePlugins(NoPublishPlugin)
   .aggregate(core, `cats-spark32`, `dataset-spark32`, `refined-spark32`, `ml-spark32`)
-
-lazy val `root-spark31` = project
-  .in(file(".spark31"))
-  .enablePlugins(NoPublishPlugin)
-  .aggregate(core, `cats-spark31`, `dataset-spark31`, `refined-spark31`, `ml-spark31`)
 
 lazy val core = project
   .settings(name := "frameless-core")
@@ -69,25 +63,17 @@ lazy val `cats-spark32` = project
   .settings(spark32Settings)
   .dependsOn(`dataset-spark32` % "test->test;compile->compile;provided->provided")
 
-lazy val `cats-spark31` = project
-  .settings(name := "frameless-cats-spark31")
-  .settings(sourceDirectory := (cats / sourceDirectory).value)
-  .settings(catsSettings)
-  .settings(spark31Settings)
-  .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
-
 lazy val dataset = project
   .settings(name := "frameless-dataset")
-  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark34")
+  .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3.4+")
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
-  .settings(spark32Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "pre34")
+  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
   .settings(spark33Settings)
@@ -96,19 +82,10 @@ lazy val `dataset-spark33` = project
 lazy val `dataset-spark32` = project
   .settings(name := "frameless-dataset-spark32")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "pre34")
+  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark32Version))
   .settings(spark32Settings)
-  .dependsOn(core % "test->test;compile->compile")
-
-lazy val `dataset-spark31` = project
-  .settings(name := "frameless-dataset-spark31")
-  .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "pre34")
-  .settings(datasetSettings)
-  .settings(sparkDependencies(spark31Version))
-  .settings(spark31Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val refined = project
@@ -129,13 +106,6 @@ lazy val `refined-spark32` = project
   .settings(refinedSettings)
   .settings(spark32Settings)
   .dependsOn(`dataset-spark32` % "test->test;compile->compile;provided->provided")
-
-lazy val `refined-spark31` = project
-  .settings(name := "frameless-refined-spark31")
-  .settings(sourceDirectory := (refined / sourceDirectory).value)
-  .settings(refinedSettings)
-  .settings(spark31Settings)
-  .dependsOn(`dataset-spark31` % "test->test;compile->compile;provided->provided")
 
 lazy val ml = project
   .settings(name := "frameless-ml")
@@ -168,17 +138,6 @@ lazy val `ml-spark32` = project
     `dataset-spark32` % "test->test;compile->compile;provided->provided"
   )
 
-lazy val `ml-spark31` = project
-  .settings(name := "frameless-ml-spark31")
-  .settings(sourceDirectory := (ml / sourceDirectory).value)
-  .settings(mlSettings)
-  .settings(sparkMlDependencies(spark31Version))
-  .settings(spark31Settings)
-  .dependsOn(
-    core % "test->test;compile->compile",
-    `dataset-spark31` % "test->test;compile->compile;provided->provided"
-  )
-
 lazy val docs = project
   .in(file("mdocs"))
   .settings(framelessSettings)
@@ -192,20 +151,12 @@ lazy val docs = project
   )
   .dependsOn(dataset, cats, ml)
 
-def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) =
-  Seq(
-    libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core" % sparkVersion % scope,
-      "org.apache.spark" %% "spark-sql"  % sparkVersion % scope
-    )
-  ) ++ (
-    if (sparkVersion.startsWith("3.4"))
-      Seq(
-        libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
-      )
-    else
-      Seq()
+def sparkDependencies(sparkVersion: String, scope: Configuration = Provided) = Seq(
+  libraryDependencies ++= Seq(
+    "org.apache.spark" %% "spark-core" % sparkVersion % scope,
+    "org.apache.spark" %% "spark-sql"  % sparkVersion % scope
   )
+)
 
 def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
   Seq(libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % scope)
@@ -245,17 +196,7 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
 )
 
 lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
-  libraryDependencies += "eu.timepit" %% "refined" % refinedVersion,
-  /**
-    * The old Scala XML is pulled from Scala 2.12.x.
-    *
-    * [error] (update) found version conflict(s) in library dependencies; some are suspected to be binary incompatible:
-    * [error]
-    * [error] 	* org.scala-lang.modules:scala-xml_2.12:2.1.0 (early-semver) is selected over 1.0.6
-    * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.1.0)
-    * [error] 	    +- org.scala-lang:scala-compiler:2.12.16              (depends on 1.0.6)
-    */
-  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+  libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
 )
 
 lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL
@@ -320,11 +261,18 @@ lazy val framelessSettings = Seq(
   mimaPreviousArtifacts ~= {
     _.filterNot(_.revision == "0.11.0") // didn't release properly
   },
-) ++ consoleSettings
 
-lazy val spark31Settings = Seq(
-  crossScalaVersions := Seq(Scala212)
-)
+  /**
+   * The old Scala XML is pulled from Scala 2.12.x.
+   *
+   * [error] (update) found version conflict(s) in library dependencies; some are suspected to be binary incompatible:
+   * [error]
+   * [error] 	* org.scala-lang.modules:scala-xml_2.12:2.1.0 (early-semver) is selected over 1.0.6
+   * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.1.0)
+   * [error] 	    +- org.scala-lang:scala-compiler:2.12.16              (depends on 1.0.6)
+   */
+  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+) ++ consoleSettings
 
 lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
@@ -401,7 +349,7 @@ ThisBuild / githubWorkflowBuildPreamble ++= Seq(
   )
 )
 
-val roots = List("root-spark31", "root-spark32", "root-spark33", "root-spark34")
+val roots = List("root-spark32", "root-spark33", "root-spark34")
 ThisBuild / githubWorkflowBuildMatrixAdditions +=
   "project" -> roots
 ThisBuild / githubWorkflowArtifactDownloadExtraKeys += "project"
