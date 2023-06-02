@@ -186,41 +186,45 @@
 //                             ^</span></code></pre>
         <p>This gets raised at compile time, whereas with the standard <code>Dataset</code> API the error appears at runtime (enjoy the stack trace):</p>
         <pre><code class="nohighlight"><span class="identifier">aptDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;citi</span><span>)
-</span><span class="comment">// org.apache.spark.sql.AnalysisException: Column &#39;citi&#39; does not exist. Did you mean one of the following? [city, price, surface, bedrooms];
+</span><span class="comment">// org.apache.spark.sql.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `citi` cannot be resolved. Did you mean one of the following? [`city`, `price`, `surface`, `bedrooms`].;
 // &#39;Project [&#39;citi]
 // +- LocalRelation [city#64, surface#65, price#66, bedrooms#67]
 // 
-// 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:54)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$7(CheckAnalysis.scala:200)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$7$adapted(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:367)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$6(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$6$adapted(CheckAnalysis.scala:193)
+// 	at org.apache.spark.sql.errors.QueryCompilationErrors$.unresolvedAttributeError(QueryCompilationErrors.scala:221)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$$failUnresolvedAttribute(CheckAnalysis.scala:143)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:258)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4$adapted(CheckAnalysis.scala:256)
 // 	at scala.collection.immutable.Stream.foreach(Stream.scala:533)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:367)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:97)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1$adapted(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0$(CheckAnalysis.scala:160)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis0(Analyzer.scala:188)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:156)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:146)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:188)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:214)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:211)
 // 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:211)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:208)
 // 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:510)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:779)
-// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:184)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:526)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:201)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:74)
 // 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:66)
-// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:91)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:779)
-// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:89)
-// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:3887)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1519)
+// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
+// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4196)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1578)
 // 	at repl.MdocSession$App0$$anonfun$25.apply(FeatureOverview.md:95)
 // 	at repl.MdocSession$App0$$anonfun$25.apply(FeatureOverview.md:95)</span></code></pre>
         <p><code>select()</code> supports arbitrary column operations:</p>
@@ -674,8 +678,8 @@
 </span><span class="comment">// +----+-------+--------+--------+
 // |city|surface|   price|bedrooms|
 // +----+-------+--------+--------+
-// |Lyon|     45|133000.0|       1|
 // |Lyon|     83|200000.0|       2|
+// |Lyon|     45|133000.0|       1|
 // +----+-------+--------+--------+
 // only showing top 2 rows
 //</span></code></pre>
@@ -702,7 +706,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$15694/663881246@afa5623
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$15787/2119219222@5e40cb53
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions

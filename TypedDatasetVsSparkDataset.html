@@ -175,9 +175,9 @@
         Now, let&#39;s take a quick look at the optimized Physical Plan that Spark&#39;s Catalyst generated.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">filteredDs</span><span>.</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) Filter (isnotnull(i#2063L) AND (i#2063L = 10))
+// *(1) Filter (isnotnull(i#2065L) AND (i#2065L = 10))
 // +- *(1) ColumnarToRow
-//    +- FileScan parquet [i#2063L] Batched: true, DataFilters: [isnotnull(i#2063L), (i#2063L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+//    +- FileScan parquet [i#2065L] Batched: true, DataFilters: [isnotnull(i#2065L), (i#2065L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
 // 
 //</span></code></pre>
         <p>The last line is very important (see <code>ReadSchema</code>). The schema read
@@ -186,40 +186,44 @@
         <p>Unfortunately, this syntax is not bulletproof: it fails at run-time if we try to access
         a non existing column <code>x</code>:</p>
         <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span> === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;x&quot;</span><span>.</span><span class="identifier">as</span><span>[</span><span class="type-name">Long</span><span>])
-</span><span class="comment">// org.apache.spark.sql.AnalysisException: Column &#39;x&#39; does not exist. Did you mean one of the following? [i, j];
+</span><span class="comment">// org.apache.spark.sql.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `x` cannot be resolved. Did you mean one of the following? [`i`, `j`].;
 // &#39;Project [&#39;x]
-// +- Filter (i#2063L = cast(10 as bigint))
-//    +- Relation [i#2063L,j#2064] parquet
+// +- Filter (i#2065L = cast(10 as bigint))
+//    +- Relation [i#2065L,j#2066] parquet
 // 
-// 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:54)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$7(CheckAnalysis.scala:200)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$7$adapted(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:367)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$6(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$6$adapted(CheckAnalysis.scala:193)
+// 	at org.apache.spark.sql.errors.QueryCompilationErrors$.unresolvedAttributeError(QueryCompilationErrors.scala:221)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$$failUnresolvedAttribute(CheckAnalysis.scala:143)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:258)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4$adapted(CheckAnalysis.scala:256)
 // 	at scala.collection.immutable.Stream.foreach(Stream.scala:533)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:193)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:367)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:97)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1$adapted(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0$(CheckAnalysis.scala:160)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis0(Analyzer.scala:188)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:156)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:146)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:188)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:214)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:211)
 // 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:211)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:208)
 // 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:510)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:779)
-// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:184)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:526)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:201)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:74)
 // 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:66)
-// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:206)
-// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:212)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1574)
+// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:205)
+// 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:211)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1633)
 // 	at repl.MdocSession$App0$$anonfun$15.apply(TypedDatasetVsSparkDataset.md:78)
 // 	at repl.MdocSession$App0$$anonfun$15.apply(TypedDatasetVsSparkDataset.md:78)</span></code></pre>
         <p>There are two things to improve here. First, we would want to avoid the <code>as[Long]</code> casting that we are required
@@ -243,12 +247,12 @@
         <p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span>).</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) SerializeFromObject [input[0, bigint, false] AS value#2115L]
-// +- *(1) MapElements &lt;function1&gt;, obj#2114: bigint
+// *(1) SerializeFromObject [input[0, bigint, false] AS value#2117L]
+// +- *(1) MapElements &lt;function1&gt;, obj#2116: bigint
 //    +- *(1) Filter &lt;function1&gt;.apply
-//       +- *(1) DeserializeToObject newInstance(class repl.MdocSession$App0$Foo), obj#2113: repl.MdocSession$App0$Foo
+//       +- *(1) DeserializeToObject newInstance(class repl.MdocSession$App0$Foo), obj#2115: repl.MdocSession$App0$Foo
 //          +- *(1) ColumnarToRow
-//             +- FileScan parquet [i#2063L,j#2064] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;
+//             +- FileScan parquet [i#2065L,j#2066] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;
 // 
 //</span></code></pre>
         <p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
@@ -274,10 +278,10 @@
         <p>And the optimized Physical Plan:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)).</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) Project [i#2063L AS value#2199L]
-// +- *(1) Filter (isnotnull(i#2063L) AND (i#2063L = 10))
+// *(1) Project [i#2065L AS value#2201L]
+// +- *(1) Filter (isnotnull(i#2065L) AND (i#2065L = 10))
 //    +- *(1) ColumnarToRow
-//       +- FileScan parquet [i#2063L] Batched: true, DataFilters: [isnotnull(i#2063L), (i#2063L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+//       +- FileScan parquet [i#2065L] Batched: true, DataFilters: [isnotnull(i#2065L), (i#2065L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
 // 
 //</span></code></pre>
         <p>And the compiler is our friend.</p>
@@ -299,34 +303,23 @@
         For example, using the following case class leads to a runtime failure:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">MyDate</span><span>(</span><span class="identifier">jday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)</span></code></pre>
         <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">myDateDs</span><span> = </span><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))))
-</span><span class="comment">// java.lang.UnsupportedOperationException: No Encoder found for java.util.Date
-// - field (class: &quot;java.util.Date&quot;, name: &quot;jday&quot;)
-// - root class: &quot;repl.MdocSession.App0.MyDate&quot;
-// 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1185)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:617)
-// 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$6(ScalaReflection.scala:604)
+</span><span class="comment">// org.apache.spark.SparkUnsupportedOperationException: [ENCODER_NOT_FOUND] Not found an encoder of the type java.util.Date to Spark SQL internal representation. Consider to change the input type to one of supported at &#39;https://spark.apache.org/docs/latest/sql-ref-datatypes.html&#39;.
+// 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1483)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:958)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$3(ScalaReflection.scala:953)
 // 	at scala.collection.immutable.List.map(List.scala:293)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerFor$1(ScalaReflection.scala:589)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:942)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$1(ScalaReflection.scala:814)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerFor(ScalaReflection.scala:448)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$serializerForType$1(ScalaReflection.scala:437)
-// 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:948)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:947)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:51)
-// 	at org.apache.spark.sql.catalyst.ScalaReflection$.serializerForType(ScalaReflection.scala:429)
-// 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:55)
-// 	at org.apache.spark.sql.Encoders$.product(Encoders.scala:300)
-// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:261)
-// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:261)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects(ScalaReflection.scala:984)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection.cleanUpReflectionObjects$(ScalaReflection.scala:983)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.cleanUpReflectionObjects(ScalaReflection.scala:60)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:811)
+// 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:805)
+// 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$.apply(ExpressionEncoder.scala:50)
+// 	at org.apache.spark.sql.Encoders$.product(Encoders.scala:308)
+// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:264)
+// 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:264)
 // 	at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)
 // 	at repl.MdocSession$App0$$anonfun$41.apply$mcV$sp(TypedDatasetVsSparkDataset.md:151)
 // 	at repl.MdocSession$App0$$anonfun$41.apply(TypedDatasetVsSparkDataset.md:150)
@@ -343,61 +336,62 @@
         This is problematic when you start mixing the two.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="identifier">functions</span><span>.</span><span class="identifier">sum</span></code></pre>
         <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">sum</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>), </span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>*</span><span class="number-literal">2</span><span>)
-</span><span class="comment">// org.apache.spark.sql.AnalysisException: grouping expressions sequence is empty, and &#39;i&#39; is not an aggregate function. Wrap &#39;(sum(i) AS `sum(i)`)&#39; in windowing function(s) or wrap &#39;i&#39; in first() (or first_value) if you don&#39;t care which value you get.;
-// Aggregate [sum(i#2063L) AS sum(i)#2205L, (i#2063L * cast(2 as bigint)) AS (i * 2)#2206L]
-// +- Relation [i#2063L,j#2064] parquet
+</span><span class="comment">// org.apache.spark.sql.AnalysisException: [MISSING_GROUP_BY] The query does not include a GROUP BY clause. Add GROUP BY or turn it into the window functions using OVER clauses.;
+// Aggregate [sum(i#2065L) AS sum(i)#2207L, (i#2065L * cast(2 as bigint)) AS (i * 2)#2208L]
+// +- Relation [i#2065L,j#2066] parquet
 // 
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis(CheckAnalysis.scala:57)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.failAnalysis$(CheckAnalysis.scala:56)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.failAnalysis(Analyzer.scala:188)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:341)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$21(CheckAnalysis.scala:356)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$21$adapted(CheckAnalysis.scala:356)
+// 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:52)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:429)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$18(CheckAnalysis.scala:445)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$18$adapted(CheckAnalysis.scala:445)
 // 	at scala.collection.Iterator.foreach(Iterator.scala:943)
 // 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
 // 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
 // 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
 // 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
 // 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:356)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$21(CheckAnalysis.scala:356)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$21$adapted(CheckAnalysis.scala:356)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:445)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$18(CheckAnalysis.scala:445)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$18$adapted(CheckAnalysis.scala:445)
 // 	at scala.collection.Iterator.foreach(Iterator.scala:943)
 // 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
 // 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
 // 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
 // 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
 // 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:356)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$24(CheckAnalysis.scala:383)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$24$adapted(CheckAnalysis.scala:383)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:445)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$21(CheckAnalysis.scala:475)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$21$adapted(CheckAnalysis.scala:475)
 // 	at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)
 // 	at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)
 // 	at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1(CheckAnalysis.scala:383)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis$1$adapted(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:367)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:102)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:97)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1(CheckAnalysis.scala:475)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1$adapted(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:163)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0$(CheckAnalysis.scala:160)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis0(Analyzer.scala:188)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:156)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:146)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:188)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:214)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:211)
 // 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
-// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:211)
+// 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:208)
 // 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:510)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:185)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:779)
-// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:184)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:526)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:202)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:201)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:76)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:74)
 // 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:66)
-// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:91)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:779)
-// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:89)
-// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:3887)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1519)
+// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
+// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4196)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1578)
 // 	at repl.MdocSession$App0$$anonfun$44.apply(TypedDatasetVsSparkDataset.md:173)
 // 	at repl.MdocSession$App0$$anonfun$44.apply(TypedDatasetVsSparkDataset.md:173)</span></code></pre>
         <p>In Frameless, mixing the two results in a compilation error.</p>
