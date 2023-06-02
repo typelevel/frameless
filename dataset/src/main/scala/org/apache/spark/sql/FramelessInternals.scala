@@ -24,8 +24,6 @@ object FramelessInternals {
 
   def expr(column: Column): Expression = column.expr
 
-  def column(column: Column): Expression = column.expr
-
   def logicalPlan(ds: Dataset[_]): LogicalPlan = ds.logicalPlan
 
   def executePlan(ds: Dataset[_], plan: LogicalPlan): QueryExecution =
@@ -51,14 +49,15 @@ object FramelessInternals {
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
   type UserDefinedType[A >: Null] =  org.apache.spark.sql.types.UserDefinedType[A]
 
+  // below only tested in SelfJoinTests.colLeft and colRight are equivalent to col outside of joins
+  //  - via files (codegen) forces doGenCode eval.
   /** Expression to tag columns from the left hand side of join expression. */
   case class DisambiguateLeft[T](tagged: Expression) extends Expression with NonSQLExpression {
     def eval(input: InternalRow): Any = tagged.eval(input)
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
-    override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 
@@ -68,8 +67,7 @@ object FramelessInternals {
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = ???
-    override def genCode(ctx: CodegenContext): ExprCode = tagged.genCode(ctx)
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
 }

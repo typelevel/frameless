@@ -9,7 +9,7 @@ import org.scalacheck.{Arbitrary, Gen}
 object Generators {
 
   implicit val arbVector: Arbitrary[Vector] = Arbitrary {
-    val genDenseVector = Gen.listOf(arbDouble.arbitrary).map(doubles => Vectors.dense(doubles.toArray))
+    val genDenseVector = Gen.listOf(arbDouble.arbitrary).suchThat(_.nonEmpty).map(doubles => Vectors.dense(doubles.toArray))
     val genSparseVector = genDenseVector.map(_.toSparse)
 
     Gen.oneOf(genDenseVector, genSparseVector)

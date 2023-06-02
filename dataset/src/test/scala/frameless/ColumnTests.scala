@@ -7,6 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 
 import scala.math.Ordering.Implicits._
+import scala.util.Try
 
 final class ColumnTests extends TypedDatasetSuite with Matchers {
 
@@ -204,8 +205,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     val spark = session
     import spark.implicits._
 
+    val regex = Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat { str => Try(str.r).isSuccess }
+
     check {
-      forAll(Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString), arbitrary[String]) { (a, b) =>
+      forAll(regex, arbitrary[String]) { (a, b) =>
         val ds = TypedDataset.create(X2(a, b) :: Nil)
 
         val typedLike = ds

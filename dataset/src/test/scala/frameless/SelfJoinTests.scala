@@ -124,13 +124,34 @@ class SelfJoinTests extends TypedDatasetSuite {
       check(prop[Int, Int] _)
     }
 
-  test("colLeft and colRight are equivalant to col outside of joins") {
+  test("colLeft and colRight are equivalent to col outside of joins") {
     def prop[A, B, C, D](data: Vector[X4[A, B, C, D]])(
       implicit
       ea: TypedEncoder[A],
       ex4: TypedEncoder[X4[A, B, C, D]]
     ): Prop = {
       val dataset = TypedDataset.create(data)
+      val selectedCol      = dataset.select(dataset.col     [A]('a)).collect().run().toVector
+      val selectedColLeft  = dataset.select(dataset.colLeft [A]('a)).collect().run().toVector
+      val selectedColRight = dataset.select(dataset.colRight[A]('a)).collect().run().toVector
+
+      (selectedCol ?= selectedColLeft) && (selectedCol ?= selectedColRight)
+    }
+
+    check(forAll(prop[Int, Int, Int, Int] _))
+    check(forAll(prop[X2[Int, Int], Int, Int, Int] _))
+    check(forAll(prop[String, Int, Int, Int] _))
+    check(forAll(prop[UdtEncodedClass, Int, Int, Int] _))
+  }
+
+  test("colLeft and colRight are equivalent to col outside of joins - via files (codegen)") {
+    def prop[A, B, C, D](data: Vector[X4[A, B, C, D]])(
+      implicit
+      ea: TypedEncoder[A],
+      ex4: TypedEncoder[X4[A, B, C, D]]
+    ): Prop = {
+      TypedDataset.create(data).write.mode("overwrite").parquet("./target/testData")
+      val dataset = TypedDataset.createUnsafe[X4[A, B, C, D]](session.read.parquet("./target/testData"))
       val selectedCol      = dataset.select(dataset.col     [A]('a)).collect().run().toVector
       val selectedColLeft  = dataset.select(dataset.colLeft [A]('a)).collect().run().toVector
       val selectedColRight = dataset.select(dataset.colRight[A]('a)).collect().run().toVector
