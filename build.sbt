@@ -10,6 +10,7 @@ val shapeless = "2.3.10"
 val scalacheck = "1.17.0"
 val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.10.3"
+val nakedFSVersion = "0.1.0"
 
 val Scala212 = "2.12.17"
 val Scala213 = "2.13.10"
@@ -192,7 +193,9 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
       dmm("org.apache.spark.sql.FramelessInternals.column")
     )
   },
-  coverageExcludedPackages := "org.apache.spark.sql.reflection"
+  coverageExcludedPackages := "org.apache.spark.sql.reflection",
+
+  libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude("org.apache.hadoop", "hadoop-commons")
 )
 
 lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
