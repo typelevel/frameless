@@ -58,9 +58,14 @@ trait PushDownTests extends Matchers {
     else
       sparkPlan).collect {
       case fs: FileSourceScanExec =>
-        val m = fs.getClass.getMethod("pushedDownFilters", Array.empty[Class[_]]: _*)
-        m.setAccessible(true)
-        val res = m.invoke(fs).asInstanceOf[Seq[Filter]]
+        import scala.reflect.runtime.{universe => ru}
+
+        val runtimeMirror = ru.runtimeMirror(getClass.getClassLoader)
+        val instanceMirror = runtimeMirror.reflect(fs)
+        val getter = ru.typeOf[FileSourceScanExec].member(ru.TermName("pushedDownFilters")).asTerm.getter
+        val m = instanceMirror.reflectMethod(getter.asMethod)
+        val res = m.apply(fs).asInstanceOf[Seq[Filter]]
+
         res
     }.flatten
   }
