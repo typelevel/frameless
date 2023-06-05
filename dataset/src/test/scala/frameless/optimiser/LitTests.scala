@@ -10,6 +10,11 @@ class LitTests extends TypedDatasetSuite {
     TypedDataset.create(Seq(X1(ms))).write.mode("overwrite").parquet("./target/testData")
     val dataset = TypedDataset.createUnsafe[X1[SQLTimestamp]](session.read.parquet("./target/testData"))
 
+    {
+      val pushDowns = getPushDowns(dataset.filter(dataset('a) >= ms))
+      assert(!pushDowns.exists(_.contains("GreaterThanOrEqual")), "Should NOT have had a push down predicate for the underlying long as no optimiser is yet used")
+    }
+
     val orig = session.sqlContext.experimental.extraOptimizations
     try {
       session.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
