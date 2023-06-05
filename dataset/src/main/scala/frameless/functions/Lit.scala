@@ -9,7 +9,7 @@ private[frameless] case class Lit[T <: AnyVal](
     dataType: DataType,
     nullable: Boolean,
     show: () => String,
-    convertedExpr: Expression // must be the same toCatalyst as the toCatalyst function
+    catalystExpr: Expression // must be the same toCatalyst as the toCatalyst function
 ) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
@@ -53,7 +53,7 @@ private[frameless] case class Lit[T <: AnyVal](
 
   def children: Seq[Expression] = Nil
 
-  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = convertedExpr.genCode(ctx)
+  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = catalystExpr.genCode(ctx)
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 }
