@@ -664,6 +664,7 @@ val sparkConfig = new org.apache.spark.SparkConf()
   .set("spark.ui.enabled", "false")
 sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
 
+val hostMode = "*"
 // With SparkSession.Builder()
 val sparkSession = org.apache.spark.sql.SparkSession.builder()
   .config("spark.master", s"local[$hostMode]").config("spark.ui.enabled", false)
@@ -701,7 +702,7 @@ Using FramelessExtension will yield the best results for all Literal types as it
 As such it is preferred to the experimental route:
 
 ```scala mdoc
-import framless.optimizer.LiteralRule
+import frameless.optimizer.LiteralRule
 
 sparkSession.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
 ```
