@@ -1,9 +1,11 @@
 package frameless.optimiser
 
 import frameless._
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.{currentTimestamp, microsToInstant}
-import org.apache.spark.sql.sources.{Filter, GreaterThanOrEqual}
+import org.apache.spark.sql.sources.{Filter, GreaterThanOrEqual, EqualTo}
 import org.apache.spark.sql.execution.FileSourceScanExec
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec
 import org.scalatest.funsuite.AnyFunSuite
@@ -20,25 +22,37 @@ trait PushDownTests extends Matchers {
   def withoutOptimisation[A]( thunk : => A): A
   def withOptimisation[A]( thunk : => A): A
 
-  def gteTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any) = {
+  def gteTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, expectFailureWithExperimental: Boolean = false) =
+    pushDownTest[A](payload, GreaterThanOrEqual("a", expected), _ >= payload, expectFailureWithExperimental)
+
+  def eqTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, expectFailureWithExperimental: Boolean = false) =
+    pushDownTest[A](payload, EqualTo("a", expected), _ === payload, expectFailureWithExperimental)
+
+  val isExperimental: Boolean
+
+  def pushDownTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, op: TypedColumn[X1[A],A] => TypedColumn[X1[A],Boolean], expectFailureWithExperimental: Boolean = false) = {
     withoutOptimisation {
       TypedDataset.create(Seq(X1(payload))).write.mode("overwrite").parquet("./target/optimiserTestData")
       val dataset = TypedDataset.createUnsafe[X1[A]](session.read.parquet("./target/optimiserTestData"))
 
-      val pushDowns = getPushDowns(dataset.filter(dataset('a) >= payload))
+      val pushDowns = getPushDowns(dataset.filter(op(dataset('a))))
 
-      pushDowns should not contain (GreaterThanOrEqual("a", expected))
+      pushDowns should not contain (expected)
     }
 
     withOptimisation {
       TypedDataset.create(Seq(X1(payload))).write.mode("overwrite").parquet("./target/optimiserTestData")
       val dataset = TypedDataset.createUnsafe[X1[A]](session.read.parquet("./target/optimiserTestData"))
 
-      val ds = dataset.filter(dataset('a) >= payload)
-      //ds.explain(true)
+      val ds = dataset.filter(op(dataset('a) ))
+      ds.explain(true)
       val pushDowns = getPushDowns(ds)
-      // prove the push down worked
-      pushDowns should contain(GreaterThanOrEqual("a", expected))
+
+      // prove the push down worked when expected
+      if (isExperimental && expectFailureWithExperimental)
+        pushDowns should not contain(expected)
+      else
+        pushDowns should contain(expected)
 
       val collected = ds.collect().run.toVector.head
       // prove the serde isn't affected
@@ -89,9 +103,18 @@ trait TheTests extends AnyFunSuite with PushDownTests {
 
     gteTest(payload, expected)
   }
+
+  test("struct pushdown") {
+    val payload = X1(X4(1,2,3,4))
+    val expected = new GenericRowWithSchema(Array(Row(1,2,3,4)), implicitly[TypedEncoder[X1[X4[Int,Int,Int,Int]]]].catalystRepr.asInstanceOf[StructType])
+
+    eqTest(payload, expected, expectFailureWithExperimental = true)
+  }
 }
 
 class ExperimentalLitTests extends TypedDatasetSuite with TheTests {
+  val isExperimental = true
+
   def withoutOptimisation[A]( thunk : => A) = thunk
 
   def withOptimisation[A](thunk: => A): A = {
@@ -108,6 +131,7 @@ class ExperimentalLitTests extends TypedDatasetSuite with TheTests {
 }
 
 class ExtensionLitTests extends TypedDatasetSuite with TheTests {
+  val isExperimental = false
 
   var s: SparkSession = null
 
