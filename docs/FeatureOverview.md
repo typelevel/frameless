@@ -646,6 +646,30 @@ withCityInfo.select(
 ).as[AptPriceCity].show().run
 ```
 
+### Chained Joins
+
+Joins may be chained using the ChainedJoinOps:
+
+```scala mdoc
+import frameless.syntax.ChainedJoinSyntax
+
+val withBedroomInfo = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
+  .join(bedroomStats).left { currentDs => currentDs.col('_1).field('city) === bedroomStats('city)}
+
+withBedroomInfo.show().run()
+```
+
+you may also use a version that provides the joined dataset as an additional parameter to the condition function.
+
+```scala mdoc
+import frameless.syntax.ChainedJoinSyntax
+
+val withBedroomInfoBothSidesAsParameters = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
+  .join(bedroomStats).left { (currentDs, joinedDs) => currentDs('_1).field('city) === joinedDs('city)}
+
+withBedroomInfoBothSidesAsParameters.show().run()
+```
+
 ```scala mdoc:invisible
 spark.stop()
 ```

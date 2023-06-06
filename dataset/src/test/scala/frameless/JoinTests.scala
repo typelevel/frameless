@@ -82,7 +82,7 @@ class JoinTests extends TypedDatasetSuite {
     check(forAll(prop[Int, Long, String]((leftDs, rightDs) => leftDs
       .join(rightDs).full(leftDs.col('a) === rightDs.col('a))) _))
     check(forAll(prop[Int, Long, String]((leftDs, rightDs) => leftDs
-      .join(rightDs).full(_.col('a) === rightDs.col('a))) _))
+      .join(rightDs).full(_('a) === rightDs.col('a))) _))
     check(forAll(prop[Int, Long, String]((leftDs, rightDs) => leftDs
       .join(rightDs).full(_.col('a) === _.col('a))) _))
   }
