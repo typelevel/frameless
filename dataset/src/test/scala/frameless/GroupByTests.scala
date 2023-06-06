@@ -21,7 +21,7 @@ class GroupByTests extends TypedDatasetSuite {
 
       val datasetSumByA = dataset.groupByMany(A).agg(sum(B)).collect().run.toVector.sortBy(_._1)
       val sumByA = data.groupBy(_.a).map { case (k, v) => k -> v.map(_.b).map(widen).sum }.toVector.sortBy(_._1)
-dataset.show().run()
+
       datasetSumByA ?= sumByA
     }
 

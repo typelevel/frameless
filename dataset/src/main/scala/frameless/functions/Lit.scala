@@ -9,7 +9,7 @@ private[frameless] case class Lit[T <: AnyVal](
     dataType: DataType,
     nullable: Boolean,
     show: () => String,
-    catalystExpr: Expression // must be the same toCatalyst as the toCatalyst function
+    catalystExpr: Expression // must be a generated Expression from a literal TypedEncoder's toCatalyst function
 ) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 

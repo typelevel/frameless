@@ -26,6 +26,7 @@ trait SparkTesting { self: BeforeAndAfterAll =>
         set("spark.hadoop.fs.AbstractFileSystem.file.impl", classOf[StreamingFS].getName)
     else
       sparkConf
+  }
 
   val conf: SparkConf = registerFS(new SparkConf())
     .setMaster("local[*]")

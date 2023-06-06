@@ -19,9 +19,9 @@ trait PushDownTests extends Matchers {
 
   import Job.framelessSparkDelayForJob
 
-  def withoutOptimisation[A](thunk : => A): A
+  def withoutOptimization[A](thunk : => A): A
   
-  def withOptimisation[A]( thunk : => A): A
+  def withOptimization[A]( thunk : => A): A
 
   def gteTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, expectFailureWithExperimental: Boolean = false) =
     pushDownTest[A](payload, GreaterThanOrEqual("a", expected), _ >= payload, expectFailureWithExperimental)
@@ -32,7 +32,7 @@ trait PushDownTests extends Matchers {
   val isExperimental: Boolean
 
   def pushDownTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, op: TypedColumn[X1[A],A] => TypedColumn[X1[A],Boolean], expectFailureWithExperimental: Boolean = false) = {
-    withoutOptimisation {
+    withoutOptimization {
       TypedDataset.create(Seq(X1(payload))).write.mode("overwrite").parquet("./target/optimiserTestData")
       val dataset = TypedDataset.createUnsafe[X1[A]](session.read.parquet("./target/optimiserTestData"))
 
@@ -41,14 +41,12 @@ trait PushDownTests extends Matchers {
       pushDowns should not contain (expected)
     }
 
-    withOptimisation {
+    withOptimization {
       TypedDataset.create(Seq(X1(payload))).write.mode("overwrite").parquet("./target/optimiserTestData")
       val dataset = TypedDataset.createUnsafe[X1[A]](session.read.parquet("./target/optimiserTestData"))
 
       val ds = dataset.filter(op(dataset('a) ))
 
-      ds.explain(true)
-      
       val pushDowns = getPushDowns(ds)
 
       // prove the push down worked when expected
@@ -118,9 +116,9 @@ trait TheTests extends AnyFunSuite with PushDownTests {
 class ExperimentalLitTests extends TypedDatasetSuite with TheTests {
   val isExperimental = true
 
-  def withoutOptimisation[A](thunk : => A) = thunk
+  def withoutOptimization[A](thunk : => A) = thunk
 
-  def withOptimisation[A](thunk: => A): A = {
+  def withOptimization[A](thunk: => A): A = {
     val orig = session.sqlContext.experimental.extraOptimizations
     try {
       session.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
@@ -140,7 +138,7 @@ class ExtensionLitTests extends TypedDatasetSuite with TheTests {
 
   override implicit def session: SparkSession = s
 
-  def withoutOptimisation[A](thunk : => A): A =
+  def withoutOptimization[A](thunk : => A): A =
     try {
       s = SparkSession.builder().config(conf).getOrCreate()
 
@@ -149,7 +147,7 @@ class ExtensionLitTests extends TypedDatasetSuite with TheTests {
       stopSpark()
     }
 
-  def withOptimisation[A](thunk: => A): A =
+  def withOptimization[A](thunk: => A): A =
     try {
       s = SparkSession.builder().config(
         conf.clone().set("spark.sql.extensions", classOf[FramelessExtension].getName)
