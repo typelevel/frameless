@@ -1,5 +1,6 @@
 package frameless
 
+import frameless.ops.ChainedJoinOps
 import org.apache.spark.sql.{Column, DataFrame, Dataset}
 
 trait FramelessSyntax {
@@ -14,5 +15,9 @@ trait FramelessSyntax {
 
   implicit class DataframeSyntax(self: DataFrame){
     def unsafeTyped[T: TypedEncoder]: TypedDataset[T] = TypedDataset.createUnsafe(self)
+  }
+
+  implicit class ChainedJoinSyntax[T](ds: TypedDataset[T]) {
+    def join[U](other: TypedDataset[U]): ChainedJoinOps[T, U] = new ChainedJoinOps[T, U](ds, other)
   }
 }
