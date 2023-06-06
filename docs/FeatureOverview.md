@@ -676,7 +676,7 @@ FramelessExtension injects the LiteralRule optimizer rule which unpacks Frameles
 
 In order to register these on Databricks you must create an appropriate shaded jar, upload it and then register through notebook in the workspace as part of the Databricks classpath e.g.:
 
-```scala mdoc
+```scala
 val scriptName = "/dbfs/add_frameless_plugin.sh"
 val script = s"""
 #!/bin/bash
