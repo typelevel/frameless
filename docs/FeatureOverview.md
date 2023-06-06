@@ -655,10 +655,20 @@ spark.stop()
 If your queries could benefit from enhanced predicate push down when using Frameless typed literals you can register the FramelessSparkExtension:
 
 ```scala mdoc
+import frameless.optimizer.FramelessExtension
+
 // With SparkConfig builders
+val sparkConfig = new org.apache.spark.SparkConf()
+  .setMaster("local[*]")
+  .setAppName("test")
+  .set("spark.ui.enabled", "false")
 sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
+
 // With SparkSession.Builder()
-builder.config("spark.sql.extensions", classOf[FramelessExtension].getName)
+val sparkSession = org.apache.spark.sql.SparkSession.builder()
+  .config("spark.master", s"local[$hostMode]").config("spark.ui.enabled", false)
+  .config("spark.sql.extensions", classOf[FramelessExtension].getName)
+  .getOrCreate()
 ```
 
 FramelessExtension injects the LiteralRule optimizer rule which unpacks FramelessLit into a Spark Literal without affecting encoding.  This can have large performance benefits when enabled via extensions.
@@ -691,7 +701,9 @@ Using FramelessExtension will yield the best results for all Literal types as it
 As such it is preferred to the experimental route:
 
 ```scala mdoc
-session.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
+import framless.optimizer.LiteralRule
+
+sparkSession.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
 ```
 
 this will, for example, not push down structure equality to the underlying source.
