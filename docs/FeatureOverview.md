@@ -649,3 +649,49 @@ withCityInfo.select(
 ```scala mdoc:invisible
 spark.stop()
 ```
+
+## SparkExtension - Typed Literals push down
+
+If your queries could benefit from enhanced predicate push down when using Frameless typed literals you can register the FramelessSparkExtension:
+
+```scala mdoc
+// With SparkConfig builders
+sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
+// With SparkSession.Builder()
+builder.config("spark.sql.extensions", classOf[FramelessExtension].getName)
+```
+
+FramelessExtension injects the LiteralRule optimiser rule which unpacks FramelessLit into a Spark Literal without affecting encoding.  This can have large performance benefits when enabled via extensions.
+
+In order to register these on Databricks you must create an appropriate shaded jar, upload it and then register through notebook in the workspace as part of the Databricks classpath e.g.:
+
+```scala mdoc
+val scriptName = "/dbfs/add_frameless_plugin.sh"
+val script = s"""
+#!/bin/bash
+
+cp /dbfs/FileStore/uploaded_frameless.jar /databricks/jars/frameless.jar
+"""
+import java.io._
+
+new File(scriptName).createNewFile
+new PrintWriter(scriptName) {write(script); close}
+```
+
+You may then change the cluster configs adding:
+
+```
+spark.sql.extensions frameless.optimiser.FramelessExtension
+```
+
+### experimental.extraOptimisations
+
+Using FramelessExtension will yield the best results for all Literal types as it takes place early enough to benefit from other Spark optimisation rules.
+
+As such it is preferred to the experimental route:
+
+```scala mdoc
+session.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
+```
+
+this will, for example, not push down structure equality to the underlying source.
