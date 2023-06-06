@@ -708,3 +708,7 @@ sparkSession.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
 ```
 
 this will, for example, not push down structure equality to the underlying source.
+
+```scala mdoc:invisible
+sparkSession.stop()
+```
