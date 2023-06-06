@@ -661,7 +661,7 @@ sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
 builder.config("spark.sql.extensions", classOf[FramelessExtension].getName)
 ```
 
-FramelessExtension injects the LiteralRule optimiser rule which unpacks FramelessLit into a Spark Literal without affecting encoding.  This can have large performance benefits when enabled via extensions.
+FramelessExtension injects the LiteralRule optimizer rule which unpacks FramelessLit into a Spark Literal without affecting encoding.  This can have large performance benefits when enabled via extensions.
 
 In order to register these on Databricks you must create an appropriate shaded jar, upload it and then register through notebook in the workspace as part of the Databricks classpath e.g.:
 
@@ -681,12 +681,12 @@ new PrintWriter(scriptName) {write(script); close}
 You may then change the cluster configs adding:
 
 ```
-spark.sql.extensions frameless.optimiser.FramelessExtension
+spark.sql.extensions frameless.optimizer.FramelessExtension
 ```
 
-### experimental.extraOptimisations
+### experimental.extraOptimizations
 
-Using FramelessExtension will yield the best results for all Literal types as it takes place early enough to benefit from other Spark optimisation rules.
+Using FramelessExtension will yield the best results for all Literal types as it takes place early enough to benefit from other Spark optimization rules.
 
 As such it is preferred to the experimental route:
 

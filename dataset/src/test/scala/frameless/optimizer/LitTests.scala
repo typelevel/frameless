@@ -1,4 +1,4 @@
-package frameless.optimiser
+package frameless.optimizer
 
 import frameless._
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema

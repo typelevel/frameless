@@ -1,4 +1,4 @@
-package frameless.optimiser
+package frameless.optimizer
 
 import frameless.functions.Lit
 import org.apache.spark.sql.catalyst.expressions.Literal
