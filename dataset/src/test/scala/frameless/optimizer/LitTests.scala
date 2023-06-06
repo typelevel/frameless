@@ -19,7 +19,8 @@ trait PushDownTests extends Matchers {
 
   import Job.framelessSparkDelayForJob
 
-  def withoutOptimisation[A]( thunk : => A): A
+  def withoutOptimisation[A](thunk : => A): A
+  
   def withOptimisation[A]( thunk : => A): A
 
   def gteTest[A: TypedEncoder : CatalystOrdered](payload: A, expected: Any, expectFailureWithExperimental: Boolean = false) =
@@ -45,7 +46,9 @@ trait PushDownTests extends Matchers {
       val dataset = TypedDataset.createUnsafe[X1[A]](session.read.parquet("./target/optimiserTestData"))
 
       val ds = dataset.filter(op(dataset('a) ))
+
       ds.explain(true)
+      
       val pushDowns = getPushDowns(ds)
 
       // prove the push down worked when expected
@@ -115,7 +118,7 @@ trait TheTests extends AnyFunSuite with PushDownTests {
 class ExperimentalLitTests extends TypedDatasetSuite with TheTests {
   val isExperimental = true
 
-  def withoutOptimisation[A]( thunk : => A) = thunk
+  def withoutOptimisation[A](thunk : => A) = thunk
 
   def withOptimisation[A](thunk: => A): A = {
     val orig = session.sqlContext.experimental.extraOptimizations
@@ -137,7 +140,7 @@ class ExtensionLitTests extends TypedDatasetSuite with TheTests {
 
   override implicit def session: SparkSession = s
 
-  def withoutOptimisation[A]( thunk : => A): A =
+  def withoutOptimisation[A](thunk : => A): A =
     try {
       s = SparkSession.builder().config(conf).getOrCreate()
 

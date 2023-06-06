@@ -81,6 +81,7 @@ class LitTests extends TypedDatasetSuite with Matchers {
 
     val lit = functions.litValue(someIpsum)
     val tds = ds.withColumnReplaced('alias, functions.litValue(someIpsum))
+
     tds.queryExecution.toString() should include (lit.toString)
 
     tds.

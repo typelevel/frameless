@@ -46,7 +46,7 @@ package object functions extends Udf with UnaryFunctions {
           dataType = encoder.catalystRepr,
           nullable = encoder.nullable,
           show = () => value.toString,
-          encoder.toCatalyst(expr)
+          catalystExpr = encoder.toCatalyst(expr)
         )
       )
     }

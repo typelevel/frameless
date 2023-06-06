@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSessionExtensions
 class FramelessExtension extends ((SparkSessionExtensions) => Unit) with Logging {
   override def apply(extensions: SparkSessionExtensions): Unit = {
     extensions.injectOptimizerRule( _ => LiteralRule)
-    logInfo("injected OptimizerRule - frameless.optimizer.LiteralRule")
+
+    logInfo("Injected OptimizerRule - frameless.optimizer.LiteralRule")
   }
 }

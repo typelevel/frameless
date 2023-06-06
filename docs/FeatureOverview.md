@@ -662,6 +662,7 @@ val sparkConfig = new org.apache.spark.SparkConf()
   .setMaster("local[*]")
   .setAppName("test")
   .set("spark.ui.enabled", "false")
+
 sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
 
 val hostMode = "*"
@@ -672,7 +673,7 @@ val sparkSession = org.apache.spark.sql.SparkSession.builder()
   .getOrCreate()
 ```
 
-FramelessExtension injects the LiteralRule optimizer rule which unpacks FramelessLit into a Spark Literal without affecting encoding.  This can have large performance benefits when enabled via extensions.
+`FramelessExtension` injects the `LiteralRule` optimizer rule which unpacks `FramelessLit` into a Spark Literal without affecting encoding. This can have large performance benefits when enabled via extensions.
 
 In order to register these on Databricks you must create an appropriate shaded jar, upload it and then register through notebook in the workspace as part of the Databricks classpath e.g.:
 
@@ -683,6 +684,7 @@ val script = s"""
 
 cp /dbfs/FileStore/uploaded_frameless.jar /databricks/jars/frameless.jar
 """
+
 import java.io._
 
 new File(scriptName).createNewFile
@@ -697,7 +699,7 @@ spark.sql.extensions frameless.optimizer.FramelessExtension
 
 ### experimental.extraOptimizations
 
-Using FramelessExtension will yield the best results for all Literal types as it takes place early enough to benefit from other Spark optimization rules.
+Using `FramelessExtension` will yield the best results for all `Literal` types as it takes place early enough to benefit from other Spark optimization rules.
 
 As such it is preferred to the experimental route:
 

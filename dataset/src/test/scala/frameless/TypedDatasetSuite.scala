@@ -20,7 +20,7 @@ trait SparkTesting { self: BeforeAndAfterAll =>
   /**
    * Allows bare naked to be used instead of winutils for testing / dev
    */
-  def registerFS(sparkConf: SparkConf): SparkConf =
+  def registerFS(sparkConf: SparkConf): SparkConf = {
     if (System.getProperty("os.name").startsWith("Windows"))
       sparkConf.set("spark.hadoop.fs.file.impl", classOf[BareLocalFileSystem].getName).
         set("spark.hadoop.fs.AbstractFileSystem.file.impl", classOf[StreamingFS].getName)
