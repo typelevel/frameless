@@ -656,7 +656,7 @@ Frameless wraps literal values into `FramelessLit`, which makes it impossible fo
 Frameless generated Spark Expressions; i.e. it won't identify such literals as primitive values and won't push down such 
 predicates into the underlying (i.e. Parquet) reader.
 
-It is possible to use `FramelessOptimizations` to expand `FramelessLit` into the regular Spark literals to overcome this behavior.
+It is possible to use `FramelessOptimizations` to expand `FramelessLit` into a `Spark Literal` to overcome this behavior.
 
 ```scala mdoc
 import frameless.sql.FramelessOptimizations
@@ -672,13 +672,13 @@ sparkConfig.set("spark.sql.extensions", classOf[FramelessOptimizations].getName)
 // With SparkSession.Builder()
 val sparkSession = org.apache.spark.sql.SparkSession.builder()
   .config("spark.master", s"local[*]").config("spark.ui.enabled", false)
-  .config("spark.sql.extensions", classOf[FramelessExtension].getName)
+  .config("spark.sql.extensions", classOf[FramelessOptimizations].getName)
   .getOrCreate()
 ```
 
-`FramelessExtension` injects the `LiteralRule` optimizer rule which unpacks `FramelessLit` into a `Spark Literal`.
+`FramelessOptimizations` injects the `LiteralRule` optimizer rule which unpacks `FramelessLit` into a `Spark Literal`.
 
-In order to register these on Databricks you need to create fat jar, and upload it into the cluster classpath:
+In order to register it on Databricks you need to create a fat-jar, and upload it into the cluster classpath:
 
 ```scala
 val scriptName = "/dbfs/add_frameless_plugin.sh"
