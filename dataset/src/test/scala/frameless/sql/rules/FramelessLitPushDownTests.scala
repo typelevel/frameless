@@ -2,12 +2,10 @@ package frameless.sql.rules
 
 import frameless._
 import frameless.functions.Lit
-import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.{currentTimestamp, microsToInstant}
 import org.apache.spark.sql.sources.{GreaterThanOrEqual, IsNotNull, EqualTo}
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
-import org.apache.spark.sql.types.StructType
 
 import java.time.Instant
 
@@ -19,7 +17,7 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
     val expectedStructure = X1(SQLTimestamp(now))
     val expectedPushDownFilters = List(IsNotNull("a"), GreaterThanOrEqual("a", expected))
 
-    optimizationRulesTest[SQLTimestamp](
+    predicatePushDownTest[SQLTimestamp](
       expectedStructure,
       expectedPushDownFilters,
       { case e @ expressions.GreaterThanOrEqual(_, _: Lit[_]) => e },
@@ -32,7 +30,7 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
     val expectedStructure = X1(microsToInstant(now))
     val expectedPushDownFilters = List(IsNotNull("a"), GreaterThanOrEqual("a", expected))
 
-    optimizationRulesTest[Instant](
+    predicatePushDownTest[Instant](
       expectedStructure,
       expectedPushDownFilters,
       { case e @ expressions.GreaterThanOrEqual(_, _: Lit[_]) => e },
@@ -40,19 +38,17 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
     )
   }
 
-  test("struct pushdown") {
+  test("struct push-down") {
     type Payload = X4[Int, Int, Int, Int]
     val expectedStructure = X1(X4(1, 2, 3, 4))
-    val expected = new GenericRowWithSchema(Array(1, 2, 3, 4), implicitly[TypedEncoder[Payload]].catalystRepr.asInstanceOf[StructType])
+    val expected = new GenericRowWithSchema(Array(1, 2, 3, 4), TypedExpressionEncoder[Payload].schema)
     val expectedPushDownFilters = List(IsNotNull("a"), EqualTo("a", expected))
 
-    optimizationRulesTest[Payload](
+    predicatePushDownTest[Payload](
       expectedStructure,
       expectedPushDownFilters,
-      { case e@expressions.EqualTo(_, _: Lit[_]) => e },
+      { case e @ expressions.EqualTo(_, _: Lit[_]) => e },
       _ === expectedStructure.a
     )
   }
-
-  override def registerOptimizations(sqlContext: SQLContext): Unit = ()
 }

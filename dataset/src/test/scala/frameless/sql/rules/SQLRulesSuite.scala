@@ -5,6 +5,9 @@ import frameless.sql._
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.catalyst.plans.logical
+import org.apache.spark.sql.execution.FileSourceScanExec
+import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec
+
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 
@@ -19,7 +22,7 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
     f(TypedDataset.createUnsafe[A](session.read.parquet(path)))
   }
 
-  def optimizationRulesTest[A: TypedEncoder : CatalystOrdered](
+  def predicatePushDownTest[A: TypedEncoder: CatalystOrdered](
     expected: X1[A],
     expectedPushDownFilters: List[Filter],
     planShouldNotContain: PartialFunction[Expression, Expression],
@@ -27,7 +30,7 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
   ): Assertion = {
     withDataset(expected) { dataset =>
       val ds = dataset.filter(op(dataset('a)))
-      val actualPushDownFilters = ds.pushDownFilters
+      val actualPushDownFilters = pushDownFilters(ds)
 
       val optimizedPlan = ds.queryExecution.optimizedPlan.collect { case logical.Filter(condition, _) => condition }.flatMap(_.toList)
 
@@ -38,23 +41,35 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
       actualPushDownFilters shouldBe expectedPushDownFilters
 
       val actual = ds.collect().run().toVector.headOption
+
       // ensure serialization is not broken
       actual should be(Some(expected))
     }
   }
 
-  def noOptimizationRulesTest[A: TypedEncoder : CatalystOrdered](
-    expected: X1[A],
-    planShouldContain: PartialFunction[Expression, Expression],
-    op: TypedColumn[X1[A], A] => TypedColumn[X1[A], Boolean]
-  ): Assertion = {
-    withDataset(expected) { dataset =>
-      val ds = dataset.filter(op(dataset('a)))
+  protected def pushDownFilters[T](ds: TypedDataset[T]): List[Filter] = {
+    val sparkPlan = ds.queryExecution.executedPlan
 
-      val optimizedPlan = ds.queryExecution.optimizedPlan.collect { case logical.Filter(condition, _) => condition }.flatMap(_.toList)
+    val initialPlan =
+      if (sparkPlan.children.isEmpty) // assume it's AQE
+        sparkPlan match {
+          case aq: AdaptiveSparkPlanExec => aq.initialPlan
+          case _ => sparkPlan
+        }
+      else
+        sparkPlan
 
-      // check the optimized plan
-      optimizedPlan.collectFirst(planShouldContain) shouldNot be(empty)
-    }
+    initialPlan.collect {
+      case fs: FileSourceScanExec =>
+        import scala.reflect.runtime.{universe => ru}
+
+        val runtimeMirror = ru.runtimeMirror(getClass.getClassLoader)
+        val instanceMirror = runtimeMirror.reflect(fs)
+        val getter = ru.typeOf[FileSourceScanExec].member(ru.TermName("pushedDownFilters")).asTerm.getter
+        val m = instanceMirror.reflectMethod(getter.asMethod)
+        val res = m.apply(fs).asInstanceOf[Seq[Filter]]
+
+        res
+    }.flatten.toList
   }
 }
