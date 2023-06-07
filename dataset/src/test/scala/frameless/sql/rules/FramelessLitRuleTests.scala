@@ -2,9 +2,6 @@ package frameless.sql.rules
 
 import frameless._
 import frameless.functions.Lit
-import frameless.sql._
-import frameless.sql.FramelessOptimizations
-import org.apache.spark.SparkConf
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.{currentTimestamp, microsToInstant}
 import org.apache.spark.sql.sources.{GreaterThanOrEqual, IsNotNull, EqualTo}
@@ -14,7 +11,7 @@ import org.apache.spark.sql.types.StructType
 
 import java.time.Instant
 
-trait FramelessLitRuleTests extends SQLRulesSuite {
+class FramelessLitPushDownTests extends SQLRulesSuite {
   private val now: Long = currentTimestamp()
 
   test("java.sql.Timestamp push-down") {
@@ -56,17 +53,6 @@ trait FramelessLitRuleTests extends SQLRulesSuite {
       _ === expectedStructure.a
     )
   }
-}
 
-class FramelessLitOptimizationRuleTests extends FramelessLitRuleTests {
-  override def registerOptimizations(sqlContext: SQLContext): Unit =
-    LiteralRule.registerOptimizations(sqlContext)
+  override def registerOptimizations(sqlContext: SQLContext): Unit = ()
 }
-
-class FramelessLitExtensionsTests extends FramelessLitRuleTests {
-  override def addSparkConfigProperties(config: SparkConf): Unit = {
-    config.set("spark.sql.extensions", classOf[FramelessOptimizations].getName)
-    ()
-  }
-}
-
