@@ -42,31 +42,6 @@ trait FramelessLitRuleTests extends SQLRulesSuite {
       _ >= expectedStructure.a
     )
   }
-}
-
-class FramelessLitOptimizationRuleTests extends FramelessLitRuleTests {
-  override def registerOptimizations(sqlContext: SQLContext): Unit =
-    LiteralRule.registerOptimizations(sqlContext)
-
-  test("struct pushdown should not work") {
-    type Payload = X4[Int, Int, Int, Int]
-    val expectedStructure = X1(X4(1, 2, 3, 4))
-    val expectedPushDownFilters = List(IsNotNull("a"))
-
-    optimizationRulesTest[Payload](
-      expectedStructure,
-      expectedPushDownFilters,
-      { case e@expressions.EqualTo(_, _: Lit[_]) => e },
-      _ === expectedStructure.a
-    )
-  }
-}
-
-class FramelessLitExtensionsTests extends FramelessLitRuleTests {
-  override def addSparkConfigProperties(config: SparkConf): Unit = {
-    config.set("spark.sql.extensions", classOf[FramelessOptimizations].getName)
-    ()
-  }
 
   test("struct pushdown") {
     type Payload = X4[Int, Int, Int, Int]
@@ -80,6 +55,18 @@ class FramelessLitExtensionsTests extends FramelessLitRuleTests {
       { case e@expressions.EqualTo(_, _: Lit[_]) => e },
       _ === expectedStructure.a
     )
+  }
+}
+
+class FramelessLitOptimizationRuleTests extends FramelessLitRuleTests {
+  override def registerOptimizations(sqlContext: SQLContext): Unit =
+    LiteralRule.registerOptimizations(sqlContext)
+}
+
+class FramelessLitExtensionsTests extends FramelessLitRuleTests {
+  override def addSparkConfigProperties(config: SparkConf): Unit = {
+    config.set("spark.sql.extensions", classOf[FramelessOptimizations].getName)
+    ()
   }
 }
 

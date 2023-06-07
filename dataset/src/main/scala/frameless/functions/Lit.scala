@@ -13,47 +13,13 @@ private[frameless] case class Lit[T <: AnyVal](
 ) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
-  def eval(input: InternalRow): Any = {
-    val ctx = new CodegenContext()
-    val eval = genCode(ctx)
-
-    val codeBody = s"""
-      public scala.Function1<InternalRow, Object> generate(Object[] references) {
-        return new LiteralEvalImpl(references);
-      }
-
-      class LiteralEvalImpl extends scala.runtime.AbstractFunction1<InternalRow, Object> {
-        private final Object[] references;
-        ${ctx.declareMutableStates()}
-        ${ctx.declareAddedFunctions()}
-
-        public LiteralEvalImpl(Object[] references) {
-          this.references = references;
-          ${ctx.initMutableStates()}
-        }
-
-        public java.lang.Object apply(java.lang.Object z) {
-          InternalRow ${ctx.INPUT_ROW} = (InternalRow) z;
-          ${eval.code}
-          return ${eval.isNull} ? ((Object)null) : ((Object)${eval.value});
-        }
-      }
-    """
-
-    val code = CodeFormatter.stripOverlappingComments(
-      new CodeAndComment(codeBody, ctx.getPlaceHolderToComments())
-    )
-
-    val (clazz, _) = CodeGenerator.compile(code)
-    val codegen =
-      clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
-
-    codegen(input)
-  }
+  def eval(input: InternalRow): Any = catalystExpr.eval(input)
 
   def children: Seq[Expression] = Nil
 
   protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = catalystExpr.genCode(ctx)
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
+
+  override val foldable: Boolean = true
 }
