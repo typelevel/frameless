@@ -650,12 +650,16 @@ withCityInfo.select(
 spark.stop()
 ```
 
-## SparkExtension - Typed Literals push down
+## SparkExtension - FramelessLiteral plan rewrite
 
-If your queries could benefit from enhanced predicate push down when using Frameless typed literals you can register the FramelessSparkExtension:
+Frameless wraps literal values into `FramelessLit`, which makes it impossible for Spark to apply its internal optimization rules to such
+Frameless generated Spark Expressions; i.e. it won't identify such literals as primitive values and won't push down such 
+predicates into the underlying (i.e. Parquet) reader.
+
+It is possible to use `FramelessOptimizations` to expand `FramelessLit` into the regular Spark literals to overcome this behavior.
 
 ```scala mdoc
-import frameless.optimizer.FramelessExtension
+import frameless.sql.FramelessOptimizations
 
 // With SparkConfig builders
 val sparkConfig = new org.apache.spark.SparkConf()
@@ -663,19 +667,18 @@ val sparkConfig = new org.apache.spark.SparkConf()
   .setAppName("test")
   .set("spark.ui.enabled", "false")
 
-sparkConfig.set("spark.sql.extensions", classOf[FramelessExtension].getName)
+sparkConfig.set("spark.sql.extensions", classOf[FramelessOptimizations].getName)
 
-val hostMode = "*"
 // With SparkSession.Builder()
 val sparkSession = org.apache.spark.sql.SparkSession.builder()
-  .config("spark.master", s"local[$hostMode]").config("spark.ui.enabled", false)
+  .config("spark.master", s"local[*]").config("spark.ui.enabled", false)
   .config("spark.sql.extensions", classOf[FramelessExtension].getName)
   .getOrCreate()
 ```
 
-`FramelessExtension` injects the `LiteralRule` optimizer rule which unpacks `FramelessLit` into a Spark Literal without affecting encoding. This can have large performance benefits when enabled via extensions.
+`FramelessExtension` injects the `LiteralRule` optimizer rule which unpacks `FramelessLit` into a `Spark Literal`.
 
-In order to register these on Databricks you must create an appropriate shaded jar, upload it and then register through notebook in the workspace as part of the Databricks classpath e.g.:
+In order to register these on Databricks you need to create fat jar, and upload it into the cluster classpath:
 
 ```scala
 val scriptName = "/dbfs/add_frameless_plugin.sh"
@@ -688,28 +691,24 @@ cp /dbfs/FileStore/uploaded_frameless.jar /databricks/jars/frameless.jar
 import java.io._
 
 new File(scriptName).createNewFile
-new PrintWriter(scriptName) {write(script); close}
+new PrintWriter(scriptName) { write(script); close() }
 ```
 
-You may then change the cluster configs adding:
+Next, we need to adjust the cluster config:
 
 ```
-spark.sql.extensions frameless.optimizer.FramelessExtension
+spark.sql.extensions frameless.sql.FramelessOptimizations
 ```
 
 ### experimental.extraOptimizations
 
-Using `FramelessExtension` will yield the best results for all `Literal` types as it takes place early enough to benefit from other Spark optimization rules.
-
-As such it is preferred to the experimental route:
+And alternative programmatic approach to register optimization rules:
 
 ```scala mdoc
-import frameless.optimizer.LiteralRule
+import frameless.sql.rules.LiteralRule
 
-sparkSession.sqlContext.experimental.extraOptimizations ++= Seq(LiteralRule)
+LiteralRule.registerOptimizations(sparkSession.sqlContext)
 ```
-
-this will, for example, not push down structure equality to the underlying source.
 
 ```scala mdoc:invisible
 sparkSession.stop()

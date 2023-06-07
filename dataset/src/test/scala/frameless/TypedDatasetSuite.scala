@@ -40,9 +40,15 @@ trait SparkTesting { self: BeforeAndAfterAll =>
   implicit def sc: SparkContext = session.sparkContext
   implicit def sqlContext: SQLContext = session.sqlContext
 
+  def registerOptimizations(sqlContext: SQLContext): Unit = { }
+
+  def addSparkConfigProperties(config: SparkConf): Unit = { }
+
   override def beforeAll(): Unit = {
     assert(s == null)
+    addSparkConfigProperties(conf)
     s = SparkSession.builder().config(conf).getOrCreate()
+    registerOptimizations(sqlContext)
   }
 
   override def afterAll(): Unit = {
