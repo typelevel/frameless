@@ -59,6 +59,7 @@ private[frameless] case class Lit[T <: AnyVal](
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 
-  // see https://github.com/typelevel/frameless/pull/721#issuecomment-1581137730 for why true and not catalystExpr.foldable (InvokeLike <3.3.1 SPARK-40380)
-  override val foldable: Boolean = true
+  // see https://github.com/typelevel/frameless/pull/721#issuecomment-1581137730 (InvokeLike <3.3.1 SPARK-40380)
+  // for why this does not push down on 3.2, 3.3.1 and higher _do_ pushdown
+  override val foldable: Boolean = catalystExpr.foldable
 }

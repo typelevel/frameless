@@ -2,12 +2,12 @@ package frameless.sql.rules
 
 import frameless._
 import frameless.sql._
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.catalyst.plans.logical
 import org.apache.spark.sql.execution.FileSourceScanExec
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec
-
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 
@@ -16,6 +16,27 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
     val tmpDir = System.getProperty("java.io.tmpdir")
     s"$tmpDir/${self.getClass.getName}"
   }
+
+  lazy val sparkFullVersion = {
+    val pos = classOf[Expression].getPackage.getSpecificationVersion
+    if (pos eq null) // DBR is always null
+      SparkSession.active.version // taking a running spark version string, hence lazy
+    else
+      pos
+  }
+
+  lazy val sparkVersion = {
+    sparkFullVersion.split('.').take(2).mkString(".")
+  }
+
+  /**
+   * Don't run this test on 3.2
+   */
+  def not3_2[T](thunk: => T): Any =
+    if (sparkVersion != "3.2")
+      thunk
+    else
+      ()
 
   def withDataset[A: TypedEncoder: CatalystOrdered](payload: A)(f: TypedDataset[A] => Assertion): Assertion = {
     TypedDataset.create(Seq(payload)).write.mode("overwrite").parquet(path)
