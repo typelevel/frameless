@@ -67,6 +67,7 @@ lazy val `cats-spark32` = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3.4+")
+  .settings(Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3+")
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
@@ -74,7 +75,8 @@ lazy val dataset = project
 lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-33")
+  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
+  .settings(Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3+")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
   .settings(spark33Settings)
@@ -83,7 +85,8 @@ lazy val `dataset-spark33` = project
 lazy val `dataset-spark32` = project
   .settings(name := "frameless-dataset-spark32")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-32")
+  .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
+  .settings(Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-32")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark32Version))
   .settings(spark32Settings)

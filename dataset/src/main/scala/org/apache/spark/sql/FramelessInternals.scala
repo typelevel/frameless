@@ -1,6 +1,5 @@
 package org.apache.spark.sql
 
-import frameless.FoldableImpl
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
@@ -11,7 +10,6 @@ import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.types.ObjectType
-
 import scala.reflect.ClassTag
 
 object FramelessInternals {
@@ -72,11 +70,4 @@ object FramelessInternals {
     protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
     protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
   }
-
-  /**
-   * With 3.2 it's a backport of SPARK-40380, higher versions are simply expression.foldable
-   * @param expression
-   * @return
-   */
-  def foldableCompat(expression: Expression): Boolean = FoldableImpl.foldableCompat(expression)
 }

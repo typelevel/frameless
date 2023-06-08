@@ -1,6 +1,5 @@
 package frameless.functions
 
-import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression}
@@ -60,8 +59,5 @@ private[frameless] case class Lit[T <: AnyVal](
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
 
-  // see https://github.com/typelevel/frameless/pull/721#issuecomment-1581137730 (InvokeLike <3.3.1 SPARK-40380, ConditionalExpression SPARK-39106)
-  // for why this does not push down on 3.2, 3.3.1 and higher _do_ pushdown
-  // TODO remove the compat layer once 3.2 is no longer supported
-  override val foldable: Boolean = FramelessInternals.foldableCompat(catalystExpr)
+  override val foldable: Boolean = catalystExpr.foldable
 }
