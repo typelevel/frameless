@@ -22,6 +22,8 @@ ThisBuild / scalaVersion := Scala212
 ThisBuild / tlSkipIrrelevantScalas := true
 ThisBuild / githubWorkflowArtifactUpload := false // doesn't work with scoverage
 
+ThisBuild / scalafmtFilter := "diff-ref="
+
 lazy val root = project.in(file("."))
   .enablePlugins(NoPublishPlugin)
   .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, docs)
