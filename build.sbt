@@ -20,7 +20,6 @@ ThisBuild / tlBaseVersion := "0.14"
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
 ThisBuild / tlSkipIrrelevantScalas := true
-ThisBuild / githubWorkflowArtifactUpload := false // doesn't work with scoverage
 
 lazy val root = project
   .in(file("."))
@@ -392,44 +391,10 @@ ThisBuild / developers := List(
 ThisBuild / tlCiReleaseBranches := Seq("master")
 ThisBuild / tlSitePublishBranch := Some("master")
 
-ThisBuild / githubWorkflowEnv += "SPARK_LOCAL_IP" -> "localhost"
-ThisBuild / githubWorkflowBuildPreamble ++= Seq(
-  WorkflowStep.Use(
-    UseRef.Public("actions", "setup-python", "v2"),
-    name = Some("Setup Python"),
-    params = Map(
-      "python-version" -> "3.x"
-    )
-  ),
-  WorkflowStep.Run(
-    List("pip install codecov"),
-    name = Some("Setup codecov")
-  )
-)
-
 val roots = List("root-spark32", "root-spark33", "root-spark34")
-ThisBuild / githubWorkflowBuildMatrixAdditions +=
-  "project" -> roots
-ThisBuild / githubWorkflowArtifactDownloadExtraKeys += "project"
-ThisBuild / githubWorkflowBuildSbtStepPreamble += s"project $${{ matrix.project }}"
+
+ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
+
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
   MatrixExclude(Map("scala" -> Scala213, "project" -> project))
 }
-
-ThisBuild / githubWorkflowBuild ~= { steps =>
-  steps.map { // replace the test step
-    case _ @WorkflowStep.Sbt(List("test"), _, _, _, _, _) =>
-      WorkflowStep.Sbt(
-        List("coverage", "test", "test/coverageReport"),
-        name = Some("Test & Compute Coverage")
-      )
-    case step => step
-  }
-}
-
-ThisBuild / githubWorkflowBuildPostamble ++= Seq(
-  WorkflowStep.Run(
-    List(s"codecov -F $${{ matrix.scala }}"),
-    name = Some("Upload Codecov Results")
-  )
-)
