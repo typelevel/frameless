@@ -1,5 +1,7 @@
 package frameless
 
+import com.globalmentor.apache.hadoop.fs.BareLocalFileSystem
+import org.apache.hadoop.fs.local.StreamingFS
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
@@ -7,6 +9,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
+
 import scala.util.{Properties, Try}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -14,7 +17,18 @@ trait SparkTesting { self: BeforeAndAfterAll =>
 
   val appID: String = new java.util.Date().toString + math.floor(math.random * 10E4).toLong.toString
 
-  val conf: SparkConf = new SparkConf()
+  /**
+   * Allows bare naked to be used instead of winutils for testing / dev
+   */
+  def registerFS(sparkConf: SparkConf): SparkConf = {
+    if (System.getProperty("os.name").startsWith("Windows"))
+      sparkConf.set("spark.hadoop.fs.file.impl", classOf[BareLocalFileSystem].getName).
+        set("spark.hadoop.fs.AbstractFileSystem.file.impl", classOf[StreamingFS].getName)
+    else
+      sparkConf
+  }
+
+  val conf: SparkConf = registerFS(new SparkConf())
     .setMaster("local[*]")
     .setAppName("test")
     .set("spark.ui.enabled", "false")
@@ -26,9 +40,15 @@ trait SparkTesting { self: BeforeAndAfterAll =>
   implicit def sc: SparkContext = session.sparkContext
   implicit def sqlContext: SQLContext = session.sqlContext
 
+  def registerOptimizations(sqlContext: SQLContext): Unit = { }
+
+  def addSparkConfigProperties(config: SparkConf): Unit = { }
+
   override def beforeAll(): Unit = {
     assert(s == null)
+    addSparkConfigProperties(conf)
     s = SparkSession.builder().config(conf).getOrCreate()
+    registerOptimizations(sqlContext)
   }
 
   override def afterAll(): Unit = {

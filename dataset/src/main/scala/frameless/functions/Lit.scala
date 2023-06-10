@@ -8,16 +8,17 @@ import org.apache.spark.sql.types.DataType
 private[frameless] case class Lit[T <: AnyVal](
     dataType: DataType,
     nullable: Boolean,
-    toCatalyst: CodegenContext => ExprCode,
-    show: () => String
+    show: () => String,
+    catalystExpr: Expression // must be a generated Expression from a literal TypedEncoder's toCatalyst function
 ) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
-  def eval(input: InternalRow): Any = {
+  lazy val codegen = {
     val ctx = new CodegenContext()
     val eval = genCode(ctx)
 
-    val codeBody = s"""
+    val codeBody =
+      s"""
       public scala.Function1<InternalRow, Object> generate(Object[] references) {
         return new LiteralEvalImpl(references);
       }
@@ -47,13 +48,16 @@ private[frameless] case class Lit[T <: AnyVal](
     val (clazz, _) = CodeGenerator.compile(code)
     val codegen =
       clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
-
-    codegen(input)
+    codegen
   }
 
+  def eval(input: InternalRow): Any = codegen(input)
+  
   def children: Seq[Expression] = Nil
 
-  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = toCatalyst(ctx)
+  protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = catalystExpr.genCode(ctx)
 
   protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = this
+
+  override val foldable: Boolean = catalystExpr.foldable
 }

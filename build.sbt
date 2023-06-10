@@ -10,8 +10,9 @@ val shapeless = "2.3.10"
 val scalacheck = "1.17.0"
 val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.10.3"
+val nakedFSVersion = "0.1.0"
 
-val Scala212 = "2.12.17"
+val Scala212 = "2.12.18"
 val Scala213 = "2.13.11"
 
 ThisBuild / tlBaseVersion := "0.14"
@@ -66,6 +67,7 @@ lazy val `cats-spark32` = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3.4+")
+  .settings(Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+")
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
   .dependsOn(core % "test->test;compile->compile")
@@ -74,6 +76,7 @@ lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
+  .settings(Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
   .settings(spark33Settings)
@@ -83,6 +86,7 @@ lazy val `dataset-spark32` = project
   .settings(name := "frameless-dataset-spark32")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3")
+  .settings(Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.2")
   .settings(datasetSettings)
   .settings(sparkDependencies(spark32Version))
   .settings(spark32Settings)
@@ -192,7 +196,9 @@ lazy val datasetSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq
       dmm("org.apache.spark.sql.FramelessInternals.column")
     )
   },
-  coverageExcludedPackages := "org.apache.spark.sql.reflection"
+  coverageExcludedPackages := "org.apache.spark.sql.reflection",
+
+  libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude("org.apache.hadoop", "hadoop-commons")
 )
 
 lazy val refinedSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
