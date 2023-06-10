@@ -79,7 +79,12 @@ class LitTests extends TypedDatasetSuite with Matchers {
 
     val someIpsum: Option[Name] = Some(new Name("Ipsum"))
 
-    ds.withColumnReplaced('alias, functions.litValue(someIpsum)).
+    val lit = functions.litValue(someIpsum)
+    val tds = ds.withColumnReplaced('alias, functions.litValue(someIpsum))
+
+    tds.queryExecution.toString() should include (lit.toString)
+
+    tds.
       collect.run() shouldBe initial.map(_.copy(alias = someIpsum))
 
     ds.withColumnReplaced('alias, functions.litValue(Option.empty[Name])).
