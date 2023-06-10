@@ -29,13 +29,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        scala: [2.13.10, 2.12.18]
+        scala: [2.13.11, 2.12.18]
         java: [temurin@8]
         project: [root-spark32, root-spark33, root-spark34]
         exclude:
-          - scala: 2.13.10
+          - scala: 2.13.11
             project: root-spark32
-          - scala: 2.13.10
+          - scala: 2.13.11
             project: root-spark33
     runs-on: ${{ matrix.os }}
     steps:
