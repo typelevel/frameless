@@ -652,9 +652,9 @@ withCityInfo.select(
 Joins, or any similar operation, may be chained using a thrush combinator removing the need for intermediate values.  Instead of:
 
 ```scala mdoc
-val withBedroomInfoInterim = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
+val withBedroomInfoInterim = aptTypedDs.joinInner(citiInfoTypedDS)( aptTypedDs('city) === citiInfoTypedDS('name) )
 val withBedroomInfo = withBedroomInfoInterim 
-  .join(bedroomStats).left { withBedroomInfoInterim.col('_1).field('city) === bedroomStats('city)}
+  .joinLeft(bedroomStats)( withBedroomInfoInterim.col('_1).field('city) === bedroomStats('city) )
 
 withBedroomInfo.show().run()
 ```
@@ -668,10 +668,10 @@ libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
 ```scala mdoc
 import mouse.all._
 
-val withBedroomInfo = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
-  .thrush( interim => join(bedroomStats).left { interim.col('_1).field('city) === bedroomStats('city)} )
+val withBedroomInfoChained = aptTypedDs.joinInner(citiInfoTypedDS)( aptTypedDs('city) === citiInfoTypedDS('name) )
+  .thrush( interim => .joinLeft(bedroomStats)( interim.col('_1).field('city) === bedroomStats('city) ) )
 
-withBedroomInfo.show().run()
+withBedroomInfoChained.show().run()
 ```
 
 
