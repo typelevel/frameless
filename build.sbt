@@ -151,7 +151,8 @@ lazy val docs = project
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full),
-    scalacOptions += "-Ydelambdafy:inline"
+    scalacOptions += "-Ydelambdafy:inline",
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
   )
   .dependsOn(dataset, cats, ml)
 

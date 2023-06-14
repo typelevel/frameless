@@ -59,6 +59,7 @@ val aptTypedDs2 = aptDs.typed
 ```
 
 ## Typesafe column referencing
+
 This is how we select a particular column from a `TypedDataset`:
 
 ```scala mdoc
@@ -645,6 +646,34 @@ withCityInfo.select(
    withCityInfo.colMany('_2, 'name), withCityInfo.colMany('_1, 'price), withCityInfo.colMany('_2, 'population)
 ).as[AptPriceCity].show().run
 ```
+
+### Chained Joins
+
+Joins, or any similar operation, may be chained using a thrush combinator removing the need for intermediate values.  Instead of:
+
+```scala mdoc
+val withBedroomInfoInterim = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
+val withBedroomInfo = withBedroomInfoInterim 
+  .join(bedroomStats).left { withBedroomInfoInterim.col('_1).field('city) === bedroomStats('city)}
+
+withBedroomInfo.show().run()
+```
+
+you can use thrush from [mouse](https://github.com/typelevel/mouse):
+
+```scala
+libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
+```
+
+```scala mdoc
+import mouse.all._
+
+val withBedroomInfo = aptTypedDs.join(citiInfoTypedDS).inner { aptTypedDs('city) === citiInfoTypedDS('name) }
+  .thrush( interim => join(bedroomStats).left { interim.col('_1).field('city) === bedroomStats('city)} )
+
+withBedroomInfo.show().run()
+```
+
 
 ```scala mdoc:invisible
 spark.stop()
