@@ -669,7 +669,7 @@ libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
 import mouse.all._
 
 val withBedroomInfoChained = aptTypedDs.joinInner(citiInfoTypedDS)( aptTypedDs('city) === citiInfoTypedDS('name) )
-  .thrush( interim => .joinLeft(bedroomStats)( interim.col('_1).field('city) === bedroomStats('city) ) )
+  .thrush( interim => interim.joinLeft(bedroomStats)( interim.col('_1).field('city) === bedroomStats('city) ) )
 
 withBedroomInfoChained.show().run()
 ```
