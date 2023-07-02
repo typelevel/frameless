@@ -132,7 +132,7 @@
         <p>Let&#39;s define a simple case class:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Person</span><span>(</span><span class="identifier">age</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">birthday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">people</span><span> = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">Person</span><span>(</span><span class="number-literal">42</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>))
-</span><span class="comment">// people: Seq[Person] = List(Person(42, Wed Jun 28 13:44:15 UTC 2023))</span></code></pre>
+</span><span class="comment">// people: Seq[Person] = List(Person(42, Sun Jul 02 14:06:28 UTC 2023))</span></code></pre>
         <p>And an instance of a <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.App0.Person]
@@ -145,11 +145,11 @@
   </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">d</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>): </span><span class="type-name">Long</span><span> = </span><span class="identifier">d</span><span>.</span><span class="identifier">getTime</span><span>()
   </span><span class="keyword">def</span><span> </span><span class="declaration-name">invert</span><span>(</span><span class="identifier">l</span><span>: </span><span class="type-name">Long</span><span>): </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>)
 }
-</span><span class="comment">// dateToLongInjection: AnyRef with Injection[java.util.Date, Long] = repl.MdocSession$App0$$anon$1@4145e665</span></code></pre>
+</span><span class="comment">// dateToLongInjection: AnyRef with Injection[java.util.Date, Long] = repl.MdocSession$App0$$anon$1@6ab1fe6</span></code></pre>
         <p>We can be less verbose using the <code>Injection.apply</code> function:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
 </span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">dateToLongInjection</span><span> = </span><span class="type-name">Injection</span><span>((</span><span class="identifier">_</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>).</span><span class="identifier">getTime</span><span>(), </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>((</span><span class="identifier">_</span><span>: </span><span class="type-name">Long</span><span>)))
-</span><span class="comment">// dateToLongInjection: Injection[java.util.Date, Long] = frameless.Injection$$anon$1@a1915b7</span></code></pre>
+</span><span class="comment">// dateToLongInjection: Injection[java.util.Date, Long] = frameless.Injection$$anon$1@4fa74f9c</span></code></pre>
         <p>Now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, birthday: bigint]</span></code></pre>
@@ -182,7 +182,7 @@
     </span><span class="keyword">case</span><span> </span><span class="number-literal">2</span><span> =&gt; </span><span class="type-name">Female</span><span>
     </span><span class="keyword">case</span><span> </span><span class="number-literal">3</span><span> =&gt; </span><span class="type-name">Other</span><span>
   })
-</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@2e1904f</span></code></pre>
+</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@6539ca02</span></code></pre>
         <p>And now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, gender: int]</span></code></pre>
