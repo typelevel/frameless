@@ -3,6 +3,7 @@ package frameless
 import org.apache.spark.sql.SparkSession
 
 sealed abstract class Job[A](implicit spark: SparkSession) { self =>
+
   /** Runs a new Spark job. */
   def run(): A
 
@@ -32,13 +33,14 @@ sealed abstract class Job[A](implicit spark: SparkSession) { self =>
   }
 }
 
-
 object Job {
+
   def apply[A](a: => A)(implicit spark: SparkSession): Job[A] = new Job[A] {
     def run(): A = a
   }
 
-  implicit val framelessSparkDelayForJob: SparkDelay[Job] = new SparkDelay[Job] {
-    def delay[A](a: => A)(implicit spark: SparkSession): Job[A] = Job(a)
-  }
+  implicit val framelessSparkDelayForJob: SparkDelay[Job] =
+    new SparkDelay[Job] {
+      def delay[A](a: => A)(implicit spark: SparkSession): Job[A] = Job(a)
+    }
 }

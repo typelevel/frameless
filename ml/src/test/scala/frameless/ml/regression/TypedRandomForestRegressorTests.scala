@@ -10,8 +10,11 @@ import org.scalacheck.Prop._
 import org.scalatest.matchers.must.Matchers
 
 class TypedRandomForestRegressorTests extends FramelessMlSuite with Matchers {
+
   implicit val arbVectorNonEmpty: Arbitrary[Vector] =
-    Arbitrary(Generators.arbVector.arbitrary suchThat (_.size > 0)) // vector must not be empty for RandomForestRegressor
+    Arbitrary(
+      Generators.arbVector.arbitrary suchThat (_.size > 0)
+    ) // vector must not be empty for RandomForestRegressor
   import Generators.arbTreesFeaturesSubsetStrategy
 
   test("fit() returns a correct TypedTransformer") {
@@ -33,13 +36,17 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with Matchers {
       pDs.select(pDs.col('a), pDs.col('b)).collect().run() == Seq(x2.a -> x2.b)
     }
 
-    def prop3[A: TypedEncoder: Arbitrary] = forAll { x3: X3[Vector, Double, A] =>
+    def prop3[
+        A: TypedEncoder: Arbitrary
+      ] = forAll { x3: X3[Vector, Double, A] =>
       val rf = TypedRandomForestRegressor[X2[Vector, Double]]
       val ds = TypedDataset.create(Seq(x3))
       val model = rf.fit(ds).run()
       val pDs = model.transform(ds).as[X4[Vector, Double, A, Double]]()
 
-      pDs.select(pDs.col('a), pDs.col('b), pDs.col('c)).collect().run() == Seq((x3.a, x3.b, x3.c))
+      pDs.select(pDs.col('a), pDs.col('b), pDs.col('c)).collect().run() == Seq(
+        (x3.a, x3.b, x3.c)
+      )
     }
 
     check(prop)
@@ -64,13 +71,13 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with Matchers {
       val model = rf.fit(ds).run()
 
       model.transformer.getNumTrees == 10 &&
-        model.transformer.getMaxBins == 100 &&
-        model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
-        model.transformer.getMaxDepth == 10 &&
-        model.transformer.getMaxMemoryInMB == 100 &&
-        model.transformer.getMinInfoGain == 0.1D &&
-        model.transformer.getMinInstancesPerNode == 2 &&
-        model.transformer.getSubsamplingRate == 0.9D
+      model.transformer.getMaxBins == 100 &&
+      model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
+      model.transformer.getMaxDepth == 10 &&
+      model.transformer.getMaxMemoryInMB == 100 &&
+      model.transformer.getMinInfoGain == 0.1D &&
+      model.transformer.getMinInstancesPerNode == 2 &&
+      model.transformer.getSubsamplingRate == 0.9D
     }
 
     check(prop)
