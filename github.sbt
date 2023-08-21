@@ -23,5 +23,6 @@ ThisBuild / githubWorkflowBuildPostamble +=
       "codecov",
       "codecov-action",
       "v3"
-    )
+    ),
+    params = Map("flags" -> s"$${{ matrix.scala }},$${{ matrix.project }}")
   )

@@ -77,6 +77,8 @@ jobs:
         run: sbt '++ ${{ matrix.scala }}' 'project ${{ matrix.project }}' doc
 
       - uses: codecov/codecov-action@v3
+        with:
+          flags: ${{ matrix.scala }},${{ matrix.project }}
 
   publish:
     name: Publish Artifacts
