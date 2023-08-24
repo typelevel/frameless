@@ -19,11 +19,11 @@ ThisBuild / tlBaseVersion := "0.14"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
-ThisBuild / tlSkipIrrelevantScalas := true
 
 lazy val root = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
+  .settings(crossScalaVersions := Nil)
   .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, docs)
 
 lazy val `root-spark34` = project
@@ -396,5 +396,5 @@ val roots = List("root-spark32", "root-spark33", "root-spark34")
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
 
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
-  MatrixExclude(Map("scala" -> Scala213, "project" -> project))
+  MatrixExclude(Map("scala" -> "2.13", "project" -> project))
 }
