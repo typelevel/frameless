@@ -1,129 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+  
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Laika 0.18.1 + Helium Theme" />
-    <title>Typed Spark ML</title>
-    
-      <meta name="author" content="Olivier Blanvillain"/>
-    
-      <meta name="author" content="Adelbert Chang"/>
-    
-      <meta name="author" content="Marios Iliofotou"/>
-    
-      <meta name="author" content="Gleb Kanterov"/>
-    
-      <meta name="author" content="Erik Osheim"/>
-    
-      <meta name="author" content="Jeremy Smith"/>
-    
-      <meta name="author" content="Cédric Chantepie"/>
-    
-      <meta name="author" content="Grigory Pomadchin"/>
-    
-    
-      <meta name="description" content="docs"/>
-    
-    
-      <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
-    
-    
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
-    
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
-    
-    <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Typed Spark ML</title>
+  
+  <meta name="author" content="Olivier Blanvillain"/>
+  
+  <meta name="author" content="Adelbert Chang"/>
+  
+  <meta name="author" content="Marios Iliofotou"/>
+  
+  <meta name="author" content="Gleb Kanterov"/>
+  
+  <meta name="author" content="Erik Osheim"/>
+  
+  <meta name="author" content="Jeremy Smith"/>
+  
+  <meta name="author" content="Cédric Chantepie"/>
+  
+  <meta name="author" content="Grigory Pomadchin"/>
+  
+  
+  <meta name="description" content="docs"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
     <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
-    <link rel="stylesheet" type="text/css" href="site/styles.css" />
-    <script src="helium/laika-helium.js"></script>
-    
-    
-    <script> /* for avoiding page load transitions */ </script>
-  </head>
+  <script src="helium/laika-helium.js"></script>
+  
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
 
   <body>
 
-    <header id="top-bar">
+    <header id="top-bar" class="light-default dark-default">
 
-      <div class="row">
-        <a id="nav-icon">
-          <i class="icofont-laika" title="Navigation">&#xefa2;</i>
-        </a>
-        
-      </div>
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    
+  </div>
 
-      <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
 
-      <span class="row links"><a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
   <g class="svg-shape">
     <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
   </g>
-</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon svg-link" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <g class="svg-shape">
     <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
   </g>
-</svg>
-</span></a></span>
+</svg></span></a>
+    
+  </div>  
 
-    </header>
-
+</header>
+    
     <nav id="sidebar">
 
-      <div class="row">
-        <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
   <g class="svg-shape">
     <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
   </g>
-</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon svg-link" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <g class="svg-shape">
     <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
   </g>
-</svg>
-</span></a>
-      </div>
+</svg></span></a>
+    
+  </div>
 
-      <ul class="nav-list">
-        <li class="level1"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
-        <li class="level1"><a href="TypedDatasetVsSparkDataset.html">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
-        <li class="level1"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
-        <li class="level1"><a href="Injection.html">Injection: Creating Custom Encoders</a></li>
-        <li class="level1"><a href="Job.html">Job[A]</a></li>
-        <li class="level1"><a href="Cats.html">Using Cats with Frameless</a></li>
-        <li class="level1 active"><a href="#">Typed Spark ML</a></li>
-        <li class="level1"><a href="TypedDataFrame.html">Proof of Concept: TypedDataFrame</a></li>
-        <li class="level1"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
-      </ul>
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
+    <li class="level1 nav-leaf"><a href="TypedDatasetVsSparkDataset.html">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
+    <li class="level1 nav-leaf"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
+    <li class="level1 nav-leaf"><a href="Injection.html">Injection: Creating Custom Encoders</a></li>
+    <li class="level1 nav-leaf"><a href="Job.html">Job[A]</a></li>
+    <li class="level1 nav-leaf"><a href="Cats.html">Using Cats with Frameless</a></li>
+    <li class="level1 active nav-leaf"><a href="#">Typed Spark ML</a></li>
+    <li class="level1 nav-leaf"><a href="TypedDataFrame.html">Proof of Concept: TypedDataFrame</a></li>
+    <li class="level1 nav-leaf"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
+  </ul>
 
-      <ul class="nav-list">
-        <li class="level1 nav-header">Related Projects</li>
-        
-          <li class="level2"><a href="https://typelevel.org/cats/">cats</a></li>
-        
-      </ul>
-
-    </nav>
+</nav>
 
     <div id="container">
 
-      <nav id="page-nav">
-        <p class="header"><a href="#">Typed Spark ML</a></p>
+      
+<nav id="page-nav">
+  <p class="header"><a href="#">Typed Spark ML</a></p>
 
-        <ul class="nav-list">
-          <li class="level1"><a href="#example-1-predict-a-continuous-value-using-a-typedrandomforestregressor">Example 1: predict a continuous value using a <code>TypedRandomForestRegressor</code></a></li>
-          <li class="level2"><a href="#training-1">Training</a></li>
-          <li class="level2"><a href="#prediction-1">Prediction</a></li>
-          <li class="level1"><a href="#example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier">Example 2: predict a categorical value using a <code>TypedRandomForestClassifier</code></a></li>
-          <li class="level2"><a href="#training-2">Training</a></li>
-          <li class="level2"><a href="#prediction-2">Prediction</a></li>
-          <li class="level1"><a href="#list-of-currently-implemented-typedestimators">List of currently implemented <code>TypedEstimator</code>s</a></li>
-          <li class="level1"><a href="#list-of-currently-implemented-typedtransformers">List of currently implemented <code>TypedTransformer</code>s</a></li>
-          <li class="level1"><a href="#using-vector-and-matrix-with-typeddataset">Using Vector and Matrix with <code>TypedDataset</code></a></li>
-        </ul>
+  <ul class="nav-list">
+    <li class="level1 nav-node"><a href="#example-1-predict-a-continuous-value-using-a-typedrandomforestregressor">Example 1: predict a continuous value using a <code>TypedRandomForestRegressor</code></a></li>
+    <li class="level2 nav-leaf"><a href="#training-1">Training</a></li>
+    <li class="level2 nav-leaf"><a href="#prediction-1">Prediction</a></li>
+    <li class="level1 nav-node"><a href="#example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier">Example 2: predict a categorical value using a <code>TypedRandomForestClassifier</code></a></li>
+    <li class="level2 nav-leaf"><a href="#training-2">Training</a></li>
+    <li class="level2 nav-leaf"><a href="#prediction-2">Prediction</a></li>
+    <li class="level1 nav-leaf"><a href="#list-of-currently-implemented-typedestimators">List of currently implemented <code>TypedEstimator</code>s</a></li>
+    <li class="level1 nav-leaf"><a href="#list-of-currently-implemented-typedtransformers">List of currently implemented <code>TypedTransformer</code>s</a></li>
+    <li class="level1 nav-leaf"><a href="#using-vector-and-matrix-with-typeddataset">Using Vector and Matrix with <code>TypedDataset</code></a></li>
+  </ul>
 
-        <p class="footer"></p>
-      </nav>
+  <p class="footer"></p>
+</nav>
+
 
       <main class="content">
 
@@ -142,11 +151,11 @@
         please check <a href="https://spark.apache.org/docs/2.2.0/ml-pipeline.html">Spark ML documentation</a> for more details 
         on <code>Transformer</code>s and <code>Estimator</code>s.</p>
         
-        <h2 id="example-1-predict-a-continuous-value-using-a-typedrandomforestregressor" class="section">Example 1: predict a continuous value using a <code>TypedRandomForestRegressor</code><a class="anchor-link right" href="#example-1-predict-a-continuous-value-using-a-typedrandomforestregressor"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="example-1-predict-a-continuous-value-using-a-typedrandomforestregressor" class="section"><a class="anchor-link left" href="#example-1-predict-a-continuous-value-using-a-typedrandomforestregressor"><i class="icofont-laika link">&#xef71;</i></a>Example 1: predict a continuous value using a <code>TypedRandomForestRegressor</code></h2>
         <p>In this example, we want to predict the sale price of a house depending on its square footage and the fact that the house
         has a garden or not. We will use a <code>TypedRandomForestRegressor</code>.</p>
         
-        <h3 id="training-1" class="section">Training<a class="anchor-link right" href="#training-1"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <h3 id="training-1" class="section"><a class="anchor-link left" href="#training-1"><i class="icofont-laika link">&#xef71;</i></a>Training</h3>
         <p>As with the Spark ML API, we use a <code>TypedVectorAssembler</code> (the type-safe equivalent of <code>VectorAssembler</code>)
         to compute feature vectors:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
@@ -167,7 +176,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">assembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@48349320
+</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@130d3849
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">trainingDataWithFeatures</span><span> = </span><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -181,13 +190,13 @@
   </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>
 )</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">WrongHouseFeatures</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(Double, Boolean, Double, org.apache.spark.ml.linalg.Vector),repl.MdocSession.App0.WrongHouseFeatures]
+</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(Double, Boolean, Double, org.apache.spark.ml.linalg.Vector),repl.MdocSession.MdocApp0.WrongHouseFeatures]
 // assembler.transform(trainingData).as[WrongHouseFeatures]
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Moreover, <code>TypedVectorAssembler[Features]</code> will compile only if <code>Features</code> contains exclusively fields of type Numeric or Boolean:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>)</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">WrongFeatures</span><span>]
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.App0.WrongFeatures is a valid input type. Input type must only contain fields of numeric or boolean types.
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongFeatures is a valid input type. Input type must only contain fields of numeric or boolean types.
 // TypedVectorAssembler[WrongFeatures]
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>The subsequent call <code>assembler.transform(trainingData)</code> compiles only if <code>trainingData</code> contains all fields (names and types)
@@ -196,22 +205,22 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">wrongTrainingData</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">WrongHouseData</span><span>(</span><span class="number-literal">20</span><span>, </span><span class="number-literal">100000</span><span>)))
 </span><span class="comment">// wrongTrainingData: TypedDataset[WrongHouseData] = [squareFeet: double, price: double]</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">wrongTrainingData</span><span>)
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.App0.WrongHouseData can be projected to repl.MdocSession.App0.Features. Perhaps not all member names and types of repl.MdocSession.App0.Features are the same in repl.MdocSession.App0.WrongHouseData?
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongHouseData can be projected to repl.MdocSession.MdocApp0.Features. Perhaps not all member names and types of repl.MdocSession.MdocApp0.Features are the same in repl.MdocSession.MdocApp0.WrongHouseData?
 // assembler.transform(wrongTrainingData)
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Then, we train the model. To train a Random Forest, one needs to feed it with features (what we predict from) and
         with a label (what we predict). In our example, <code>price</code> is the label, <code>features</code> are the features:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestRegressor</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@468db96f
+</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@32fa7a
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">trainingDataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@1be417e4</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@5f7514ea</span></code></pre>
         <p><code>TypedRandomForestRegressor[RFInputs]</code> compiles only if <code>RFInputs</code>
         contains only one field of type Double (the label) and one field of type Vector (the features):</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongRFInputs</span><span>(</span><span class="identifier">labelOfWrongType</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedRandomForestRegressor</span><span>[</span><span class="type-name">WrongRFInputs</span><span>]
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.App0.WrongRFInputs is a valid input type. Input type must only contain a field of type Double (the label) and a field of type org.apache.spark.ml.linalg.Vector (the features).
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongRFInputs is a valid input type. Input type must only contain a field of type Double (the label) and a field of type org.apache.spark.ml.linalg.Vector (the features).
 // TypedRandomForestRegressor[WrongRFInputs]
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>The subsequent <code>rf.fit(trainingDataWithFeatures)</code> call compiles only if <code>trainingDataWithFeatures</code> contains the same fields
@@ -219,11 +228,11 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">wrongTrainingDataWithFeatures</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">HouseData</span><span>(</span><span class="number-literal">20</span><span>, </span><span class="boolean-literal">false</span><span>, </span><span class="number-literal">100000</span><span>))) </span><span class="comment">// features are missing
 // wrongTrainingDataWithFeatures: TypedDataset[HouseData] = [squareFeet: double, hasGarden: boolean ... 1 more field]</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">wrongTrainingDataWithFeatures</span><span>) 
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.App0.HouseData can be projected to repl.MdocSession.App0.RFInputs. Perhaps not all member names and types of repl.MdocSession.App0.RFInputs are the same in repl.MdocSession.App0.HouseData?
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?
 // rf.fit(wrongTrainingDataWithFeatures) 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         
-        <h3 id="prediction-1" class="section">Prediction<a class="anchor-link right" href="#prediction-1"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <h3 id="prediction-1" class="section"><a class="anchor-link left" href="#prediction-1"><i class="icofont-laika link">&#xef71;</i></a>Prediction</h3>
         <p>We now want to predict <code>price</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
         <code>testData</code> has a default value for <code>price</code> (<code>0</code> in our case) that will be ignored at prediction time. We reuse
         our <code>assembler</code> to compute the feature vector of <code>testData</code>.</p>
@@ -247,15 +256,15 @@
         <p><code>model.transform(testDataWithFeatures)</code> will only compile if <code>testDataWithFeatures</code> contains a field <code>price</code> of type Double
         and a field <code>features</code> of type Vector:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">model</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">testData</span><span>)
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.App0.HouseData can be projected to repl.MdocSession.App0.RFInputs. Perhaps not all member names and types of repl.MdocSession.App0.RFInputs are the same in repl.MdocSession.App0.HouseData?
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?
 // val model = rf.fit(indexedData).run()
 //     ^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         
-        <h2 id="example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier" class="section">Example 2: predict a categorical value using a <code>TypedRandomForestClassifier</code><a class="anchor-link right" href="#example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier" class="section"><a class="anchor-link left" href="#example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier"><i class="icofont-laika link">&#xef71;</i></a>Example 2: predict a categorical value using a <code>TypedRandomForestClassifier</code></h2>
         <p>In this example, we want to predict in which city a house is located depending on its price and its square footage. We use a
         <code>TypedRandomForestClassifier</code>.</p>
         
-        <h3 id="training-2" class="section">Training<a class="anchor-link right" href="#training-2"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <h3 id="training-2" class="section"><a class="anchor-link left" href="#training-2"><i class="icofont-laika link">&#xef71;</i></a>Training</h3>
         <p>As with the Spark ML API, we use a <code>TypedVectorAssembler</code> to compute feature vectors and a <code>TypedStringIndexer</code>
         to index <code>city</code> values in order to be able to pass them to a <code>TypedRandomForestClassifier</code>
         (which only accepts Double values as label):</p>
@@ -272,7 +281,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">vectorAssembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@79f510be
+</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@7e532859
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">dataWithFeatures</span><span> = </span><span class="identifier">vectorAssembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -280,11 +289,11 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">StringIndexerInput</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexer</span><span> = </span><span class="type-name">TypedStringIndexer</span><span>[</span><span class="type-name">StringIndexerInput</span><span>]
-</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@3d5e6cd5
+</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@32f0705d
 </span><span class="identifier">indexer</span><span>.</span><span class="identifier">estimator</span><span>.</span><span class="identifier">setHandleInvalid</span><span>(</span><span class="string-literal">&quot;keep&quot;</span><span>)
-</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_ad4874a4ca1b
+</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_64ecd6ee52b9
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexerModel</span><span> = </span><span class="identifier">indexer</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">dataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@4fe6db9f
+</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@28ba75e7
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeaturesAndIndex</span><span>(
   </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>,
@@ -298,12 +307,12 @@
         <p>Then, we train the model:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">cityIndexed</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestClassifier</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@40c5f9ef
+</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@6e09a250
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">indexedData</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@11e461a9</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@9ff5e28</span></code></pre>
         
-        <h3 id="prediction-2" class="section">Prediction<a class="anchor-link right" href="#prediction-2"><i class="icofont-laika">&#xef71;</i></a></h3>
+        <h3 id="prediction-2" class="section"><a class="anchor-link left" href="#prediction-2"><i class="icofont-laika link">&#xef71;</i></a>Prediction</h3>
         <p>We now want to predict <code>city</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
         <code>testData</code> has a default value for <code>city</code> (empty string in our case) that will be ignored at prediction time. We reuse
         our <code>vectorAssembler</code> to compute the feature vector of <code>testData</code> and our <code>indexerModel</code> to index <code>city</code>.</p>
@@ -332,7 +341,7 @@
         as input the label array computed by our previous <code>indexerModel</code>:</p>
         <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">IndexToStringInput</span><span>(</span><span class="identifier">predictedCityIndexed</span><span>: </span><span class="type-name">Double</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexToString</span><span> = </span><span class="type-name">TypedIndexToString</span><span>[</span><span class="type-name">IndexToStringInput</span><span>](</span><span class="identifier">indexerModel</span><span>.</span><span class="identifier">transformer</span><span>.</span><span class="identifier">labels</span><span>)
-</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@5f929f84
+</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@38bca5d2
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseCityPrediction</span><span>(
   </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>,
@@ -348,14 +357,14 @@
 </span><span class="identifier">predictions</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">predictions</span><span>.</span><span class="identifier">col</span><span>(</span><span class="symbol-literal">&#39;predictedCity</span><span>)).</span><span class="identifier">collect</span><span>.</span><span class="identifier">run</span><span>()
 </span><span class="comment">// res13: Seq[String] = WrappedArray(&quot;san francisco&quot;)</span></code></pre>
         
-        <h2 id="list-of-currently-implemented-typedestimators" class="section">List of currently implemented <code>TypedEstimator</code>s<a class="anchor-link right" href="#list-of-currently-implemented-typedestimators"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="list-of-currently-implemented-typedestimators" class="section"><a class="anchor-link left" href="#list-of-currently-implemented-typedestimators"><i class="icofont-laika link">&#xef71;</i></a>List of currently implemented <code>TypedEstimator</code>s</h2>
         <ul>
           <li><code>TypedRandomForestClassifier</code></li>
           <li><code>TypedRandomForestRegressor</code></li>
           <li>... <a href="https://github.com/typelevel/frameless/issues/215">your contribution here</a> ... :)</li>
         </ul>
         
-        <h2 id="list-of-currently-implemented-typedtransformers" class="section">List of currently implemented <code>TypedTransformer</code>s<a class="anchor-link right" href="#list-of-currently-implemented-typedtransformers"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="list-of-currently-implemented-typedtransformers" class="section"><a class="anchor-link left" href="#list-of-currently-implemented-typedtransformers"><i class="icofont-laika link">&#xef71;</i></a>List of currently implemented <code>TypedTransformer</code>s</h2>
         <ul>
           <li><code>TypedIndexToString</code></li>
           <li><code>TypedStringIndexer</code></li>
@@ -363,7 +372,7 @@
           <li>... <a href="https://github.com/typelevel/frameless/issues/215">your contribution here</a> ... :)</li>
         </ul>
         
-        <h2 id="using-vector-and-matrix-with-typeddataset" class="section">Using Vector and Matrix with <code>TypedDataset</code><a class="anchor-link right" href="#using-vector-and-matrix-with-typeddataset"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="using-vector-and-matrix-with-typeddataset" class="section"><a class="anchor-link left" href="#using-vector-and-matrix-with-typeddataset"><i class="icofont-laika link">&#xef71;</i></a>Using Vector and Matrix with <code>TypedDataset</code></h2>
         <p><code>frameless-ml</code> provides <code>TypedEncoder</code> instances for <code>org.apache.spark.ml.linalg.Vector</code> 
         and <code>org.apache.spark.ml.linalg.Matrix</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
@@ -383,14 +392,17 @@
         and <code>org.apache.spark.ml.linalg.MatrixUDT</code>. This is possible thanks to the implicit derivation 
         from <code>org.apache.spark.sql.types.UserDefinedType[A]</code> to <code>TypedEncoder[A]</code> defined in <code>TypedEncoder</code> companion object.</p>
 
-        <hr style="margin-top: 30px"/>
-        <footer style="font-size: 90%; text-align: center">
-          frameless is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="http://opensource.org/licenses/Apache-2.0">Apache-2.0</a> license.
-        </footer>
+        
+<hr class="footer-rule"/>
+<footer>
+  frameless is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="http://opensource.org/licenses/Apache-2.0">Apache-2.0</a> license.
+</footer>
+
 
       </main>
 
     </div>
 
   </body>
+
 </html>

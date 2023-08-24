@@ -1,122 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
+  
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="Laika 0.18.1 + Helium Theme" />
-    <title>Injection: Creating Custom Encoders</title>
-    
-      <meta name="author" content="Olivier Blanvillain"/>
-    
-      <meta name="author" content="Adelbert Chang"/>
-    
-      <meta name="author" content="Marios Iliofotou"/>
-    
-      <meta name="author" content="Gleb Kanterov"/>
-    
-      <meta name="author" content="Erik Osheim"/>
-    
-      <meta name="author" content="Jeremy Smith"/>
-    
-      <meta name="author" content="Cédric Chantepie"/>
-    
-      <meta name="author" content="Grigory Pomadchin"/>
-    
-    
-      <meta name="description" content="docs"/>
-    
-    
-      <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
-    
-    
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
-    
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
-    
-    <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Typelevel Laika + Helium Theme" />
+  <title>Injection: Creating Custom Encoders</title>
+  
+  <meta name="author" content="Olivier Blanvillain"/>
+  
+  <meta name="author" content="Adelbert Chang"/>
+  
+  <meta name="author" content="Marios Iliofotou"/>
+  
+  <meta name="author" content="Gleb Kanterov"/>
+  
+  <meta name="author" content="Erik Osheim"/>
+  
+  <meta name="author" content="Jeremy Smith"/>
+  
+  <meta name="author" content="Cédric Chantepie"/>
+  
+  <meta name="author" content="Grigory Pomadchin"/>
+  
+  
+  <meta name="description" content="docs"/>
+  
+  
+  
+  <link rel="icon" sizes="32x32" type="image/png" href="https://typelevel.org/img/favicon.png"/>
+  
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700">
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
+  
+  <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
     <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
-    <link rel="stylesheet" type="text/css" href="site/styles.css" />
-    <script src="helium/laika-helium.js"></script>
-    
-    
-    <script> /* for avoiding page load transitions */ </script>
-  </head>
+  <script src="helium/laika-helium.js"></script>
+  
+  
+  <script> /* for avoiding page load transitions */ </script>
+</head>
 
   <body>
 
-    <header id="top-bar">
+    <header id="top-bar" class="light-default dark-default">
 
-      <div class="row">
-        <a id="nav-icon">
-          <i class="icofont-laika" title="Navigation">&#xefa2;</i>
-        </a>
-        
-      </div>
+  <div class="row">
+    <a id="nav-icon">
+      <i class="icofont-laika navigationMenu" title="Navigation">&#xefa2;</i>
+    </a>
+    
+    
+  </div>
 
-      <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
+  <a class="image-link" href="https://typelevel.org"><img src="https://typelevel.org/img/logo.svg"></a>
 
-      <span class="row links"><a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <div class="row links">
+    
+    <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
   <g class="svg-shape">
     <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
   </g>
-</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon svg-link" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <g class="svg-shape">
     <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
   </g>
-</svg>
-</span></a></span>
+</svg></span></a>
+    
+  </div>  
 
-    </header>
-
+</header>
+    
     <nav id="sidebar">
 
-      <div class="row">
-        <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+  <div class="row">
+    
+    <a class="icon-link svg-link" href="https://github.com/typelevel/frameless"><span class="github" title="Source Code"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
   <g class="svg-shape">
     <path d="M49.995,1c-27.609,-0 -49.995,22.386 -49.995,50.002c-0,22.09 14.325,40.83 34.194,47.444c2.501,0.458 3.413,-1.086 3.413,-2.412c0,-1.185 -0.043,-4.331 -0.067,-8.503c-13.908,3.021 -16.843,-6.704 -16.843,-6.704c-2.274,-5.773 -5.552,-7.311 -5.552,-7.311c-4.54,-3.103 0.344,-3.042 0.344,-3.042c5.018,0.356 7.658,5.154 7.658,5.154c4.46,7.64 11.704,5.433 14.552,4.156c0.454,-3.232 1.744,-5.436 3.174,-6.685c-11.102,-1.262 -22.775,-5.553 -22.775,-24.713c-0,-5.457 1.949,-9.92 5.147,-13.416c-0.516,-1.265 -2.231,-6.348 0.488,-13.233c0,0 4.199,-1.344 13.751,5.126c3.988,-1.108 8.266,-1.663 12.518,-1.682c4.245,0.019 8.523,0.574 12.517,1.682c9.546,-6.47 13.736,-5.126 13.736,-5.126c2.728,6.885 1.013,11.968 0.497,13.233c3.204,3.496 5.141,7.959 5.141,13.416c0,19.209 -11.691,23.436 -22.83,24.673c1.795,1.544 3.394,4.595 3.394,9.26c0,6.682 -0.061,12.076 -0.061,13.715c0,1.338 0.899,2.894 3.438,2.406c19.853,-6.627 34.166,-25.354 34.166,-47.438c-0,-27.616 -22.389,-50.002 -50.005,-50.002"/>
   </g>
-</svg></span></a><a class="icon-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika" title="Chat">&#xeed5;</i></a><a class="icon-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon svg-link" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+</svg></span></a>
+    
+    <a class="icon-link glyph-link" href="https://discord.gg/XF3CXcMzqD"><i class="icofont-laika chat" title="Chat">&#xeed5;</i></a>
+    
+    <a class="icon-link svg-link" href="https://fosstodon.org/@typelevel"><span class="mastodon" title="Mastodon"><svg class="svg-icon" width="100%" height="100%" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <g class="svg-shape">
     <path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/>
   </g>
-</svg>
-</span></a>
-      </div>
+</svg></span></a>
+    
+  </div>
 
-      <ul class="nav-list">
-        <li class="level1"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
-        <li class="level1"><a href="TypedDatasetVsSparkDataset.html">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
-        <li class="level1"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
-        <li class="level1 active"><a href="#">Injection: Creating Custom Encoders</a></li>
-        <li class="level1"><a href="Job.html">Job[A]</a></li>
-        <li class="level1"><a href="Cats.html">Using Cats with Frameless</a></li>
-        <li class="level1"><a href="TypedML.html">Typed Spark ML</a></li>
-        <li class="level1"><a href="TypedDataFrame.html">Proof of Concept: TypedDataFrame</a></li>
-        <li class="level1"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
-      </ul>
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="FeatureOverview.html">TypedDataset: Feature Overview</a></li>
+    <li class="level1 nav-leaf"><a href="TypedDatasetVsSparkDataset.html">Comparing TypedDatasets with Spark&#39;s Datasets</a></li>
+    <li class="level1 nav-leaf"><a href="WorkingWithCsvParquetJson.html">Working with CSV and Parquet data</a></li>
+    <li class="level1 active nav-leaf"><a href="#">Injection: Creating Custom Encoders</a></li>
+    <li class="level1 nav-leaf"><a href="Job.html">Job[A]</a></li>
+    <li class="level1 nav-leaf"><a href="Cats.html">Using Cats with Frameless</a></li>
+    <li class="level1 nav-leaf"><a href="TypedML.html">Typed Spark ML</a></li>
+    <li class="level1 nav-leaf"><a href="TypedDataFrame.html">Proof of Concept: TypedDataFrame</a></li>
+    <li class="level1 nav-leaf"><a href="TypedEncoder.html">Typed Encoders in Frameless</a></li>
+  </ul>
 
-      <ul class="nav-list">
-        <li class="level1 nav-header">Related Projects</li>
-        
-          <li class="level2"><a href="https://typelevel.org/cats/">cats</a></li>
-        
-      </ul>
-
-    </nav>
+</nav>
 
     <div id="container">
 
-      <nav id="page-nav">
-        <p class="header"><a href="#">Injection: Creating Custom Encoders</a></p>
+      
+<nav id="page-nav">
+  <p class="header"><a href="#">Injection: Creating Custom Encoders</a></p>
 
-        <ul class="nav-list">
-          <li class="level1"><a href="#example">Example</a></li>
-          <li class="level1"><a href="#another-example">Another example</a></li>
-        </ul>
+  <ul class="nav-list">
+    <li class="level1 nav-leaf"><a href="#example">Example</a></li>
+    <li class="level1 nav-leaf"><a href="#another-example">Another example</a></li>
+  </ul>
 
-        <p class="footer"></p>
-      </nav>
+  <p class="footer"></p>
+</nav>
+
 
       <main class="content">
 
@@ -128,14 +137,14 @@
   </span><span class="keyword">def</span><span> </span><span class="declaration-name">invert</span><span>(</span><span class="identifier">b</span><span>: </span><span class="type-name">B</span><span>): </span><span class="type-name">A</span><span>
 }</span></code></pre>
         
-        <h2 id="example" class="section">Example<a class="anchor-link right" href="#example"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="example" class="section"><a class="anchor-link left" href="#example"><i class="icofont-laika link">&#xef71;</i></a>Example</h2>
         <p>Let&#39;s define a simple case class:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Person</span><span>(</span><span class="identifier">age</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">birthday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">people</span><span> = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">Person</span><span>(</span><span class="number-literal">42</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>))
-</span><span class="comment">// people: Seq[Person] = List(Person(42, Mon Aug 21 13:09:55 UTC 2023))</span></code></pre>
+</span><span class="comment">// people: Seq[Person] = List(Person(42, Thu Aug 24 02:38:23 UTC 2023))</span></code></pre>
         <p>And an instance of a <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
-</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.App0.Person]
+</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.Person]
 // val personDS = TypedDataset.create(people)
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Looks like we can&#39;t, a <code>TypedEncoder</code> instance of <code>Person</code> is not available, or more precisely for <code>java.util.Date</code>.
@@ -145,16 +154,16 @@
   </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">d</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>): </span><span class="type-name">Long</span><span> = </span><span class="identifier">d</span><span>.</span><span class="identifier">getTime</span><span>()
   </span><span class="keyword">def</span><span> </span><span class="declaration-name">invert</span><span>(</span><span class="identifier">l</span><span>: </span><span class="type-name">Long</span><span>): </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>)
 }
-</span><span class="comment">// dateToLongInjection: AnyRef with Injection[java.util.Date, Long] = repl.MdocSession$App0$$anon$1@7b06d537</span></code></pre>
+</span><span class="comment">// dateToLongInjection: AnyRef with Injection[java.util.Date, Long] = repl.MdocSession$MdocApp0$$anon$1@469a9e95</span></code></pre>
         <p>We can be less verbose using the <code>Injection.apply</code> function:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
 </span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">dateToLongInjection</span><span> = </span><span class="type-name">Injection</span><span>((</span><span class="identifier">_</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>).</span><span class="identifier">getTime</span><span>(), </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>((</span><span class="identifier">_</span><span>: </span><span class="type-name">Long</span><span>)))
-</span><span class="comment">// dateToLongInjection: Injection[java.util.Date, Long] = frameless.Injection$$anon$1@5ac40845</span></code></pre>
+</span><span class="comment">// dateToLongInjection: Injection[java.util.Date, Long] = frameless.Injection$$anon$1@97be5c7</span></code></pre>
         <p>Now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, birthday: bigint]</span></code></pre>
         
-        <h2 id="another-example" class="section">Another example<a class="anchor-link right" href="#another-example"><i class="icofont-laika">&#xef71;</i></a></h2>
+        <h2 id="another-example" class="section"><a class="anchor-link left" href="#another-example"><i class="icofont-laika link">&#xef71;</i></a>Another example</h2>
         <p>Let&#39;s define a sealed family:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">sealed</span><span> </span><span class="keyword">trait</span><span> </span><span class="type-name">Gender</span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">object</span><span> </span><span class="type-name">Male</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Gender</span><span>
@@ -166,7 +175,7 @@
 </span><span class="comment">// people: Seq[Person] = List(Person(42, Male))</span></code></pre>
         <p>Again if we try to create a <code>TypedDataset</code>, we get a compilation error.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
-</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.App1.Person]
+</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp1.Person]
 // val personDS = TypedDataset.create(people)
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Let&#39;s define an injection instance for <code>Gender</code>:</p>
@@ -182,7 +191,7 @@
     </span><span class="keyword">case</span><span> </span><span class="number-literal">2</span><span> =&gt; </span><span class="type-name">Female</span><span>
     </span><span class="keyword">case</span><span> </span><span class="number-literal">3</span><span> =&gt; </span><span class="type-name">Other</span><span>
   })
-</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@6306efba</span></code></pre>
+</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@4d7f3713</span></code></pre>
         <p>And now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, gender: int]</span></code></pre>
@@ -195,14 +204,17 @@
 </span><span class="keyword">object</span><span> </span><span class="type-name">B</span><span> { </span><span class="keyword">case</span><span> </span><span class="keyword">object</span><span> </span><span class="type-name">Bar</span><span> </span><span class="keyword">extends</span><span> </span><span class="type-name">Foo</span><span> }</span></code></pre>
         <p><code>A.Bar</code> and <code>B.Bar</code> will both be encoded as <code>&quot;Bar&quot;</code> thereby breaking the law that <code>invert(apply(x)) == x</code>.</p>
 
-        <hr style="margin-top: 30px"/>
-        <footer style="font-size: 90%; text-align: center">
-          frameless is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="http://opensource.org/licenses/Apache-2.0">Apache-2.0</a> license.
-        </footer>
+        
+<hr class="footer-rule"/>
+<footer>
+  frameless is a <a href="https://typelevel.org/">Typelevel</a> project distributed under the <a href="http://opensource.org/licenses/Apache-2.0">Apache-2.0</a> license.
+</footer>
+
 
       </main>
 
     </div>
 
   </body>
+
 </html>
