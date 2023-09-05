@@ -1,6 +1,10 @@
 package frameless
 
+import java.util.Date
+
 import java.time.{Instant, Period, Duration}
+import java.sql.{Date=>SqlDate,Timestamp}
+
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers
@@ -10,6 +14,17 @@ import scala.math.Ordering.Implicits._
 import scala.util.Try
 
 final class ColumnTests extends TypedDatasetSuite with Matchers {
+  implicit val timestampArb: Arbitrary[Timestamp] = Arbitrary {
+    implicitly[Arbitrary[Long]].arbitrary.map { new Timestamp(_) }
+  }
+
+  implicit val sqlDateArb: Arbitrary[SqlDate] = Arbitrary {
+    implicitly[Arbitrary[Long]].arbitrary.map { new SqlDate(_) }
+  }
+
+  implicit val dateArb: Arbitrary[Date] = Arbitrary {
+    implicitly[Arbitrary[Long]].arbitrary.map { new Date(_) }
+  }
 
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
@@ -29,6 +44,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
   test("select('a < 'b, 'a <= 'b, 'a > 'b, 'a >= 'b)") {
     import OrderingImplicits._
+
     def prop[A: TypedEncoder : CatalystOrdered : Ordering](a: A, b: A): Prop = {
       val dataset = TypedDataset.create(X2(a, b) :: Nil)
       val A = dataset.col('a)
@@ -337,7 +353,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
         .toList
         .head
 
-      defaulted.?=((opt.getOrElse(a), opt.getOrElse(a)))
+      defaulted ?= (opt.getOrElse(a) -> opt.getOrElse(a))
     }
 
     check(forAll(prop[Int] _))
@@ -349,6 +365,9 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[Double] _))
     check(forAll(prop[SQLDate] _))
     check(forAll(prop[SQLTimestamp] _))
+    check(forAll(prop[Date] _))
+    check(forAll(prop[Timestamp] _))
+    check(forAll(prop[SqlDate] _))
     check(forAll(prop[String] _))
   }
 
@@ -385,7 +404,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
     check(forAll(prop[Int] _))
     check(forAll(prop[String] _))
-    check(forAll(prop[Long] _))
+    check(forAll(prop[Date] _))
     check(forAll(prop[Vector[Vector[String]]] _))
   }
 
@@ -425,9 +444,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     val ds = TypedDataset.create((true, false) :: Nil)
 
     val rs = ds.select(!ds('_1), !ds('_2)).collect().run().head
-    val expected = (false, true)
 
-    rs shouldEqual expected
+    rs shouldEqual (false -> true)
   }
 
   test("unary_! with non-boolean columns should not compile") {

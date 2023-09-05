@@ -1,6 +1,9 @@
 package frameless
 
+import java.util.Date
+
 import java.time.{Duration, Instant, Period}
+
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
@@ -211,6 +214,30 @@ object TypedEncoder {
         propagateNull = true
       )
   }
+
+  implicit def timestampEncoder[T <: Date](
+    implicit i0: ClassTag[T]): TypedEncoder[T] =
+    new TypedEncoder[T] {
+      def nullable: Boolean = false
+
+      def jvmRepr: DataType = FramelessInternals.objectTypeFor[T](i0)
+      def catalystRepr: DataType = TimestampType
+
+      def toCatalyst(path: Expression): Expression =
+        Invoke(path, "getTime", catalystRepr)
+
+      def fromCatalyst(path: Expression): Expression =
+        NewInstance(
+          i0.runtimeClass,
+          Seq(path),
+          Seq(catalystRepr),
+          false,
+          jvmRepr,
+          None
+        )
+
+      override def toString: String = s"timestampEncoder(${i0.runtimeClass})"
+    }
 
   implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] = new TypedEncoder[SQLTimestamp] {
     def nullable: Boolean = false
