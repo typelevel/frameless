@@ -3,11 +3,11 @@ package frameless
 import java.util.Date
 import java.math.BigInteger
 
-import java.time.{Instant, Period, Duration}
-import java.sql.{Date=>SqlDate,Timestamp}
+import java.time.{ Instant, Period, Duration }
+import java.sql.{ Date => SqlDate, Timestamp }
 
 import org.scalacheck.Prop._
-import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary
+import org.scalacheck.{ Arbitrary, Gen, Prop }, Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 
@@ -15,6 +15,7 @@ import scala.math.Ordering.Implicits._
 import scala.util.Try
 
 final class ColumnTests extends TypedDatasetSuite with Matchers {
+
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSize = 1, sizeRange = 1)
 
@@ -32,36 +33,60 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
   private implicit object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
-    implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] = Ordering.by(_.us)
-    implicit val periodOrdering: Ordering[Period] = Ordering.by(p => (p.getYears, p.getMonths, p.getDays))
-    /**
-      * DateTimeUtils.instantToMicros supports dates starting 1970-01-01T00:00:00Z, which is Instant.EPOCH.
-      * This function also overflows on Instant.MAX, to be sure it never overflows we use Instant.MAX / 4.
-      * For implementation details check the org.apache.spark.sql.catalyst.util.DateTimeUtils.instantToMicros function details.
-      */
 
-    val genInstant = Gen.choose[Instant](Instant.EPOCH, Instant.ofEpochMilli(Instant.MAX.getEpochSecond / 4))
+    implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] =
+      Ordering.by(_.us)
+
+    implicit val periodOrdering: Ordering[Period] =
+      Ordering.by(p => (p.getYears, p.getMonths, p.getDays))
+
+    /**
+     * DateTimeUtils.instantToMicros supports dates starting 1970-01-01T00:00:00Z, which is Instant.EPOCH.
+     * This function also overflows on Instant.MAX, to be sure it never overflows we use Instant.MAX / 4.
+     * For implementation details check the org.apache.spark.sql.catalyst.util.DateTimeUtils.instantToMicros function details.
+     */
+
+    val genInstant = Gen.choose[Instant](
+      Instant.EPOCH,
+      Instant.ofEpochMilli(Instant.MAX.getEpochSecond / 4)
+    )
     implicit val arbInstant: Arbitrary[Instant] = Arbitrary(genInstant)
-    implicit val arbDuration: Arbitrary[Duration] = Arbitrary(genInstant.map(i => Duration.ofMillis(i.toEpochMilli)))
-    implicit val arbPeriod: Arbitrary[Period] = Arbitrary(Gen.chooseNum(0, Int.MaxValue).map(l => Period.of(l, l, l)))
+
+    implicit val arbDuration: Arbitrary[Duration] = Arbitrary(
+      genInstant.map(i => Duration.ofMillis(i.toEpochMilli))
+    )
+
+    implicit val arbPeriod: Arbitrary[Period] = Arbitrary(
+      Gen.chooseNum(0, Int.MaxValue).map(l => Period.of(l, l, l))
+    )
   }
 
   test("select('a < 'b, 'a <= 'b, 'a > 'b, 'a >= 'b)") {
     import OrderingImplicits._
 
-    def prop[A: TypedEncoder : CatalystOrdered : Ordering](a: A, b: A): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered: Ordering](a: A, b: A): Prop = {
       val dataset = TypedDataset.create(X2(a, b) :: Nil)
       val A = dataset.col('a)
       val B = dataset.col('b)
 
-      val dataset2 = dataset.selectMany(
-        A < B, A < b, // One test uses columns, other uses literals
-        A <= B, A <= b,
-        A > B, A > b,
-        A >= B, A >= b
-      ).collect().run().toVector
+      val dataset2 = dataset
+        .selectMany(
+          A < B,
+          A < b, // One test uses columns, other uses literals
+          A <= B,
+          A <= b,
+          A > B,
+          A > b,
+          A >= B,
+          A >= b
+        )
+        .collect()
+        .run()
+        .toVector
 
-      dataset2 ?= Vector((a < b, a < b, a <= b, a <= b, a > b, a > b, a >= b, a >= b))
+      dataset2 ?= Vector(
+        (a < b, a < b, a <= b, a <= b, a > b, a > b, a >= b, a >= b)
+      )
     }
 
     check(forAll(prop[Int] _))
@@ -81,13 +106,21 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
   test("between") {
     import OrderingImplicits._
-    def prop[A: TypedEncoder : CatalystOrdered : Ordering](a: A, b: A, c: A): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered: Ordering](
+        a: A,
+        b: A,
+        c: A
+      ): Prop = {
       val dataset = TypedDataset.create(X3(a, b, c) :: Nil)
       val A = dataset.col('a)
       val B = dataset.col('b)
       val C = dataset.col('c)
 
-      val isBetweeen = dataset.selectMany(A.between(B, C), A.between(b, c)).collect().run().toVector
+      val isBetweeen = dataset
+        .selectMany(A.between(B, C), A.between(b, c))
+        .collect()
+        .run()
+        .toVector
       val result = b <= a && a <= c
 
       isBetweeen ?= Vector((result, result))
@@ -121,16 +154,24 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       forAll { (s: Seq[X3[Boolean, Boolean, Boolean]]) =>
         val ds = TypedDataset.create(s)
 
-        val typedBoolean = ds.select(
-          ds('a) && ds('b) || ds('c),
-          ds('a).and(ds('b)).or(ds('c))
-        ).collect().run().toList
+        val typedBoolean = ds
+          .select(
+            ds('a) && ds('b) || ds('c),
+            ds('a).and(ds('b)).or(ds('c))
+          )
+          .collect()
+          .run()
+          .toList
 
         val untypedDs = ds.toDF()
-        val untypedBoolean = untypedDs.select(
-          untypedDs("a") && untypedDs("b") || untypedDs("c"),
-          untypedDs("a").and(untypedDs("b")).or(untypedDs("c"))
-        ).as[(Boolean, Boolean)].collect().toList
+        val untypedBoolean = untypedDs
+          .select(
+            untypedDs("a") && untypedDs("b") || untypedDs("c"),
+            untypedDs("a").and(untypedDs("b")).or(untypedDs("c"))
+          )
+          .as[(Boolean, Boolean)]
+          .collect()
+          .toList
 
         typedBoolean ?= untypedBoolean
       }
@@ -145,11 +186,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       forAll { (a: String, b: Int, c: Int) =>
         val ds = TypedDataset.create(X3(a, b, c) :: Nil)
 
-        val typedSubstr = ds
-          .select(ds('a).substr(ds('b), ds('c)))
-          .collect()
-          .run()
-          .toList
+        val typedSubstr =
+          ds.select(ds('a).substr(ds('b), ds('c))).collect().run().toList
 
         val untypedDs = ds.toDF()
         val untypedSubstr = untypedDs
@@ -166,11 +204,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       forAll { (a: String, b: Int, c: Int) =>
         val ds = TypedDataset.create(X1(a) :: Nil)
 
-        val typedSubstr = ds
-          .select(ds('a).substr(b, c))
-          .collect()
-          .run()
-          .toList
+        val typedSubstr = ds.select(ds('a).substr(b, c)).collect().run().toList
 
         val untypedDs = ds.toDF()
         val untypedSubstr = untypedDs
@@ -198,11 +232,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       forAll { (a: String, b: String) =>
         val ds = TypedDataset.create(X2(a, b) :: Nil)
 
-        val typedLike = ds
-          .select(ds('a).like(a), ds('b).like(a))
-          .collect()
-          .run()
-          .toList
+        val typedLike =
+          ds.select(ds('a).like(a), ds('b).like(a)).collect().run().toList
 
         val untypedDs = ds.toDF()
         val untypedLike = untypedDs
@@ -225,7 +256,9 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     val spark = session
     import spark.implicits._
 
-    val regex = Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat { str => Try(str.r).isSuccess }
+    val regex = Gen.nonEmptyListOf(arbitrary[Char]).map(_.mkString).suchThat {
+      str => Try(str.r).isSuccess
+    }
 
     check {
       forAll(regex, arbitrary[String]) { (a, b) =>
@@ -239,7 +272,11 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
         val untypedDs = ds.toDF()
         val untypedLike = untypedDs
-          .select(untypedDs("a").rlike(a), untypedDs("b").rlike(a), untypedDs("a").rlike(".*"))
+          .select(
+            untypedDs("a").rlike(a),
+            untypedDs("b").rlike(a),
+            untypedDs("a").rlike(".*")
+          )
           .as[(Boolean, Boolean, Boolean)]
           .collect()
           .toList
@@ -270,7 +307,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
         val untypedDs = ds.toDF()
         val untypedContains = untypedDs
-          .select(untypedDs("a").contains(untypedDs("b")), untypedDs("b").contains(a))
+          .select(
+            untypedDs("a").contains(untypedDs("b")),
+            untypedDs("b").contains(a)
+          )
           .as[(Boolean, Boolean)]
           .collect()
           .toList
@@ -301,7 +341,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
         val untypedDs = ds.toDF()
         val untypedStartsWith = untypedDs
-          .select(untypedDs("a").startsWith(untypedDs("b")), untypedDs("b").startsWith(a))
+          .select(
+            untypedDs("a").startsWith(untypedDs("b")),
+            untypedDs("b").startsWith(a)
+          )
           .as[(Boolean, Boolean)]
           .collect()
           .toList
@@ -331,7 +374,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
         val untypedDs = ds.toDF()
         val untypedStartsWith = untypedDs
-          .select(untypedDs("a").endsWith(untypedDs("b")), untypedDs("b").endsWith(a))
+          .select(
+            untypedDs("a").endsWith(untypedDs("b")),
+            untypedDs("b").endsWith(a)
+          )
           .as[(Boolean, Boolean)]
           .collect()
           .toList
@@ -377,11 +423,35 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     // Scalacheck is too slow
     check(prop[BigInt](BigInt(Long.MaxValue).+(BigInt(Long.MaxValue)), None))
     check(prop[BigInt](BigInt("0"), Some(BigInt(Long.MaxValue))))
-    check(prop[BigInt](BigInt(Long.MinValue).-(BigInt(Long.MinValue)), Some(BigInt("0"))))
+    check(
+      prop[BigInt](
+        BigInt(Long.MinValue).-(BigInt(Long.MinValue)),
+        Some(BigInt("0"))
+      )
+    )
 
-    check(prop[BigInteger](BigInteger.valueOf(Long.MaxValue).add(BigInteger.valueOf(Long.MaxValue)), None))
-    check(prop[BigInteger](BigInteger.valueOf(0L), Some(BigInteger.valueOf(Long.MaxValue))))
-    check(prop[BigInteger](BigInteger.valueOf(Long.MinValue).subtract(BigInteger.valueOf(Long.MinValue)), Some(BigInteger.valueOf(0L))))
+    check(
+      prop[BigInteger](
+        BigInteger
+          .valueOf(Long.MaxValue)
+          .add(BigInteger.valueOf(Long.MaxValue)),
+        None
+      )
+    )
+    check(
+      prop[BigInteger](
+        BigInteger.valueOf(0L),
+        Some(BigInteger.valueOf(Long.MaxValue))
+      )
+    )
+    check(
+      prop[BigInteger](
+        BigInteger
+          .valueOf(Long.MinValue)
+          .subtract(BigInteger.valueOf(Long.MinValue)),
+        Some(BigInteger.valueOf(0L))
+      )
+    )
   }
 
   test("asCol") {
@@ -426,10 +496,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
       val ds: TypedDataset[Long] = TypedDataset.create(a)
       val (first, second) = (2L, 5L)
       val frameless: Seq[(Long, Long, Long)] =
-        ds.select(ds.asCol, ds.asCol+first, ds.asCol*second).collect().run()
+        ds.select(ds.asCol, ds.asCol + first, ds.asCol * second).collect().run()
 
       val scala: Seq[(Long, Long, Long)] =
-        a.map(x => (x, x+first, x*second))
+        a.map(x => (x, x + first, x * second))
 
       scala ?= frameless
     }
@@ -442,8 +512,8 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
 
     val bar = new Name("bar")
 
-    val ds1: TypedDataset[Person] = TypedDataset.create(
-      Seq(Person(bar, 23), Person(new Name("foo"), 11)))
+    val ds1: TypedDataset[Person] =
+      TypedDataset.create(Seq(Person(bar, 23), Person(new Name("foo"), 11)))
 
     val ds2: TypedDataset[Name] =
       TypedDataset.create(Seq(new Name("lorem"), bar))
@@ -472,13 +542,14 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   test("opt") {
     val data = (Option(1L), Option(2L)) :: (None, None) :: Nil
     val ds = TypedDataset.create(data)
-    val rs = ds.select(ds('_1).opt.map(_ * 2), ds('_1).opt.map(_ + 2)).collect().run()
+    val rs =
+      ds.select(ds('_1).opt.map(_ * 2), ds('_1).opt.map(_ + 2)).collect().run()
     val expected = data.map { case (x, y) => (x.map(_ * 2), y.map(_ + 1)) }
     rs shouldEqual expected
   }
 
   test("opt compiles only for columns of type Option[_]") {
-    val ds = TypedDataset.create((1, List(1,2,3)) :: Nil)
+    val ds = TypedDataset.create((1, List(1, 2, 3)) :: Nil)
     "ds.select(ds('_1).opt.map(x => x))" shouldNot typeCheck
     "ds.select(ds('_2).opt.map(x => x))" shouldNot typeCheck
   }
@@ -500,7 +571,9 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     case class MyClass1(a: Int, b: String, c: MyClass2)
     case class MyClass2(d: Long)
 
-    val ds = TypedDataset.create(Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L))))
+    val ds = TypedDataset.create(
+      Seq(MyClass1(1, "2", MyClass2(3L)), MyClass1(4, "5", MyClass2(6L)))
+    )
 
     assert(ds.col(_.a).isInstanceOf[TypedColumn[MyClass1, Int]])
     assert(ds.col(_.b).isInstanceOf[TypedColumn[MyClass1, String]])
