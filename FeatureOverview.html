@@ -135,7 +135,8 @@
     <li class="level1 nav-node"><a href="#groupby-and-aggregations">GroupBy and Aggregations</a></li>
     <li class="level2 nav-leaf"><a href="#working-with-optional-fields">Working with Optional fields</a></li>
     <li class="level2 nav-leaf"><a href="#entire-typeddataset-aggregation">Entire TypedDataset Aggregation</a></li>
-    <li class="level1 nav-leaf"><a href="#joins">Joins</a></li>
+    <li class="level1 nav-node"><a href="#joins">Joins</a></li>
+    <li class="level2 nav-leaf"><a href="#chained-joins">Chained Joins</a></li>
   </ul>
 
   <p class="footer"></p>
@@ -715,7 +716,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$13157/1302096687@2cac78be
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$13251/1514840258@387f5783
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
@@ -911,6 +912,47 @@
 // | Lyon|133000.0|        500715|
 // | Nice|325000.0|        343629|
 // +-----+--------+--------------+
+//</span></code></pre>
+        
+        <h3 id="chained-joins" class="section"><a class="anchor-link left" href="#chained-joins"><i class="icofont-laika link">&#xef71;</i></a>Chained Joins</h3>
+        <p>Joins, or any similar operation, may be chained using a thrush combinator removing the need for intermediate values.  Instead of:</p>
+        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">withBedroomInfoInterim</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">joinInner</span><span>(</span><span class="identifier">citiInfoTypedDS</span><span>)( </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) === </span><span class="identifier">citiInfoTypedDS</span><span>(</span><span class="symbol-literal">&#39;name</span><span>) )
+</span><span class="comment">// withBedroomInfoInterim: TypedDataset[(Apartment, CityPopulationInfo)] = [_1: struct&lt;city: string, surface: int ... 2 more fields&gt;, _2: struct&lt;name: string, population: int&gt;]
+</span><span class="keyword">val</span><span> </span><span class="identifier">withBedroomInfo</span><span> = </span><span class="identifier">withBedroomInfoInterim</span><span> 
+  .</span><span class="identifier">joinLeft</span><span>(</span><span class="identifier">bedroomStats</span><span>)( </span><span class="identifier">withBedroomInfoInterim</span><span>.</span><span class="identifier">col</span><span>(&#39;</span><span class="identifier">_1</span><span>).</span><span class="identifier">field</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) === </span><span class="identifier">bedroomStats</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) )
+</span><span class="comment">// withBedroomInfo: TypedDataset[((Apartment, CityPopulationInfo), Option[BedroomStats])] = [_1: struct&lt;_1: struct&lt;city: string, surface: int ... 2 more fields&gt;, _2: struct&lt;name: string, population: int&gt;&gt;, _2: struct&lt;city: string, AvgPriceBeds1: double ... 3 more fields&gt;]
+</span><span>
+</span><span class="identifier">withBedroomInfo</span><span>.</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
+</span><span class="comment">// +--------------------+--------------------+
+// |                  _1|                  _2|
+// +--------------------+--------------------+
+// |{{Paris, 50, 3000...|{Paris, 250000.0,...|
+// |{{Paris, 100, 450...|{Paris, 250000.0,...|
+// |{{Paris, 25, 2500...|{Paris, 250000.0,...|
+// |{{Lyon, 83, 20000...|{Lyon, 133000.0, ...|
+// |{{Lyon, 45, 13300...|{Lyon, 133000.0, ...|
+// |{{Nice, 74, 32500...|{Nice, null, null...|
+// +--------------------+--------------------+
+//</span></code></pre>
+        <p>You can use thrush from <a href="https://github.com/typelevel/mouse">mouse</a>:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">libraryDependencies</span><span> += </span><span class="string-literal">&quot;org.typelevel&quot;</span><span> %% </span><span class="string-literal">&quot;mouse&quot;</span><span> % </span><span class="string-literal">&quot;1.2.1&quot;</span></code></pre>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">mouse</span><span>.</span><span class="identifier">all</span><span>.</span><span class="identifier">_</span><span>
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">withBedroomInfoChained</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">joinInner</span><span>(</span><span class="identifier">citiInfoTypedDS</span><span>)( </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) === </span><span class="identifier">citiInfoTypedDS</span><span>(</span><span class="symbol-literal">&#39;name</span><span>) )
+  .</span><span class="identifier">thrush</span><span>( </span><span class="identifier">interim</span><span> =&gt; </span><span class="identifier">interim</span><span>.</span><span class="identifier">joinLeft</span><span>(</span><span class="identifier">bedroomStats</span><span>)( </span><span class="identifier">interim</span><span>.</span><span class="identifier">col</span><span>(&#39;</span><span class="identifier">_1</span><span>).</span><span class="identifier">field</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) === </span><span class="identifier">bedroomStats</span><span>(</span><span class="symbol-literal">&#39;city</span><span>) ) )
+</span><span class="comment">// withBedroomInfoChained: TypedDataset[((Apartment, CityPopulationInfo), Option[BedroomStats])] = [_1: struct&lt;_1: struct&lt;city: string, surface: int ... 2 more fields&gt;, _2: struct&lt;name: string, population: int&gt;&gt;, _2: struct&lt;city: string, AvgPriceBeds1: double ... 3 more fields&gt;]
+</span><span>
+</span><span class="identifier">withBedroomInfoChained</span><span>.</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
+</span><span class="comment">// +--------------------+--------------------+
+// |                  _1|                  _2|
+// +--------------------+--------------------+
+// |{{Paris, 50, 3000...|{Paris, 250000.0,...|
+// |{{Paris, 100, 450...|{Paris, 250000.0,...|
+// |{{Paris, 25, 2500...|{Paris, 250000.0,...|
+// |{{Lyon, 83, 20000...|{Lyon, 133000.0, ...|
+// |{{Lyon, 45, 13300...|{Lyon, 133000.0, ...|
+// |{{Nice, 74, 32500...|{Nice, null, null...|
+// +--------------------+--------------------+
 //</span></code></pre>
 
         
