@@ -9,6 +9,6 @@ object Common extends AutoPlugin {
   override def requires = JvmPlugin
 
   override def projectSettings = Seq(
-    scalafmtFilter := "diff-ref=ea25f7d"
+    scalafmtFilter := "diff-ref=78f708d"
   )
 }

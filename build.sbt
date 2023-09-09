@@ -1,10 +1,10 @@
 val sparkVersion = "3.4.1"
-val spark33Version = "3.3.2"
+val spark33Version = "3.3.3"
 val spark32Version = "3.2.4"
-val catsCoreVersion = "2.9.0"
+val catsCoreVersion = "2.10.0"
 val catsEffectVersion = "3.5.1"
 val catsMtlVersion = "1.3.1"
-val scalatest = "3.2.16"
+val scalatest = "3.2.17"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.10"
 val scalacheck = "1.17.0"
@@ -19,11 +19,11 @@ ThisBuild / tlBaseVersion := "0.14"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
-ThisBuild / tlSkipIrrelevantScalas := true
 
 lazy val root = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
+  .settings(crossScalaVersions := Nil)
   .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, docs)
 
 lazy val `root-spark34` = project
@@ -396,5 +396,5 @@ val roots = List("root-spark32", "root-spark33", "root-spark34")
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
 
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
-  MatrixExclude(Map("scala" -> Scala213, "project" -> project))
+  MatrixExclude(Map("scala" -> "2.13", "project" -> project))
 }
