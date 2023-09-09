@@ -128,13 +128,18 @@
       <main class="content">
 
         <h1 id="typed-encoders-in-frameless" class="title">Typed Encoders in Frameless</h1>
-        <p>Spark uses Reflection to derive its <code>Encoder</code>s, which is why they can fail at run time. For example, because Spark does not support <code>java.util.Date</code>, the following leads to an error:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">Dataset</span><span>
+        <p>Spark uses Reflection to derive its <code>Encoder</code>s, which is why they can fail at run time. For example, because Spark does not support <code>java.util.Calendar</code>, the following leads to an error:</p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="type-name">Dataset</span><span>
+
 </span><span class="keyword">import</span><span> </span><span class="identifier">spark</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">_</span><span>
 
-</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DateRange</span><span>(</span><span class="identifier">s</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>, </span><span class="identifier">e</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)</span></code></pre>
-        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">Dataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)).</span><span class="identifier">toDS</span><span>()
-</span><span class="comment">// org.apache.spark.SparkUnsupportedOperationException: [ENCODER_NOT_FOUND] Not found an encoder of the type java.util.Date to Spark SQL internal representation. Consider to change the input type to one of supported at &#39;https://spark.apache.org/docs/latest/sql-ref-datatypes.html&#39;.
+</span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">DateRange</span><span>(</span><span class="identifier">s</span><span>: </span><span class="type-name">Calendar</span><span>, </span><span class="identifier">e</span><span>: </span><span class="type-name">Calendar</span><span>)</span></code></pre>
+        <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">now</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">Dataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="identifier">now</span><span>, </span><span class="identifier">now</span><span>)).</span><span class="identifier">toDS</span><span>()
+</span><span class="comment">// org.apache.spark.SparkUnsupportedOperationException: [ENCODER_NOT_FOUND] Not found an encoder of the type java.util.Calendar to Spark SQL internal representation. Consider to change the input type to one of supported at &#39;https://spark.apache.org/docs/latest/sql-ref-datatypes.html&#39;.
 // 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1483)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:958)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$3(ScalaReflection.scala:953)
@@ -152,41 +157,76 @@
 // 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:264)
 // 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:264)
 // 	at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)
-// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply$mcV$sp(TypedEncoder.md:45)
-// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedEncoder.md:44)
-// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedEncoder.md:44)</span></code></pre>
+// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply$mcV$sp(TypedEncoder.md:49)
+// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedEncoder.md:47)
+// 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedEncoder.md:47)</span></code></pre>
         <p>As shown by the stack trace, this runtime error goes through <a href="https://github.com/apache/spark/blob/19cf208063f035d793d2306295a251a9af7e32f6/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/ScalaReflection.scala">ScalaReflection</a> to try to derive an <code>Encoder</code> for <code>Dataset</code> schema. Beside the annoyance of not detecting this error at compile time, a more important limitation of the reflection-based approach is its inability to be extended for custom types. See this Stack Overflow question for a summary of the current situation (as of 2.0) in vanilla Spark: <a href="http://stackoverflow.com/a/39442829/2311362">How to store custom objects in a Dataset?</a>.</p>
-        <p>Frameless introduces a new type class called <code>TypeEncoder</code> to solve these issues. <code>TypeEncoder</code>s are passed around as implicit parameters to every Frameless method to ensure that the data being manipulated is <code>Encoder</code>. It uses a standard implicit resolution coupled with shapeless&#39; type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the <code>java.util.Date</code> example won&#39;t compile with Frameless:</p>
+        <p>Frameless introduces a new type class called <code>TypeEncoder</code> to solve these issues. <code>TypeEncoder</code>s are passed around as implicit parameters to every Frameless method to ensure that the data being manipulated is <code>Encoder</code>. It uses a standard implicit resolution coupled with shapeless&#39; type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the <code>java.util.Calendar</code> example won&#39;t compile with Frameless:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="type-name">TypedDataset</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">_</span></code></pre>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)))
+        <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">now</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="identifier">now</span><span>, </span><span class="identifier">now</span><span>)))
 </span><span class="comment">// error: ds is already defined as value ds
-// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
+// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
 //     ^^
+// error: ambiguous reference to overloaded definition,
+// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// match expected type java.util.Calendar
+// val ds: Dataset[DateRange] = Seq(DateRange(now, now)).toDS()
+//                                            ^^^
+// error: ambiguous reference to overloaded definition,
+// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// match expected type java.util.Calendar
+// val ds: Dataset[DateRange] = Seq(DateRange(now, now)).toDS()
+//                                                 ^^^
+// error: ambiguous reference to overloaded definition,
+// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// match expected type java.util.Calendar
+// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
+//                                                                     ^^^
+// error: ambiguous reference to overloaded definition,
+// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
+// match expected type java.util.Calendar
+// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
+//                                                                          ^^^
 // error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.DateRange]
-// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(new java.util.Date, new java.util.Date)))
-//                                                      ^</span></code></pre>
+// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
+//                                                      ^
+// error: method now is defined twice;
+//   the conflicting method now was defined at line 11:5
+// def now = new java.util.GregorianCalendar()
+// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Type class derivation takes care of recursively constructing (and proving the existence of) <code>TypeEncoder</code>s for case classes. The following works as expected:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>)
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Foo</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">Bar</span><span>)
-</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">Foo</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">Foo</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="type-name">Bar</span><span>(</span><span class="number-literal">1.1</span><span>, </span><span class="string-literal">&quot;s&quot;</span><span>))))
+
+</span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">Foo</span><span>] = 
+  </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">Foo</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="type-name">Bar</span><span>(</span><span class="number-literal">1.1</span><span>, </span><span class="string-literal">&quot;s&quot;</span><span>))))
 </span><span class="comment">// ds: TypedDataset[Foo] = [i: int, b: struct&lt;d: double, s: string&gt;]
+</span><span>
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">collect</span><span>()
-</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@428f389c</span></code></pre>
+</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@391d77ba</span></code></pre>
         <p>But any non-encodable in the case class hierarchy will be detected at compile time:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">BarDate</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">t</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">BarDate</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">t</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">FooDate</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">BarDate</span><span>)</span></code></pre>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">FooDate</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">FooDate</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="type-name">BarDate</span><span>(</span><span class="number-literal">1.1</span><span>, </span><span class="string-literal">&quot;s&quot;</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>))))
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">FooDate</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(
+  </span><span class="type-name">Seq</span><span>(</span><span class="type-name">FooDate</span><span>(</span><span class="number-literal">1</span><span>, </span><span class="type-name">BarDate</span><span>(</span><span class="number-literal">1.1</span><span>, </span><span class="string-literal">&quot;s&quot;</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>))))
 </span><span class="comment">// error: ds is already defined as value ds
-// val ds: TypedDataset[Foo] = TypedDataset.create(Seq(Foo(1, Bar(1.1, &quot;s&quot;))))
+// val ds: TypedDataset[Foo] = 
 //     ^^
 // error: ds is already defined as value ds
-// val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, &quot;s&quot;, new java.util.Date))))
+// val ds: TypedDataset[FooDate] = TypedDataset.create(
 //     ^^
 // error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.FooDate]
-// val ds: TypedDataset[FooDate] = TypedDataset.create(Seq(FooDate(1, BarDate(1.1, &quot;s&quot;, new java.util.Date))))
+// val ds: TypedDataset[FooDate] = TypedDataset.create(
 //                                                    ^</span></code></pre>
-        <p>It should be noted that once derived, reflection-based <code>Encoder</code>s and implicitly derived <code>TypeEncoder</code>s have identical performance. The derivation mechanism is different, but the objects generated to encode and decode JVM objects in Spark&#39;s internal representation behave the same at runtime.</p>
+        <p>It should be noted that once derived, reflection-based <code>Encoder</code>s and implicitly derived <code>TypeEncoder</code>s have identical performance.
+        The derivation mechanism is different, but the objects generated to encode and decode JVM objects in Spark&#39;s internal representation behave the same at runtime.</p>
 
         
 <hr class="footer-rule"/>

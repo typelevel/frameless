@@ -139,26 +139,48 @@
         
         <h2 id="example" class="section"><a class="anchor-link left" href="#example"><i class="icofont-laika link">&#xef71;</i></a>Example</h2>
         <p>Let&#39;s define a simple case class:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Person</span><span>(</span><span class="identifier">age</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">birthday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)
-</span><span class="keyword">val</span><span> </span><span class="identifier">people</span><span> = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">Person</span><span>(</span><span class="number-literal">42</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>))
-</span><span class="comment">// people: Seq[Person] = List(Person(42, Sat Sep 09 13:43:25 UTC 2023))</span></code></pre>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Person</span><span>(</span><span class="identifier">age</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">birthday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)
+</span><span class="keyword">val</span><span> </span><span class="identifier">people</span><span> = </span><span class="type-name">Seq</span><span>(</span><span class="type-name">Person</span><span>(</span><span class="number-literal">42</span><span>, </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()))
+</span><span class="comment">// people: Seq[Person] = List(
+//   Person(
+//     42,
+//     java.util.GregorianCalendar[time=1694291204798,areFieldsSet=true,areAllFieldsSet=true,lenient=true,zone=sun.util.calendar.ZoneInfo[id=&quot;Etc/UTC&quot;,offset=0,dstSavings=0,useDaylight=false,transitions=0,lastRule=null],firstDayOfWeek=1,minimalDaysInFirstWeek=1,ERA=1,YEAR=2023,MONTH=8,WEEK_OF_YEAR=36,WEEK_OF_MONTH=2,DAY_OF_MONTH=9,DAY_OF_YEAR=252,DAY_OF_WEEK=7,DAY_OF_WEEK_IN_MONTH=2,AM_PM=1,HOUR=8,HOUR_OF_DAY=20,MINUTE=26,SECOND=44,MILLISECOND=798,ZONE_OFFSET=0,DST_OFFSET=0]
+//   )
+// )</span></code></pre>
         <p>And an instance of a <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.Person]
 // val personDS = TypedDataset.create(people)
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
-        <p>Looks like we can&#39;t, a <code>TypedEncoder</code> instance of <code>Person</code> is not available, or more precisely for <code>java.util.Date</code>.
-        But we can define a injection from <code>java.util.Date</code> to an encodable type, like <code>Long</code>:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
-</span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">dateToLongInjection</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">Injection</span><span>[</span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>, </span><span class="type-name">Long</span><span>] {
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">d</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>): </span><span class="type-name">Long</span><span> = </span><span class="identifier">d</span><span>.</span><span class="identifier">getTime</span><span>()
-  </span><span class="keyword">def</span><span> </span><span class="declaration-name">invert</span><span>(</span><span class="identifier">l</span><span>: </span><span class="type-name">Long</span><span>): </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>)
+        <p>Looks like we can&#39;t, a <code>TypedEncoder</code> instance of <code>Person</code> is not available, or more precisely for <code>java.util.Calendar</code>.
+        But we can define a injection from <code>java.util.Calendar</code> to an encodable type, like <code>Long</code>:</p>
+        <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
+
+</span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">calendarToLongInjection</span><span> = </span><span class="keyword">new</span><span> </span><span class="type-name">Injection</span><span>[</span><span class="type-name">Calendar</span><span>, </span><span class="type-name">Long</span><span>] {
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">apply</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Calendar</span><span>): </span><span class="type-name">Long</span><span> = </span><span class="identifier">d</span><span>.</span><span class="identifier">getTime</span><span>.</span><span class="identifier">getTime</span><span>
+
+  </span><span class="keyword">def</span><span> </span><span class="declaration-name">invert</span><span>(</span><span class="identifier">l</span><span>: </span><span class="type-name">Long</span><span>): </span><span class="type-name">Calendar</span><span> = {
+    </span><span class="keyword">val</span><span> </span><span class="identifier">cal</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+    </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>))
+    </span><span class="identifier">cal</span><span>
+  }
 }
-</span><span class="comment">// dateToLongInjection: AnyRef with Injection[java.util.Date, Long] = repl.MdocSession$MdocApp0$$anon$1@ed0f157</span></code></pre>
+</span><span class="comment">// calendarToLongInjection: AnyRef with Injection[Calendar, Long] = repl.MdocSession$MdocApp0$$anon$1@1ac079a8</span></code></pre>
         <p>We can be less verbose using the <code>Injection.apply</code> function:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
-</span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">dateToLongInjection</span><span> = </span><span class="type-name">Injection</span><span>((</span><span class="identifier">_</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>).</span><span class="identifier">getTime</span><span>(), </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>((</span><span class="identifier">_</span><span>: </span><span class="type-name">Long</span><span>)))
-</span><span class="comment">// dateToLongInjection: Injection[java.util.Date, Long] = frameless.Injection$$anon$1@5d78ac98</span></code></pre>
+
+</span><span class="keyword">import</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>
+
+</span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">calendarToLongInjection</span><span> = </span><span class="type-name">Injection</span><span>[</span><span class="type-name">Calendar</span><span>, </span><span class="type-name">Long</span><span>](
+  (</span><span class="identifier">_</span><span>: </span><span class="type-name">Calendar</span><span>).</span><span class="identifier">getTime</span><span>.</span><span class="identifier">getTime</span><span>,
+  { (</span><span class="identifier">l</span><span>: </span><span class="type-name">Long</span><span>) =&gt;
+    </span><span class="keyword">val</span><span> </span><span class="identifier">cal</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+    </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>))
+    </span><span class="identifier">cal</span><span>
+  })
+</span><span class="comment">// calendarToLongInjection: Injection[Calendar, Long] = frameless.Injection$$anon$1@8be7137</span></code></pre>
         <p>Now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, birthday: bigint]</span></code></pre>
@@ -180,6 +202,7 @@
 //                ^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>Let&#39;s define an injection instance for <code>Gender</code>:</p>
         <pre><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
+
 </span><span class="keyword">implicit</span><span> </span><span class="keyword">val</span><span> </span><span class="identifier">genderToInt</span><span>: </span><span class="type-name">Injection</span><span>[</span><span class="type-name">Gender</span><span>, </span><span class="type-name">Int</span><span>] = </span><span class="type-name">Injection</span><span>(
   {
     </span><span class="keyword">case</span><span> </span><span class="type-name">Male</span><span>   =&gt; </span><span class="number-literal">1</span><span>
@@ -191,7 +214,7 @@
     </span><span class="keyword">case</span><span> </span><span class="number-literal">2</span><span> =&gt; </span><span class="type-name">Female</span><span>
     </span><span class="keyword">case</span><span> </span><span class="number-literal">3</span><span> =&gt; </span><span class="type-name">Other</span><span>
   })
-</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@44762197</span></code></pre>
+</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@f42b628</span></code></pre>
         <p>And now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, gender: int]</span></code></pre>

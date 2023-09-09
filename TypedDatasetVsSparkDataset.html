@@ -310,9 +310,13 @@
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
         For example, using the following case class leads to a runtime failure:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">MyDate</span><span>(</span><span class="identifier">jday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>)</span></code></pre>
-        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">myDateDs</span><span> = </span><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))))
-</span><span class="comment">// org.apache.spark.SparkUnsupportedOperationException: [ENCODER_NOT_FOUND] Not found an encoder of the type java.util.Date to Spark SQL internal representation. Consider to change the input type to one of supported at &#39;https://spark.apache.org/docs/latest/sql-ref-datatypes.html&#39;.
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">MyDate</span><span>(</span><span class="identifier">jday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)</span></code></pre>
+        <pre><code class="nohighlight"><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span> {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">cal</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+  </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))
+  </span><span class="identifier">cal</span><span>
+}))
+</span><span class="comment">// org.apache.spark.SparkUnsupportedOperationException: [ENCODER_NOT_FOUND] Not found an encoder of the type java.util.Calendar to Spark SQL internal representation. Consider to change the input type to one of supported at &#39;https://spark.apache.org/docs/latest/sql-ref-datatypes.html&#39;.
 // 	at org.apache.spark.sql.errors.QueryExecutionErrors$.cannotFindEncoderForTypeError(QueryExecutionErrors.scala:1483)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:958)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$3(ScalaReflection.scala:953)
@@ -330,14 +334,17 @@
 // 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder(SQLImplicits.scala:264)
 // 	at org.apache.spark.sql.LowPrioritySQLImplicits.newProductEncoder$(SQLImplicits.scala:264)
 // 	at org.apache.spark.sql.SQLImplicits.newProductEncoder(SQLImplicits.scala:32)
-// 	at repl.MdocSession$MdocApp0$$anonfun$18.apply$mcV$sp(TypedDatasetVsSparkDataset.md:151)
-// 	at repl.MdocSession$MdocApp0$$anonfun$18.apply(TypedDatasetVsSparkDataset.md:150)
-// 	at repl.MdocSession$MdocApp0$$anonfun$18.apply(TypedDatasetVsSparkDataset.md:150)</span></code></pre>
-        <p>In comparison, a TypedDataset will notify about the encoding problem at compile time: </p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))))
+// 	at repl.MdocSession$MdocApp0$$anonfun$18.apply(TypedDatasetVsSparkDataset.md:151)
+// 	at repl.MdocSession$MdocApp0$$anonfun$18.apply(TypedDatasetVsSparkDataset.md:151)</span></code></pre>
+        <p>In comparison, a <code>TypedDataset</code> will notify about the encoding problem at compile time: </p>
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">MyDate</span><span> {
+  </span><span class="keyword">val</span><span> </span><span class="identifier">cal</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+  </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))
+  </span><span class="identifier">cal</span><span>
+}))
 </span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.MyDate]
-// TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+// TypedDataset.create(Seq(MyDate {
+// ^</span></code></pre>
         
         <h2 id="aggregate-vs-projected-columns" class="section"><a class="anchor-link left" href="#aggregate-vs-projected-columns"><i class="icofont-laika link">&#xef71;</i></a>Aggregate vs Projected columns</h2>
         <p>Spark&#39;s <code>Dataset</code> do not distinguish between columns created from aggregate operations, 
@@ -401,8 +408,8 @@
 // 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)
 // 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4196)
 // 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1578)
-// 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:173)
-// 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:173)</span></code></pre>
+// 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:177)
+// 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:177)</span></code></pre>
         <p>In Frameless, mixing the two results in a compilation error.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="comment">// To avoid confusing frameless&#39; sum with the standard Spark&#39;s sum
 </span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">functions</span><span>.</span><span class="identifier">aggregate</span><span>.{</span><span class="identifier">sum</span><span> =&gt; </span><span class="identifier">fsum</span><span>}</span></code></pre>
