@@ -2,6 +2,8 @@ package frameless
 
 import java.util.Date
 
+import java.math.BigInteger
+
 import java.time.{Duration, Instant, Period}
 
 import scala.reflect.ClassTag
@@ -194,6 +196,47 @@ object TypedEncoder {
         Invoke(path, "toJavaBigDecimal", jvmRepr)
 
       override def toString: String = "javaBigDecimalEncoder"
+    }
+
+  implicit val bigIntEncoder: TypedEncoder[BigInt] = new TypedEncoder[BigInt] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[BigInt]
+    def catalystRepr: DataType = DecimalType(DecimalType.MAX_PRECISION, 0)
+
+      def toCatalyst(path: Expression): Expression =
+        StaticInvoke(
+          Decimal.getClass,
+          catalystRepr,
+          "apply",
+          path :: Nil
+        )
+
+      def fromCatalyst(path: Expression): Expression =
+        Invoke(path, "toScalaBigInt", jvmRepr)
+
+      override def toString: String = "bigIntEncoder"
+    }
+
+  implicit val javaBigIntEncoder: TypedEncoder[BigInteger] = 
+    new TypedEncoder[BigInteger] {
+      def nullable: Boolean = false
+
+      def jvmRepr: DataType = ScalaReflection.dataTypeFor[BigInteger]
+      def catalystRepr: DataType = DecimalType(DecimalType.MAX_PRECISION, 0)
+
+      def toCatalyst(path: Expression): Expression =
+        StaticInvoke(
+          Decimal.getClass,
+          catalystRepr,
+          "apply",
+          path :: Nil
+        )
+
+      def fromCatalyst(path: Expression): Expression =
+        Invoke(path, "toJavaBigInteger", jvmRepr)
+
+      override def toString: String = "javaBigIntEncoder"
     }
 
   implicit val sqlDate: TypedEncoder[SQLDate] = new TypedEncoder[SQLDate] {

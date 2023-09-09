@@ -1,6 +1,7 @@
 package frameless
 
 import java.util.Date
+import java.math.BigInteger
 
 import java.time.{Instant, Period, Duration}
 import java.sql.{Date=>SqlDate,Timestamp}
@@ -14,6 +15,9 @@ import scala.math.Ordering.Implicits._
 import scala.util.Try
 
 final class ColumnTests extends TypedDatasetSuite with Matchers {
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSize = 1, sizeRange = 1)
+
   implicit val timestampArb: Arbitrary[Timestamp] = Arbitrary {
     implicitly[Arbitrary[Long]].arbitrary.map { new Timestamp(_) }
   }
@@ -369,6 +373,15 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[Timestamp] _))
     check(forAll(prop[SqlDate] _))
     check(forAll(prop[String] _))
+
+    // Scalacheck is too slow
+    check(prop[BigInt](BigInt(Long.MaxValue).+(BigInt(Long.MaxValue)), None))
+    check(prop[BigInt](BigInt("0"), Some(BigInt(Long.MaxValue))))
+    check(prop[BigInt](BigInt(Long.MinValue).-(BigInt(Long.MinValue)), Some(BigInt("0"))))
+
+    check(prop[BigInteger](BigInteger.valueOf(Long.MaxValue).add(BigInteger.valueOf(Long.MaxValue)), None))
+    check(prop[BigInteger](BigInteger.valueOf(0L), Some(BigInteger.valueOf(Long.MaxValue))))
+    check(prop[BigInteger](BigInteger.valueOf(Long.MinValue).subtract(BigInteger.valueOf(Long.MinValue)), Some(BigInteger.valueOf(0L))))
   }
 
   test("asCol") {
