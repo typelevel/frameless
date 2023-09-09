@@ -59,6 +59,7 @@ val aptTypedDs2 = aptDs.typed
 ```
 
 ## Typesafe column referencing
+
 This is how we select a particular column from a `TypedDataset`:
 
 ```scala mdoc
@@ -389,7 +390,6 @@ c.select(c.colMany('_1, 'city), c('_2)).show(2).run()
 
 ### Working with collections
 
-
 ```scala mdoc
 import frameless.functions._
 import frameless.functions.nonAggregate._
@@ -416,7 +416,6 @@ in Frameless `explode()` is part of `TypedDataset` and not a function of a colum
 This provides additional safety since more than one `explode()` applied in a single 
 statement results in runtime error in vanilla Spark.   
 
-
 ```scala mdoc
 val t2 = cityRatio.select(cityRatio('city), lit(List(1,2,3,4)))
 val flattened = t2.explode('_2): TypedDataset[(String, Int)]
@@ -433,8 +432,6 @@ to a single column at a time.
   t2.dataset.toDF().select(sparkExplode($"_2"), sparkExplode($"_2"))
 }
 ```
-
-
 
 ### Collecting data to the driver
 
@@ -462,7 +459,6 @@ cityBeds.limit(4).collect().run()
 
 ## Sorting columns
 
-
 Only column types that can be sorted are allowed to be selected for sorting. 
 
 ```scala mdoc
@@ -477,7 +473,6 @@ aptTypedDs.orderBy(
    aptTypedDs('price).desc
 ).show(2).run()
 ```
-
 
 ## User Defined Functions
 
@@ -577,7 +572,6 @@ In a DataFrame, if you just ignore types, this would equivelantly be written as:
 bedroomStats.dataset.toDF().filter($"AvgPriceBeds2".isNotNull)
 ```
 
-
 ### Entire TypedDataset Aggregation
 
 We often want to aggregate the entire `TypedDataset` and skip the `groupBy()` clause.
@@ -611,7 +605,6 @@ aptds.agg(
 ).show().run()
 ```
 
-
 ## Joins
 
 ```scala mdoc:silent
@@ -644,6 +637,33 @@ case class AptPriceCity(city: String, aptPrice: Double, cityPopulation: Int)
 withCityInfo.select(
    withCityInfo.colMany('_2, 'name), withCityInfo.colMany('_1, 'price), withCityInfo.colMany('_2, 'population)
 ).as[AptPriceCity].show().run
+```
+
+### Chained Joins
+
+Joins, or any similar operation, may be chained using a thrush combinator removing the need for intermediate values.  Instead of:
+
+```scala mdoc
+val withBedroomInfoInterim = aptTypedDs.joinInner(citiInfoTypedDS)( aptTypedDs('city) === citiInfoTypedDS('name) )
+val withBedroomInfo = withBedroomInfoInterim 
+  .joinLeft(bedroomStats)( withBedroomInfoInterim.col('_1).field('city) === bedroomStats('city) )
+
+withBedroomInfo.show().run()
+```
+
+You can use thrush from [mouse](https://github.com/typelevel/mouse):
+
+```scala
+libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
+```
+
+```scala mdoc
+import mouse.all._
+
+val withBedroomInfoChained = aptTypedDs.joinInner(citiInfoTypedDS)( aptTypedDs('city) === citiInfoTypedDS('name) )
+  .thrush( interim => interim.joinLeft(bedroomStats)( interim.col('_1).field('city) === bedroomStats('city) ) )
+
+withBedroomInfoChained.show().run()
 ```
 
 ```scala mdoc:invisible
