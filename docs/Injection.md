@@ -26,8 +26,8 @@ trait Injection[A, B] extends Serializable {
 Let's define a simple case class:
 
 ```scala mdoc
-case class Person(age: Int, birthday: java.util.Date)
-val people = Seq(Person(42, new java.util.Date))
+case class Person(age: Int, birthday: java.util.Calendar)
+val people = Seq(Person(42, new java.util.GregorianCalendar()))
 ```
 
 And an instance of a `TypedDataset`:
@@ -36,14 +36,22 @@ And an instance of a `TypedDataset`:
 val personDS = TypedDataset.create(people)
 ```
 
-Looks like we can't, a `TypedEncoder` instance of `Person` is not available, or more precisely for `java.util.Date`.
-But we can define a injection from `java.util.Date` to an encodable type, like `Long`:
+Looks like we can't, a `TypedEncoder` instance of `Person` is not available, or more precisely for `java.util.Calendar`.
+But we can define a injection from `java.util.Calendar` to an encodable type, like `Long`:
 
 ```scala mdoc
+import java.util.Calendar
+
 import frameless._
-implicit val dateToLongInjection = new Injection[java.util.Date, Long] {
-  def apply(d: java.util.Date): Long = d.getTime()
-  def invert(l: Long): java.util.Date = new java.util.Date(l)
+
+implicit val calendarToLongInjection = new Injection[Calendar, Long] {
+  def apply(d: Calendar): Long = d.getTime.getTime
+
+  def invert(l: Long): Calendar = {
+    val cal = new java.util.GregorianCalendar()
+    cal.setTime(new java.util.Date(l))
+    cal
+  }
 }
 ```
 
@@ -51,7 +59,16 @@ We can be less verbose using the `Injection.apply` function:
 
 ```scala mdoc:nest
 import frameless._
-implicit val dateToLongInjection = Injection((_: java.util.Date).getTime(), new java.util.Date((_: Long)))
+
+import java.util.Calendar
+
+implicit val calendarToLongInjection = Injection[Calendar, Long](
+  (_: Calendar).getTime.getTime,
+  { (l: Long) =>
+    val cal = new java.util.GregorianCalendar()
+    cal.setTime(new java.util.Date(l))
+    cal
+  })
 ```
 
 Now we can create our `TypedDataset`:
@@ -72,8 +89,14 @@ import org.apache.spark.sql.SparkSession
 import frameless.functions.aggregate._
 import frameless.TypedDataset
 
-val conf = new SparkConf().setMaster("local[*]").setAppName("frameless repl").set("spark.ui.enabled", "false")
-implicit val spark = SparkSession.builder().config(conf).appName("REPL").getOrCreate()
+val conf = new SparkConf().
+  setMaster("local[*]").
+  setAppName("frameless repl").
+  set("spark.ui.enabled", "false")
+
+implicit val spark = SparkSession.builder().
+  config(conf).appName("REPL").getOrCreate()
+
 spark.sparkContext.setLogLevel("WARN")
 
 import spark.implicits._
@@ -105,6 +128,7 @@ Let's define an injection instance for `Gender`:
 
 ```scala mdoc
 import frameless._
+
 implicit val genderToInt: Injection[Gender, Int] = Injection(
   {
     case Male   => 1

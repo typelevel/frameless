@@ -149,19 +149,26 @@ However, the compile type guards implemented in Spark are not sufficient to dete
 For example, using the following case class leads to a runtime failure:
 
 ```scala mdoc
-case class MyDate(jday: java.util.Date)
+case class MyDate(jday: java.util.Calendar)
 ```
 
 ```scala mdoc:crash
-val myDateDs = spark.createDataset(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+spark.createDataset(Seq(MyDate {
+  val cal = new java.util.GregorianCalendar()
+  cal.setTime(new java.util.Date(System.currentTimeMillis))
+  cal
+}))
 ```
 
-In comparison, a TypedDataset will notify about the encoding problem at compile time: 
+In comparison, a `TypedDataset` will notify about the encoding problem at compile time: 
 
 ```scala mdoc:fail
-TypedDataset.create(Seq(MyDate(new java.util.Date(System.currentTimeMillis))))
+TypedDataset.create(Seq(MyDate {
+  val cal = new java.util.GregorianCalendar()
+  cal.setTime(new java.util.Date(System.currentTimeMillis))
+  cal
+}))
 ```
-
 
 ## Aggregate vs Projected columns 
 

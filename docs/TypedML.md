@@ -270,6 +270,7 @@ as input the label array computed by our previous `indexerModel`:
 
 ```scala mdoc
 case class IndexToStringInput(predictedCityIndexed: Double)
+
 val indexToString = TypedIndexToString[IndexToStringInput](indexerModel.transformer.labels)
 
 case class HouseCityPrediction(
