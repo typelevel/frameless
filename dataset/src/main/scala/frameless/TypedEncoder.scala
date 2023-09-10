@@ -1,10 +1,12 @@
 package frameless
 
-import java.util.Date
-
 import java.math.BigInteger
 
-import java.time.{ Duration, Instant, Period }
+import java.util.Date
+
+import java.time.{ Duration, Instant, Period, LocalDate }
+
+import java.sql.Timestamp
 
 import scala.reflect.ClassTag
 
@@ -274,30 +276,94 @@ object TypedEncoder {
       )
   }
 
-  implicit def timestampEncoder[T <: Date](
-      implicit
-      i0: ClassTag[T]
-    ): TypedEncoder[T] =
-    new TypedEncoder[T] {
+  implicit val timestampEncoder: TypedEncoder[Timestamp] =
+    new TypedEncoder[Timestamp] {
       def nullable: Boolean = false
 
-      def jvmRepr: DataType = FramelessInternals.objectTypeFor[T](i0)
+      def jvmRepr: DataType = ScalaReflection.dataTypeFor[Timestamp]
       def catalystRepr: DataType = TimestampType
 
       def toCatalyst(path: Expression): Expression =
-        Invoke(path, "getTime", catalystRepr)
-
-      def fromCatalyst(path: Expression): Expression =
-        NewInstance(
-          i0.runtimeClass,
-          Seq(path),
-          Seq(catalystRepr),
-          false,
-          jvmRepr,
-          None
+        StaticInvoke(
+          DateTimeUtils.getClass,
+          TimestampType,
+          "fromJavaTimestamp",
+          path :: Nil,
+          returnNullable = false
         )
 
-      override def toString: String = s"timestampEncoder(${i0.runtimeClass})"
+      def fromCatalyst(path: Expression): Expression =
+        StaticInvoke(
+          staticObject = DateTimeUtils.getClass,
+          dataType = jvmRepr,
+          functionName = "toJavaTimestamp",
+          arguments = path :: Nil,
+          propagateNull = true
+        )
+
+      override def toString: String = "timestampEncoder"
+    }
+
+  implicit val dateEncoder: TypedEncoder[Date] = new TypedEncoder[Date] {
+    def nullable: Boolean = false
+
+    def jvmRepr: DataType = ScalaReflection.dataTypeFor[Date]
+    def catalystRepr: DataType = TimestampType
+
+    private val instantRepr = ScalaReflection.dataTypeFor[Instant]
+
+    def toCatalyst(path: Expression): Expression =
+      timeInstant.toCatalyst(Invoke(path, "toInstant", instantRepr))
+
+    def fromCatalyst(path: Expression): Expression =
+      StaticInvoke(
+        staticObject = classOf[Date],
+        dataType = jvmRepr,
+        functionName = "from",
+        arguments = timeInstant.fromCatalyst(path) :: Nil,
+        propagateNull = true
+      )
+
+    override def toString: String = "dateEncoder"
+  }
+
+  implicit val sqlDateEncoder: TypedEncoder[java.sql.Date] =
+    new TypedEncoder[java.sql.Date] {
+      def nullable: Boolean = false
+
+      def jvmRepr: DataType = ScalaReflection.dataTypeFor[java.sql.Date]
+      def catalystRepr: DataType = DateType
+
+      def toCatalyst(path: Expression): Expression =
+        StaticInvoke(
+          staticObject = DateTimeUtils.getClass,
+          dataType = catalystRepr,
+          functionName = "fromJavaDate",
+          arguments = path :: Nil,
+          propagateNull = true
+        )
+
+      private val localDateRepr = ScalaReflection.dataTypeFor[LocalDate]
+
+      def fromCatalyst(path: Expression): Expression = {
+        val toLocalDate = StaticInvoke(
+          staticObject = DateTimeUtils.getClass,
+          dataType = localDateRepr,
+          functionName = "daysToLocalDate",
+          arguments = path :: Nil,
+          propagateNull = true
+        )
+
+        StaticInvoke(
+          staticObject = classOf[java.sql.Date],
+          dataType = jvmRepr,
+          functionName = "valueOf",
+          arguments = toLocalDate :: Nil,
+          propagateNull = true
+        )
+      }
+
+      override def toString: String = "sqlDateEncoder"
     }
 
   implicit val sqlTimestamp: TypedEncoder[SQLTimestamp] =
