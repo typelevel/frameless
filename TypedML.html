@@ -176,7 +176,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">assembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@3a004ed
+</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@274768b0
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">trainingDataWithFeatures</span><span> = </span><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -212,10 +212,10 @@
         with a label (what we predict). In our example, <code>price</code> is the label, <code>features</code> are the features:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestRegressor</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@3b0bf91f
+</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@12ef3550
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">trainingDataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@2cd9d5ca</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@75fe8fa5</span></code></pre>
         <p><code>TypedRandomForestRegressor[RFInputs]</code> compiles only if <code>RFInputs</code>
         contains only one field of type Double (the label) and one field of type Vector (the features):</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongRFInputs</span><span>(</span><span class="identifier">labelOfWrongType</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)</span></code></pre>
@@ -281,7 +281,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">vectorAssembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@762f14c1
+</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@d4f41f9
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">dataWithFeatures</span><span> = </span><span class="identifier">vectorAssembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -289,11 +289,11 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">StringIndexerInput</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexer</span><span> = </span><span class="type-name">TypedStringIndexer</span><span>[</span><span class="type-name">StringIndexerInput</span><span>]
-</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@1905e8c
+</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@4dc289aa
 </span><span class="identifier">indexer</span><span>.</span><span class="identifier">estimator</span><span>.</span><span class="identifier">setHandleInvalid</span><span>(</span><span class="string-literal">&quot;keep&quot;</span><span>)
-</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_b864b28c6d9a
+</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_8abe6ea0b283
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexerModel</span><span> = </span><span class="identifier">indexer</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">dataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@1b993302
+</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@d382575
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeaturesAndIndex</span><span>(
   </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>,
@@ -307,10 +307,10 @@
         <p>Then, we train the model:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">cityIndexed</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestClassifier</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@5c45859c
+</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@8415496
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">indexedData</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@52420bc9</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@7ff69cee</span></code></pre>
         
         <h3 id="prediction-2" class="section"><a class="anchor-link left" href="#prediction-2"><i class="icofont-laika link">&#xef71;</i></a>Prediction</h3>
         <p>We now want to predict <code>city</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
@@ -342,7 +342,7 @@
         <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">IndexToStringInput</span><span>(</span><span class="identifier">predictedCityIndexed</span><span>: </span><span class="type-name">Double</span><span>)
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexToString</span><span> = </span><span class="type-name">TypedIndexToString</span><span>[</span><span class="type-name">IndexToStringInput</span><span>](</span><span class="identifier">indexerModel</span><span>.</span><span class="identifier">transformer</span><span>.</span><span class="identifier">labels</span><span>)
-</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@51255b33
+</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@2620d563
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseCityPrediction</span><span>(
   </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>,
