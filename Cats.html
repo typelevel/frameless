@@ -38,7 +38,9 @@
   
   <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
     <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
+  
   <script src="helium/laika-helium.js"></script>
+  
   
   
   <script> /* for avoiding page load transitions */ </script>
@@ -132,9 +134,11 @@
       <main class="content">
 
         <h1 id="using-cats-with-frameless" class="title">Using Cats with Frameless</h1>
-        <p>There are two main parts to the <code>cats</code> integration offered by Frameless:
-        - effect suspension in <code>TypedDataset</code> using <code>cats-effect</code> and <code>cats-mtl</code>
-        - <code>RDD</code> enhancements using algebraic typeclasses in <code>cats-kernel</code></p>
+        <p>There are two main parts to the <code>cats</code> integration offered by Frameless:</p>
+        <ul>
+          <li>effect suspension in <code>TypedDataset</code> using <code>cats-effect</code> and <code>cats-mtl</code></li>
+          <li><code>RDD</code> enhancements using algebraic typeclasses in <code>cats-kernel</code></li>
+        </ul>
         <p>All the examples below assume you have previously imported <code>cats.implicits</code> and <code>frameless.cats.implicits</code>.</p>
         <p><em>Note that you should not import <code>frameless.syntax._</code> together with <code>frameless.cats.implicits._</code>.</em></p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">all</span><span>.</span><span class="identifier">_</span><span>
@@ -164,7 +168,7 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">typedDs</span><span>.</span><span class="identifier">count</span><span>[</span><span class="type-name">Action</span><span>]()
 } </span><span class="keyword">yield</span><span> (</span><span class="identifier">sample</span><span>, </span><span class="identifier">count</span><span>)
 </span><span class="comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$Lambda$10740/659879244@786362db
+//   cats.data.Kleisli$$Lambda$10867/1768199301@3854c85e
 // )</span></code></pre>
         <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
         run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
@@ -191,7 +195,7 @@
        }
 } </span><span class="keyword">yield</span><span> </span><span class="identifier">r</span><span>
 </span><span class="comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$$Lambda$12148/604058227@22a8971c
+//   cats.data.Kleisli$$$Lambda$12235/192208774@314942cc
 // )
 </span><span>
 </span><span class="identifier">resultWithDescription</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()

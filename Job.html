@@ -38,7 +38,9 @@
   
   <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
     <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
+  
   <script src="helium/laika-helium.js"></script>
+  
   
   
   <script> /* for avoiding page load transitions */ </script>
@@ -134,13 +136,15 @@
         with an instance of the <code>SparkDelay</code> typeclass and <code>A</code> is the result of running a
         non-lazy computation in Spark. </p>
         <p>A default such type constructor called <code>Job</code> is provided by Frameless. </p>
-        <p><code>Job</code> serves several functions:
-        - Makes all operations on a <code>TypedDataset</code> lazy, which makes them more predictable compared to having
-        few operations being lazy and other being strict
-        - Allows the programmer to make expensive blocking operations explicit
-        - Allows for Spark jobs to be lazily sequenced using monadic composition via for-comprehension
-        - Provides an obvious place where you can annotate/name your Spark jobs to make it easier
-        to track different parts of your application in the Spark UI</p>
+        <p><code>Job</code> serves several functions:</p>
+        <ul>
+          <li>Makes all operations on a <code>TypedDataset</code> lazy, which makes them more predictable compared to having
+          few operations being lazy and other being strict</li>
+          <li>Allows the programmer to make expensive blocking operations explicit</li>
+          <li>Allows for Spark jobs to be lazily sequenced using monadic composition via for-comprehension</li>
+          <li>Provides an obvious place where you can annotate/name your Spark jobs to make it easier
+          to track different parts of your application in the Spark UI</li>
+        </ul>
         <p>The toy example showcases the use of for-comprehension to explicitly sequences Spark Jobs.
         First we calculate the size of the <code>TypedDataset</code> and then we collect to the driver
         exactly 20% of its elements:</p>
@@ -154,7 +158,7 @@
     </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">ds</span><span>.</span><span class="identifier">count</span><span>()
     </span><span class="identifier">sample</span><span> &lt;- </span><span class="identifier">ds</span><span>.</span><span class="identifier">take</span><span>((</span><span class="identifier">count</span><span>/</span><span class="number-literal">5</span><span>).</span><span class="identifier">toInt</span><span>)
   } </span><span class="keyword">yield</span><span> </span><span class="identifier">sample</span><span>
-</span><span class="comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@5b6fa076
+</span><span class="comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@4a4d4007
 </span><span>
 </span><span class="identifier">countAndTakeJob</span><span>.</span><span class="identifier">run</span><span>()
 </span><span class="comment">// res1: Seq[Int] = WrappedArray(1, 2, 3, 4)</span></code></pre>
@@ -165,7 +169,7 @@
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">computeMinOfSample</span><span>(</span><span class="identifier">sample</span><span>: </span><span class="type-name">Job</span><span>[</span><span class="type-name">Seq</span><span>[</span><span class="type-name">Int</span><span>]]): </span><span class="type-name">Job</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">sample</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">min</span><span>)
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">finalJob</span><span> = </span><span class="identifier">computeMinOfSample</span><span>(</span><span class="identifier">countAndTakeJob</span><span>)
-</span><span class="comment">// finalJob: Job[Int] = frameless.Job$$anon$2@f50b697</span></code></pre>
+</span><span class="comment">// finalJob: Job[Int] = frameless.Job$$anon$2@1c62e14</span></code></pre>
         <p>Now we can execute this new job by specifying a <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit">group-id</a> and a description.
         This allows the programmer to see this information on the Spark UI and help track, say,
         performance issues.</p>
