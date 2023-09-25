@@ -3,7 +3,6 @@ package org.apache.spark.sql
 import org.apache.spark.sql.catalyst.ScalaReflection.{cleanUpReflectionObjects, getClassFromType, localTypeOf}
 import org.apache.spark.sql.types.{BinaryType, BooleanType, ByteType, CalendarIntervalType, DataType, Decimal, DecimalType, DoubleType, FloatType, IntegerType, LongType, NullType, ObjectType, ShortType}
 import org.apache.spark.unsafe.types.CalendarInterval
-import org.apache.spark.sql.catalyst.ScalaReflection.{isNativeType => oisNativeType}
 
 /**
  * Copy of spark's pre 3.4 reflection based encoding
@@ -11,9 +10,13 @@ import org.apache.spark.sql.catalyst.ScalaReflection.{isNativeType => oisNativeT
 package object reflection {
 
   /**
-   * forwards to keep the rest of the code looking the same
+   * copy of pre 3.5.0 isNativeType, https://issues.apache.org/jira/browse/SPARK-44343 removed it
    */
-  def isNativeType(dt: DataType): Boolean = oisNativeType(dt)
+  def isNativeType(dt: DataType): Boolean = dt match {
+    case NullType | BooleanType | ByteType | ShortType | IntegerType | LongType |
+         FloatType | DoubleType | BinaryType | CalendarIntervalType => true
+    case _ => false
+  }
 
   private object ScalaSubtypeLock
 
