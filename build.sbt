@@ -25,7 +25,13 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
   .settings(crossScalaVersions := Nil)
-  .aggregate(`root-spark35`, `root-spark34`, `root-spark33`, `root-spark32`, docs)
+  .aggregate(
+    `root-spark35`,
+    `root-spark34`,
+    `root-spark33`,
+    `root-spark32`,
+    docs
+  )
 
 lazy val `root-spark35` = project
   .in(file(".spark35"))
