@@ -469,3 +469,5 @@ ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
   MatrixExclude(Map("scala" -> "2.13", "project" -> project))
 }
+
+ThisBuild / githubWorkflowEnv += "SBT_OPTS" -> "-Xms1g -Xmx4g"

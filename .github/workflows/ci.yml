@@ -16,6 +16,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  SBT_OPTS: '-Xms1g -Xmx4g'
   SPARK_LOCAL_IP: localhost
 
 
