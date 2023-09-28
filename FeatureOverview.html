@@ -202,41 +202,41 @@
 // &#39;Project [&#39;citi]
 // +- LocalRelation [city#64, surface#65, price#66, bedrooms#67]
 // 
-// 	at org.apache.spark.sql.errors.QueryCompilationErrors$.unresolvedAttributeError(QueryCompilationErrors.scala:221)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$$failUnresolvedAttribute(CheckAnalysis.scala:143)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:258)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:256)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4(CheckAnalysis.scala:256)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$4$adapted(CheckAnalysis.scala:256)
+// 	at org.apache.spark.sql.errors.QueryCompilationErrors$.unresolvedAttributeError(QueryCompilationErrors.scala:307)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$$failUnresolvedAttribute(CheckAnalysis.scala:147)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$6(CheckAnalysis.scala:266)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$6$adapted(CheckAnalysis.scala:264)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:264)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:264)
 // 	at scala.collection.immutable.Stream.foreach(Stream.scala:533)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1(CheckAnalysis.scala:256)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$1$adapted(CheckAnalysis.scala:163)
-// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:295)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:163)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0$(CheckAnalysis.scala:160)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:264)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2$adapted(CheckAnalysis.scala:182)
+// 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:182)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0$(CheckAnalysis.scala:164)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis0(Analyzer.scala:188)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:156)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:146)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis(CheckAnalysis.scala:160)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis$(CheckAnalysis.scala:150)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.checkAnalysis(Analyzer.scala:188)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.$anonfun$executeAndCheck$1(Analyzer.scala:211)
 // 	at org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper$.markInAnalyzer(AnalysisHelper.scala:330)
 // 	at org.apache.spark.sql.catalyst.analysis.Analyzer.executeAndCheck(Analyzer.scala:208)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:76)
-// 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:111)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:202)
-// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:526)
-// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:202)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
-// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:201)
-// 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:76)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$analyzed$1(QueryExecution.scala:77)
+// 	at org.apache.spark.sql.catalyst.QueryPlanningTracker.measurePhase(QueryPlanningTracker.scala:138)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$2(QueryExecution.scala:219)
+// 	at org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:546)
+// 	at org.apache.spark.sql.execution.QueryExecution.$anonfun$executePhase$1(QueryExecution.scala:219)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)
+// 	at org.apache.spark.sql.execution.QueryExecution.executePhase(QueryExecution.scala:218)
+// 	at org.apache.spark.sql.execution.QueryExecution.analyzed$lzycompute(QueryExecution.scala:77)
 // 	at org.apache.spark.sql.execution.QueryExecution.analyzed(QueryExecution.scala:74)
 // 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:66)
-// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:90)
-// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:827)
-// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:88)
-// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4196)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1578)
+// 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:91)
+// 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)
+// 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:89)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4363)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1541)
 // 	at repl.MdocSession$MdocApp0$$anonfun$15.apply(FeatureOverview.md:95)
 // 	at repl.MdocSession$MdocApp0$$anonfun$15.apply(FeatureOverview.md:95)</span></code></pre>
         <p><code>select()</code> supports arbitrary column operations:</p>
@@ -304,8 +304,8 @@
 </span><span class="comment">// +-----+-------+--------+--------+
 // | city|surface|   price|bedrooms|
 // +-----+-------+--------+--------+
-// |Paris|     50|300000.0|    null|
-// | null|   null|450000.0|       3|
+// |Paris|     50|300000.0|    NULL|
+// | NULL|   NULL|450000.0|       3|
 // +-----+-------+--------+--------+
 //</span></code></pre>
         <p>Unfortunately the syntax used above with <code>select()</code> will not work here:</p>
@@ -718,7 +718,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$13292/1695119406@2299f59b
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$13402/1752437684@206a2c2b
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
@@ -792,9 +792,9 @@
 </span><span class="comment">// +-----+-------------+-------------+-------------+-------------+
 // | city|AvgPriceBeds1|AvgPriceBeds2|AvgPriceBeds3|AvgPriceBeds4|
 // +-----+-------------+-------------+-------------+-------------+
-// | Nice|         null|         null|     325000.0|         null|
-// |Paris|     250000.0|     300000.0|     450000.0|         null|
-// | Lyon|     133000.0|     200000.0|         null|         null|
+// | Nice|         NULL|         NULL|     325000.0|         NULL|
+// |Paris|     250000.0|     300000.0|     450000.0|         NULL|
+// | Lyon|     133000.0|     200000.0|         NULL|         NULL|
 // +-----+-------------+-------------+-------------+-------------+
 //</span></code></pre>
         <p>With pivot, collecting data preserves typesafety by
@@ -933,7 +933,7 @@
 // |{{Paris, 25, 2500...|{Paris, 250000.0,...|
 // |{{Lyon, 83, 20000...|{Lyon, 133000.0, ...|
 // |{{Lyon, 45, 13300...|{Lyon, 133000.0, ...|
-// |{{Nice, 74, 32500...|{Nice, null, null...|
+// |{{Nice, 74, 32500...|{Nice, NULL, NULL...|
 // +--------------------+--------------------+
 //</span></code></pre>
         <p>You can use thrush from <a href="https://github.com/typelevel/mouse">mouse</a>:</p>
@@ -953,7 +953,7 @@
 // |{{Paris, 25, 2500...|{Paris, 250000.0,...|
 // |{{Lyon, 83, 20000...|{Lyon, 133000.0, ...|
 // |{{Lyon, 45, 13300...|{Lyon, 133000.0, ...|
-// |{{Nice, 74, 32500...|{Nice, null, null...|
+// |{{Nice, 74, 32500...|{Nice, NULL, NULL...|
 // +--------------------+--------------------+
 //</span></code></pre>
 
