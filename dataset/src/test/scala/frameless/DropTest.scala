@@ -8,36 +8,28 @@ class DropTest extends TypedDatasetSuite {
   import DropTest._
 
   test("fail to compile on missing value") {
-    val f: TypedDataset[X] = TypedDataset.create(
-      X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil
-    )
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XMissing] = f.drop[XMissing]('j)"""
     }
   }
 
   test("fail to compile on different column name") {
-    val f: TypedDataset[X] = TypedDataset.create(
-      X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil
-    )
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XDifferentColumnName] = f.drop[XDifferentColumnName]('j)"""
     }
   }
 
   test("fail to compile on added column name") {
-    val f: TypedDataset[X] = TypedDataset.create(
-      X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil
-    )
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil)
     illTyped {
       """val fNew: TypedDataset[XAdded] = f.drop[XAdded]('j)"""
     }
   }
 
   test("remove column in the middle") {
-    val f: TypedDataset[X] = TypedDataset.create(
-      X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil
-    )
+    val f: TypedDataset[X] = TypedDataset.create(X(1, 1, false) :: X(1, 1, false) :: X(1, 10, false) :: Nil)
     val fNew: TypedDataset[XGood] = f.drop[XGood]
 
     fNew.collect().run().foreach(xg => assert(xg === XGood(1, false)))

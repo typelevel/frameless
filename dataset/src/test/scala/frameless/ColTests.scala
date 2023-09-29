@@ -16,10 +16,7 @@ class ColTests extends TypedDatasetSuite {
     x4.col[Int]('a)
     t4.col[Int]('_1)
 
-    illTyped(
-      "x4.col[String]('a)",
-      "No column .* of type String in frameless.X4.*"
-    )
+    illTyped("x4.col[String]('a)", "No column .* of type String in frameless.X4.*")
 
     x4.col('b)
     t4.col('_2)

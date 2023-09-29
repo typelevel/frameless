@@ -2,11 +2,7 @@ package frameless
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{
-  IntegerType,
-  ObjectType,
-  StringType,
-  StructField,
-  StructType
+  IntegerType, ObjectType, StringType, StructField, StructType
 }
 
 import org.scalatest.matchers.should.Matchers
@@ -28,8 +24,7 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
 
     val nes: NonEmptyString = "Non Empty String"
 
-    val unsafeDs =
-      TypedDataset.createUnsafe(sc.parallelize(Seq(nes.value)).toDF())(encoder)
+    val unsafeDs = TypedDataset.createUnsafe(sc.parallelize(Seq(nes.value)).toDF())(encoder)
 
     val expected = Seq(nes)
 
@@ -45,12 +40,9 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
     encoderA.jvmRepr shouldBe ObjectType(classOf[A])
 
     // Check catalystRepr
-    val expectedAStructType = StructType(
-      Seq(
-        StructField("a", IntegerType, false),
-        StructField("s", StringType, false)
-      )
-    )
+    val expectedAStructType = StructType(Seq(
+      StructField("a", IntegerType, false),
+      StructField("s", StringType, false)))
 
     encoderA.catalystRepr shouldBe expectedAStructType
 
@@ -79,23 +71,18 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
     encoderB.jvmRepr shouldBe ObjectType(classOf[B])
 
     // Check catalystRepr
-    val expectedBStructType = StructType(
-      Seq(
-        StructField("a", IntegerType, false),
-        StructField("s", StringType, true)
-      )
-    )
+    val expectedBStructType = StructType(Seq(
+      StructField("a", IntegerType, false),
+      StructField("s", StringType, true)))
 
     encoderB.catalystRepr shouldBe expectedBStructType
 
     // Check unsafe
     val unsafeDs: TypedDataset[B] = {
-      val rdd = sc.parallelize(
-        Seq(
-          Row(bs.a, bs.s.mkString),
-          Row(2, null.asInstanceOf[String])
-        )
-      )
+      val rdd = sc.parallelize(Seq(
+        Row(bs.a, bs.s.mkString),
+        Row(2, null.asInstanceOf[String]),
+      ))
 
       val df = session.createDataFrame(rdd, expectedBStructType)
 

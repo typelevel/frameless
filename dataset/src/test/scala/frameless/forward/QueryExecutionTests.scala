@@ -1,7 +1,7 @@
 package frameless
 
 import org.scalacheck.Prop
-import org.scalacheck.Prop.{ forAll, _ }
+import org.scalacheck.Prop.{forAll, _}
 
 class QueryExecutionTests extends TypedDatasetSuite {
   test("queryExecution") {

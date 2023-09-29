@@ -3,7 +3,6 @@ package frameless
 import shapeless._
 
 trait InjectionEnum {
-
   implicit val cnilInjectionEnum: Injection[CNil, String] =
     Injection(
       // $COVERAGE-OFF$No value of type CNil so impossible to test
@@ -16,10 +15,10 @@ trait InjectionEnum {
     )
 
   implicit def coproductInjectionEnum[H, T <: Coproduct](
-      implicit
-      typeable: Typeable[H],
-      gen: Generic.Aux[H, HNil],
-      tInjectionEnum: Injection[T, String]
+    implicit
+    typeable: Typeable[H] ,
+    gen: Generic.Aux[H, HNil],
+    tInjectionEnum: Injection[T, String]
     ): Injection[H :+: T, String] = {
     val dataConstructorName = typeable.describe.takeWhile(_ != '.')
 
@@ -38,9 +37,9 @@ trait InjectionEnum {
   }
 
   implicit def genericInjectionEnum[A, R](
-      implicit
-      gen: Generic.Aux[A, R],
-      rInjectionEnum: Injection[R, String]
+    implicit
+    gen: Generic.Aux[A, R],
+    rInjectionEnum: Injection[R, String]
     ): Injection[A, String] =
     Injection(
       value => rInjectionEnum(gen.to(value)),

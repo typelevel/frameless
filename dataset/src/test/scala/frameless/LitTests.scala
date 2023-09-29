@@ -9,26 +9,22 @@ import org.scalacheck.Prop, Prop._
 import RecordEncoderTests.Name
 
 class LitTests extends TypedDatasetSuite with Matchers {
-
-  def prop[A: TypedEncoder](
-      value: A
-    )(implicit
-      i0: shapeless.Refute[IsValueClass[A]]
-    ): Prop = {
+  def prop[A: TypedEncoder](value: A)(implicit i0: shapeless.Refute[IsValueClass[A]]): Prop = {
     val df: TypedDataset[Int] = TypedDataset.create(1 :: Nil)
 
     val l: TypedColumn[Int, A] = lit(value)
 
     // filter forces whole codegen
-    val elems = df.deserialized
-      .filter((_: Int) => true)
-      .select(l)
+    val elems = df.deserialized.filter((_:Int) => true).select(l)
       .collect()
       .run()
       .toVector
 
     // otherwise it uses local relation
-    val localElems = df.select(l).collect().run().toVector
+    val localElems = df.select(l)
+      .collect()
+      .run()
+      .toVector
 
     val expected = Vector(value)
 
@@ -60,24 +56,23 @@ class LitTests extends TypedDatasetSuite with Matchers {
   }
 
   test("support value class") {
-    val initial =
-      Seq(Q(name = new Name("Foo"), id = 1), Q(name = new Name("Bar"), id = 2))
+    val initial = Seq(
+      Q(name = new Name("Foo"), id = 1),
+      Q(name = new Name("Bar"), id = 2))
     val ds = TypedDataset.create(initial)
 
     ds.collect.run() shouldBe initial
 
     val lorem = new Name("Lorem")
 
-    ds.withColumnReplaced('name, functions.litValue(lorem))
-      .collect
-      .run() shouldBe initial.map(_.copy(name = lorem))
+    ds.withColumnReplaced('name, functions.litValue(lorem)).
+      collect.run() shouldBe initial.map(_.copy(name = lorem))
   }
 
   test("support optional value class") {
     val initial = Seq(
       R(name = "Foo", id = 1, alias = None),
-      R(name = "Bar", id = 2, alias = Some(new Name("Lorem")))
-    )
+      R(name = "Bar", id = 2, alias = Some(new Name("Lorem"))))
     val ds = TypedDataset.create(initial)
 
     ds.collect.run() shouldBe initial
@@ -87,13 +82,13 @@ class LitTests extends TypedDatasetSuite with Matchers {
     val lit = functions.litValue(someIpsum)
     val tds = ds.withColumnReplaced('alias, functions.litValue(someIpsum))
 
-    tds.queryExecution.toString() should include(lit.toString)
+    tds.queryExecution.toString() should include (lit.toString)
 
-    tds.collect.run() shouldBe initial.map(_.copy(alias = someIpsum))
+    tds.
+      collect.run() shouldBe initial.map(_.copy(alias = someIpsum))
 
-    ds.withColumnReplaced('alias, functions.litValue(Option.empty[Name]))
-      .collect
-      .run() shouldBe initial.map(_.copy(alias = None))
+    ds.withColumnReplaced('alias, functions.litValue(Option.empty[Name])).
+      collect.run() shouldBe initial.map(_.copy(alias = None))
   }
 
   test("#205: comparing literals encoded using Injection") {

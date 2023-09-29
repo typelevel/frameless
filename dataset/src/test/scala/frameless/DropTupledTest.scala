@@ -7,9 +7,9 @@ class DropTupledTest extends TypedDatasetSuite {
   test("drop five columns") {
     def prop[A: TypedEncoder](value: A): Prop = {
       val d5 = TypedDataset.create(X5(value, value, value, value, value) :: Nil)
-      val d4 = d5.dropTupled('a) // drops first column
-      val d3 = d4.dropTupled('_4) // drops last column
-      val d2 = d3.dropTupled('_2) // drops middle column
+      val d4 = d5.dropTupled('a) //drops first column
+      val d3 = d4.dropTupled('_4) //drops last column
+      val d2 = d3.dropTupled('_2) //drops middle column
       val d1 = d2.dropTupled('_2)
 
       Tuple1(value) ?= d1.collect().run().head

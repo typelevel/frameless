@@ -10,14 +10,7 @@ class ToLocalIteratorTests extends TypedDatasetSuite with Matchers {
     def prop[A: TypedEncoder](data: Vector[A]): Prop = {
       val dataset = TypedDataset.create(data)
 
-      dataset
-        .toLocalIterator()
-        .run()
-        .asScala
-        .toIterator sameElements dataset.dataset
-        .toLocalIterator()
-        .asScala
-        .toIterator
+      dataset.toLocalIterator().run().asScala.toIterator sameElements dataset.dataset.toLocalIterator().asScala.toIterator
     }
 
     check(forAll(prop[Int] _))

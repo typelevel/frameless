@@ -1,18 +1,15 @@
 package frameless
 package ml
 
-import frameless.ml.params.linears.{ LossStrategy, Solver }
+import frameless.ml.params.linears.{LossStrategy, Solver}
 import frameless.ml.params.trees.FeatureSubsetStrategy
-import org.apache.spark.ml.linalg.{ Matrices, Matrix, Vector, Vectors }
-import org.scalacheck.{ Arbitrary, Gen }
+import org.apache.spark.ml.linalg.{Matrices, Matrix, Vector, Vectors}
+import org.scalacheck.{Arbitrary, Gen}
 
 object Generators {
 
   implicit val arbVector: Arbitrary[Vector] = Arbitrary {
-    val genDenseVector = Gen
-      .listOf(arbDouble.arbitrary)
-      .suchThat(_.nonEmpty)
-      .map(doubles => Vectors.dense(doubles.toArray))
+    val genDenseVector = Gen.listOf(arbDouble.arbitrary).suchThat(_.nonEmpty).map(doubles => Vectors.dense(doubles.toArray))
     val genSparseVector = genDenseVector.map(_.toSparse)
 
     Gen.oneOf(genDenseVector, genSparseVector)
@@ -24,34 +21,29 @@ object Generators {
         nbRows <- Gen.choose(0, size)
         nbCols <- Gen.choose(1, size)
         matrix <- {
-          Gen
-            .listOfN(nbRows * nbCols, arbDouble.arbitrary)
+          Gen.listOfN(nbRows * nbCols, arbDouble.arbitrary)
             .map(values => Matrices.dense(nbRows, nbCols, values.toArray))
         }
       } yield matrix
     }
   }
 
-  implicit val arbTreesFeaturesSubsetStrategy: Arbitrary[FeatureSubsetStrategy] =
-    Arbitrary {
-      val genRatio =
-        Gen.choose(0D, 1D).suchThat(_ > 0D).map(FeatureSubsetStrategy.Ratio)
-      val genNumberOfFeatures =
-        Gen.choose(1, Int.MaxValue).map(FeatureSubsetStrategy.NumberOfFeatures)
+  implicit val arbTreesFeaturesSubsetStrategy: Arbitrary[FeatureSubsetStrategy] = Arbitrary {
+    val genRatio = Gen.choose(0D, 1D).suchThat(_ > 0D).map(FeatureSubsetStrategy.Ratio)
+    val genNumberOfFeatures = Gen.choose(1, Int.MaxValue).map(FeatureSubsetStrategy.NumberOfFeatures)
 
-      Gen.oneOf(
-        Gen.const(FeatureSubsetStrategy.All),
-        Gen.const(FeatureSubsetStrategy.All),
-        Gen.const(FeatureSubsetStrategy.Log2),
-        Gen.const(FeatureSubsetStrategy.OneThird),
-        Gen.const(FeatureSubsetStrategy.Sqrt),
-        genRatio,
-        genNumberOfFeatures
-      )
-    }
+    Gen.oneOf(Gen.const(FeatureSubsetStrategy.All),
+      Gen.const(FeatureSubsetStrategy.All),
+      Gen.const(FeatureSubsetStrategy.Log2),
+      Gen.const(FeatureSubsetStrategy.OneThird),
+      Gen.const(FeatureSubsetStrategy.Sqrt),
+      genRatio,
+      genNumberOfFeatures
+    )
+  }
 
   implicit val arbLossStrategy: Arbitrary[LossStrategy] = Arbitrary {
-    Gen.const(LossStrategy.SquaredError)
+      Gen.const(LossStrategy.SquaredError)
   }
 
   implicit val arbSolver: Arbitrary[Solver] = Arbitrary {

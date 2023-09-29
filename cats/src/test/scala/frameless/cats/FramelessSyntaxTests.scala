@@ -6,18 +6,16 @@ import _root_.cats.effect.IO
 import _root_.cats.effect.unsafe.implicits.global
 import org.apache.spark.sql.SparkSession
 import org.scalatest.matchers.should.Matchers
-import org.scalacheck.{ Test => PTest }
+import org.scalacheck.{Test => PTest}
 import org.scalacheck.Prop, Prop._
 import org.scalacheck.effect.PropF, PropF._
 
 class FramelessSyntaxTests extends TypedDatasetSuite with Matchers {
   override val sparkDelay = null
 
-  def prop[A, B](
-      data: Vector[X2[A, B]]
-    )(implicit
-      ev: TypedEncoder[X2[A, B]]
-    ): Prop = {
+  def prop[A, B](data: Vector[X2[A, B]])(
+    implicit ev: TypedEncoder[X2[A, B]]
+  ): Prop = {
     import implicits._
 
     val dataset = TypedDataset.create(data).dataset
@@ -26,13 +24,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite with Matchers {
     val typedDataset = dataset.typed
     val typedDatasetFromDataFrame = dataframe.unsafeTyped[X2[A, B]]
 
-    typedDataset
-      .collect[IO]()
-      .unsafeRunSync()
-      .toVector ?= typedDatasetFromDataFrame
-      .collect[IO]()
-      .unsafeRunSync()
-      .toVector
+    typedDataset.collect[IO]().unsafeRunSync().toVector ?= typedDatasetFromDataFrame.collect[IO]().unsafeRunSync().toVector
   }
 
   test("dataset typed - toTyped") {
@@ -45,7 +37,8 @@ class FramelessSyntaxTests extends TypedDatasetSuite with Matchers {
 
     forAllF { (k: String, v: String) =>
       val scopedKey = "frameless.tests." + k
-      1.pure[ReaderT[IO, SparkSession, *]]
+      1
+        .pure[ReaderT[IO, SparkSession, *]]
         .withLocalProperty(scopedKey, v)
         .withGroupId(v)
         .withDescription(v)
@@ -54,8 +47,7 @@ class FramelessSyntaxTests extends TypedDatasetSuite with Matchers {
           sc.getLocalProperty(scopedKey) shouldBe v
           sc.getLocalProperty("spark.jobGroup.id") shouldBe v
           sc.getLocalProperty("spark.job.description") shouldBe v
-        }
-        .void
+        }.void
     }.check().unsafeRunSync().status shouldBe PTest.Passed
   }
 }

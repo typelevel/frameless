@@ -1,6 +1,6 @@
 package org.apache.spark.ml
 
-import org.apache.spark.ml.linalg.{ MatrixUDT, VectorUDT }
+import org.apache.spark.ml.linalg.{MatrixUDT, VectorUDT}
 
 object FramelessInternals {
 

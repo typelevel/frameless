@@ -1,19 +1,14 @@
 package frameless
 
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{
-  GenericInternalRow,
-  UnsafeArrayData
-}
+import org.apache.spark.sql.catalyst.expressions.{GenericInternalRow, UnsafeArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
 
 @SQLUserDefinedType(udt = classOf[UdtEncodedClassUdt])
 class UdtEncodedClass(val a: Int, val b: Array[Double]) {
-
   override def equals(other: Any): Boolean = other match {
-    case that: UdtEncodedClass =>
-      a == that.a && java.util.Arrays.equals(b, that.b)
+    case that: UdtEncodedClass => a == that.a && java.util.Arrays.equals(b, that.b)
     case _ => false
   }
 
@@ -30,18 +25,11 @@ object UdtEncodedClass {
 }
 
 class UdtEncodedClassUdt extends UserDefinedType[UdtEncodedClass] {
-
   def sqlType: DataType = {
-    StructType(
-      Seq(
-        StructField("a", IntegerType, nullable = false),
-        StructField(
-          "b",
-          ArrayType(DoubleType, containsNull = false),
-          nullable = false
-        )
-      )
-    )
+    StructType(Seq(
+      StructField("a", IntegerType, nullable = false),
+      StructField("b", ArrayType(DoubleType, containsNull = false), nullable = false)
+    ))
   }
 
   def serialize(obj: UdtEncodedClass): InternalRow = {
@@ -52,8 +40,7 @@ class UdtEncodedClassUdt extends UserDefinedType[UdtEncodedClass] {
   }
 
   def deserialize(datum: Any): UdtEncodedClass = datum match {
-    case row: InternalRow =>
-      new UdtEncodedClass(row.getInt(0), row.getArray(1).toDoubleArray())
+    case row: InternalRow => new UdtEncodedClass(row.getInt(0), row.getArray(1).toDoubleArray())
   }
 
   def userClass: Class[UdtEncodedClass] = classOf[UdtEncodedClass]

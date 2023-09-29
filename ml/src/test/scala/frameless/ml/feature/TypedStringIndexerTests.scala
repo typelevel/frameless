@@ -3,7 +3,7 @@ package ml
 package feature
 
 import frameless.ml.feature.TypedStringIndexer.HandleInvalid
-import org.scalacheck.{ Arbitrary, Gen }
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 import org.scalatest.matchers.must.Matchers
@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
 
   test(".fit() returns a correct TypedTransformer") {
-    def prop[A: TypedEncoder: Arbitrary] = forAll { x2: X2[String, A] =>
+    def prop[A: TypedEncoder : Arbitrary] = forAll { x2: X2[String, A] =>
       val indexer = TypedStringIndexer[X1[String]]
       val ds = TypedDataset.create(Seq(x2))
       val model = indexer.fit(ds).run()
@@ -30,8 +30,8 @@ class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
     }
 
     val prop = forAll { handleInvalid: HandleInvalid =>
-      val indexer =
-        TypedStringIndexer[X1[String]].setHandleInvalid(handleInvalid)
+      val indexer = TypedStringIndexer[X1[String]]
+        .setHandleInvalid(handleInvalid)
       val ds = TypedDataset.create(Seq(X1("foo")))
       val model = indexer.fit(ds).run()
 

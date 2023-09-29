@@ -24,9 +24,7 @@ import org.apache.spark.unsafe.types.UTF8String
 import shapeless._
 import shapeless.ops.hlist.IsHCons
 
-abstract class TypedEncoder[T](
-    implicit
-    val classTag: ClassTag[T])
+abstract class TypedEncoder[T](implicit val classTag: ClassTag[T])
     extends Serializable {
   def nullable: Boolean
 
