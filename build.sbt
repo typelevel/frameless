@@ -1,4 +1,5 @@
-val sparkVersion = "3.4.1"
+val sparkVersion = "3.5.0"
+val spark34Version = "3.4.1"
 val spark33Version = "3.3.3"
 val spark32Version = "3.2.4"
 val catsCoreVersion = "2.10.0"
@@ -13,9 +14,9 @@ val refinedVersion = "0.11.0"
 val nakedFSVersion = "0.1.0"
 
 val Scala212 = "2.12.18"
-val Scala213 = "2.13.11"
+val Scala213 = "2.13.12"
 
-ThisBuild / tlBaseVersion := "0.14"
+ThisBuild / tlBaseVersion := "0.15"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
@@ -24,12 +25,29 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(NoPublishPlugin)
   .settings(crossScalaVersions := Nil)
-  .aggregate(`root-spark34`, `root-spark33`, `root-spark32`, docs)
+  .aggregate(
+    `root-spark35`,
+    `root-spark34`,
+    `root-spark33`,
+    `root-spark32`,
+    docs
+  )
+
+lazy val `root-spark35` = project
+  .in(file(".spark35"))
+  .enablePlugins(NoPublishPlugin)
+  .aggregate(core, cats, dataset, refined, ml)
 
 lazy val `root-spark34` = project
   .in(file(".spark34"))
   .enablePlugins(NoPublishPlugin)
-  .aggregate(core, cats, dataset, refined, ml)
+  .aggregate(
+    core,
+    `cats-spark34`,
+    `dataset-spark34`,
+    `refined-spark34`,
+    `ml-spark34`
+  )
 
 lazy val `root-spark33` = project
   .in(file(".spark33"))
@@ -61,6 +79,15 @@ lazy val cats = project
   .settings(catsSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
+lazy val `cats-spark34` = project
+  .settings(name := "frameless-cats-spark34")
+  .settings(sourceDirectory := (cats / sourceDirectory).value)
+  .settings(catsSettings)
+  .settings(spark34Settings)
+  .dependsOn(
+    `dataset-spark34` % "test->test;compile->compile;provided->provided"
+  )
+
 lazy val `cats-spark33` = project
   .settings(name := "frameless-cats-spark33")
   .settings(sourceDirectory := (cats / sourceDirectory).value)
@@ -89,6 +116,20 @@ lazy val dataset = project
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
+  .dependsOn(core % "test->test;compile->compile")
+
+lazy val `dataset-spark34` = project
+  .settings(name := "frameless-dataset-spark34")
+  .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(
+    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3.4+"
+  )
+  .settings(
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
+  )
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark34Version))
+  .settings(spark34Settings)
   .dependsOn(core % "test->test;compile->compile")
 
 lazy val `dataset-spark33` = project
@@ -124,6 +165,15 @@ lazy val refined = project
   .settings(refinedSettings)
   .dependsOn(dataset % "test->test;compile->compile;provided->provided")
 
+lazy val `refined-spark34` = project
+  .settings(name := "frameless-refined-spark34")
+  .settings(sourceDirectory := (refined / sourceDirectory).value)
+  .settings(refinedSettings)
+  .settings(spark34Settings)
+  .dependsOn(
+    `dataset-spark34` % "test->test;compile->compile;provided->provided"
+  )
+
 lazy val `refined-spark33` = project
   .settings(name := "frameless-refined-spark33")
   .settings(sourceDirectory := (refined / sourceDirectory).value)
@@ -149,6 +199,17 @@ lazy val ml = project
   .dependsOn(
     core % "test->test;compile->compile",
     dataset % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark34` = project
+  .settings(name := "frameless-ml-spark34")
+  .settings(sourceDirectory := (ml / sourceDirectory).value)
+  .settings(mlSettings)
+  .settings(sparkMlDependencies(spark34Version))
+  .settings(spark34Settings)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val `ml-spark33` = project
@@ -326,9 +387,18 @@ lazy val spark32Settings = Seq(
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
 )
 
+lazy val spark34Settings = Seq[Setting[_]](
+  tlVersionIntroduced := Map("2.12" -> "0.14.1", "2.13" -> "0.14.1"),
+  mimaPreviousArtifacts := Set(
+    organization.value %% moduleName.value
+      .split("-")
+      .dropRight(1)
+      .mkString("-") % "0.14.1"
+  )
+)
+
 lazy val spark33Settings = Seq[Setting[_]](
   tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0"),
-  // frameless-dataset-spark33 was originally frameless-dataset
   mimaPreviousArtifacts := Set(
     organization.value %% moduleName.value
       .split("-")
@@ -399,3 +469,5 @@ ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
 ThisBuild / githubWorkflowBuildMatrixExclusions ++= roots.init.map { project =>
   MatrixExclude(Map("scala" -> "2.13", "project" -> project))
 }
+
+ThisBuild / githubWorkflowEnv += "SBT_OPTS" -> "-Xms1g -Xmx4g"

@@ -3,32 +3,30 @@ package frameless
 import java.util.Date
 import java.math.BigInteger
 
-import java.time.{ Instant, Period, Duration }
-import java.sql.{ Date => SqlDate, Timestamp }
+import java.time.{ Instant, LocalDate, Period, Duration }
+import java.time.temporal.ChronoUnit
 
-import org.scalacheck.Prop._
-import org.scalacheck.{ Arbitrary, Gen, Prop }, Arbitrary.arbitrary
-import org.scalatest.matchers.should.Matchers
-import shapeless.test.illTyped
+import java.sql.{ Date => SqlDate, Timestamp }
 
 import scala.math.Ordering.Implicits._
 import scala.util.Try
 
+import org.scalacheck.{ Arbitrary, Gen, Prop }, Arbitrary.arbitrary, Prop._
+
+import org.scalatest.matchers.should.Matchers
+
+import shapeless.test.illTyped
+
 final class ColumnTests extends TypedDatasetSuite with Matchers {
 
-  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
-    PropertyCheckConfiguration(minSize = 1, sizeRange = 1)
-
   implicit val timestampArb: Arbitrary[Timestamp] = Arbitrary {
-    implicitly[Arbitrary[Long]].arbitrary.map { new Timestamp(_) }
-  }
-
-  implicit val sqlDateArb: Arbitrary[SqlDate] = Arbitrary {
-    implicitly[Arbitrary[Long]].arbitrary.map { new SqlDate(_) }
+    OrderingImplicits.arbInstant.arbitrary.map { i =>
+      Timestamp from i.truncatedTo(ChronoUnit.MILLIS)
+    }
   }
 
   implicit val dateArb: Arbitrary[Date] = Arbitrary {
-    implicitly[Arbitrary[Long]].arbitrary.map { new Date(_) }
+    OrderingImplicits.arbInstant.arbitrary.map(Date from _)
   }
 
   private implicit object OrderingImplicits {
@@ -45,7 +43,6 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
      * This function also overflows on Instant.MAX, to be sure it never overflows we use Instant.MAX / 4.
      * For implementation details check the org.apache.spark.sql.catalyst.util.DateTimeUtils.instantToMicros function details.
      */
-
     val genInstant = Gen.choose[Instant](
       Instant.EPOCH,
       Instant.ofEpochMilli(Instant.MAX.getEpochSecond / 4)
@@ -417,7 +414,6 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     check(forAll(prop[SQLTimestamp] _))
     check(forAll(prop[Date] _))
     check(forAll(prop[Timestamp] _))
-    check(forAll(prop[SqlDate] _))
     check(forAll(prop[String] _))
 
     // Scalacheck is too slow
@@ -438,12 +434,14 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
         None
       )
     )
+
     check(
       prop[BigInteger](
         BigInteger.valueOf(0L),
         Some(BigInteger.valueOf(Long.MaxValue))
       )
     )
+
     check(
       prop[BigInteger](
         BigInteger
@@ -452,6 +450,37 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
         Some(BigInteger.valueOf(0L))
       )
     )
+  }
+
+  test("Consistency with Spark internal date/time representation") {
+    val ts = Timestamp.from(Instant parse "1990-01-01T01:00:00.000Z")
+    val date = Date.from(Instant parse "1991-01-01T02:00:00.000Z")
+
+    val sqlDate = SqlDate.valueOf(LocalDate parse "1991-02-01")
+
+    val input = Seq(X3(ts, date, sqlDate))
+
+    val ds: TypedDataset[X3[Timestamp, Date, SqlDate]] =
+      TypedDataset.create(input)
+
+    val result1: Seq[(Timestamp, Date, SqlDate)] =
+      ds.dataset.toDF
+        .collect()
+        .map { row =>
+          Tuple3(
+            row.getTimestamp(0),
+            Date.from(row.getTimestamp(1).toInstant),
+            row.getDate(2)
+          )
+        }
+        .toSeq
+
+    result1 shouldEqual Seq(Tuple3(ts, date, sqlDate))
+
+    val result2: Seq[X3[Timestamp, Date, SqlDate]] =
+      ds.collect.run().toSeq
+
+    result2 shouldEqual input
   }
 
   test("asCol") {
