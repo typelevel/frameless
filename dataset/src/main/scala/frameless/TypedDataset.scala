@@ -750,8 +750,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
 
     // now we need to unpack `Tuple1[A]` to `A`
 
-    TypedEncoder[A].catalystRepr match {
-      case StructType(_) =>
+    ea.catalystRepr match {
+      case StructType(_) => {
         // if column is struct, we use all its fields
         val df = tuple1
           .dataset
@@ -759,6 +759,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
           .as[A](TypedExpressionEncoder[A])
 
         TypedDataset.create(df)
+      }
+
       case other =>
         // for primitive types `Tuple1[A]` has the same schema as `A`
         TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
@@ -1217,9 +1219,9 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     val df = dataset.toDF()
 
     val trans =
-      df
-        .withColumn(column.value.name, sparkExplode(df(column.value.name)))
+      df.withColumn(column.value.name, sparkExplode(df(column.value.name)))
         .as[Out](TypedExpressionEncoder[Out])
+
     TypedDataset.create[Out](trans)
   }
 
@@ -1267,6 +1269,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
     // we rename the original Row columns to avoid this collision
     val dfr = df.toDF(columnNamesRenamed: _*)
     val exploded = dfr.select(sparkCol("*"), sparkExplode(dfr(columnRenamed)))
+
     val trans =
       exploded
         // map explode explodes it into [key, value] columns
@@ -1277,6 +1280,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         // rename columns back and form the result
         .toDF(columnNames: _*)
         .as[Out](TypedExpressionEncoder[Out])
+
     TypedDataset.create[Out](trans)
   }
 
