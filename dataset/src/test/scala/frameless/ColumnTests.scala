@@ -615,4 +615,36 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     // we should be able to block the following as well...
     "ds.col(_.a.toInt)" shouldNot typeCheck
   }
+
+  test("col through record encoder (for Value class)") {
+    import RecordEncoderTests.{ Name, Person }
+
+    val bar = new Name("bar")
+    val foo = new Name("foo")
+
+    val ds: TypedDataset[Person] =
+      TypedDataset.create(Seq(Person(bar, 23), Person(foo, 11)))
+
+    a[org.apache.spark.sql.AnalysisException] should be thrownBy {
+      // TypedEncoder[Name] is resolved using case class derivation,
+      // which is not compatible to the way such Value class
+      // is encoded as a field in another class,
+      // which leads to encoding/analysis error.
+
+      ds.select(ds.col[Name](Symbol("name")))
+        .collect
+        .run()
+        .toSeq shouldEqual Seq[Name](bar, foo)
+    }
+
+    {
+      implicit def enc: TypedEncoder[Name] =
+        TypedEncoder.usingFieldEncoder[Name]
+
+      ds.select(ds.col[Name](Symbol("name")))
+        .collect
+        .run()
+        .toSeq shouldEqual Seq[Name](bar, foo)
+    }
+  }
 }
