@@ -36,11 +36,9 @@
   
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:500">
   
-  <link rel="stylesheet" type="text/css" href="helium/icofont.min.css" />
-    <link rel="stylesheet" type="text/css" href="helium/laika-helium.css" />
-  
-  <script src="helium/laika-helium.js"></script>
-  
+  <link rel="stylesheet" type="text/css" href="helium/site/icofont.min.css" />
+    <link rel="stylesheet" type="text/css" href="helium/site/laika-helium.css" />
+  <script src="helium/site/laika-helium.js"></script>
   
   
   <script> /* for avoiding page load transitions */ </script>
@@ -168,7 +166,7 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">typedDs</span><span>.</span><span class="identifier">count</span><span>[</span><span class="type-name">Action</span><span>]()
 } </span><span class="keyword">yield</span><span> (</span><span class="identifier">sample</span><span>, </span><span class="identifier">count</span><span>)
 </span><span class="comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$Lambda$10875/1731962956@11ebbae2
+//   cats.data.Kleisli$$Lambda$10871/457022543@771d93ec
 // )</span></code></pre>
         <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
         run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
@@ -195,7 +193,7 @@
        }
 } </span><span class="keyword">yield</span><span> </span><span class="identifier">r</span><span>
 </span><span class="comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$$Lambda$12299/1295867839@49e7924
+//   cats.data.Kleisli$$$Lambda$12263/1246626812@20485f84
 // )
 </span><span>
 </span><span class="identifier">resultWithDescription</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
