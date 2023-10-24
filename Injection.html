@@ -144,7 +144,7 @@
 </span><span class="comment">// people: Seq[Person] = List(
 //   Person(
 //     42,
-//     java.util.GregorianCalendar[time=1698112065940,areFieldsSet=true,areAllFieldsSet=true,lenient=true,zone=sun.util.calendar.ZoneInfo[id=&quot;Etc/UTC&quot;,offset=0,dstSavings=0,useDaylight=false,transitions=0,lastRule=null],firstDayOfWeek=1,minimalDaysInFirstWeek=1,ERA=1,YEAR=2023,MONTH=9,WEEK_OF_YEAR=43,WEEK_OF_MONTH=4,DAY_OF_MONTH=24,DAY_OF_YEAR=297,DAY_OF_WEEK=3,DAY_OF_WEEK_IN_MONTH=4,AM_PM=0,HOUR=1,HOUR_OF_DAY=1,MINUTE=47,SECOND=45,MILLISECOND=940,ZONE_OFFSET=0,DST_OFFSET=0]
+//     java.util.GregorianCalendar[time=1698124016139,areFieldsSet=true,areAllFieldsSet=true,lenient=true,zone=sun.util.calendar.ZoneInfo[id=&quot;Etc/UTC&quot;,offset=0,dstSavings=0,useDaylight=false,transitions=0,lastRule=null],firstDayOfWeek=1,minimalDaysInFirstWeek=1,ERA=1,YEAR=2023,MONTH=9,WEEK_OF_YEAR=43,WEEK_OF_MONTH=4,DAY_OF_MONTH=24,DAY_OF_YEAR=297,DAY_OF_WEEK=3,DAY_OF_WEEK_IN_MONTH=4,AM_PM=0,HOUR=5,HOUR_OF_DAY=5,MINUTE=6,SECOND=56,MILLISECOND=139,ZONE_OFFSET=0,DST_OFFSET=0]
 //   )
 // )</span></code></pre>
         <p>And an instance of a <code>TypedDataset</code>:</p>
@@ -167,7 +167,7 @@
     </span><span class="identifier">cal</span><span>
   }
 }
-</span><span class="comment">// calendarToLongInjection: AnyRef with Injection[Calendar, Long] = repl.MdocSession$MdocApp0$$anon$1@277615e4</span></code></pre>
+</span><span class="comment">// calendarToLongInjection: AnyRef with Injection[Calendar, Long] = repl.MdocSession$MdocApp0$$anon$1@12841552</span></code></pre>
         <p>We can be less verbose using the <code>Injection.apply</code> function:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">_</span><span>
 
@@ -180,7 +180,7 @@
     </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="identifier">l</span><span>))
     </span><span class="identifier">cal</span><span>
   })
-</span><span class="comment">// calendarToLongInjection: Injection[Calendar, Long] = frameless.Injection$$anon$1@451d6e7a</span></code></pre>
+</span><span class="comment">// calendarToLongInjection: Injection[Calendar, Long] = frameless.Injection$$anon$1@265f0e99</span></code></pre>
         <p>Now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, birthday: bigint]</span></code></pre>
@@ -214,7 +214,7 @@
     </span><span class="keyword">case</span><span> </span><span class="number-literal">2</span><span> =&gt; </span><span class="type-name">Female</span><span>
     </span><span class="keyword">case</span><span> </span><span class="number-literal">3</span><span> =&gt; </span><span class="type-name">Other</span><span>
   })
-</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@3b153524</span></code></pre>
+</span><span class="comment">// genderToInt: Injection[Gender, Int] = frameless.Injection$$anon$1@29a518c9</span></code></pre>
         <p>And now we can create our <code>TypedDataset</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">personDS</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="identifier">people</span><span>)
 </span><span class="comment">// personDS: TypedDataset[Person] = [age: int, gender: int]</span></code></pre>
