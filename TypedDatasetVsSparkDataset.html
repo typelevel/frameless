@@ -159,9 +159,9 @@
 </span><span class="comment">// +---+---+
 // |  i|  j|
 // +---+---+
+// |  1|  Q|
 // | 10|  W|
 // |100|  E|
-// |  1|  Q|
 // +---+---+
 //</span></code></pre>
         <p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
@@ -184,9 +184,9 @@
         Now, let&#39;s take a quick look at the optimized Physical Plan that Spark&#39;s Catalyst generated.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">filteredDs</span><span>.</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) Filter (isnotnull(i#2411L) AND (i#2411L = 10))
+// *(1) Filter (isnotnull(i#2419L) AND (i#2419L = 10))
 // +- *(1) ColumnarToRow
-//    +- FileScan parquet [i#2411L] Batched: true, DataFilters: [isnotnull(i#2411L), (i#2411L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+//    +- FileScan parquet [i#2419L] Batched: true, DataFilters: [isnotnull(i#2419L), (i#2419L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
 // 
 //</span></code></pre>
         <p>The last line is very important (see <code>ReadSchema</code>). The schema read
@@ -197,8 +197,8 @@
         <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span> === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;x&quot;</span><span>.</span><span class="identifier">as</span><span>[</span><span class="type-name">Long</span><span>])
 </span><span class="comment">// org.apache.spark.sql.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `x` cannot be resolved. Did you mean one of the following? [`i`, `j`].;
 // &#39;Project [&#39;x]
-// +- Filter (i#2411L = cast(10 as bigint))
-//    +- Relation [i#2411L,j#2412] parquet
+// +- Filter (i#2419L = cast(10 as bigint))
+//    +- Relation [i#2419L,j#2420] parquet
 // 
 // 	at org.apache.spark.sql.errors.QueryCompilationErrors$.unresolvedAttributeError(QueryCompilationErrors.scala:307)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.org$apache$spark$sql$catalyst$analysis$CheckAnalysis$$failUnresolvedAttribute(CheckAnalysis.scala:147)
@@ -256,12 +256,12 @@
         <p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span>).</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) SerializeFromObject [input[0, bigint, false] AS value#2463L]
-// +- *(1) MapElements &lt;function1&gt;, obj#2462: bigint
+// *(1) SerializeFromObject [input[0, bigint, false] AS value#2471L]
+// +- *(1) MapElements &lt;function1&gt;, obj#2470: bigint
 //    +- *(1) Filter &lt;function1&gt;.apply
-//       +- *(1) DeserializeToObject newInstance(class repl.MdocSession$MdocApp0$Foo), obj#2461: repl.MdocSession$MdocApp0$Foo
+//       +- *(1) DeserializeToObject newInstance(class repl.MdocSession$MdocApp0$Foo), obj#2469: repl.MdocSession$MdocApp0$Foo
 //          +- *(1) ColumnarToRow
-//             +- FileScan parquet [i#2411L,j#2412] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;
+//             +- FileScan parquet [i#2419L,j#2420] Batched: true, DataFilters: [], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [], ReadSchema: struct&lt;i:bigint,j:string&gt;
 // 
 //</span></code></pre>
         <p>As we see from the explained Physical Plan, Spark was not able to optimize our query as before.
@@ -287,10 +287,10 @@
         <p>And the optimized Physical Plan:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)).</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
-// *(1) Project [i#2411L AS value#2547L]
-// +- *(1) Filter (isnotnull(i#2411L) AND (i#2411L = 10))
+// *(1) Project [i#2419L AS value#2555L]
+// +- *(1) Filter (isnotnull(i#2419L) AND (i#2419L = 10))
 //    +- *(1) ColumnarToRow
-//       +- FileScan parquet [i#2411L] Batched: true, DataFilters: [isnotnull(i#2411L), (i#2411L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
+//       +- FileScan parquet [i#2419L] Batched: true, DataFilters: [isnotnull(i#2419L), (i#2419L = 10)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/tmp/foo], PartitionFilters: [], PushedFilters: [IsNotNull(i), EqualTo(i,10)], ReadSchema: struct&lt;i:bigint&gt;
 // 
 //</span></code></pre>
         <p>And the compiler is our friend.</p>
@@ -355,8 +355,8 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">org</span><span>.</span><span class="identifier">apache</span><span>.</span><span class="identifier">spark</span><span>.</span><span class="identifier">sql</span><span>.</span><span class="identifier">functions</span><span>.</span><span class="identifier">sum</span></code></pre>
         <pre><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">sum</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>), </span><span class="identifier">$</span><span class="string-literal">&quot;i&quot;</span><span>*</span><span class="number-literal">2</span><span>)
 </span><span class="comment">// org.apache.spark.sql.AnalysisException: [MISSING_GROUP_BY] The query does not include a GROUP BY clause. Add GROUP BY or turn it into the window functions using OVER clauses.;
-// Aggregate [sum(i#2411L) AS sum(i)#2553L, (i#2411L * cast(2 as bigint)) AS (i * 2)#2554L]
-// +- Relation [i#2411L,j#2412] parquet
+// Aggregate [sum(i#2419L) AS sum(i)#2561L, (i#2419L * cast(2 as bigint)) AS (i * 2)#2562L]
+// +- Relation [i#2419L,j#2420] parquet
 // 
 // 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:52)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:437)

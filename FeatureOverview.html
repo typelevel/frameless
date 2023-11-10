@@ -716,7 +716,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$15242/247499471@2a85afdf
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14211/334702665@7f42d8f5
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
@@ -744,8 +744,8 @@
 </span><span class="identifier">priceByCity</span><span>.</span><span class="identifier">collect</span><span>().</span><span class="identifier">run</span><span>()
 </span><span class="comment">// res37: Seq[(String, Double)] = WrappedArray(
 //   (&quot;Paris&quot;, 333333.3333333333),
-//   (&quot;Nice&quot;, 325000.0),
-//   (&quot;Lyon&quot;, 166500.0)
+//   (&quot;Lyon&quot;, 166500.0),
+//   (&quot;Nice&quot;, 325000.0)
 // )</span></code></pre>
         <p>Again if we try to aggregate a column that can&#39;t be aggregated, we get a compilation error</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">agg</span><span>(</span><span class="identifier">avg</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)))
@@ -765,8 +765,8 @@
 // |   _1|                _2|
 // +-----+------------------+
 // |Paris| 6833.333333333333|
-// | Nice| 4391.891891891892|
 // | Lyon|2682.5970548862115|
+// | Nice| 4391.891891891892|
 // +-----+------------------+
 //</span></code></pre>
         <p>We can also use <code>pivot</code> to further group data on a secondary column.
