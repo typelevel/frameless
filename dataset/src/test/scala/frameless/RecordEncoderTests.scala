@@ -1,23 +1,12 @@
 package frameless
 
-import org.apache.spark.sql.{Row, functions => F}
-import org.apache.spark.sql.types.{
-  ArrayType,
-  BinaryType,
-  DecimalType,
-  IntegerType,
-  LongType,
-  MapType,
-  ObjectType,
-  StringType,
-  StructField,
-  StructType
-}
-
-import shapeless.{HList, LabelledGeneric}
-import shapeless.test.illTyped
-
+import frameless.RecordEncoderTests.{ A, B, E }
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{ Row, functions => F }
 import org.scalatest.matchers.should.Matchers
+import shapeless.record.Record
+import shapeless.test.illTyped
+import shapeless.{ HList, LabelledGeneric }
 
 final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
   test("Unable to encode products made from units only") {
@@ -85,6 +74,26 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val ds = session.createDataset(rdd)(TypedExpressionEncoder[E])
 
     ds.collect.head shouldBe obj
+  }
+
+  test("TypedRow") {
+
+    val r1: RecordEncoderTests.RR = Record(x = 1, y = "abc")
+    val r2: TypedRow[RecordEncoderTests.RR] = TypedRow.fromHList(r1)
+
+    val rdd = sc.parallelize(Seq(r2))
+    val ds =
+      session.createDataset(rdd)(
+        TypedExpressionEncoder[TypedRow[RecordEncoderTests.RR]]
+      )
+
+    ds.schema.treeString shouldBe
+      """root
+        | |-- x: integer (nullable = true)
+        | |-- y: string (nullable = true)
+        |""".stripMargin
+
+    ds.collect.head shouldBe r2
   }
 
   test("Scalar value class") {
@@ -547,6 +556,9 @@ object RecordEncoderTests {
 
   case class D(m: Map[String, Int])
   case class E(b: Set[B])
+
+  val RR = Record.`'x -> Int, 'y -> String`
+  type RR = RR.T
 
   final class Subject(val name: String) extends AnyVal with Serializable
 

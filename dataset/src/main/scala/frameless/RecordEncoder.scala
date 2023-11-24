@@ -119,20 +119,19 @@ object DropUnitValues {
     }
 }
 
-class RecordEncoder[F, G <: HList, H <: HList]
+abstract class RecordEncoder[F, G <: HList, H <: HList]
   (implicit
-    i0: LabelledGeneric.Aux[F, G],
-    i1: DropUnitValues.Aux[G, H],
-    i2: IsHCons[H],
-    fields: Lazy[RecordEncoderFields[H]],
-    newInstanceExprs: Lazy[NewInstanceExprs[G]],
+    stage1: RecordEncoderStage1[G, H],
     classTag: ClassTag[F]
   ) extends TypedEncoder[F] {
+
+  import stage1._
+
     def nullable: Boolean = false
 
-    def jvmRepr: DataType = FramelessInternals.objectTypeFor[F]
+    lazy val jvmRepr: DataType = FramelessInternals.objectTypeFor[F]
 
-    def catalystRepr: DataType = {
+    lazy val catalystRepr: DataType = {
       val structFields = fields.value.value.map { field =>
         StructField(
           name = field.name,
@@ -145,34 +144,35 @@ class RecordEncoder[F, G <: HList, H <: HList]
       StructType(structFields)
     }
 
+  }
+
+object RecordEncoder {
+
+  case class ForGeneric[F, G <: HList, H <: HList](
+    )(implicit
+      stage1: RecordEncoderStage1[G, H],
+      classTag: ClassTag[F])
+      extends RecordEncoder[F, G, H] {
+
+    import stage1._
+
     def toCatalyst(path: Expression): Expression = {
-      val nameExprs = fields.value.value.map { field =>
-        Literal(field.name)
-      }
 
       val valueExprs = fields.value.value.map { field =>
         val fieldPath = Invoke(path, field.name, field.encoder.jvmRepr, Nil)
         field.encoder.toCatalyst(fieldPath)
       }
 
-      // the way exprs are encoded in CreateNamedStruct
-      val exprs = nameExprs.zip(valueExprs).flatMap {
-        case (nameExpr, valueExpr) => nameExpr :: valueExpr :: Nil
-      }
+      val createExpr = stage1.cellsToCatalyst(valueExprs)
 
-      val createExpr = CreateNamedStruct(exprs)
       val nullExpr = Literal.create(null, createExpr.dataType)
 
       If(IsNull(path), nullExpr, createExpr)
     }
 
     def fromCatalyst(path: Expression): Expression = {
-      val exprs = fields.value.value.map { field =>
-        field.encoder.fromCatalyst(
-          GetStructField(path, field.ordinal, Some(field.name)))
-      }
 
-      val newArgs = newInstanceExprs.value.from(exprs)
+      val newArgs = stage1.fromCatalystToCells(path)
       val newExpr = NewInstance(
         classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
 
@@ -180,6 +180,58 @@ class RecordEncoder[F, G <: HList, H <: HList]
 
       If(IsNull(path), nullExpr, newExpr)
     }
+  }
+
+  case class ForTypedRow[G <: HList, H <: HList](
+    )(implicit
+      stage1: RecordEncoderStage1[G, H],
+      classTag: ClassTag[TypedRow[G]])
+      extends RecordEncoder[TypedRow[G], G, H] {
+
+    import stage1._
+
+    private final val _apply = "apply"
+    private final val _fromInternalRow = "fromInternalRow"
+
+    def toCatalyst(path: Expression): Expression = {
+
+      val valueExprs = fields.value.value.zipWithIndex.map {
+        case (field, i) =>
+          val fieldPath = Invoke(
+            path,
+            _apply,
+            field.encoder.jvmRepr,
+            Seq(Literal.create(i, IntegerType))
+          )
+          field.encoder.toCatalyst(fieldPath)
+      }
+
+      val createExpr = stage1.cellsToCatalyst(valueExprs)
+
+      val nullExpr = Literal.create(null, createExpr.dataType)
+
+      If(IsNull(path), nullExpr, createExpr)
+    }
+
+    def fromCatalyst(path: Expression): Expression = {
+
+      val newArgs = stage1.fromCatalystToCells(path)
+      val aggregated = CreateStruct(newArgs)
+
+      val partial = TypedRow.WithCatalystTypes(newArgs.map(_.dataType))
+
+      val newExpr = Invoke(
+        Literal.fromObject(partial),
+        _fromInternalRow,
+        TypedRow.catalystType,
+        Seq(aggregated)
+      )
+
+      val nullExpr = Literal.create(null, jvmRepr)
+
+      If(IsNull(path), nullExpr, newExpr)
+    }
+  }
 }
 
 final class RecordFieldEncoder[T](
