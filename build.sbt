@@ -1,10 +1,9 @@
 val sparkVersion = "3.5.0"
-val spark34Version = "3.4.1"
-val spark33Version = "3.3.3"
-val spark32Version = "3.2.4"
+val spark34Version = "3.4.2"
+val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
-val catsEffectVersion = "3.5.1"
-val catsMtlVersion = "1.3.1"
+val catsEffectVersion = "3.5.2"
+val catsMtlVersion = "1.4.0"
 val scalatest = "3.2.17"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.10"
@@ -29,7 +28,6 @@ lazy val root = project
     `root-spark35`,
     `root-spark34`,
     `root-spark33`,
-    `root-spark32`,
     docs
   )
 
@@ -60,17 +58,6 @@ lazy val `root-spark33` = project
     `ml-spark33`
   )
 
-lazy val `root-spark32` = project
-  .in(file(".spark32"))
-  .enablePlugins(NoPublishPlugin)
-  .aggregate(
-    core,
-    `cats-spark32`,
-    `dataset-spark32`,
-    `refined-spark32`,
-    `ml-spark32`
-  )
-
 lazy val core =
   project.settings(name := "frameless-core").settings(framelessSettings)
 
@@ -95,15 +82,6 @@ lazy val `cats-spark33` = project
   .settings(spark33Settings)
   .dependsOn(
     `dataset-spark33` % "test->test;compile->compile;provided->provided"
-  )
-
-lazy val `cats-spark32` = project
-  .settings(name := "frameless-cats-spark32")
-  .settings(sourceDirectory := (cats / sourceDirectory).value)
-  .settings(catsSettings)
-  .settings(spark32Settings)
-  .dependsOn(
-    `dataset-spark32` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val dataset = project
@@ -146,20 +124,6 @@ lazy val `dataset-spark33` = project
   .settings(spark33Settings)
   .dependsOn(core % "test->test;compile->compile")
 
-lazy val `dataset-spark32` = project
-  .settings(name := "frameless-dataset-spark32")
-  .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3"
-  )
-  .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.2"
-  )
-  .settings(datasetSettings)
-  .settings(sparkDependencies(spark32Version))
-  .settings(spark32Settings)
-  .dependsOn(core % "test->test;compile->compile")
-
 lazy val refined = project
   .settings(name := "frameless-refined")
   .settings(refinedSettings)
@@ -181,15 +145,6 @@ lazy val `refined-spark33` = project
   .settings(spark33Settings)
   .dependsOn(
     `dataset-spark33` % "test->test;compile->compile;provided->provided"
-  )
-
-lazy val `refined-spark32` = project
-  .settings(name := "frameless-refined-spark32")
-  .settings(sourceDirectory := (refined / sourceDirectory).value)
-  .settings(refinedSettings)
-  .settings(spark32Settings)
-  .dependsOn(
-    `dataset-spark32` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val ml = project
@@ -223,17 +178,6 @@ lazy val `ml-spark33` = project
     `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
-lazy val `ml-spark32` = project
-  .settings(name := "frameless-ml-spark32")
-  .settings(sourceDirectory := (ml / sourceDirectory).value)
-  .settings(mlSettings)
-  .settings(sparkMlDependencies(spark32Version))
-  .settings(spark32Settings)
-  .dependsOn(
-    core % "test->test;compile->compile",
-    `dataset-spark32` % "test->test;compile->compile;provided->provided"
-  )
-
 lazy val docs = project
   .in(file("mdocs"))
   .settings(framelessSettings)
@@ -246,7 +190,7 @@ lazy val docs = project
       "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.1"
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.2"
   )
   .dependsOn(dataset, cats, ml)
 
@@ -383,10 +327,6 @@ lazy val framelessSettings = Seq(
   libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 ) ++ consoleSettings
 
-lazy val spark32Settings = Seq(
-  tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0")
-)
-
 lazy val spark34Settings = Seq[Setting[_]](
   tlVersionIntroduced := Map("2.12" -> "0.14.1", "2.13" -> "0.14.1"),
   mimaPreviousArtifacts := Set(
@@ -462,7 +402,7 @@ ThisBuild / developers := List(
 ThisBuild / tlCiReleaseBranches := Seq("master")
 ThisBuild / tlSitePublishBranch := Some("master")
 
-val roots = List("root-spark32", "root-spark33", "root-spark34")
+val roots = List("root-spark33", "root-spark34", "root-spark35")
 
 ThisBuild / githubWorkflowBuildMatrixAdditions += "project" -> roots
 
