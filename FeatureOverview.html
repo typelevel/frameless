@@ -388,7 +388,7 @@
         while preserving their initial names and types for extra safety.</p>
         <p>Here is an example using the <code>TypedDataset[Apartment]</code> with an additional column:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
-// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
+// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">ApartmentDetails</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">surface</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">ratio</span><span>: </span><span class="type-name">Double</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptWithRatio</span><span> =
@@ -716,10 +716,10 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14069/0x0000000803c8a840@156ae90b
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14082/0x0000000803c58840@b429f69
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
-// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
+// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">adjustedPrice</span><span> = </span><span class="identifier">aptds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">udf</span><span>(</span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;price</span><span>)))
 </span><span class="comment">// adjustedPrice: TypedDataset[(String, Double)] = [_1: string, _2: double]
@@ -755,7 +755,7 @@
 //                                              ^</span></code></pre>
         <p>Next, we combine <code>select</code> and <code>groupBy</code> to calculate the average price/surface ratio per city:</p>
         <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
-// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields] // For shorter expressions
+// aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">cityPriceRatio</span><span> =  </span><span class="identifier">aptds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;price</span><span>) / </span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>).</span><span class="identifier">cast</span><span>[</span><span class="type-name">Double</span><span>])
 </span><span class="comment">// cityPriceRatio: TypedDataset[(String, Double)] = [_1: string, _2: double]
@@ -784,7 +784,7 @@
    </span><span class="identifier">on</span><span>(</span><span class="number-literal">1</span><span>,</span><span class="number-literal">2</span><span>,</span><span class="number-literal">3</span><span>,</span><span class="number-literal">4</span><span>). </span><span class="comment">// We only care for up to 4 bedrooms
 </span><span>   </span><span class="identifier">agg</span><span>(</span><span class="identifier">avg</span><span>(</span><span class="identifier">aptds</span><span>(</span><span class="symbol-literal">&#39;price</span><span>))).
    </span><span class="identifier">as</span><span>[</span><span class="type-name">BedroomStats</span><span>]  </span><span class="comment">// Typesafe casting
-// bedroomStats: TypedDataset[BedroomStats] = [city: string, AvgPriceBeds1: double ... 3 more fields]  // Typesafe casting
+// bedroomStats: TypedDataset[BedroomStats] = [city: string, AvgPriceBeds1: double ... 3 more fields]
 </span><span>
 </span><span class="identifier">bedroomStats</span><span>.</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
 </span><span class="comment">// +-----+-------------+-------------+-------------+-------------+
