@@ -15,7 +15,7 @@ val nakedFSVersion = "0.1.0"
 val Scala212 = "2.12.18"
 val Scala213 = "2.13.12"
 
-ThisBuild / tlBaseVersion := "0.15"
+ThisBuild / tlBaseVersion := "0.16"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
