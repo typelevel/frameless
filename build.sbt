@@ -2,20 +2,20 @@ val sparkVersion = "3.5.0"
 val spark34Version = "3.4.2"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
-val catsEffectVersion = "3.5.2"
+val catsEffectVersion = "3.5.3"
 val catsMtlVersion = "1.4.0"
-val scalatest = "3.2.17"
+val scalatest = "3.2.18"
 val scalatestplus = "3.1.0.0-RC2"
 val shapeless = "2.3.10"
 val scalacheck = "1.17.0"
 val scalacheckEffect = "1.0.4"
-val refinedVersion = "0.11.0"
+val refinedVersion = "0.11.1"
 val nakedFSVersion = "0.1.0"
 
 val Scala212 = "2.12.18"
 val Scala213 = "2.13.12"
 
-ThisBuild / tlBaseVersion := "0.15"
+ThisBuild / tlBaseVersion := "0.16"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
