@@ -233,8 +233,8 @@
 // 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:91)
 // 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)
 // 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:89)
-// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4363)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1541)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4351)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1540)
 // 	at repl.MdocSession$MdocApp0$$anonfun$15.apply(FeatureOverview.md:95)
 // 	at repl.MdocSession$MdocApp0$$anonfun$15.apply(FeatureOverview.md:95)</span></code></pre>
         <p><code>select()</code> supports arbitrary column operations:</p>
@@ -716,7 +716,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$13949/0x0000000803c8a840@501a93eb
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14104/0x0000000803c65040@55778808
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]

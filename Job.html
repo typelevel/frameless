@@ -156,7 +156,7 @@
     </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">ds</span><span>.</span><span class="identifier">count</span><span>()
     </span><span class="identifier">sample</span><span> &lt;- </span><span class="identifier">ds</span><span>.</span><span class="identifier">take</span><span>((</span><span class="identifier">count</span><span>/</span><span class="number-literal">5</span><span>).</span><span class="identifier">toInt</span><span>)
   } </span><span class="keyword">yield</span><span> </span><span class="identifier">sample</span><span>
-</span><span class="comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@611f6fa2
+</span><span class="comment">// countAndTakeJob: frameless.Job[Seq[Int]] = frameless.Job$$anon$3@5b45067c
 </span><span>
 </span><span class="identifier">countAndTakeJob</span><span>.</span><span class="identifier">run</span><span>()
 </span><span class="comment">// res1: Seq[Int] = WrappedArray(1, 2, 3, 4)</span></code></pre>
@@ -167,7 +167,7 @@
 </span><span class="keyword">def</span><span> </span><span class="declaration-name">computeMinOfSample</span><span>(</span><span class="identifier">sample</span><span>: </span><span class="type-name">Job</span><span>[</span><span class="type-name">Seq</span><span>[</span><span class="type-name">Int</span><span>]]): </span><span class="type-name">Job</span><span>[</span><span class="type-name">Int</span><span>] = </span><span class="identifier">sample</span><span>.</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">min</span><span>)
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">finalJob</span><span> = </span><span class="identifier">computeMinOfSample</span><span>(</span><span class="identifier">countAndTakeJob</span><span>)
-</span><span class="comment">// finalJob: Job[Int] = frameless.Job$$anon$2@7b79b759</span></code></pre>
+</span><span class="comment">// finalJob: Job[Int] = frameless.Job$$anon$2@5f866d2f</span></code></pre>
         <p>Now we can execute this new job by specifying a <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext@setJobGroup(groupId:String,description:String,interruptOnCancel:Boolean):Unit">group-id</a> and a description.
         This allows the programmer to see this information on the Spark UI and help track, say,
         performance issues.</p>

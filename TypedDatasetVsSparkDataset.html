@@ -159,8 +159,8 @@
 </span><span class="comment">// +---+---+
 // |  i|  j|
 // +---+---+
-// | 10|  W|
 // |100|  E|
+// | 10|  W|
 // |  1|  Q|
 // +---+---+
 //</span></code></pre>
@@ -232,7 +232,7 @@
 // 	at org.apache.spark.sql.execution.QueryExecution.assertAnalyzed(QueryExecution.scala:66)
 // 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:206)
 // 	at org.apache.spark.sql.Dataset.&lt;init&gt;(Dataset.scala:212)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1596)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1595)
 // 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedDatasetVsSparkDataset.md:78)
 // 	at repl.MdocSession$MdocApp0$$anonfun$1.apply(TypedDatasetVsSparkDataset.md:78)</span></code></pre>
         <p>There are two things to improve here. First, we would want to avoid the <code>as[Long]</code> casting that we are required
@@ -359,31 +359,31 @@
 // +- Relation [i#2419L,j#2420] parquet
 // 
 // 	at org.apache.spark.sql.catalyst.analysis.package$AnalysisErrorAt.failAnalysis(package.scala:52)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:437)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:453)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:453)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:441)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:457)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:457)
 // 	at scala.collection.Iterator.foreach(Iterator.scala:943)
 // 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
 // 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
 // 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
 // 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
 // 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:453)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:453)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:453)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:457)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:457)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:457)
 // 	at scala.collection.Iterator.foreach(Iterator.scala:943)
 // 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
 // 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
 // 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
 // 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
 // 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:453)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22(CheckAnalysis.scala:485)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22$adapted(CheckAnalysis.scala:485)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:457)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22(CheckAnalysis.scala:489)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22$adapted(CheckAnalysis.scala:489)
 // 	at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)
 // 	at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)
 // 	at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)
-// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:485)
+// 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:489)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2$adapted(CheckAnalysis.scala:182)
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkAnalysis0(CheckAnalysis.scala:182)
@@ -408,8 +408,8 @@
 // 	at org.apache.spark.sql.Dataset$.$anonfun$ofRows$1(Dataset.scala:91)
 // 	at org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)
 // 	at org.apache.spark.sql.Dataset$.ofRows(Dataset.scala:89)
-// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4363)
-// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1541)
+// 	at org.apache.spark.sql.Dataset.withPlan(Dataset.scala:4351)
+// 	at org.apache.spark.sql.Dataset.select(Dataset.scala:1540)
 // 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:177)
 // 	at repl.MdocSession$MdocApp0$$anonfun$19.apply(TypedDatasetVsSparkDataset.md:177)</span></code></pre>
         <p>In Frameless, mixing the two results in a compilation error.</p>
