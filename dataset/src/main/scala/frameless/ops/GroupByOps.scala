@@ -6,6 +6,7 @@ import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.{Column, Dataset, FramelessInternals, RelationalGroupedDataset}
 import shapeless._
 import shapeless.ops.hlist.{Length, Mapped, Prepend, ToList, ToTraversable, Tupler}
+import com.sparkutils.shim.expressions.{MapGroups4 => MapGroups}
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT]
   (self: TypedDataset[T], groupedBy: TK)

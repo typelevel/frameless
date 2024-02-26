@@ -11,9 +11,12 @@ val scalacheck = "1.17.0"
 val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.11.1"
 val nakedFSVersion = "0.1.0"
+val shimVersion = "0.0.1-SNAPSHOT"
 
 val Scala212 = "2.12.18"
 val Scala213 = "2.13.12"
+
+//resolvers in Global += Resolver.mavenLocal
 
 ThisBuild / tlBaseVersion := "0.16"
 
@@ -87,10 +90,10 @@ lazy val `cats-spark33` = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(
-    Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3.4+"
+    Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
@@ -100,10 +103,10 @@ lazy val `dataset-spark34` = project
   .settings(name := "frameless-dataset-spark34")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3.4+"
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.4.1.oss_3.4" % shimVersion changing()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark34Version))
@@ -114,10 +117,10 @@ lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3"
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.3.2.oss_3.3" % shimVersion changing()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))

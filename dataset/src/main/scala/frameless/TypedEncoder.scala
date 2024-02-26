@@ -14,7 +14,7 @@ import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.{ reflection => ScalaReflection }
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.objects._
+import org.apache.spark.sql.catalyst.expressions.objects.{StaticInvoke => _, _}
 import org.apache.spark.sql.catalyst.util.{
   ArrayBasedMapData,
   DateTimeUtils,
@@ -25,6 +25,8 @@ import org.apache.spark.unsafe.types.UTF8String
 
 import shapeless._
 import shapeless.ops.hlist.IsHCons
+
+import org.apache.spark.sql.shim.{StaticInvoke4 => StaticInvoke}
 
 abstract class TypedEncoder[T](
     implicit
