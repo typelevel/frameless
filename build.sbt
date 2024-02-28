@@ -17,7 +17,7 @@ val Scala212 = "2.12.18"
 val Scala213 = "2.13.12"
 
 //resolvers in Global += Resolver.mavenLocal
-resolvers in Global +=  MavenRepository(
+resolvers in Global += MavenRepository(
   "sonatype-s01-snapshots",
   Resolver.SonatypeS01RepositoryRoot + "/snapshots"
 )
@@ -103,7 +103,7 @@ lazy val dataset = project
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing()
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing ()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
@@ -116,7 +116,7 @@ lazy val `dataset-spark34` = project
     Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.4.1.oss_3.4" % shimVersion changing()
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.4.1.oss_3.4" % shimVersion changing ()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark34Version))
@@ -130,7 +130,7 @@ lazy val `dataset-spark33` = project
     Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.3.2.oss_3.3" % shimVersion changing()
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.3.2.oss_3.3" % shimVersion changing ()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
