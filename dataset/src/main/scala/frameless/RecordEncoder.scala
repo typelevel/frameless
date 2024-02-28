@@ -57,8 +57,9 @@ object RecordEncoderFields {
     new RecordEncoderFields[FieldType[K, H] :: T] {
 
       def value: List[RecordEncoderField] =
-        fieldEncoder[K, H] :: tail.value
-          .map(x => x.copy(ordinal = x.ordinal + 1))
+        fieldEncoder[K, H] :: tail.value.map(x =>
+          x.copy(ordinal = x.ordinal + 1)
+        )
     }
 
   private def fieldEncoder[K <: Symbol, H](
