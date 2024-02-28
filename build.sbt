@@ -252,6 +252,8 @@ lazy val datasetSettings =
         imt("frameless.RecordEncoderFields.deriveRecordLast"),
         mc("frameless.functions.FramelessLit"),
         mc(f"frameless.functions.FramelessLit$$"),
+        mc("frameless.MapGroups"),
+        mc(f"frameless.MapGroups$$"),
         dmm("frameless.functions.package.litAggr"),
         dmm("org.apache.spark.sql.FramelessInternals.column")
       )
