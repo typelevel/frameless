@@ -1,20 +1,15 @@
 package frameless
 
 import java.math.BigInteger
-
 import java.util.Date
-
-import java.time.{ Duration, Instant, Period, LocalDate }
-
+import java.time.{Duration, Instant, LocalDate, Period}
 import java.sql.Timestamp
-
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
 import org.apache.spark.sql.{ reflection => ScalaReflection }
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.objects.{StaticInvoke => _, _}
 import org.apache.spark.sql.catalyst.util.{
   ArrayBasedMapData,
   DateTimeUtils,
@@ -25,8 +20,8 @@ import org.apache.spark.unsafe.types.UTF8String
 
 import shapeless._
 import shapeless.ops.hlist.IsHCons
-
-import org.apache.spark.sql.shim.{StaticInvoke4 => StaticInvoke}
+import com.sparkutils.shim.expressions.{UnwrapOption2 => UnwrapOption, WrapOption2 => WrapOption, MapObjects5 => MapObjects, ExternalMapToCatalyst7 => ExternalMapToCatalyst}
+import org.apache.spark.sql.shim.{StaticInvoke4 => StaticInvoke, NewInstance4 => NewInstance, Invoke5 => Invoke}
 
 abstract class TypedEncoder[T](
     implicit

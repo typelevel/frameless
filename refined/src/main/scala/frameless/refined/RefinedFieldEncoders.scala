@@ -3,10 +3,10 @@ package frameless.refined
 import scala.reflect.ClassTag
 
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.objects.{
-  Invoke, NewInstance, UnwrapOption, WrapOption
-}
 import org.apache.spark.sql.types._
+
+import com.sparkutils.shim.expressions.{UnwrapOption2 => UnwrapOption, WrapOption2 => WrapOption}
+import org.apache.spark.sql.shim.{Invoke5 => Invoke, NewInstance4 => NewInstance}
 
 import eu.timepit.refined.api.RefType
 

@@ -1,13 +1,11 @@
 package frameless
 
+import com.sparkutils.shim.expressions.{CreateNamedStruct1 => CreateNamedStruct, GetStructField3 => GetStructField, UnwrapOption2 => UnwrapOption, WrapOption2 => WrapOption}
+import com.sparkutils.shim.{deriveUnitLiteral, ifIsNull}
 import org.apache.spark.sql.FramelessInternals
-
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.expressions.objects.{
-  Invoke, NewInstance, UnwrapOption, WrapOption
-}
+import org.apache.spark.sql.catalyst.expressions.{CreateNamedStruct => _, GetStructField => _, _}
+import org.apache.spark.sql.shim.{Invoke5 => Invoke, NewInstance4 => NewInstance}
 import org.apache.spark.sql.types._
-
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
@@ -72,7 +70,7 @@ object NewInstanceExprs {
       tail: NewInstanceExprs[T]
     ): NewInstanceExprs[FieldType[K, Unit] :: T] = new NewInstanceExprs[FieldType[K, Unit] :: T] {
       def from(exprs: List[Expression]): Seq[Expression] =
-        Literal.fromObject(()) +: tail.from(exprs)
+        deriveUnitLiteral +: tail.from(exprs)
     }
 
   implicit def deriveNonUnit[K <: Symbol, V, T <: HList]
@@ -161,9 +159,8 @@ class RecordEncoder[F, G <: HList, H <: HList]
       }
 
       val createExpr = CreateNamedStruct(exprs)
-      val nullExpr = Literal.create(null, createExpr.dataType)
 
-      If(IsNull(path), nullExpr, createExpr)
+      ifIsNull(createExpr.dataType, path, createExpr)
     }
 
     def fromCatalyst(path: Expression): Expression = {
@@ -176,9 +173,7 @@ class RecordEncoder[F, G <: HList, H <: HList]
       val newExpr = NewInstance(
         classTag.runtimeClass, newArgs, jvmRepr, propagateNull = true)
 
-      val nullExpr = Literal.create(null, jvmRepr)
-
-      If(IsNull(path), nullExpr, newExpr)
+      ifIsNull(jvmRepr, path, newExpr)
     }
 }
 
