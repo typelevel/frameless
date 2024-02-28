@@ -15,7 +15,7 @@ val shimVersion = "0.0.1-SNAPSHOT"
 
 val Scala212 = "2.12.18"
 val Scala213 = "2.13.12"
-/*
+
 //resolvers in Global += Resolver.mavenLocal
 resolvers in Global +=  MavenRepository(
   "sonatype-s01-snapshots",
@@ -27,7 +27,7 @@ import lmcoursier.definitions.CachePolicy
 csrConfiguration := csrConfiguration.value
   .withTtl(Some(1.minute))
   .withCachePolicies(Vector(CachePolicy.LocalOnly))
-*/
+
 ThisBuild / tlBaseVersion := "0.16"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
