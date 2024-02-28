@@ -2,7 +2,7 @@ package frameless
 
 import java.math.BigInteger
 import java.util.Date
-import java.time.{Duration, Instant, LocalDate, Period}
+import java.time.{ Duration, Instant, LocalDate, Period }
 import java.sql.Timestamp
 import scala.reflect.ClassTag
 
@@ -20,8 +20,17 @@ import org.apache.spark.unsafe.types.UTF8String
 
 import shapeless._
 import shapeless.ops.hlist.IsHCons
-import com.sparkutils.shim.expressions.{UnwrapOption2 => UnwrapOption, WrapOption2 => WrapOption, MapObjects5 => MapObjects, ExternalMapToCatalyst7 => ExternalMapToCatalyst}
-import org.apache.spark.sql.shim.{StaticInvoke4 => StaticInvoke, NewInstance4 => NewInstance, Invoke5 => Invoke}
+import com.sparkutils.shim.expressions.{
+  UnwrapOption2 => UnwrapOption,
+  WrapOption2 => WrapOption,
+  MapObjects5 => MapObjects,
+  ExternalMapToCatalyst7 => ExternalMapToCatalyst
+}
+import org.apache.spark.sql.shim.{
+  StaticInvoke4 => StaticInvoke,
+  NewInstance4 => NewInstance,
+  Invoke5 => Invoke
+}
 
 abstract class TypedEncoder[T](
     implicit
