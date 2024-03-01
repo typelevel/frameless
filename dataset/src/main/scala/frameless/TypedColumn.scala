@@ -4,8 +4,14 @@ import frameless.functions.{ litAggr, lit => flit }
 import frameless.syntax._
 
 import org.apache.spark.sql.catalyst.expressions.{
-  With => _,
-  _
+  Expression,
+  EqualNullSafe,
+  EqualTo,
+  Not,
+  IsNull,
+  IsNotNull,
+  Literal,
+  Coalesce
 } // 787 - Spark 4 source code compat
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.{ Column, FramelessInternals }
