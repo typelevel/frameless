@@ -1,5 +1,5 @@
 val sparkVersion =
-  "3.5.0" // "4.0.0-SNAPSHOT" must have the apache_snaps configured
+  "3.5.1" // "4.0.0-SNAPSHOT" must have the apache_snaps configured
 val spark34Version = "3.4.2"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
@@ -206,10 +206,10 @@ lazy val docs = project
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin(
-      "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
+      "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.2"
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.3"
   )
   .dependsOn(dataset, cats, ml)
 
@@ -230,7 +230,7 @@ def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
 
 lazy val catsSettings = framelessSettings ++ Seq(
   addCompilerPlugin(
-    "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
+    "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
   ),
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core" % catsCoreVersion,
