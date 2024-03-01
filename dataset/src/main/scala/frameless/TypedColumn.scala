@@ -3,7 +3,7 @@ package frameless
 import frameless.functions.{litAggr, lit => flit}
 import frameless.syntax._
 
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions.{With => _, _} // 787 - Spark 4 source code compat
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.{Column, FramelessInternals}
 

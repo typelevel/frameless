@@ -2,14 +2,14 @@ package frameless.sql.rules
 
 import frameless._
 import frameless.functions.Lit
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.{currentTimestamp, microsToInstant}
+import org.apache.spark.sql.catalyst.util.DateTimeUtils.{microsToInstant, instantToMicros}
 import org.apache.spark.sql.sources.{EqualTo, GreaterThanOrEqual, IsNotNull}
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import java.time.Instant
 
 class FramelessLitPushDownTests extends SQLRulesSuite {
-  private val now: Long = currentTimestamp()
+  private val now: Long = instantToMicros(Instant.now())
 
   test("java.sql.Timestamp push-down") {
     val expected = java.sql.Timestamp.from(microsToInstant(now))

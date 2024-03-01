@@ -1,4 +1,4 @@
-val sparkVersion = "3.5.0"
+val sparkVersion = "3.5.0"//"4.0.0-SNAPSHOT" must have the apache_snaps configured
 val spark34Version = "3.4.2"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
@@ -21,6 +21,11 @@ resolvers in Global += MavenRepository(
   "sonatype-s01-snapshots",
   Resolver.SonatypeS01RepositoryRoot + "/snapshots"
 )
+resolvers in Global += MavenRepository(
+  "apache_snaps",
+  "https://repository.apache.org/content/repositories/snapshots"
+)
+
 import scala.concurrent.duration.DurationInt
 import lmcoursier.definitions.CachePolicy
 
@@ -103,7 +108,7 @@ lazy val dataset = project
     Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing ()
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing () //4.0.0.oss_4.0 for 4 snapshot
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
