@@ -1,5 +1,5 @@
 val sparkVersion =
-  "3.5.0" // "4.0.0-SNAPSHOT" must have the apache_snaps configured
+  "3.5.1" // "4.0.0-SNAPSHOT" must have the apache_snaps configured
 val spark34Version = "3.4.2"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
