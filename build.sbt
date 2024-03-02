@@ -12,7 +12,7 @@ val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.11.1"
 val nakedFSVersion = "0.1.0"
 
-val Scala212 = "2.12.18"
+val Scala212 = "2.12.19"
 val Scala213 = "2.13.13"
 
 ThisBuild / tlBaseVersion := "0.16"
