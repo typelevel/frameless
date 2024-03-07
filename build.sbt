@@ -17,7 +17,7 @@ val shimVersion = "0.0.1-SNAPSHOT"
 val Scala212 = "2.12.19"
 val Scala213 = "2.13.13"
 
-resolvers in Global += Resolver.mavenLocal
+//resolvers in Global += Resolver.mavenLocal
 resolvers in Global += MavenRepository(
   "sonatype-s01-snapshots",
   Resolver.SonatypeS01RepositoryRoot + "/snapshots"
