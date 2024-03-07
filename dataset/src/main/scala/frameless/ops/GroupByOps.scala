@@ -6,7 +6,6 @@ import org.apache.spark.sql.catalyst.plans.logical.Project
 import org.apache.spark.sql.{
   Column,
   Dataset,
-  FramelessInternals,
   RelationalGroupedDataset
 }
 import shapeless._
@@ -19,6 +18,7 @@ import shapeless.ops.hlist.{
   Tupler
 }
 import com.sparkutils.shim.expressions.{ MapGroups4 => MapGroups }
+import frameless.FramelessInternals
 
 class GroupedByManyOps[T, TK <: HList, K <: HList, KT](
     self: TypedDataset[T],

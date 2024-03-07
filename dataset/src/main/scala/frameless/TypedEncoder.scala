@@ -5,10 +5,7 @@ import java.util.Date
 import java.time.{ Duration, Instant, LocalDate, Period }
 import java.sql.Timestamp
 import scala.reflect.ClassTag
-
-import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.sql.{ reflection => ScalaReflection }
+import FramelessInternals.UserDefinedType
 import org.apache.spark.sql.catalyst.expressions.{ Expression, UnsafeArrayData, Literal }
 import org.apache.spark.sql.catalyst.util.{
   ArrayBasedMapData,
@@ -26,6 +23,7 @@ import com.sparkutils.shim.expressions.{
   MapObjects5 => MapObjects,
   ExternalMapToCatalyst7 => ExternalMapToCatalyst
 }
+import frameless.{reflection => ScalaReflection}
 import org.apache.spark.sql.shim.{
   StaticInvoke4 => StaticInvoke,
   NewInstance4 => NewInstance,

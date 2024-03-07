@@ -1,7 +1,7 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.FramelessInternals.expr
+import FramelessInternals.expr
 import org.apache.spark.sql.catalyst.expressions.Literal
 import org.apache.spark.sql.{ functions => sparkFunctions }
 import frameless.syntax._

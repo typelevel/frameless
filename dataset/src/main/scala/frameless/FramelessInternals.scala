@@ -1,20 +1,15 @@
-package org.apache.spark.sql
+package frameless
 
-import org.apache.spark.sql.catalyst.expressions.codegen._
-import com.sparkutils.shim.expressions.{
-  Alias2 => Alias,
-  CreateStruct1 => CreateStruct
-}
-import org.apache.spark.sql.catalyst.expressions.{
-  Expression,
-  NamedExpression,
-  NonSQLExpression
-}
+import com.sparkutils.shim.expressions.{Alias2 => Alias, CreateStruct1 => CreateStruct}
+import org.apache.spark.sql.shim.{utils => shimUtils}
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.plans.logical.{ LogicalPlan, Project }
+import org.apache.spark.sql.catalyst.expressions.codegen._
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression, NonSQLExpression}
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.types.ObjectType
+import org.apache.spark.sql._
+
 import scala.reflect.ClassTag
 
 object FramelessInternals {
@@ -36,7 +31,7 @@ object FramelessInternals {
 
   def expr(column: Column): Expression = column.expr
 
-  def logicalPlan(ds: Dataset[_]): LogicalPlan = ds.logicalPlan
+  def logicalPlan(ds: Dataset[_]): LogicalPlan = shimUtils.logicalPlan(ds)
 
   def executePlan(ds: Dataset[_], plan: LogicalPlan): QueryExecution =
     ds.sparkSession.sessionState.executePlan(plan)
@@ -68,7 +63,7 @@ object FramelessInternals {
     new Dataset(sqlContext, plan, encoder)
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
-    Dataset.ofRows(sparkSession, logicalPlan)
+    shimUtils.ofRows(sparkSession, logicalPlan)
 
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
   type UserDefinedType[A >: Null] =

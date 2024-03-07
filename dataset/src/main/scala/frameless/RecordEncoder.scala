@@ -7,7 +7,6 @@ import com.sparkutils.shim.expressions.{
   WrapOption2 => WrapOption
 }
 import com.sparkutils.shim.{ deriveUnitLiteral, ifIsNull }
-import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.expressions.{ Expression, Literal }
 import org.apache.spark.sql.shim.{
   Invoke5 => Invoke,

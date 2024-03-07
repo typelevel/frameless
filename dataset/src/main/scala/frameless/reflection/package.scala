@@ -1,26 +1,6 @@
-package org.apache.spark.sql
+package frameless
 
-import org.apache.spark.sql.catalyst.ScalaReflection.{
-  cleanUpReflectionObjects,
-  getClassFromType,
-  localTypeOf
-}
-import org.apache.spark.sql.types.{
-  BinaryType,
-  BooleanType,
-  ByteType,
-  CalendarIntervalType,
-  DataType,
-  Decimal,
-  DecimalType,
-  DoubleType,
-  FloatType,
-  IntegerType,
-  LongType,
-  NullType,
-  ObjectType,
-  ShortType
-}
+import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.CalendarInterval
 
 /**
@@ -45,6 +25,59 @@ package object reflection {
 
   import universe._
 
+  // Since we are creating a runtime mirror using the class loader of current thread,
+  // we need to use def at here. So, every time we call mirror, it is using the
+  // class loader of the current thread.
+  def mirror: universe.Mirror = {
+    universe.runtimeMirror(Thread.currentThread().getContextClassLoader)
+  }
+
+  /**
+   * Any codes calling `scala.reflect.api.Types.TypeApi.<:<` should be wrapped by this method to
+   * clean up the Scala reflection garbage automatically. Otherwise, it will leak some objects to
+   * `scala.reflect.runtime.JavaUniverse.undoLog`.
+   *
+   * @see https://github.com/scala/bug/issues/8302
+   */
+  def cleanUpReflectionObjects[T](func: => T): T = {
+    universe.asInstanceOf[scala.reflect.runtime.JavaUniverse].undoLog.undo(func)
+  }
+
+  /**
+   * Return the Scala Type for `T` in the current classloader mirror.
+   *
+   * Use this method instead of the convenience method `universe.typeOf`, which
+   * assumes that all types can be found in the classloader that loaded scala-reflect classes.
+   * That's not necessarily the case when running using Eclipse launchers or even
+   * Sbt console or test (without `fork := true`).
+   *
+   * @see SPARK-5281
+   */
+  def localTypeOf[T: TypeTag]: `Type` = {
+    val tag = implicitly[TypeTag[T]]
+    tag.in(mirror).tpe.dealias
+  }
+
+  /*
+   * Retrieves the runtime class corresponding to the provided type.
+   */
+  def getClassFromType(tpe: Type): Class[_] =
+    mirror.runtimeClass(erasure(tpe).dealias.typeSymbol.asClass)
+
+  private def erasure(tpe: Type): Type = {
+    // For user-defined AnyVal classes, we should not erasure it. Otherwise, it will
+    // resolve to underlying type which wrapped by this class, e.g erasure
+    // `case class Foo(i: Int) extends AnyVal` will return type `Int` instead of `Foo`.
+    // But, for other types, we do need to erasure it. For example, we need to erasure
+    // `scala.Any` to `java.lang.Object` in order to load it from Java ClassLoader.
+    // Please see SPARK-17368 & SPARK-31190 for more details.
+    if (isSubtype(tpe, localTypeOf[AnyVal]) && !tpe.toString.startsWith("scala")) {
+      tpe
+    } else {
+      tpe.erasure
+    }
+  }
+
   /**
    * Returns the Spark SQL DataType for a given scala type.  Where this is not an exact mapping
    * to a native type, an ObjectType is returned. Special handling is also used for Arrays including
@@ -62,7 +95,7 @@ package object reflection {
    *
    * See https://github.com/scala/bug/issues/10766
    */
-  private[sql] def isSubtype(tpe1: `Type`, tpe2: `Type`): Boolean = {
+  private def isSubtype(tpe1: `Type`, tpe2: `Type`): Boolean = {
     ScalaSubtypeLock.synchronized {
       tpe1 <:< tpe2
     }

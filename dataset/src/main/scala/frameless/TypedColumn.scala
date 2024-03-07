@@ -8,7 +8,7 @@ import org.apache.spark.sql.catalyst.expressions.{
   Literal
 } // 787 - Spark 4 source code compat
 import org.apache.spark.sql.types.DecimalType
-import org.apache.spark.sql.{ Column, FramelessInternals }
+import org.apache.spark.sql.Column
 
 import shapeless._
 import shapeless.ops.record.Selector
