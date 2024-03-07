@@ -206,10 +206,10 @@ lazy val docs = project
   .settings(sparkMlDependencies(sparkVersion, Compile))
   .settings(
     addCompilerPlugin(
-      "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
+      "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.2"
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.2.3"
   )
   .dependsOn(dataset, cats, ml)
 
@@ -230,7 +230,7 @@ def sparkMlDependencies(sparkVersion: String, scope: Configuration = Provided) =
 
 lazy val catsSettings = framelessSettings ++ Seq(
   addCompilerPlugin(
-    "org.typelevel" % "kind-projector" % "0.13.2" cross CrossVersion.full
+    "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
   ),
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-core" % catsCoreVersion,
