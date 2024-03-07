@@ -5,13 +5,7 @@ import frameless.syntax._
 
 import org.apache.spark.sql.catalyst.expressions.{
   Expression,
-  EqualNullSafe,
-  EqualTo,
-  Not,
-  IsNull,
-  IsNotNull,
-  Literal,
-  Coalesce
+  Literal
 } // 787 - Spark 4 source code compat
 import org.apache.spark.sql.types.DecimalType
 import org.apache.spark.sql.{ Column, FramelessInternals }
@@ -21,6 +15,15 @@ import shapeless.ops.record.Selector
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag
+
+import com.sparkutils.shim.expressions.{
+  EqualNullSafe2 => EqualNullSafe,
+  EqualTo2 => EqualTo,
+  Not1 => Not,
+  IsNull1 => IsNull,
+  IsNotNull1 => IsNotNull,
+  Coalesce1 => Coalesce
+} // 787 - Spark 4 source code compat
 
 import scala.language.experimental.macros
 

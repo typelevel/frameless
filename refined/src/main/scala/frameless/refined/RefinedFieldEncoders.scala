@@ -2,7 +2,7 @@ package frameless.refined
 
 import scala.reflect.ClassTag
 
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.types._
 
 import com.sparkutils.shim.expressions.{

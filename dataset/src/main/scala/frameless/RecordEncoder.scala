@@ -8,11 +8,7 @@ import com.sparkutils.shim.expressions.{
 }
 import com.sparkutils.shim.{ deriveUnitLiteral, ifIsNull }
 import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.catalyst.expressions.{
-  CreateNamedStruct => _,
-  GetStructField => _,
-  _
-}
+import org.apache.spark.sql.catalyst.expressions.{ Expression, Literal }
 import org.apache.spark.sql.shim.{
   Invoke5 => Invoke,
   NewInstance4 => NewInstance
