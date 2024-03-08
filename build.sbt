@@ -278,7 +278,7 @@ lazy val refinedSettings =
     libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
   )
 
-lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL  ++ Seq(
+lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
   mimaBinaryIssueFilters ++= {
     import com.typesafe.tools.mima.core._
 
