@@ -1685,7 +1685,7 @@ object TypedDataset {
     createUnsafe(dataset.toDF())
 
   /**
-   * Creates a [[frameless.TypedDataset]] from a Spark [[org.apache.spark.sql.DataFrame]].
+   * Creates a [[frameless.TypedDataset]] from a Spark org.apache.spark.sql.DataFrame.
    * Note that the names and types need to align!
    *
    * This is an unsafe operation: If the schemas do not align,
