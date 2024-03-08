@@ -264,15 +264,12 @@ lazy val datasetSettings =
         mc(f"frameless.functions.FramelessLit$$"),
         mc("org.apache.spark.sql.FramelessInternals"),
         mc(f"org.apache.spark.sql.FramelessInternals$$"),
-        mc("org.apache.spark.ml.FramelessInternals"),
-        mc(f"org.apache.spark.ml.FramelessInternals$$"),
         mc("frameless.MapGroups"),
         mc(f"frameless.MapGroups$$"),
-        dmm("frameless.functions.package.litAggr"),
-        dmm("org.apache.spark.sql.FramelessInternals.column")
+        dmm("frameless.functions.package.litAggr")
       )
     },
-    coverageExcludedPackages := "org.apache.spark.sql.reflection",
+    coverageExcludedPackages := "frameless.reflection",
     libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude ("org.apache.hadoop", "hadoop-commons")
   )
 
@@ -281,7 +278,18 @@ lazy val refinedSettings =
     libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
   )
 
-lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL
+lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL  ++ Seq(
+  mimaBinaryIssueFilters ++= {
+    import com.typesafe.tools.mima.core._
+
+    val mc = ProblemFilters.exclude[MissingClassProblem](_)
+
+    Seq(
+      mc("org.apache.spark.ml.FramelessInternals"),
+      mc(f"org.apache.spark.ml.FramelessInternals$$")
+    )
+  }
+)
 
 lazy val scalac212Options = Seq(
   "-Xlint:-missing-interpolator,-unused,_",
