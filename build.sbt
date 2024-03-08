@@ -264,6 +264,10 @@ lazy val datasetSettings =
         mc(f"frameless.functions.FramelessLit$$"),
         mc("org.apache.spark.sql.FramelessInternals"),
         mc(f"org.apache.spark.sql.FramelessInternals$$"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateLeft"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateLeft$"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateRight"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateRight$"),
         mc("frameless.MapGroups"),
         mc(f"frameless.MapGroups$$"),
         dmm("frameless.functions.package.litAggr")
