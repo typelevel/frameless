@@ -23,6 +23,10 @@ resolvers in Global += MavenRepository(
   Resolver.SonatypeS01RepositoryRoot + "/snapshots"
 )
 resolvers in Global += MavenRepository(
+  "sonatype-s01-releases",
+  Resolver.SonatypeS01RepositoryRoot + "/releases"
+)
+resolvers in Global += MavenRepository(
   "apache_snaps",
   "https://repository.apache.org/content/repositories/snapshots"
 )
