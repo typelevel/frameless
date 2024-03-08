@@ -3,11 +3,7 @@ package ops
 
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAlias
 import org.apache.spark.sql.catalyst.plans.logical.Project
-import org.apache.spark.sql.{
-  Column,
-  Dataset,
-  RelationalGroupedDataset
-}
+import org.apache.spark.sql.{ Column, Dataset, RelationalGroupedDataset }
 import shapeless._
 import shapeless.ops.hlist.{
   Length,

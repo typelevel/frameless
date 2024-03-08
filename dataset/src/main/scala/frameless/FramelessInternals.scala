@@ -1,11 +1,18 @@
 package frameless
 
-import com.sparkutils.shim.expressions.{Alias2 => Alias, CreateStruct1 => CreateStruct}
-import org.apache.spark.sql.shim.{utils => shimUtils}
+import com.sparkutils.shim.expressions.{
+  Alias2 => Alias,
+  CreateStruct1 => CreateStruct
+}
+import org.apache.spark.sql.shim.{ utils => shimUtils }
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression, NonSQLExpression}
-import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
+import org.apache.spark.sql.catalyst.expressions.{
+  Expression,
+  NamedExpression,
+  NonSQLExpression
+}
+import org.apache.spark.sql.catalyst.plans.logical.{ LogicalPlan, Project }
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._

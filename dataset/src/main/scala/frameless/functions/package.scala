@@ -1,6 +1,6 @@
 package frameless
 
-import frameless.{reflection => ScalaReflection}
+import frameless.{ reflection => ScalaReflection }
 import scala.reflect.ClassTag
 
 import shapeless._
