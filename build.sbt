@@ -368,7 +368,10 @@ lazy val framelessSettings = Seq(
    * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.1.0)
    * [error] 	    +- org.scala-lang:scala-compiler:2.12.16              (depends on 1.0.6)
    */
-  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
+  // allow testing on different runtimes, but don't publish / run docs
+  Test / publishArtifact := true,
+  Test / packageDoc / publishArtifact := false
 ) ++ consoleSettings
 
 lazy val spark34Settings = Seq[Setting[_]](
