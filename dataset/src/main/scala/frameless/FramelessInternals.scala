@@ -41,7 +41,7 @@ object FramelessInternals {
   def logicalPlan(ds: Dataset[_]): LogicalPlan = shimUtils.logicalPlan(ds)
 
   def executePlan(ds: Dataset[_], plan: LogicalPlan): QueryExecution =
-    ds.sparkSession.sessionState.executePlan(plan)
+    ShimUtils.executePlan(ds, plan)
 
   def joinPlan(
       ds: Dataset[_],
