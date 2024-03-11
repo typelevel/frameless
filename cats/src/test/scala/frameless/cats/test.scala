@@ -7,7 +7,7 @@ import _root_.cats.syntax.all._
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext => SC}
+import org.apache.spark.{ SparkConf, SparkContext => SC }
 
 import org.scalatest.compatible.Assertion
 import org.scalactic.anyvals.PosInt
@@ -21,7 +21,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.propspec.AnyPropSpec
 
 trait SparkTests {
-  val appID: String = new java.util.Date().toString + math.floor(math.random() * 10E4).toLong.toString
+
+  val appID: String = new java.util.Date().toString + math
+    .floor(math.random() * 10e4)
+    .toLong
+    .toString
 
   val conf: SparkConf = new SparkConf()
     .setMaster("local[*]")
@@ -29,16 +33,27 @@ trait SparkTests {
     .set("spark.ui.enabled", "false")
     .set("spark.app.id", appID)
 
-  implicit def session: SparkSession = SparkSession.builder().config(conf).getOrCreate()
+  implicit def session: SparkSession =
+    SparkSession.builder().config(conf).getOrCreate()
   implicit def sc: SparkContext = session.sparkContext
 
-  implicit class seqToRdd[A: ClassTag](seq: Seq[A])(implicit sc: SC) {
+  implicit class seqToRdd[A: ClassTag](
+      seq: Seq[A]
+    )(implicit
+      sc: SC) {
     def toRdd: RDD[A] = sc.makeRDD(seq)
   }
 }
 
 object Tests {
-  def innerPairwise(mx: Map[String, Int], my: Map[String, Int], check: (Any, Any) => Assertion)(implicit sc: SC): Assertion = {
+
+  def innerPairwise(
+      mx: Map[String, Int],
+      my: Map[String, Int],
+      check: (Any, Any) => Assertion
+    )(implicit
+      sc: SC
+    ): Assertion = {
     import frameless.cats.implicits._
     import frameless.cats.inner._
     val xs = sc.parallelize(mx.toSeq)
@@ -63,21 +78,31 @@ object Tests {
   }
 }
 
-class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with SparkTests {
+class Test
+    extends AnyPropSpec
+    with Matchers
+    with ScalaCheckPropertyChecks
+    with SparkTests {
+
   implicit override val generatorDrivenConfig =
     PropertyCheckConfiguration(minSize = PosInt(10))
 
   property("spark is working") {
-    sc.parallelize(Seq(1, 2, 3)).collect() shouldBe Array(1,2,3)
+    sc.parallelize(Seq(1, 2, 3)).collect() shouldBe Array(1, 2, 3)
   }
 
   property("inner pairwise monoid") {
     // Make sure we have non-empty map
-    forAll { (xh: (String, Int), mx: Map[String, Int], yh: (String, Int), my: Map[String, Int]) =>
-      Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _)
+    forAll {
+      (xh: (String, Int),
+          mx: Map[String, Int],
+          yh: (String, Int),
+          my: Map[String, Int]
+        ) => Tests.innerPairwise(mx + xh, my + yh, _ shouldBe _)
     }
   }
 
+  org.scalatestplus.scalacheck.Checkers
   property("rdd simple numeric commutative semigroup") {
     import frameless.cats.implicits._
 
@@ -110,7 +135,8 @@ class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with 
   property("rdd tuple commutative semigroup example") {
     import frameless.cats.implicits._
     forAll { seq: List[(Int, Int)] =>
-      val expectedSum = if (seq.isEmpty) None else Some(Foldable[List].fold(seq))
+      val expectedSum =
+        if (seq.isEmpty) None else Some(Foldable[List].fold(seq))
       val rdd = seq.toRdd
 
       rdd.csum shouldBe expectedSum.getOrElse(0 -> 0)
@@ -120,10 +146,22 @@ class Test extends AnyPropSpec with Matchers with ScalaCheckPropertyChecks with 
 
   property("pair rdd numeric commutative semigroup example") {
     import frameless.cats.implicits._
-    val seq = Seq( ("a",2), ("b",3), ("d",6), ("b",2), ("d",1) )
+    val seq = Seq(("a", 2), ("b", 3), ("d", 6), ("b", 2), ("d", 1))
     val rdd = seq.toRdd
-    rdd.cminByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",2), ("d",1) )
-    rdd.cmaxByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",3), ("d",6) )
-    rdd.csumByKey.collect().toSeq should contain theSameElementsAs Seq( ("a",2), ("b",5), ("d",7) )
+    rdd.cminByKey.collect().toSeq should contain theSameElementsAs Seq(
+      ("a", 2),
+      ("b", 2),
+      ("d", 1)
+    )
+    rdd.cmaxByKey.collect().toSeq should contain theSameElementsAs Seq(
+      ("a", 2),
+      ("b", 3),
+      ("d", 6)
+    )
+    rdd.csumByKey.collect().toSeq should contain theSameElementsAs Seq(
+      ("a", 2),
+      ("b", 5),
+      ("d", 7)
+    )
   }
 }
