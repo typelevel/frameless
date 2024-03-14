@@ -134,8 +134,8 @@ case class FramelessUdf[T, R](
 
   // #803 - SPARK-41991 fixes this for the most part, this is a belts and braces approach
   def nonProxy(child: Expression): Expression =
-    child match {
-      case p: ExpressionProxy => nonProxy(p.child)
+    child transform {
+      case p: ExpressionProxy => p.child
       case _ => child
     }
 
