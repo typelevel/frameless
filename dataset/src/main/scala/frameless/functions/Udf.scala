@@ -2,7 +2,7 @@ package frameless
 package functions
 
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.{Expression, LeafExpression, NonSQLExpression}
+import org.apache.spark.sql.catalyst.expressions.{Expression, ExpressionProxy, LeafExpression, NonSQLExpression}
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import Block._
 import org.apache.spark.sql.types.DataType
@@ -132,6 +132,13 @@ case class FramelessUdf[T, R](
 
   def dataType: DataType = rencoder.catalystRepr
 
+  // #803 - SPARK-41991 fixes this for the most part, this is a belts and braces approach
+  def nonProxy(child: Expression): Expression =
+    child match {
+      case p: ExpressionProxy => nonProxy(p.child)
+      case _ => child
+    }
+
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
 
@@ -145,7 +152,7 @@ case class FramelessUdf[T, R](
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
       case (encoder, child) =>
-        val eval = child.genCode(ctx)
+        val eval = nonProxy(child).genCode(ctx)
         val codeTpe = CodeGenerator.boxedType(encoder.jvmRepr)
         val argTerm = ctx.freshName("arg")
         val convert = s"${eval.code}\n$codeTpe $argTerm = ${eval.isNull} ? (($codeTpe)null) : (($codeTpe)(${eval.value}));"
