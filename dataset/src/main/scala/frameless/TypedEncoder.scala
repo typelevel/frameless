@@ -1,30 +1,23 @@
 package frameless
 
 import java.math.BigInteger
-
 import java.util.Date
-
-import java.time.{ Duration, Instant, Period, LocalDate }
-
+import java.time.{Duration, Instant, LocalDate, Period}
 import java.sql.Timestamp
-
 import scala.reflect.ClassTag
-
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.sql.{ reflection => ScalaReflection }
+import org.apache.spark.sql.{reflection => ScalaReflection}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{
-  ArrayBasedMapData,
-  DateTimeUtils,
-  GenericArrayData
-}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
-
 import shapeless._
 import shapeless.ops.hlist.IsHCons
+
+import scala.collection.generic.CanBuildFrom
+import scala.collection.immutable.TreeSet
 
 abstract class TypedEncoder[T](
     implicit
@@ -501,27 +494,57 @@ object TypedEncoder {
       override def toString: String = s"arrayEncoder($jvmRepr)"
     }
 
-  trait SeqConversion[C[_]] extends Serializable {
-    def convertSeq[Y](c: Seq[Y]): C[Y]
+  /**
+   * Per #804 - when MapObjects is used in interpreted mode the type returned is Seq, not the derived type used in compilation
+   *
+   * This type class offers extensible conversion for more specific types.  By default Seq, List and Vector are supported.
+   *
+   * @tparam C
+   */
+  trait CollectionConversion[F[_], C[_], Y] extends Serializable {
+    def convert(c: F[Y]): C[Y]
   }
 
-  object SeqConversion {
-    implicit val seqToSeq = new SeqConversion[Seq] {
-      override def convertSeq[Y](c: Seq[Y]): Seq[Y] = c
+  object CollectionConversion {
+    implicit def seqToSeq[Y](implicit cbf: CanBuildFrom[Nothing, Y, Seq[Y]]) = new CollectionConversion[Seq, Seq, Y] {
+      override def convert(c: Seq[Y]): Seq[Y] = c
     }
-    implicit val seqToVector = new SeqConversion[Vector] {
-      override def convertSeq[Y](c: Seq[Y]): Vector[Y] = c.toVector
+    implicit def seqToVector[Y](implicit cbf: CanBuildFrom[Nothing, Y, Vector[Y]]) = new CollectionConversion[Seq, Vector, Y] {
+      override def convert(c: Seq[Y]): Vector[Y] = c.toVector
     }
-    implicit val seqToList = new SeqConversion[List] {
-      override def convertSeq[Y](c: Seq[Y]): List[Y] = c.toList
+    implicit def seqToList[Y](implicit cbf: CanBuildFrom[Nothing, Y, List[Y]]) = new CollectionConversion[Seq, List, Y] {
+      override def convert(c: Seq[Y]): List[Y] = c.toList
+    }
+    implicit def setToSet[Y](implicit cbf: CanBuildFrom[Nothing, Y, Set[Y]]) = new CollectionConversion[Set, Set, Y] {
+      override def convert(c: Set[Y]): Set[Y] = c
+    }
+    implicit def setToTreeSet[Y](implicit cbf: CanBuildFrom[Nothing, Y, TreeSet[Y]]) = new CollectionConversion[Set, TreeSet, Y] {
+      override def convert(c: Set[Y]): TreeSet[Y] = c.to[TreeSet]
     }
   }
 
-  implicit def collectionEncoder[C[X] <: Seq[X], T](
+  implicit def seqEncoder[C[X] <: Seq[X], T](
+                                              implicit
+                                              i0: Lazy[RecordFieldEncoder[T]],
+                                              i1: ClassTag[C[T]],
+                                              i2: CollectionConversion[Seq, C, T],
+                                              i3: CanBuildFrom[Nothing, T, C[T]]
+                                            ) = collectionEncoder[Seq, C, T]
+
+  implicit def setEncoder[C[X] <: Set[X], T](
+                                              implicit
+                                              i0: Lazy[RecordFieldEncoder[T]],
+                                              i1: ClassTag[C[T]],
+                                              i2: CollectionConversion[Set, C, T],
+                                              i3: CanBuildFrom[Nothing, T, C[T]]
+                                            ) = collectionEncoder[Set, C, T]
+
+  def collectionEncoder[O[_], C[X], T](
       implicit
       i0: Lazy[RecordFieldEncoder[T]],
       i1: ClassTag[C[T]],
-      i2: SeqConversion[C]
+      i2: CollectionConversion[O, C, T],
+      i3: CanBuildFrom[Nothing, T, C[T]]
     ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
     private lazy val encodeT = i0.value.encoder
 
@@ -538,20 +561,20 @@ object TypedEncoder {
       if (ScalaReflection.isNativeType(enc.jvmRepr)) {
         NewInstance(classOf[GenericArrayData], path :: Nil, catalystRepr)
       } else {
-        MapObjects(enc.toCatalyst, path, enc.jvmRepr, encodeT.nullable)
+        // converts to Seq, both Set and Seq handling must convert to Seq first
+        MapObjects(enc.toCatalyst, SeqCaster(path), enc.jvmRepr, encodeT.nullable)
       }
     }
 
     def fromCatalyst(path: Expression): Expression =
-      CollectionCaster(
+      CollectionCaster[O, C, T](
         MapObjects(
         i0.value.fromCatalyst,
         path,
         encodeT.catalystRepr,
         encodeT.nullable,
-        Some(i1.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
-      )
-        , implicitly[SeqConversion[C]])
+        Some(i1.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly when compiling
+      ), implicitly[CollectionConversion[O,C,T]]) // This will convert Seq to the appropriate C[_] when eval'ing.
 
     override def toString: String = s"collectionEncoder($jvmRepr)"
   }
@@ -561,16 +584,18 @@ object TypedEncoder {
    * @param i2 implicit `ClassTag[Set[T]]` to provide runtime information about the set type.
    * @tparam T the element type of the set.
    * @return a `TypedEncoder` instance for `Set[T]`.
-   */
-  implicit def setEncoder[T](
+
+  implicit def setEncoder[C[X] <: Seq[X], T](
       implicit
       i1: shapeless.Lazy[RecordFieldEncoder[T]],
-      i2: ClassTag[Set[T]]
+      i2: ClassTag[Set[T]],
+      i3: CollectionConversion[Set, C, T],
+      i4: CanBuildFrom[Nothing, T, C[T]]
     ): TypedEncoder[Set[T]] = {
     implicit val inj: Injection[Set[T], Seq[T]] = Injection(_.toSeq, _.toSet)
 
     TypedEncoder.usingInjection
-  }
+  }*/
 
   /**
    * @tparam A the key type

@@ -1,7 +1,6 @@
 package frameless
 
-import scala.collection.immutable.Set
-
+import scala.collection.immutable.{Set, TreeSet}
 import org.scalatest.matchers.should.Matchers
 
 object EncoderTests {
@@ -12,6 +11,8 @@ object EncoderTests {
   case class PeriodRow(p: java.time.Period)
 
   case class VectorOfObject(a: Vector[X1[Int]])
+
+  case class TreeSetOfObjects(a: TreeSet[X1[Int]])
 }
 
 class EncoderTests extends TypedDatasetSuite with Matchers {
@@ -36,7 +37,7 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
   }
 
   test("It should encode a Vector of Objects") {
-    forceInterpreted {
+    evalCodeGens {
       implicit val e = implicitly[TypedEncoder[VectorOfObject]]
       implicit val te = TypedExpressionEncoder[VectorOfObject]
       implicit val xe = implicitly[TypedEncoder[X1[VectorOfObject]]]
@@ -44,6 +45,20 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
       val v = (1 to 20).map(X1(_)).toVector
       val ds = {
         sqlContext.createDataset(Seq(X1[VectorOfObject](VectorOfObject(v))))
+      }
+      ds.head.a.a shouldBe v
+    }
+  }
+
+  test("It should encode a TreeSet of Objects") {
+    evalCodeGens {
+      implicit val e = implicitly[TypedEncoder[TreeSetOfObjects]]
+      implicit val te = TypedExpressionEncoder[TreeSetOfObjects]
+      implicit val xe = implicitly[TypedEncoder[X1[TreeSetOfObjects]]]
+      implicit val xte = TypedExpressionEncoder[X1[TreeSetOfObjects]]
+      val v = (1 to 20).map(X1(_)).to[TreeSet]
+      val ds = {
+        sqlContext.createDataset(Seq(X1[TreeSetOfObjects](TreeSetOfObjects(v))))
       }
       ds.head.a.a shouldBe v
     }
