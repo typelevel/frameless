@@ -1,6 +1,6 @@
 package frameless
 
-import scala.collection.immutable.{Set, TreeSet}
+import scala.collection.immutable.{ Set, TreeSet }
 import org.scalatest.matchers.should.Matchers
 
 object EncoderTests {
