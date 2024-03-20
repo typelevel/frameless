@@ -502,7 +502,7 @@ object TypedEncoder {
   /**
    * Per #804 - when MapObjects is used in interpreted mode the type returned is Seq, not the derived type used in compilation
    *
-   * This type class offers extensible conversion for more specific types.  By default Seq, List and Vector for Seq's and Set, TreeSet and HashTrieSet are supported.
+   * This type class offers extensible conversion for more specific types.  By default Seq, List and Vector for Seq's and Set, TreeSet and ListSet are supported.
    *
    * @tparam C
    */
@@ -552,13 +552,6 @@ object TypedEncoder {
         cbf: CanBuildFrom[Nothing, Y, ListSet[Y]]
       ) = new CollectionConversion[Set, ListSet, Y] {
       override def convert(c: Set[Y]): ListSet[Y] = c.to[ListSet]
-    }
-
-    implicit def setToTrieSet[Y](
-        implicit
-        cbf: CanBuildFrom[Nothing, Y, HashTrieSet[Y]]
-      ) = new CollectionConversion[Set, HashTrieSet, Y] {
-      override def convert(c: Set[Y]): HashTrieSet[Y] = c.to[HashTrieSet]
     }
   }
 
