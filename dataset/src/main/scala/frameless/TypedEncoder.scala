@@ -530,11 +530,15 @@ object TypedEncoder {
         implicit
         ordering: Ordering[Y]
       ) = new CollectionConversion[Set, TreeSet, Y] {
-      override def convert(c: Set[Y]): TreeSet[Y] = TreeSet.newBuilder.++=(c).result()
+
+      override def convert(c: Set[Y]): TreeSet[Y] =
+        TreeSet.newBuilder.++=(c).result()
     }
 
     implicit def setToListSet[Y] = new CollectionConversion[Set, ListSet, Y] {
-      override def convert(c: Set[Y]): ListSet[Y] = ListSet.newBuilder.++=(c).result()
+
+      override def convert(c: Set[Y]): ListSet[Y] =
+        ListSet.newBuilder.++=(c).result()
     }
   }
 
