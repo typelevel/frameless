@@ -69,6 +69,7 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
     // only needed for 2.12
     implicit val ordering = new Ordering[X1[Int]] {
       val intordering = implicitly[Ordering[Int]]
+
       override def compare(x: X1[Int], y: X1[Int]): Int =
         intordering.compare(x.a, y.a)
     }
