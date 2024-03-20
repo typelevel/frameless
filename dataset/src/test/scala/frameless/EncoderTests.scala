@@ -1,6 +1,6 @@
 package frameless
 
-import scala.collection.immutable.{ Set, TreeSet }
+import scala.collection.immutable.{ListSet, Set, TreeSet}
 import org.scalatest.matchers.should.Matchers
 
 object EncoderTests {
@@ -10,9 +10,7 @@ object EncoderTests {
   case class DurationRow(d: java.time.Duration)
   case class PeriodRow(p: java.time.Period)
 
-  case class VectorOfObject(a: Vector[X1[Int]])
-
-  case class TreeSetOfObjects(a: TreeSet[X1[Int]])
+  case class ContainerOf[CC[X] <: Iterable[X]](a: CC[X1[Int]])
 }
 
 class EncoderTests extends TypedDatasetSuite with Matchers {
@@ -36,31 +34,48 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
     implicitly[TypedEncoder[PeriodRow]]
   }
 
-  test("It should encode a Vector of Objects") {
-    evalCodeGens {
-      implicit val e = implicitly[TypedEncoder[VectorOfObject]]
-      implicit val te = TypedExpressionEncoder[VectorOfObject]
-      implicit val xe = implicitly[TypedEncoder[X1[VectorOfObject]]]
-      implicit val xte = TypedExpressionEncoder[X1[VectorOfObject]]
-      val v = (1 to 20).map(X1(_)).toVector
-      val ds = {
-        sqlContext.createDataset(Seq(X1[VectorOfObject](VectorOfObject(v))))
-      }
-      ds.head.a.a shouldBe v
+  def performCollection[C[X] <: Iterable[X]](toType: Seq[X1[Int]] => C[X1[Int]])(implicit ce: TypedEncoder[C[X1[Int]]]): (Unit,Unit) = evalCodeGens {
+
+    implicit val cte = TypedExpressionEncoder[C[X1[Int]]]
+    implicit val e = implicitly[TypedEncoder[ContainerOf[C]]]
+    implicit val te = TypedExpressionEncoder[ContainerOf[C]]
+    implicit val xe = implicitly[TypedEncoder[X1[ContainerOf[C]]]]
+    implicit val xte = TypedExpressionEncoder[X1[ContainerOf[C]]]
+    val v = toType((1 to 20).map(X1(_)))
+    val ds = {
+      sqlContext.createDataset(Seq(X1[ContainerOf[C]](ContainerOf[C](v))))
     }
+    ds.head.a.a shouldBe v
+    ()
   }
 
-  test("It should encode a TreeSet of Objects") {
-    evalCodeGens {
-      implicit val e = implicitly[TypedEncoder[TreeSetOfObjects]]
-      implicit val te = TypedExpressionEncoder[TreeSetOfObjects]
-      implicit val xe = implicitly[TypedEncoder[X1[TreeSetOfObjects]]]
-      implicit val xte = TypedExpressionEncoder[X1[TreeSetOfObjects]]
-      val v = (1 to 20).map(X1(_)).to[TreeSet]
-      val ds = {
-        sqlContext.createDataset(Seq(X1[TreeSetOfObjects](TreeSetOfObjects(v))))
-      }
-      ds.head.a.a shouldBe v
+  test("It should serde a Seq of Objects") {
+    performCollection[Seq](_)
+  }
+
+  test("It should serde a Set of Objects") {
+    performCollection[Set](_)
+  }
+
+  test("It should serde a Vector of Objects") {
+    performCollection[Vector](_.toVector)
+  }
+
+  test("It should serde a TreeSet of Objects") {
+    // only needed for 2.12
+    implicit val ordering = new Ordering[X1[Int]] {
+      val intordering = implicitly[Ordering[Int]]
+      override def compare(x: X1[Int], y: X1[Int]): Int = intordering.compare(x.a, y.a)
     }
+
+    performCollection[TreeSet](TreeSet.newBuilder.++=(_).result())
+  }
+
+  test("It should serde a List of Objects") {
+    performCollection[List](_.toList)
+  }
+
+  test("It should serde a ListSet of Objects") {
+    performCollection[ListSet](ListSet.newBuilder.++=(_).result())
   }
 }

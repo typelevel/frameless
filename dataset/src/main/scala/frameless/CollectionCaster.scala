@@ -62,6 +62,6 @@ case class SeqCaster[C[X] <: Iterable[X], Y](child: Expression)
       ctx: CodegenContext,
       ev: ExprCode
     ): ExprCode =
-    defineCodeGen(ctx, ev, c => toSeqOr(s"$c.toSeq()", s"$c"))
+    defineCodeGen(ctx, ev, c => toSeqOr(s"$c.toVector()", s"$c"))
 
 }

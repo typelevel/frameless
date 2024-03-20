@@ -188,7 +188,7 @@ package object frameless {
    * @return
    */
   def evalCodeGens[T](f: => T): (T, T) =
-    (forceCodeGen(f), forceInterpreted(f))
+    (forceInterpreted(f), forceCodeGen(f))
 
   /**
    * Sets all SQL configurations specified in `pairs`, calls `f`, and then restores all SQL
