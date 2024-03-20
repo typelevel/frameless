@@ -21,7 +21,7 @@ import shapeless._
 import shapeless.ops.hlist.IsHCons
 
 import scala.collection.generic.CanBuildFrom
-import scala.collection.immutable.HashSet.HashTrieSet
+
 import scala.collection.immutable.{ ListSet, TreeSet }
 
 abstract class TypedEncoder[T](
