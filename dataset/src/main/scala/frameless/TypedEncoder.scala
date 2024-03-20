@@ -501,10 +501,27 @@ object TypedEncoder {
       override def toString: String = s"arrayEncoder($jvmRepr)"
     }
 
+  trait SeqConversion[C[_]] extends Serializable {
+    def convertSeq[Y](c: Seq[Y]): C[Y]
+  }
+
+  object SeqConversion {
+    implicit val seqToSeq = new SeqConversion[Seq] {
+      override def convertSeq[Y](c: Seq[Y]): Seq[Y] = c
+    }
+    implicit val seqToVector = new SeqConversion[Vector] {
+      override def convertSeq[Y](c: Seq[Y]): Vector[Y] = c.toVector
+    }
+    implicit val seqToList = new SeqConversion[List] {
+      override def convertSeq[Y](c: Seq[Y]): List[Y] = c.toList
+    }
+  }
+
   implicit def collectionEncoder[C[X] <: Seq[X], T](
       implicit
       i0: Lazy[RecordFieldEncoder[T]],
-      i1: ClassTag[C[T]]
+      i1: ClassTag[C[T]],
+      i2: SeqConversion[C]
     ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
     private lazy val encodeT = i0.value.encoder
 
@@ -526,13 +543,15 @@ object TypedEncoder {
     }
 
     def fromCatalyst(path: Expression): Expression =
-      MapObjects(
+      CollectionCaster(
+        MapObjects(
         i0.value.fromCatalyst,
         path,
         encodeT.catalystRepr,
         encodeT.nullable,
         Some(i1.runtimeClass) // This will cause MapObjects to build a collection of type C[_] directly
       )
+        , implicitly[SeqConversion[C]])
 
     override def toString: String = s"collectionEncoder($jvmRepr)"
   }
