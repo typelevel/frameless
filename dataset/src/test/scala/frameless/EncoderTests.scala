@@ -1,6 +1,6 @@
 package frameless
 
-import scala.collection.immutable.{ListSet, Set, TreeSet}
+import scala.collection.immutable.{ ListSet, Set, TreeSet }
 import org.scalatest.matchers.should.Matchers
 
 object EncoderTests {
@@ -34,7 +34,11 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
     implicitly[TypedEncoder[PeriodRow]]
   }
 
-  def performCollection[C[X] <: Iterable[X]](toType: Seq[X1[Int]] => C[X1[Int]])(implicit ce: TypedEncoder[C[X1[Int]]]): (Unit,Unit) = evalCodeGens {
+  def performCollection[C[X] <: Iterable[X]](
+      toType: Seq[X1[Int]] => C[X1[Int]]
+    )(implicit
+      ce: TypedEncoder[C[X1[Int]]]
+    ): (Unit, Unit) = evalCodeGens {
 
     implicit val cte = TypedExpressionEncoder[C[X1[Int]]]
     implicit val e = implicitly[TypedEncoder[ContainerOf[C]]]
@@ -65,7 +69,8 @@ class EncoderTests extends TypedDatasetSuite with Matchers {
     // only needed for 2.12
     implicit val ordering = new Ordering[X1[Int]] {
       val intordering = implicitly[Ordering[Int]]
-      override def compare(x: X1[Int], y: X1[Int]): Int = intordering.compare(x.a, y.a)
+      override def compare(x: X1[Int], y: X1[Int]): Int =
+        intordering.compare(x.a, y.a)
     }
 
     performCollection[TreeSet](TreeSet.newBuilder.++=(_).result())
