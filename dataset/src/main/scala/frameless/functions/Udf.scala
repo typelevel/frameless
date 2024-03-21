@@ -156,6 +156,7 @@ trait Udf {
  *
  * Our own implementation of `ScalaUDF` from Catalyst compatible with [[TypedEncoder]].
  */
+// Possibly add UserDefinedExpression trait to stop the functions being registered and used as aggregates
 case class FramelessUdf[T, R](
     function: AnyRef,
     encoders: Seq[TypedEncoder[_]],
@@ -172,6 +173,9 @@ case class FramelessUdf[T, R](
   lazy val typedEnc =
     TypedExpressionEncoder[R](rencoder).asInstanceOf[ExpressionEncoder[R]]
 
+  lazy val isSerializedAsStructForTopLevel =
+    typedEnc.isSerializedAsStructForTopLevel
+
   def eval(input: InternalRow): Any = {
     val jvmTypes = children.map(_.eval(input))
 
@@ -181,7 +185,7 @@ case class FramelessUdf[T, R](
     val retval =
       if (returnCatalyst == null)
         null
-      else if (typedEnc.isSerializedAsStructForTopLevel)
+      else if (isSerializedAsStructForTopLevel)
         returnCatalyst
       else
         returnCatalyst.get(0, dataType)
