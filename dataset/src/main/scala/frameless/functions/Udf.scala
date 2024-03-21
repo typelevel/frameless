@@ -49,16 +49,12 @@ trait Udf {
     ) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
-<<<<<<< HEAD
-        FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
-=======
         FramelessUdf(
           f,
           us.toList[UntypedExpression[T]],
           TypedEncoder[R],
           s => f(s.head.asInstanceOf[A1], s(1).asInstanceOf[A2])
         )
->>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -75,9 +71,6 @@ trait Udf {
     ) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
-<<<<<<< HEAD
-        FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
-=======
         FramelessUdf(
           f,
           us.toList[UntypedExpression[T]],
@@ -89,7 +82,6 @@ trait Udf {
               s(2).asInstanceOf[A3]
             )
         )
->>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -102,9 +94,6 @@ trait Udf {
   def udf[T, A1, A2, A3, A4, R: TypedEncoder](f: (A1, A2, A3, A4) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
-<<<<<<< HEAD
-        FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
-=======
         FramelessUdf(
           f,
           us.toList[UntypedExpression[T]],
@@ -117,7 +106,6 @@ trait Udf {
               s(3).asInstanceOf[A4]
             )
         )
->>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -130,9 +118,6 @@ trait Udf {
   def udf[T, A1, A2, A3, A4, A5, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
-<<<<<<< HEAD
-        FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
-=======
         FramelessUdf(
           f,
           us.toList[UntypedExpression[T]],
@@ -146,7 +131,6 @@ trait Udf {
               s(4).asInstanceOf[A5]
             )
         )
->>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 }

@@ -212,4 +212,58 @@ package object frameless {
     }
     res
   }
+
+  // from Quality, which is from Spark test versions
+
+  // if this blows then debug on CodeGenerator 1294, 1299 and grab code.body
+  def forceCodeGen[T](f: => T): T = {
+    val codegenMode = CodegenObjectFactoryMode.CODEGEN_ONLY.toString
+
+    withSQLConf(SQLConf.CODEGEN_FACTORY_MODE.key -> codegenMode) {
+      f
+    }
+  }
+
+  def forceInterpreted[T](f: => T): T = {
+    val codegenMode = CodegenObjectFactoryMode.NO_CODEGEN.toString
+
+    withSQLConf(SQLConf.CODEGEN_FACTORY_MODE.key -> codegenMode) {
+      f
+    }
+  }
+
+  /**
+   * runs the same test with both eval and codegen, then does the same again using resolveWith
+   *
+   * @param f
+   * @tparam T
+   * @return
+   */
+  def evalCodeGens[T](f: => T): (T, T) =
+    (forceInterpreted(f), forceCodeGen(f))
+
+  /**
+   * Sets all SQL configurations specified in `pairs`, calls `f`, and then restores all SQL
+   * configurations.
+   */
+  protected def withSQLConf[T](pairs: (String, String)*)(f: => T): T = {
+    val conf = SQLConf.get
+    val (keys, values) = pairs.unzip
+    val currentValues = keys.map { key =>
+      if (conf.contains(key)) {
+        Some(conf.getConfString(key))
+      } else {
+        None
+      }
+    }
+    (keys, values).zipped.foreach { (k, v) => conf.setConfString(k, v) }
+    try f
+    finally {
+      keys.zip(currentValues).foreach {
+        case (key, Some(value)) => conf.setConfString(key, value)
+        case (key, None)        => conf.unsetConf(key)
+      }
+    }
+  }
+
 }
