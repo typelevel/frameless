@@ -11,9 +11,6 @@ import org.apache.spark.sql.catalyst.expressions.{
   UnsafeArrayData,
   Literal
 }
-import org.apache.spark.sql.FramelessInternals
-import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.sql.{ reflection => ScalaReflection }
 
 import org.apache.spark.sql.catalyst.util.{
   ArrayBasedMapData,
@@ -528,7 +525,12 @@ object TypedEncoder {
   object CollectionConversion {
 
     implicit def seqToSeq[Y] = new CollectionConversion[Seq, Seq, Y] {
-      override def convert(c: Seq[Y]): Seq[Y] = c
+      override def convert(c: Seq[Y]): Seq[Y] =
+        c match {
+          // Stream is produced
+          case _: Stream[Y]@unchecked => c.toVector.toSeq
+          case _ => c
+        }
     }
 
     implicit def seqToVector[Y] = new CollectionConversion[Seq, Vector, Y] {

@@ -119,7 +119,7 @@ package object frameless {
 
   private var outputDir: String = _
 
-  /** allow usage on non-build environments */
+  /** allow test usage on non-build environments */
   def setOutputDir(path: String): Unit = {
     outputDir = path
   }
@@ -129,6 +129,15 @@ package object frameless {
       outputDir
     else
       "target/test-output"
+
+  private var shouldClose = true
+
+  /** allow test usage on non-build environments */
+  def setShouldCloseSession(shouldClose: Boolean): Unit = {
+    this.shouldClose = shouldClose
+  }
+
+  lazy val shouldCloseSession = shouldClose
 
   /**
    * Will dive down causes until either the cause is true or there are no more causes
