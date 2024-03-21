@@ -4,12 +4,12 @@ package functions
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{
   Expression,
-  ExpressionProxy,
   LeafExpression,
   NonSQLExpression
 }
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import Block._
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.types.DataType
 import shapeless.syntax.std.tuple._
 
@@ -28,7 +28,12 @@ trait Udf {
    */
   def udf[T, A, R: TypedEncoder](f: A => R): TypedColumn[T, A] => TypedColumn[T, R] = {
     u =>
-      val scalaUdf = FramelessUdf(f, List(u), TypedEncoder[R])
+      val scalaUdf = FramelessUdf(
+        f,
+        List(u),
+        TypedEncoder[R],
+        s => f(s.head.asInstanceOf[A])
+      )
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -44,7 +49,16 @@ trait Udf {
     ) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
+<<<<<<< HEAD
         FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+=======
+        FramelessUdf(
+          f,
+          us.toList[UntypedExpression[T]],
+          TypedEncoder[R],
+          s => f(s.head.asInstanceOf[A1], s(1).asInstanceOf[A2])
+        )
+>>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -61,7 +75,21 @@ trait Udf {
     ) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
+<<<<<<< HEAD
         FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+=======
+        FramelessUdf(
+          f,
+          us.toList[UntypedExpression[T]],
+          TypedEncoder[R],
+          s =>
+            f(
+              s.head.asInstanceOf[A1],
+              s(1).asInstanceOf[A2],
+              s(2).asInstanceOf[A3]
+            )
+        )
+>>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -74,7 +102,22 @@ trait Udf {
   def udf[T, A1, A2, A3, A4, R: TypedEncoder](f: (A1, A2, A3, A4) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
+<<<<<<< HEAD
         FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+=======
+        FramelessUdf(
+          f,
+          us.toList[UntypedExpression[T]],
+          TypedEncoder[R],
+          s =>
+            f(
+              s.head.asInstanceOf[A1],
+              s(1).asInstanceOf[A2],
+              s(2).asInstanceOf[A3],
+              s(3).asInstanceOf[A4]
+            )
+        )
+>>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 
@@ -87,7 +130,23 @@ trait Udf {
   def udf[T, A1, A2, A3, A4, A5, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf =
+<<<<<<< HEAD
         FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
+=======
+        FramelessUdf(
+          f,
+          us.toList[UntypedExpression[T]],
+          TypedEncoder[R],
+          s =>
+            f(
+              s.head.asInstanceOf[A1],
+              s(1).asInstanceOf[A2],
+              s(2).asInstanceOf[A3],
+              s(3).asInstanceOf[A4],
+              s(4).asInstanceOf[A5]
+            )
+        )
+>>>>>>> 3bdb8ad (#803 - clean udf from #804, no shim start)
       new TypedColumn[T, R](scalaUdf)
   }
 }
@@ -101,63 +160,36 @@ case class FramelessUdf[T, R](
     function: AnyRef,
     encoders: Seq[TypedEncoder[_]],
     children: Seq[Expression],
-    rencoder: TypedEncoder[R])
+    rencoder: TypedEncoder[R],
+    evalFunction: Seq[Any] => Any)
     extends Expression
     with NonSQLExpression {
 
   override def nullable: Boolean = rencoder.nullable
+
   override def toString: String = s"FramelessUdf(${children.mkString(", ")})"
 
-  lazy val evalCode = {
-    val ctx = new CodegenContext()
-    val eval = genCode(ctx)
-
-    val codeBody = s"""
-      public scala.Function1<InternalRow, Object> generate(Object[] references) {
-        return new FramelessUdfEvalImpl(references);
-      }
-
-      class FramelessUdfEvalImpl extends scala.runtime.AbstractFunction1<InternalRow, Object> {
-        private final Object[] references;
-        ${ctx.declareMutableStates()}
-        ${ctx.declareAddedFunctions()}
-
-        public FramelessUdfEvalImpl(Object[] references) {
-          this.references = references;
-          ${ctx.initMutableStates()}
-        }
-
-        public java.lang.Object apply(java.lang.Object z) {
-          InternalRow ${ctx.INPUT_ROW} = (InternalRow) z;
-          ${eval.code}
-          return ${eval.isNull} ? ((Object)null) : ((Object)${eval.value});
-        }
-      }
-    """
-
-    val code = CodeFormatter.stripOverlappingComments(
-      new CodeAndComment(codeBody, ctx.getPlaceHolderToComments())
-    )
-
-    val (clazz, _) = CodeGenerator.compile(code)
-    val codegen =
-      clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
-
-    codegen
-  }
+  lazy val typedEnc =
+    TypedExpressionEncoder[R](rencoder).asInstanceOf[ExpressionEncoder[R]]
 
   def eval(input: InternalRow): Any = {
-    evalCode(input)
+    val jvmTypes = children.map(_.eval(input))
+
+    val returnJvm = evalFunction(jvmTypes).asInstanceOf[R]
+
+    val returnCatalyst = typedEnc.createSerializer().apply(returnJvm)
+    val retval =
+      if (returnCatalyst == null)
+        null
+      else if (typedEnc.isSerializedAsStructForTopLevel)
+        returnCatalyst
+      else
+        returnCatalyst.get(0, dataType)
+
+    retval
   }
 
   def dataType: DataType = rencoder.catalystRepr
-
-  // #803 - SPARK-41991 fixes this for the most part, this is a belts and braces approach
-  def nonProxy(child: Expression): Expression =
-    child transform {
-      case p: ExpressionProxy => p.child
-      case everythingElse     => everythingElse
-    }
 
   override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
     ctx.references += this
@@ -178,7 +210,7 @@ case class FramelessUdf[T, R](
       .zip(children)
       .map {
         case (encoder, child) =>
-          val eval = nonProxy(child).genCode(ctx)
+          val eval = child.genCode(ctx)
           val codeTpe = CodeGenerator.boxedType(encoder.jvmRepr)
           val argTerm = ctx.freshName("arg")
           val convert =
@@ -266,11 +298,13 @@ object FramelessUdf {
   def apply[T, R](
       function: AnyRef,
       cols: Seq[UntypedExpression[T]],
-      rencoder: TypedEncoder[R]
+      rencoder: TypedEncoder[R],
+      evalFunction: Seq[Any] => Any
     ): FramelessUdf[T, R] = FramelessUdf(
     function = function,
     encoders = cols.map(_.uencoder).toList,
     children = cols.map(x => x.uencoder.fromCatalyst(x.expr)).toList,
-    rencoder = rencoder
+    rencoder = rencoder,
+    evalFunction = evalFunction
   )
 }
