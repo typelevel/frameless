@@ -525,11 +525,12 @@ object TypedEncoder {
   object CollectionConversion {
 
     implicit def seqToSeq[Y] = new CollectionConversion[Seq, Seq, Y] {
+
       override def convert(c: Seq[Y]): Seq[Y] =
         c match {
           // Stream is produced
-          case _: Stream[Y]@unchecked => c.toVector.toSeq
-          case _ => c
+          case _: Stream[Y] @unchecked => c.toVector.toSeq
+          case _                       => c
         }
     }
 
