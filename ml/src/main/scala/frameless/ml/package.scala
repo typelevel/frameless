@@ -1,13 +1,15 @@
 package frameless
 
-import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.ml.FramelessInternals
-import org.apache.spark.ml.linalg.{Matrix, Vector}
+import FramelessInternals.UserDefinedType
+import org.apache.spark.sql.shim.{ mlUtils => MLFramelessInternals }
+import org.apache.spark.ml.linalg.{ Matrix, Vector }
 
 package object ml {
 
-  implicit val mlVectorUdt: UserDefinedType[Vector] = FramelessInternals.vectorUdt
+  implicit val mlVectorUdt: UserDefinedType[Vector] =
+    MLFramelessInternals.vectorUdt
 
-  implicit val mlMatrixUdt: UserDefinedType[Matrix] = FramelessInternals.matrixUdt
+  implicit val mlMatrixUdt: UserDefinedType[Matrix] =
+    MLFramelessInternals.matrixUdt
 
 }
