@@ -21,13 +21,17 @@ object DoubleBehaviourUtils {
     case null => None
     case d: Double =>
       nanHandler(d).map { d =>
-        BigDecimal(d).setScale(
-          6,
-          if (d > 0)
-            BigDecimal.RoundingMode.FLOOR
-          else
-            BigDecimal.RoundingMode.CEILING
-        )
+        if (d == Double.NegativeInfinity || d == Double.PositiveInfinity)
+          BigDecimal("1000000.000000") * (if (d == Double.PositiveInfinity) 1
+                                          else -1)
+        else
+          BigDecimal(d).setScale(
+            6,
+            if (d > 0)
+              BigDecimal.RoundingMode.FLOOR
+            else
+              BigDecimal.RoundingMode.CEILING
+          )
       }
     case _ => ???
   }
