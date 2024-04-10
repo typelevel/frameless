@@ -250,13 +250,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("first") {
-    def prop[A: TypedEncoder](xs: List[A]): Prop = {
+    def prop[A: TypedEncoder: Ordering: CatalystOrdered](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
+      // servers do not return the same order told to
+      val sxs = xs.sorted
 
-      val datasetFirst = dataset.agg(first(A)).collect().run().toList
+      val datasetFirst = dataset.orderBy(A: SortedTypedColumn[X1[A],A]).agg(first(A)).collect().run().toList
 
-      datasetFirst ?= xs.headOption.toList
+      datasetFirst ?= sxs.headOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))
@@ -269,13 +271,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("last") {
-    def prop[A: TypedEncoder](xs: List[A]): Prop = {
+    def prop[A: TypedEncoder: Ordering: CatalystOrdered](xs: List[A]): Prop = {
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
+      // servers do not return the same order told to
+      val sxs = xs.sorted
 
-      val datasetLast = dataset.agg(last(A)).collect().run().toList
+      val datasetLast = dataset.orderBy(A: SortedTypedColumn[X1[A],A]).agg(last(A)).collect().run().toList
 
-      datasetLast ?= xs.lastOption.toList
+      datasetLast ?= sxs.lastOption.toList
     }
 
     check(forAll(prop[BigDecimal] _))
@@ -392,6 +396,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     implicit
     encEv: Encoder[(Int, A, B)],
     encEv2: Encoder[(Int,Option[Double])],
+    encEv3: Encoder[(Int,Option[BigDecimal])],
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
   ): Prop = {
@@ -430,6 +435,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     implicit
     encEv: Encoder[(Int, A)],
     encEv2: Encoder[(Int,Option[Double])],
+    encEv3: Encoder[(Int,Option[BigDecimal])],
     evCanBeDoubleA: CatalystCast[A, Double]
   ): Prop = {
 

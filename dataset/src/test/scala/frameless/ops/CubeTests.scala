@@ -13,9 +13,9 @@ class CubeTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.cube(A).agg(count()).collect().run().toVector.sortBy(_._2)
+      val received = dataset.cube(A).agg(count()).collect().run().toVector.sortBy(t => (t._2, t._1))
       val expected = dataset.dataset.cube("a").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_._2)
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(t => (t._2, t._1))
 
       received ?= expected
     }
@@ -24,15 +24,15 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cube('a, 'b).agg(count())") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
+    def prop[A: TypedEncoder : Ordering, B: TypedEncoder: Ordering, Out: TypedEncoder : Numeric: Ordering]
     (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val received = dataset.cube(A, B).agg(count()).collect().run().toVector.sortBy(_._3)
+      val received = dataset.cube(A, B).agg(count()).collect().run().toVector.sortBy(t => (t._3, t._2, t._1))
       val expected = dataset.dataset.cube("a", "b").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[Long](2))).sortBy(_._3)
+        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[Long](2))).sortBy(t => (t._3, t._2, t._1))
 
       received ?= expected
     }
@@ -41,15 +41,15 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cube('a).agg(sum('b)") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
+    def prop[A: TypedEncoder : Ordering, B: TypedEncoder: Ordering, Out: TypedEncoder : Numeric]
     (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val received = dataset.cube(A).agg(sum(B)).collect().run().toVector.sortBy(_._2)
+      val received = dataset.cube(A).agg(sum(B)).collect().run().toVector.sortBy(t => (t._2, t._1))
       val expected = dataset.dataset.cube("a").sum("b").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Out](1))).sortBy(_._2)
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Out](1))).sortBy(t => (t._2, t._1))
 
       received ?= expected
     }
@@ -94,38 +94,38 @@ class CubeTests extends TypedDatasetSuite {
       val framelessSumBC = dataset
         .cube(A)
         .agg(sum(B), sum(C))
-        .collect().run().toVector.sortBy(_._1)
+        .collect().run().toVector.sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBC = dataset.dataset.cube("a").sum("b", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2)))
-        .sortBy(_._1)
+        .sortBy(t => (t._1, t._2, t._3))
 
       val framelessSumBCB = dataset
         .cube(A)
         .agg(sum(B), sum(C), sum(B))
-        .collect().run().toVector.sortBy(_._1)
+        .collect().run().toVector.sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCB = dataset.dataset.cube("a").sum("b", "c", "b").collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3)))
-        .sortBy(_._1)
+        .sortBy(t => (t._1, t._2, t._3))
 
       val framelessSumBCBC = dataset
         .cube(A)
         .agg(sum(B), sum(C), sum(B), sum(C))
-        .collect().run().toVector.sortBy(_._1)
+        .collect().run().toVector.sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCBC = dataset.dataset.cube("a").sum("b", "c", "b", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3), row.getAs[OutC](4)))
-        .sortBy(_._1)
+        .sortBy(t => (t._1, t._2, t._3))
 
       val framelessSumBCBCB = dataset
         .cube(A)
         .agg(sum(B), sum(C), sum(B), sum(C), sum(B))
-        .collect().run().toVector.sortBy(_._1)
+        .collect().run().toVector.sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCBCB = dataset.dataset.cube("a").sum("b", "c", "b", "c", "b").collect().toVector
         .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3), row.getAs[OutC](4), row.getAs[OutB](5)))
-        .sortBy(_._1)
+        .sortBy(t => (t._1, t._2, t._3))
 
       (framelessSumBC ?= sparkSumBC)
         .&&(framelessSumBCB ?= sparkSumBCB)
@@ -187,56 +187,56 @@ class CubeTests extends TypedDatasetSuite {
         .cube(A, B)
         .agg(sum(C))
         .collect().run().toVector
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumC = dataset.dataset
         .cube("a", "b").sum("c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2)))
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCC = dataset
         .cube(A, B)
         .agg(sum(C), sum(C))
         .collect().run().toVector
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCC = dataset.dataset
         .cube("a", "b").sum("c", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3)))
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCC = dataset
         .cube(A, B)
         .agg(sum(C), sum(C), sum(C))
         .collect().run().toVector
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCC = dataset.dataset
         .cube("a", "b").sum("c", "c", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4)))
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCCC = dataset
         .cube(A, B)
         .agg(sum(C), sum(C), sum(C), sum(C))
         .collect().run().toVector
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCC = dataset.dataset
         .cube("a", "b").sum("c", "c", "c", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5)))
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCCCC = dataset
         .cube(A, B)
         .agg(sum(C), sum(C), sum(C), sum(C), sum(C))
         .collect().run().toVector
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCCC = dataset.dataset
         .cube("a", "b").sum("c", "c", "c", "c", "c").collect().toVector
         .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5), row.getAs[OutC](6)))
-        .sortBy(_._2)
+        .sortBy(t => (t._2, t._1, t._3))
 
       (framelessSumC ?= sparkSumC) &&
         (framelessSumCC ?= sparkSumCC) &&
@@ -358,9 +358,9 @@ class CubeTests extends TypedDatasetSuite {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.cubeMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_._2)
+      val received = dataset.cubeMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_.swap)
       val expected = dataset.dataset.cube("a").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_._2)
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_.swap)
 
       received ?= expected
     }
