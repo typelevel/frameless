@@ -8,14 +8,23 @@ import org.scalacheck.Prop._
 class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a).agg(count())") {
-    def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
-    (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, Out: TypedEncoder: Numeric](
+        data: List[X1[A]]
+      )(implicit
+        summable: CatalystSummable[A, Out]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.rollup(A).agg(count()).collect().run().toVector.sortBy(_.swap)
-      val expected = dataset.dataset.rollup("a").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_.swap)
+      val received =
+        dataset.rollup(A).agg(count()).collect().run().toVector.sortBy(_.swap)
+      val expected = dataset.dataset
+        .rollup("a")
+        .count()
+        .collect()
+        .toVector
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1)))
+        .sortBy(_.swap)
 
       received ?= expected
     }
@@ -24,15 +33,34 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollup('a, 'b).agg(count())") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder: Ordering, Out: TypedEncoder : Numeric]
-    (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    def prop[
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder: Ordering,
+        Out: TypedEncoder: Numeric
+      ](data: List[X2[A, B]]
+      )(implicit
+        summable: CatalystSummable[B, Out]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val received = dataset.rollup(A, B).agg(count()).collect().run().toVector.sortBy(t => (t._3, t._2, t._1))
-      val expected = dataset.dataset.rollup("a", "b").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[Long](2))).sortBy(t => (t._3, t._2, t._1))
+      val received = dataset
+        .rollup(A, B)
+        .agg(count())
+        .collect()
+        .run()
+        .toVector
+        .sortBy(t => (t._3, t._2, t._1))
+      val expected = dataset.dataset
+        .rollup("a", "b")
+        .count()
+        .collect()
+        .toVector
+        .map(row =>
+          (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[Long](2))
+        )
+        .sortBy(t => (t._3, t._2, t._1))
 
       received ?= expected
     }
@@ -41,15 +69,27 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollup('a).agg(sum('b)") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
-    (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    def prop[
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder,
+        Out: TypedEncoder: Numeric
+      ](data: List[X2[A, B]]
+      )(implicit
+        summable: CatalystSummable[B, Out]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
-      val received = dataset.rollup(A).agg(sum(B)).collect().run().toVector.sortBy(_.swap)
-      val expected = dataset.dataset.rollup("a").sum("b").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Out](1))).sortBy(_.swap)
+      val received =
+        dataset.rollup(A).agg(sum(B)).collect().run().toVector.sortBy(_.swap)
+      val expected = dataset.dataset
+        .rollup("a")
+        .sum("b")
+        .collect()
+        .toVector
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Out](1)))
+        .sortBy(_.swap)
 
       received ?= expected
     }
@@ -58,15 +98,22 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollup('a).mapGroups('a, sum('b))") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder : Numeric]
-    (data: List[X2[A, B]]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Numeric](
+        data: List[X2[A, B]]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.rollup(A)
-        .deserialized.mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
-        .collect().run().toVector.sortBy(identity)
-      val expected = data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(identity)
+      val received = dataset
+        .rollup(A)
+        .deserialized
+        .mapGroups { case (a, xs) => (a, xs.map(_.b).sum) }
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
+      val expected =
+        data.groupBy(_.a).mapValues(_.map(_.b).sum).toVector.sortBy(identity)
 
       received ?= expected
     }
@@ -76,16 +123,16 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a).agg(sum('b), sum('c)) to rollup('a).agg(sum('a), sum('b), sum('a), sum('b), sum('a))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder,
-    C: TypedEncoder,
-    OutB: TypedEncoder : Numeric,
-    OutC: TypedEncoder : Numeric
-    ](data: List[X3[A, B, C]])(
-      implicit
-      summableB: CatalystSummable[B, OutB],
-      summableC: CatalystSummable[C, OutC]
-    ): Prop = {
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder,
+        C: TypedEncoder,
+        OutB: TypedEncoder: Numeric,
+        OutC: TypedEncoder: Numeric
+      ](data: List[X3[A, B, C]]
+      )(implicit
+        summableB: CatalystSummable[B, OutB],
+        summableC: CatalystSummable[C, OutC]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -94,37 +141,91 @@ class RollupTests extends TypedDatasetSuite {
       val framelessSumBC = dataset
         .rollup(A)
         .agg(sum(B), sum(C))
-        .collect().run().toVector.sortBy(identity)
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
 
-      val sparkSumBC = dataset.dataset.rollup("a").sum("b", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2)))
+      val sparkSumBC = dataset.dataset
+        .rollup("a")
+        .sum("b", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2))
+        )
         .sortBy(identity)
 
       val framelessSumBCB = dataset
         .rollup(A)
         .agg(sum(B), sum(C), sum(B))
-        .collect().run().toVector.sortBy(identity)
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
 
-      val sparkSumBCB = dataset.dataset.rollup("a").sum("b", "c", "b").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3)))
+      val sparkSumBCB = dataset.dataset
+        .rollup("a")
+        .sum("b", "c", "b")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            row.getAs[OutB](1),
+            row.getAs[OutC](2),
+            row.getAs[OutB](3)
+          )
+        )
         .sortBy(identity)
 
       val framelessSumBCBC = dataset
         .rollup(A)
         .agg(sum(B), sum(C), sum(B), sum(C))
-        .collect().run().toVector.sortBy(identity)
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
 
-      val sparkSumBCBC = dataset.dataset.rollup("a").sum("b", "c", "b", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3), row.getAs[OutC](4)))
+      val sparkSumBCBC = dataset.dataset
+        .rollup("a")
+        .sum("b", "c", "b", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            row.getAs[OutB](1),
+            row.getAs[OutC](2),
+            row.getAs[OutB](3),
+            row.getAs[OutC](4)
+          )
+        )
         .sortBy(identity)
 
       val framelessSumBCBCB = dataset
         .rollup(A)
         .agg(sum(B), sum(C), sum(B), sum(C), sum(B))
-        .collect().run().toVector.sortBy(identity)
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
 
-      val sparkSumBCBCB = dataset.dataset.rollup("a").sum("b", "c", "b", "c", "b").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2), row.getAs[OutB](3), row.getAs[OutC](4), row.getAs[OutB](5)))
+      val sparkSumBCBCB = dataset.dataset
+        .rollup("a")
+        .sum("b", "c", "b", "c", "b")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            row.getAs[OutB](1),
+            row.getAs[OutC](2),
+            row.getAs[OutB](3),
+            row.getAs[OutC](4),
+            row.getAs[OutB](5)
+          )
+        )
         .sortBy(identity)
 
       (framelessSumBC ?= sparkSumBC)
@@ -138,17 +239,17 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a, 'b).agg(sum('c), sum('d))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder,
-    D: TypedEncoder,
-    OutC: TypedEncoder : Numeric,
-    OutD: TypedEncoder : Numeric
-    ](data: List[X4[A, B, C, D]])(
-      implicit
-      summableC: CatalystSummable[C, OutC],
-      summableD: CatalystSummable[D, OutD]
-    ): Prop = {
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder: Ordering,
+        C: TypedEncoder,
+        D: TypedEncoder,
+        OutC: TypedEncoder: Numeric,
+        OutD: TypedEncoder: Numeric
+      ](data: List[X4[A, B, C, D]]
+      )(implicit
+        summableC: CatalystSummable[C, OutC],
+        summableD: CatalystSummable[D, OutD]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -158,11 +259,24 @@ class RollupTests extends TypedDatasetSuite {
       val framelessSumByAB = dataset
         .rollup(A, B)
         .agg(sum(C), sum(D))
-        .collect().run().toVector.sortBy(t => (t._2, t._1, t._3, t._4))
+        .collect()
+        .run()
+        .toVector
+        .sortBy(t => (t._2, t._1, t._3, t._4))
 
       val sparkSumByAB = dataset.dataset
-        .rollup("a", "b").sum("c", "d").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutD](3)))
+        .rollup("a", "b")
+        .sum("c", "d")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutD](3)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3, t._4))
 
       framelessSumByAB ?= sparkSumByAB
@@ -173,11 +287,14 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a, 'b).agg(sum('c)) to rollup('a, 'b).agg(sum('c),sum('c),sum('c),sum('c),sum('c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder,
-    OutC: TypedEncoder: Numeric
-    ](data: List[X3[A, B, C]])(implicit summableC: CatalystSummable[C, OutC]): Prop = {
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder: Ordering,
+        C: TypedEncoder,
+        OutC: TypedEncoder: Numeric
+      ](data: List[X3[A, B, C]]
+      )(implicit
+        summableC: CatalystSummable[C, OutC]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -186,63 +303,124 @@ class RollupTests extends TypedDatasetSuite {
       val framelessSumC = dataset
         .rollup(A, B)
         .agg(sum(C))
-        .collect().run().toVector
+        .collect()
+        .run()
+        .toVector
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumC = dataset.dataset
-        .rollup("a", "b").sum("c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2)))
+        .rollup("a", "b")
+        .sum("c")
+        .collect()
+        .toVector
+        .map(row =>
+          (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2))
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCC = dataset
         .rollup(A, B)
         .agg(sum(C), sum(C))
-        .collect().run().toVector
+        .collect()
+        .run()
+        .toVector
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCC = dataset.dataset
-        .rollup("a", "b").sum("c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3)))
+        .rollup("a", "b")
+        .sum("c", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutC](3)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCC = dataset
         .rollup(A, B)
         .agg(sum(C), sum(C), sum(C))
-        .collect().run().toVector
+        .collect()
+        .run()
+        .toVector
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCC = dataset.dataset
-        .rollup("a", "b").sum("c", "c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4)))
+        .rollup("a", "b")
+        .sum("c", "c", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutC](3),
+            row.getAs[OutC](4)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCCC = dataset
         .rollup(A, B)
         .agg(sum(C), sum(C), sum(C), sum(C))
-        .collect().run().toVector
+        .collect()
+        .run()
+        .toVector
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCC = dataset.dataset
-        .rollup("a", "b").sum("c", "c", "c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5)))
+        .rollup("a", "b")
+        .sum("c", "c", "c", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutC](3),
+            row.getAs[OutC](4),
+            row.getAs[OutC](5)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val framelessSumCCCCC = dataset
         .rollup(A, B)
         .agg(sum(C), sum(C), sum(C), sum(C), sum(C))
-        .collect().run().toVector
+        .collect()
+        .run()
+        .toVector
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCCC = dataset.dataset
-        .rollup("a", "b").sum("c", "c", "c", "c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5), row.getAs[OutC](6)))
+        .rollup("a", "b")
+        .sum("c", "c", "c", "c", "c")
+        .collect()
+        .toVector
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutC](3),
+            row.getAs[OutC](4),
+            row.getAs[OutC](5),
+            row.getAs[OutC](6)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       (framelessSumC ?= sparkSumC) &&
-        (framelessSumCC ?= sparkSumCC) &&
-        (framelessSumCCC ?= sparkSumCCC) &&
-        (framelessSumCCCC ?= sparkSumCCCC) &&
-        (framelessSumCCCCC ?= sparkSumCCCCC)
+      (framelessSumCC ?= sparkSumCC) &&
+      (framelessSumCCC ?= sparkSumCCC) &&
+      (framelessSumCCCC ?= sparkSumCCCC) &&
+      (framelessSumCCCCC ?= sparkSumCCCCC)
     }
 
     check(forAll(prop[String, Long, Double, Double] _))
@@ -250,22 +428,30 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a, 'b).mapGroups('a, 'b, sum('c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder : Numeric
-    ](data: List[X3[A, B, C]]): Prop = {
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder: Ordering,
+        C: TypedEncoder: Numeric
+      ](data: List[X3[A, B, C]]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
 
       val framelessSumByAB = dataset
         .rollup(A, B)
-        .deserialized.mapGroups { case ((a, b), xs) => (a, b, xs.map(_.c).sum) }
-        .collect().run().toVector.sortBy(identity)
+        .deserialized
+        .mapGroups { case ((a, b), xs) => (a, b, xs.map(_.c).sum) }
+        .collect()
+        .run()
+        .toVector
+        .sortBy(identity)
 
-      val sumByAB = data.groupBy(x => (x.a, x.b))
+      val sumByAB = data
+        .groupBy(x => (x.a, x.b))
         .mapValues { xs => xs.map(_.c).sum }
-        .toVector.map { case ((a, b), c) => (a, b, c) }.sortBy(identity)
+        .toVector
+        .map { case ((a, b), c) => (a, b, c) }
+        .sortBy(identity)
 
       framelessSumByAB ?= sumByAB
     }
@@ -274,17 +460,19 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollup('a).mapGroups(('a, toVector(('a, 'b))") {
-    def prop[
-    A: TypedEncoder: Ordering,
-    B: TypedEncoder: Ordering
-    ](data: Vector[X2[A, B]]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Ordering](
+        data: Vector[X2[A, B]]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .rollup(A)
-        .deserialized.mapGroups((a, xs) => (a, xs.toVector.sorted))
-        .collect().run().toMap
+        .deserialized
+        .mapGroups((a, xs) => (a, xs.toVector.sorted))
+        .collect()
+        .run()
+        .toMap
 
       val dataGrouped = data.groupBy(_.a).map { case (k, v) => k -> v.sorted }
 
@@ -297,21 +485,23 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollup('a).flatMapGroups(('a, toVector(('a, 'b))") {
-    def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering
-    ](data: Vector[X2[A, B]]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Ordering](
+        data: Vector[X2[A, B]]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
       val datasetGrouped = dataset
         .rollup(A)
-        .deserialized.flatMapGroups((a, xs) => xs.map(x => (a, x)))
-        .collect().run()
+        .deserialized
+        .flatMapGroups((a, xs) => xs.map(x => (a, x)))
+        .collect()
+        .run()
         .sorted
 
       val dataGrouped = data
-        .groupBy(_.a).toSeq
+        .groupBy(_.a)
+        .toSeq
         .flatMap { case (a, xs) => xs.map(x => (a, x)) }
         .sorted
 
@@ -325,22 +515,26 @@ class RollupTests extends TypedDatasetSuite {
 
   test("rollup('a, 'b).flatMapGroups((('a,'b) toVector((('a,'b), 'c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder : Ordering
-    ](data: Vector[X3[A, B, C]]): Prop = {
+        A: TypedEncoder: Ordering,
+        B: TypedEncoder: Ordering,
+        C: TypedEncoder: Ordering
+      ](data: Vector[X3[A, B, C]]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val cA = dataset.col[A]('a)
       val cB = dataset.col[B]('b)
 
       val datasetGrouped = dataset
         .rollup(cA, cB)
-        .deserialized.flatMapGroups((a, xs) => xs.map(x => (a, x)))
-        .collect().run()
+        .deserialized
+        .flatMapGroups((a, xs) => xs.map(x => (a, x)))
+        .collect()
+        .run()
         .sorted
 
       val dataGrouped = data
-        .groupBy(t => (t.a, t.b)).toSeq
+        .groupBy(t => (t.a, t.b))
+        .toSeq
         .flatMap { case (a, xs) => xs.map(x => (a, x)) }
         .sorted
 
@@ -353,14 +547,28 @@ class RollupTests extends TypedDatasetSuite {
   }
 
   test("rollupMany('a).agg(sum('b))") {
-    def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
-    (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, Out: TypedEncoder: Numeric](
+        data: List[X1[A]]
+      )(implicit
+        summable: CatalystSummable[A, Out]
+      ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
-      val received = dataset.rollupMany(A).agg(count[X1[A]]()).collect().run().toVector.sortBy(_.swap)
-      val expected = dataset.dataset.rollup("a").count().collect().toVector
-        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1))).sortBy(_.swap)
+      val received = dataset
+        .rollupMany(A)
+        .agg(count[X1[A]]())
+        .collect()
+        .run()
+        .toVector
+        .sortBy(_.swap)
+      val expected = dataset.dataset
+        .rollup("a")
+        .count()
+        .collect()
+        .toVector
+        .map(row => (Option(row.getAs[A](0)), row.getAs[Long](1)))
+        .sortBy(_.swap)
 
       received ?= expected
     }
