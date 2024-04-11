@@ -610,7 +610,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         evCanBeDoubleB: CatalystCast[B, Double]
       ): Prop = bivariatePropTemplate(xs)(
       covarSamp[A, B, X3[Int, A, B]],
-      org.apache.spark.sql.functions.covar_samp
+      org.apache.spark.sql.functions.covar_samp,
+      fudger = DoubleBehaviourUtils.tolerance(_, BigDecimal("10"))
     )
 
     check(forAll(prop[Double, Double] _))

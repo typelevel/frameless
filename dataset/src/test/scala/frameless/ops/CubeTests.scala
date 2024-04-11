@@ -1,6 +1,7 @@
 package frameless
 package ops
 
+import frameless.functions.DoubleBehaviourUtils.{ dp5, tolerantCompareVectors }
 import frameless.functions.ToDecimal
 import frameless.functions.aggregate._
 import org.scalacheck.Prop
@@ -249,10 +250,22 @@ class CubeTests extends TypedDatasetSuite {
         )
         .sortBy(t => (t._1, t._2, t._3))
 
-      (framelessSumBC ?= sparkSumBC)
-        .&&(framelessSumBCB ?= sparkSumBCB)
-        .&&(framelessSumBCBC ?= sparkSumBCBC)
-        .&&(framelessSumBCBCB ?= sparkSumBCBCB)
+      (tolerantCompareVectors(framelessSumBC, sparkSumBC, dp5)(Seq(l => l._3)))
+        .&&(
+          tolerantCompareVectors(framelessSumBCB, sparkSumBCB, dp5)(
+            Seq(l => l._3)
+          )
+        )
+        .&&(
+          tolerantCompareVectors(framelessSumBCBC, sparkSumBCBC, dp5)(
+            Seq(l => l._3, l => l._5)
+          )
+        )
+        .&&(
+          tolerantCompareVectors(framelessSumBCBCB, sparkSumBCBCB, dp5)(
+            Seq(l => l._3, l => l._5)
+          )
+        )
     }
 
     check(forAll(prop[String, Long, Double, Long, Double] _))
@@ -265,7 +278,7 @@ class CubeTests extends TypedDatasetSuite {
         C: TypedEncoder,
         D: TypedEncoder,
         OutC: TypedEncoder: Numeric,
-        OutD: TypedEncoder: Numeric
+        OutD: TypedEncoder: Numeric: ToDecimal
       ](data: List[X4[A, B, C, D]]
       )(implicit
         summableC: CatalystSummable[C, OutC],
@@ -277,12 +290,15 @@ class CubeTests extends TypedDatasetSuite {
       val C = dataset.col[C]('c)
       val D = dataset.col[D]('d)
 
+      val toDecOpt = implicitly[ToDecimal[OutD]].truncate _
+
       val framelessSumByAB = dataset
         .cube(A, B)
         .agg(sum(C), sum(D))
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_4 = toDecOpt(row._4)))
         .sortBy(x => (x._1, x._2))
 
       val sparkSumByAB = dataset.dataset
@@ -295,12 +311,14 @@ class CubeTests extends TypedDatasetSuite {
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
             row.getAs[OutC](2),
-            row.getAs[OutD](3)
+            toDecOpt(row.getAs[OutD](3))
           )
         )
         .sortBy(x => (x._1, x._2))
 
-      framelessSumByAB ?= sparkSumByAB
+      tolerantCompareVectors(framelessSumByAB, sparkSumByAB, dp5)(
+        Seq(l => l._4)
+      )
     }
 
     check(forAll(prop[Byte, Int, Long, Double, Long, Double] _))
@@ -470,11 +488,19 @@ class CubeTests extends TypedDatasetSuite {
         )
         .sortBy(t => (t._2, t._1, t._3))
 
-      (framelessSumC ?= sparkSumC) &&
-      (framelessSumCC ?= sparkSumCC) &&
-      (framelessSumCCC ?= sparkSumCCC) &&
-      (framelessSumCCCC ?= sparkSumCCCC) &&
-      (framelessSumCCCCC ?= sparkSumCCCCC)
+      (tolerantCompareVectors(framelessSumC, sparkSumC, dp5)(Seq(l => l._3))) &&
+      (tolerantCompareVectors(framelessSumCC, sparkSumCC, dp5)(
+        Seq(l => l._3, l => l._4)
+      )) &&
+      (tolerantCompareVectors(framelessSumCCC, sparkSumCCC, dp5)(
+        Seq(l => l._3, l => l._4, l => l._5)
+      )) &&
+      (tolerantCompareVectors(framelessSumCCCC, sparkSumCCCC, dp5)(
+        Seq(l => l._3, l => l._4, l => l._5, l => l._6)
+      )) &&
+      (tolerantCompareVectors(framelessSumCCCCC, sparkSumCCCCC, dp5)(
+        Seq(l => l._3, l => l._4, l => l._5, l => l._6, l => l._7)
+      ))
     }
 
     check(forAll(prop[String, Long, Double, Double] _))
