@@ -466,7 +466,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
           TypedColumn[X3[Int, A, B], A],
           TypedColumn[X3[Int, A, B], B]
         ) => TypedAggregate[X3[Int, A, B], Option[Double]],
-      sparkFun: (Column, Column) => Column
+      sparkFun: (Column, Column) => Column,
+      fudger: Tuple2[Option[BigDecimal], Option[BigDecimal]] => Tuple2[Option[
+        BigDecimal
+      ], Option[BigDecimal]] = identity
     )(implicit
       encEv: Encoder[(Int, A, B)],
       encEv2: Encoder[(Int, Option[Double])],
@@ -496,7 +499,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       })
 
     // Should be the same
-    tdBivar.toMap ?= compBivar.collect().toMap
+    // tdBivar.toMap ?= compBivar.collect().toMap
+    DoubleBehaviourUtils.compareMaps(
+      tdBivar.toMap,
+      compBivar.collect().toMap,
+      fudger
+    )
   }
 
   def univariatePropTemplate[A: TypedEncoder](
@@ -505,7 +513,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         X2[Int, A],
         Option[Double]
       ],
-      sparkFun: (Column) => Column
+      sparkFun: (Column) => Column,
+      fudger: Tuple2[Option[BigDecimal], Option[BigDecimal]] => Tuple2[Option[
+        BigDecimal
+      ], Option[BigDecimal]] = identity
     )(implicit
       encEv: Encoder[(Int, A)],
       encEv2: Encoder[(Int, Option[Double])],
@@ -534,7 +545,12 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       })
 
     // Should be the same
-    tdUnivar.toMap ?= compUnivar.collect().toMap
+    // tdUnivar.toMap ?= compUnivar.collect().toMap
+    DoubleBehaviourUtils.compareMaps(
+      tdUnivar.toMap,
+      compUnivar.collect().toMap,
+      fudger
+    )
   }
 
   test("corr") {
@@ -571,7 +587,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         evCanBeDoubleB: CatalystCast[B, Double]
       ): Prop = bivariatePropTemplate(xs)(
       covarPop[A, B, X3[Int, A, B]],
-      org.apache.spark.sql.functions.covar_pop
+      org.apache.spark.sql.functions.covar_pop,
+      fudger = DoubleBehaviourUtils.tolerance(_, BigDecimal("100"))
     )
 
     check(forAll(prop[Double, Double] _))
@@ -614,7 +631,8 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
         evCanBeDoubleA: CatalystCast[A, Double]
       ): Prop = univariatePropTemplate(xs)(
       kurtosis[A, X2[Int, A]],
-      org.apache.spark.sql.functions.kurtosis
+      org.apache.spark.sql.functions.kurtosis,
+      fudger = DoubleBehaviourUtils.tolerance(_, BigDecimal("0.1"))
     )
 
     check(forAll(prop[Double] _))

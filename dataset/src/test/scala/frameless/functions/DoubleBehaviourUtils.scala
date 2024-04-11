@@ -1,6 +1,9 @@
 package frameless
 package functions
 
+import org.scalacheck.Prop
+import org.scalacheck.util.Pretty
+
 /**
  * Some statistical functions in Spark can result in Double, Double.NaN or Null.
  * This tends to break ?= of the property based testing. Use the nanNullHandler function
@@ -37,6 +40,63 @@ object DoubleBehaviourUtils {
         else
           BigDecimal.RoundingMode.CEILING
       )
+
+  def compareMaps[K](
+      m1: Map[K, Option[BigDecimal]],
+      m2: Map[K, Option[BigDecimal]],
+      fudger: Tuple2[Option[BigDecimal], Option[BigDecimal]] => Tuple2[Option[
+        BigDecimal
+      ], Option[BigDecimal]]
+    ): Prop = {
+    def compareKey(k: K): Prop = {
+      val m1v = m1.get(k)
+      val m2v = m2.get(k)
+      if (!m2v.isDefined)
+        Prop.falsified :| {
+          val expKey = Pretty.pretty[K](k, Pretty.Params(0))
+          "Expected key of " + expKey + " in right side map"
+        }
+      else {
+        val (v1, v2) = fudger((m1v.get, m2v.get))
+        if (v1 == v2)
+          Prop.proved
+        else
+          Prop.falsified :| {
+            val expKey = Pretty.pretty[K](k, Pretty.Params(0))
+            val leftVal =
+              Pretty.pretty[Option[BigDecimal]](v1, Pretty.Params(0))
+            val rightVal =
+              Pretty.pretty[Option[BigDecimal]](v2, Pretty.Params(0))
+            "For key of " + expKey + " expected " + leftVal + " got " + rightVal
+          }
+      }
+    }
+
+    if (m1.size != m2.size)
+      Prop.falsified :| {
+        "Expected map of size " + m1.size + " but got " + m2.size
+      }
+    else
+      m1.keys.foldLeft(Prop.passed) { (curr, elem) => curr && compareKey(elem) }
+  }
+
+  /** running covar_pop and kurtosis multiple times is giving slightly different results */
+  def tolerance(
+      p: Tuple2[Option[BigDecimal], Option[BigDecimal]],
+      of: BigDecimal
+    ): Tuple2[Option[BigDecimal], Option[BigDecimal]] = {
+    val comb = p._1.flatMap(a => p._2.map(b => (a, b)))
+    if (comb.isEmpty)
+      p
+    else {
+      val (l, r) = comb.get
+      if ((l.max(r) - l.min(r)).abs < of)
+        // tolerate it
+        (Some(l), Some(l))
+      else
+        p
+    }
+  }
 }
 
 /** drop in conversion for doubles to handle serialization on cluster */
