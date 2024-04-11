@@ -20,19 +20,35 @@ object DoubleBehaviourUtils {
   val nanNullHandler: Any => Option[BigDecimal] = {
     case null => None
     case d: Double =>
-      nanHandler(d).map { d =>
-        if (d == Double.NegativeInfinity || d == Double.PositiveInfinity)
-          BigDecimal("1000000.000000") * (if (d == Double.PositiveInfinity) 1
-                                          else -1)
-        else
-          BigDecimal(d).setScale(
-            6,
-            if (d > 0)
-              BigDecimal.RoundingMode.FLOOR
-            else
-              BigDecimal.RoundingMode.CEILING
-          )
-      }
+      nanHandler(d).map(truncate)
     case _ => ???
+  }
+
+  /** ensure different serializations are 'comparable' */
+  def truncate(d: Double): BigDecimal =
+    if (d == Double.NegativeInfinity || d == Double.PositiveInfinity)
+      BigDecimal("1000000.000000") * (if (d == Double.PositiveInfinity) 1
+                                      else -1)
+    else
+      BigDecimal(d).setScale(
+        6,
+        if (d > 0)
+          BigDecimal.RoundingMode.FLOOR
+        else
+          BigDecimal.RoundingMode.CEILING
+      )
+}
+
+/** drop in conversion for doubles to handle serialization on cluster */
+trait ToDecimal[A] {
+  def truncate(a: A): Option[BigDecimal]
+}
+
+object ToDecimal {
+
+  implicit val doubleToDecimal: ToDecimal[Double] = new ToDecimal[Double] {
+
+    override def truncate(a: Double): Option[BigDecimal] =
+      DoubleBehaviourUtils.nanNullHandler(a)
   }
 }

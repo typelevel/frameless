@@ -798,7 +798,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric: TypedEncoder: Encoder](
+    def prop[A: CatalystNumeric: TypedEncoder: Encoder: CatalystOrdered](
         na: A,
         values: List[X1[A]]
       )(implicit
@@ -811,6 +811,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect()
         .toList
+        .sorted
 
       val typedDS = TypedDataset.create(cDS)
       val res = typedDS
@@ -820,20 +821,26 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toList
+        .sorted
 
       val aggrTyped = typedDS
+        .orderBy(typedDS('a).asc)
         .agg(atan(frameless.functions.aggregate.first(typedDS('a))))
         .firstOption()
         .run()
         .get
 
       val aggrSpark = cDS
+        .orderBy("a")
         .select(
           sparkFunctions.atan(sparkFunctions.first("a")).as[Double]
         )
         .first()
 
-      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
+      (res ?= resCompare).&&(
+        DoubleBehaviourUtils.nanNullHandler(aggrTyped) ?= DoubleBehaviourUtils
+          .nanNullHandler(aggrSpark)
+      )
     }
 
     check(forAll(prop[Int] _))
@@ -849,8 +856,8 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     import spark.implicits._
 
     def prop[
-        A: CatalystNumeric: TypedEncoder: Encoder,
-        B: CatalystNumeric: TypedEncoder: Encoder
+        A: CatalystNumeric: TypedEncoder: Encoder: CatalystOrdered,
+        B: CatalystNumeric: TypedEncoder: Encoder: CatalystOrdered
       ](na: X2[A, B],
         values: List[X2[A, B]]
       )(implicit
@@ -863,6 +870,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect()
         .toList
+        .sorted
 
       val typedDS = TypedDataset.create(cDS)
       val res = typedDS
@@ -872,8 +880,10 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toList
+        .sorted
 
       val aggrTyped = typedDS
+        .orderBy(typedDS('a).asc, typedDS('b).asc)
         .agg(
           atan2(
             frameless.functions.aggregate.first(typedDS('a)),
@@ -885,6 +895,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .orderBy("a", "b")
         .select(
           sparkFunctions
             .atan2(sparkFunctions.first("a"), sparkFunctions.first("b"))
@@ -892,7 +903,10 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         )
         .first()
 
-      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
+      (res ?= resCompare).&&(
+        DoubleBehaviourUtils.nanNullHandler(aggrTyped) ?= DoubleBehaviourUtils
+          .nanNullHandler(aggrSpark)
+      )
     }
 
     check(forAll(prop[Int, Long] _))
@@ -907,7 +921,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric: TypedEncoder: Encoder](
+    def prop[A: CatalystNumeric: TypedEncoder: Encoder: CatalystOrdered](
         na: X1[A],
         value: List[X1[A]],
         lit: Double
@@ -921,6 +935,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect()
         .toList
+        .sorted
 
       val typedDS = TypedDataset.create(cDS)
       val res = typedDS
@@ -930,20 +945,26 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toList
+        .sorted
 
       val aggrTyped = typedDS
+        .orderBy(typedDS('a).asc)
         .agg(atan2(lit, frameless.functions.aggregate.first(typedDS('a))))
         .firstOption()
         .run()
         .get
 
       val aggrSpark = cDS
+        .orderBy("a")
         .select(
           sparkFunctions.atan2(lit, sparkFunctions.first("a")).as[Double]
         )
         .first()
 
-      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
+      (res ?= resCompare).&&(
+        DoubleBehaviourUtils.nanNullHandler(aggrTyped) ?= DoubleBehaviourUtils
+          .nanNullHandler(aggrSpark)
+      )
     }
 
     check(forAll(prop[Int] _))
@@ -958,7 +979,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     val spark = session
     import spark.implicits._
 
-    def prop[A: CatalystNumeric: TypedEncoder: Encoder](
+    def prop[A: CatalystNumeric: TypedEncoder: Encoder: CatalystOrdered](
         na: X1[A],
         value: List[X1[A]],
         lit: Double
@@ -972,6 +993,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(DoubleBehaviourUtils.nanNullHandler)
         .collect()
         .toList
+        .sorted
 
       val typedDS = TypedDataset.create(cDS)
       val res = typedDS
@@ -981,20 +1003,26 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toList
+        .sorted
 
       val aggrTyped = typedDS
+        .orderBy(typedDS('a).asc)
         .agg(atan2(frameless.functions.aggregate.first(typedDS('a)), lit))
         .firstOption()
         .run()
         .get
 
       val aggrSpark = cDS
+        .orderBy("a")
         .select(
           sparkFunctions.atan2(sparkFunctions.first("a"), lit).as[Double]
         )
         .first()
 
-      (res ?= resCompare).&&(aggrTyped ?= aggrSpark)
+      (res ?= resCompare).&&(
+        DoubleBehaviourUtils.nanNullHandler(aggrTyped) ?= DoubleBehaviourUtils
+          .nanNullHandler(aggrSpark)
+      )
     }
 
     check(forAll(prop[Int] _))
@@ -2139,15 +2167,18 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .map(_.getAs[Int](0))
         .collect()
         .toVector
+        .sorted
 
       val typed = ds
         .select(levenshtein(ds('a), concat(ds('a), lit("Hello"))))
         .collect()
         .run()
         .toVector
+        .sorted
 
       val cDS = ds.dataset
       val aggrTyped = ds
+        .orderBy(ds('a).asc)
         .agg(
           levenshtein(
             frameless.functions.aggregate.first(ds('a)),
@@ -2159,6 +2190,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .orderBy("a")
         .select(
           sparkFunctions
             .levenshtein(sparkFunctions.first("a"), sparkFunctions.lit("Hello"))

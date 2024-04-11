@@ -1,6 +1,7 @@
 package frameless
 package ops
 
+import frameless.functions.ToDecimal
 import frameless.functions.aggregate._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -137,7 +138,7 @@ class CubeTests extends TypedDatasetSuite {
         B: TypedEncoder,
         C: TypedEncoder,
         OutB: TypedEncoder: Numeric,
-        OutC: TypedEncoder: Numeric
+        OutC: TypedEncoder: Numeric: ToDecimal
       ](data: List[X3[A, B, C]]
       )(implicit
         summableB: CatalystSummable[B, OutB],
@@ -148,12 +149,15 @@ class CubeTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
+      val toDecOpt = implicitly[ToDecimal[OutC]].truncate _
+
       val framelessSumBC = dataset
         .cube(A)
         .agg(sum(B), sum(C))
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBC = dataset.dataset
@@ -162,7 +166,11 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .toVector
         .map(row =>
-          (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2))
+          (
+            Option(row.getAs[A](0)),
+            row.getAs[OutB](1),
+            toDecOpt(row.getAs[OutC](2))
+          )
         )
         .sortBy(t => (t._1, t._2, t._3))
 
@@ -172,6 +180,7 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCB = dataset.dataset
@@ -183,7 +192,7 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3)
           )
         )
@@ -195,6 +204,7 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _5 = toDecOpt(row._5)))
         .sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCBC = dataset.dataset
@@ -206,9 +216,9 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3),
-            row.getAs[OutC](4)
+            toDecOpt(row.getAs[OutC](4))
           )
         )
         .sortBy(t => (t._1, t._2, t._3))
@@ -219,6 +229,7 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _5 = toDecOpt(row._5)))
         .sortBy(t => (t._1, t._2, t._3))
 
       val sparkSumBCBCB = dataset.dataset
@@ -230,9 +241,9 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3),
-            row.getAs[OutC](4),
+            toDecOpt(row.getAs[OutC](4)),
             row.getAs[OutB](5)
           )
         )
@@ -300,11 +311,14 @@ class CubeTests extends TypedDatasetSuite {
         A: TypedEncoder: Ordering,
         B: TypedEncoder: Ordering,
         C: TypedEncoder,
-        OutC: TypedEncoder: Numeric
+        OutC: TypedEncoder: Numeric: ToDecimal
       ](data: List[X3[A, B, C]]
       )(implicit
         summableC: CatalystSummable[C, OutC]
       ): Prop = {
+
+      val toDecOpt = implicitly[ToDecimal[OutC]].truncate _
+
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -316,6 +330,7 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumC = dataset.dataset
@@ -324,7 +339,11 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .toVector
         .map(row =>
-          (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2))
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            toDecOpt(row.getAs[OutC](2))
+          )
         )
         .sortBy(t => (t._2, t._1, t._3))
 
@@ -334,6 +353,7 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _4 = toDecOpt(row._4)))
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCC = dataset.dataset
@@ -345,8 +365,8 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -357,6 +377,13 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCC = dataset.dataset
@@ -368,9 +395,9 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -381,6 +408,14 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5),
+            _6 = toDecOpt(row._6)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCC = dataset.dataset
@@ -392,10 +427,10 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4),
-            row.getAs[OutC](5)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4)),
+            toDecOpt(row.getAs[OutC](5))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -406,6 +441,15 @@ class CubeTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5),
+            _6 = toDecOpt(row._6),
+            _7 = toDecOpt(row._7)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCCC = dataset.dataset
@@ -417,11 +461,11 @@ class CubeTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4),
-            row.getAs[OutC](5),
-            row.getAs[OutC](6)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4)),
+            toDecOpt(row.getAs[OutC](5)),
+            toDecOpt(row.getAs[OutC](6))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))

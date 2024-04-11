@@ -1,6 +1,7 @@
 package frameless
 package ops
 
+import frameless.functions.ToDecimal
 import frameless.functions.aggregate._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -127,7 +128,7 @@ class RollupTests extends TypedDatasetSuite {
         B: TypedEncoder,
         C: TypedEncoder,
         OutB: TypedEncoder: Numeric,
-        OutC: TypedEncoder: Numeric
+        OutC: TypedEncoder: Numeric: ToDecimal
       ](data: List[X3[A, B, C]]
       )(implicit
         summableB: CatalystSummable[B, OutB],
@@ -138,12 +139,15 @@ class RollupTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
+      val toDecOpt = implicitly[ToDecimal[OutC]].truncate _
+
       val framelessSumBC = dataset
         .rollup(A)
         .agg(sum(B), sum(C))
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(identity)
 
       val sparkSumBC = dataset.dataset
@@ -152,7 +156,11 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .toVector
         .map(row =>
-          (Option(row.getAs[A](0)), row.getAs[OutB](1), row.getAs[OutC](2))
+          (
+            Option(row.getAs[A](0)),
+            row.getAs[OutB](1),
+            toDecOpt(row.getAs[OutC](2))
+          )
         )
         .sortBy(identity)
 
@@ -162,6 +170,7 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(identity)
 
       val sparkSumBCB = dataset.dataset
@@ -173,7 +182,7 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3)
           )
         )
@@ -185,6 +194,7 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _5 = toDecOpt(row._5)))
         .sortBy(identity)
 
       val sparkSumBCBC = dataset.dataset
@@ -196,9 +206,9 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3),
-            row.getAs[OutC](4)
+            toDecOpt(row.getAs[OutC](4))
           )
         )
         .sortBy(identity)
@@ -209,6 +219,7 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _5 = toDecOpt(row._5)))
         .sortBy(identity)
 
       val sparkSumBCBCB = dataset.dataset
@@ -220,9 +231,9 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             row.getAs[OutB](1),
-            row.getAs[OutC](2),
+            toDecOpt(row.getAs[OutC](2)),
             row.getAs[OutB](3),
-            row.getAs[OutC](4),
+            toDecOpt(row.getAs[OutC](4)),
             row.getAs[OutB](5)
           )
         )
@@ -244,7 +255,7 @@ class RollupTests extends TypedDatasetSuite {
         C: TypedEncoder,
         D: TypedEncoder,
         OutC: TypedEncoder: Numeric,
-        OutD: TypedEncoder: Numeric
+        OutD: TypedEncoder: Numeric: ToDecimal
       ](data: List[X4[A, B, C, D]]
       )(implicit
         summableC: CatalystSummable[C, OutC],
@@ -256,12 +267,15 @@ class RollupTests extends TypedDatasetSuite {
       val C = dataset.col[C]('c)
       val D = dataset.col[D]('d)
 
+      val toDecOpt = implicitly[ToDecimal[OutD]].truncate _
+
       val framelessSumByAB = dataset
         .rollup(A, B)
         .agg(sum(C), sum(D))
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_4 = toDecOpt(row._4)))
         .sortBy(t => (t._2, t._1, t._3, t._4))
 
       val sparkSumByAB = dataset.dataset
@@ -274,7 +288,7 @@ class RollupTests extends TypedDatasetSuite {
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
             row.getAs[OutC](2),
-            row.getAs[OutD](3)
+            toDecOpt(row.getAs[OutD](3))
           )
         )
         .sortBy(t => (t._2, t._1, t._3, t._4))
@@ -290,7 +304,7 @@ class RollupTests extends TypedDatasetSuite {
         A: TypedEncoder: Ordering,
         B: TypedEncoder: Ordering,
         C: TypedEncoder,
-        OutC: TypedEncoder: Numeric
+        OutC: TypedEncoder: Numeric: ToDecimal
       ](data: List[X3[A, B, C]]
       )(implicit
         summableC: CatalystSummable[C, OutC]
@@ -300,12 +314,15 @@ class RollupTests extends TypedDatasetSuite {
       val B = dataset.col[B]('b)
       val C = dataset.col[C]('c)
 
+      val toDecOpt = implicitly[ToDecimal[OutC]].truncate _
+
       val framelessSumC = dataset
         .rollup(A, B)
         .agg(sum(C))
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3)))
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumC = dataset.dataset
@@ -314,7 +331,11 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .toVector
         .map(row =>
-          (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2))
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            toDecOpt(row.getAs[OutC](2))
+          )
         )
         .sortBy(t => (t._2, t._1, t._3))
 
@@ -324,6 +345,7 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row => row.copy(_3 = toDecOpt(row._3), _4 = toDecOpt(row._4)))
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCC = dataset.dataset
@@ -335,8 +357,8 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -347,6 +369,13 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCC = dataset.dataset
@@ -358,9 +387,9 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -371,6 +400,14 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5),
+            _6 = toDecOpt(row._6)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCC = dataset.dataset
@@ -382,10 +419,10 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4),
-            row.getAs[OutC](5)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4)),
+            toDecOpt(row.getAs[OutC](5))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
@@ -396,6 +433,15 @@ class RollupTests extends TypedDatasetSuite {
         .collect()
         .run()
         .toVector
+        .map(row =>
+          row.copy(
+            _3 = toDecOpt(row._3),
+            _4 = toDecOpt(row._4),
+            _5 = toDecOpt(row._5),
+            _6 = toDecOpt(row._6),
+            _7 = toDecOpt(row._7)
+          )
+        )
         .sortBy(t => (t._2, t._1, t._3))
 
       val sparkSumCCCCC = dataset.dataset
@@ -407,11 +453,11 @@ class RollupTests extends TypedDatasetSuite {
           (
             Option(row.getAs[A](0)),
             Option(row.getAs[B](1)),
-            row.getAs[OutC](2),
-            row.getAs[OutC](3),
-            row.getAs[OutC](4),
-            row.getAs[OutC](5),
-            row.getAs[OutC](6)
+            toDecOpt(row.getAs[OutC](2)),
+            toDecOpt(row.getAs[OutC](3)),
+            toDecOpt(row.getAs[OutC](4)),
+            toDecOpt(row.getAs[OutC](5)),
+            toDecOpt(row.getAs[OutC](6))
           )
         )
         .sortBy(t => (t._2, t._1, t._3))
