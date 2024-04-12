@@ -2178,6 +2178,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
 
       val cDS = ds.dataset
       val aggrTyped = ds
+        .coalesce(1)
         .orderBy(ds('a).asc)
         .agg(
           levenshtein(
@@ -2190,6 +2191,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .coalesce(1)
         .orderBy("a")
         .select(
           sparkFunctions

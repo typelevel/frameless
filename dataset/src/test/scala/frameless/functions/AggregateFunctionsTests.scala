@@ -298,6 +298,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val sxs = xs.sorted
 
       val datasetFirst = dataset
+        .coalesce(1)
         .orderBy(A: SortedTypedColumn[X1[A], A])
         .agg(first(A))
         .collect()
@@ -324,6 +325,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val sxs = xs.sorted
 
       val datasetLast = dataset
+        .coalesce(1)
         .orderBy(A: SortedTypedColumn[X1[A], A])
         .agg(last(A))
         .collect()
