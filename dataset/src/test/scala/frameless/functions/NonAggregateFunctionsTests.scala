@@ -824,6 +824,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .sorted
 
       val aggrTyped = typedDS
+        .coalesce(1)
         .orderBy(typedDS('a).asc)
         .agg(atan(frameless.functions.aggregate.first(typedDS('a))))
         .firstOption()
@@ -831,6 +832,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .coalesce(1)
         .orderBy("a")
         .select(
           sparkFunctions.atan(sparkFunctions.first("a")).as[Double]
@@ -883,6 +885,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .sorted
 
       val aggrTyped = typedDS
+        .coalesce(1)
         .orderBy(typedDS('a).asc, typedDS('b).asc)
         .agg(
           atan2(
@@ -895,6 +898,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .coalesce(1)
         .orderBy("a", "b")
         .select(
           sparkFunctions
@@ -948,6 +952,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .sorted
 
       val aggrTyped = typedDS
+        .coalesce(1)
         .orderBy(typedDS('a).asc)
         .agg(atan2(lit, frameless.functions.aggregate.first(typedDS('a))))
         .firstOption()
@@ -955,6 +960,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .coalesce(1)
         .orderBy("a")
         .select(
           sparkFunctions.atan2(lit, sparkFunctions.first("a")).as[Double]
@@ -1006,6 +1012,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .sorted
 
       val aggrTyped = typedDS
+        .coalesce(1)
         .orderBy(typedDS('a).asc)
         .agg(atan2(frameless.functions.aggregate.first(typedDS('a)), lit))
         .firstOption()
@@ -1013,6 +1020,7 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
         .get
 
       val aggrSpark = cDS
+        .coalesce(1)
         .orderBy("a")
         .select(
           sparkFunctions.atan2(sparkFunctions.first("a"), lit).as[Double]
@@ -2039,8 +2047,13 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(pairs) { values: List[X2[String, String]] =>
       val ds = TypedDataset.create(values)
       val td =
-        ds.agg(concat(first(ds('a)), first(ds('b)))).collect().run().toVector
+        ds.coalesce(1)
+          .agg(concat(first(ds('a)), first(ds('b))))
+          .collect()
+          .run()
+          .toVector
       val spark = ds.dataset
+        .coalesce(1)
         .select(
           sparkFunctions.concat(
             sparkFunctions.first($"a").as[String],
@@ -2092,11 +2105,13 @@ class NonAggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(pairs) { values: List[X2[String, String]] =>
       val ds = TypedDataset.create(values)
       val td = ds
+        .coalesce(1)
         .agg(concatWs(",", first(ds('a)), first(ds('b)), last(ds('b))))
         .collect()
         .run()
         .toVector
       val spark = ds.dataset
+        .coalesce(1)
         .select(
           sparkFunctions.concat_ws(
             ",",
