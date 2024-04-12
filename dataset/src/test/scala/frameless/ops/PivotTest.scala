@@ -24,6 +24,7 @@ class PivotTest extends TypedDatasetSuite {
     def prop(data: Vector[X4[String, String, Int, Boolean]]): Prop = {
       val d = TypedDataset.create(data)
       val frameless = d
+        .coalesce(1)
         .orderBy(d('a).asc, d('d).asc)
         .groupBy(d('a))
         .pivot(d('b))
@@ -34,6 +35,7 @@ class PivotTest extends TypedDatasetSuite {
         .toVector
 
       val spark = d.dataset
+        .coalesce(1)
         .orderBy("a", "d")
         .groupBy("a")
         .pivot("b", Seq("a", "b", "c"))
