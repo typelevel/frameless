@@ -1,4 +1,5 @@
-val sparkVersion = "3.5.1"
+val sparkVersion =
+  "3.5.1" // "4.0.0-SNAPSHOT" must have the apache_snaps configured
 val spark34Version = "3.4.2"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.10.0"
@@ -11,9 +12,31 @@ val scalacheck = "1.17.1"
 val scalacheckEffect = "1.0.4"
 val refinedVersion = "0.11.1"
 val nakedFSVersion = "0.1.0"
+val shimVersion = "0.0.1-RC4"
 
 val Scala212 = "2.12.19"
 val Scala213 = "2.13.13"
+
+resolvers in Global += Resolver.mavenLocal
+resolvers in Global += MavenRepository(
+  "sonatype-s01-snapshots",
+  Resolver.SonatypeS01RepositoryRoot + "/snapshots"
+)
+resolvers in Global += MavenRepository(
+  "sonatype-s01-releases",
+  Resolver.SonatypeS01RepositoryRoot + "/releases"
+)
+resolvers in Global += MavenRepository(
+  "apache_snaps",
+  "https://repository.apache.org/content/repositories/snapshots"
+)
+
+import scala.concurrent.duration.DurationInt
+import lmcoursier.definitions.CachePolicy
+
+csrConfiguration := csrConfiguration.value
+  .withTtl(Some(1.minute))
+  .withCachePolicies(Vector(CachePolicy.LocalOnly))
 
 ThisBuild / tlBaseVersion := "0.16"
 
@@ -87,10 +110,10 @@ lazy val `cats-spark33` = project
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(
-    Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main" / "spark-3.4+"
+    Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.5.0.oss_3.5" % shimVersion changing () // 4.0.0.oss_4.0 for 4 snapshot
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(sparkVersion))
@@ -100,10 +123,10 @@ lazy val `dataset-spark34` = project
   .settings(name := "frameless-dataset-spark34")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3.4+"
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.4.1.oss_3.4" % shimVersion changing ()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark34Version))
@@ -114,10 +137,10 @@ lazy val `dataset-spark33` = project
   .settings(name := "frameless-dataset-spark33")
   .settings(sourceDirectory := (dataset / sourceDirectory).value)
   .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3"
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
   )
   .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
+    libraryDependencies += "com.sparkutils" %% "shim_runtime_3.3.2.oss_3.3" % shimVersion changing ()
   )
   .settings(datasetSettings)
   .settings(sparkDependencies(spark33Version))
@@ -239,11 +262,29 @@ lazy val datasetSettings =
         imt("frameless.RecordEncoderFields.deriveRecordLast"),
         mc("frameless.functions.FramelessLit"),
         mc(f"frameless.functions.FramelessLit$$"),
+        mc("org.apache.spark.sql.FramelessInternals"),
+        mc(f"org.apache.spark.sql.FramelessInternals$$"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateLeft"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateLeft$"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateRight"),
+        mc("org.apache.spark.sql.FramelessInternals$DisambiguateRight$"),
+        mc("org.apache.spark.sql.reflection.package"),
+        mc("org.apache.spark.sql.reflection.package$"),
+        mc("org.apache.spark.sql.reflection.package$ScalaSubtypeLock$"),
+        mc("frameless.MapGroups"),
+        mc(f"frameless.MapGroups$$"),
         dmm("frameless.functions.package.litAggr"),
-        dmm("org.apache.spark.sql.FramelessInternals.column")
+        dmm("org.apache.spark.sql.FramelessInternals.column"),
+        dmm("frameless.TypedEncoder.collectionEncoder"),
+        dmm("frameless.TypedEncoder.setEncoder"),
+        dmm("frameless.functions.FramelessUdf.evalCode"),
+        dmm("frameless.functions.FramelessUdf.copy"),
+        dmm("frameless.functions.FramelessUdf.this"),
+        dmm("frameless.functions.FramelessUdf.apply"),
+        imt("frameless.functions.FramelessUdf.apply")
       )
     },
-    coverageExcludedPackages := "org.apache.spark.sql.reflection",
+    coverageExcludedPackages := "frameless.reflection",
     libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude ("org.apache.hadoop", "hadoop-commons")
   )
 
@@ -252,7 +293,18 @@ lazy val refinedSettings =
     libraryDependencies += "eu.timepit" %% "refined" % refinedVersion
   )
 
-lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL
+lazy val mlSettings = framelessSettings ++ framelessTypedDatasetREPL ++ Seq(
+  mimaBinaryIssueFilters ++= {
+    import com.typesafe.tools.mima.core._
+
+    val mc = ProblemFilters.exclude[MissingClassProblem](_)
+
+    Seq(
+      mc("org.apache.spark.ml.FramelessInternals"),
+      mc(f"org.apache.spark.ml.FramelessInternals$$")
+    )
+  }
+)
 
 lazy val scalac212Options = Seq(
   "-Xlint:-missing-interpolator,-unused,_",
@@ -324,7 +376,10 @@ lazy val framelessSettings = Seq(
    * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.1.0)
    * [error] 	    +- org.scala-lang:scala-compiler:2.12.16              (depends on 1.0.6)
    */
-  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+  libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always,
+  // allow testing on different runtimes, but don't publish / run docs
+  Test / publishArtifact := true,
+  Test / packageDoc / publishArtifact := false
 ) ++ consoleSettings
 
 lazy val spark34Settings = Seq[Setting[_]](
