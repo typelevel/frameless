@@ -8,9 +8,9 @@ ThisBuild / githubWorkflowBuildSbtStepPreamble += s"project $${{ matrix.project 
 ThisBuild / tlCiScalafmtCheck := true
 ThisBuild / githubWorkflowBuild ~= { steps =>
   steps.map { // replace the test step
-    case _ @WorkflowStep.Sbt(List("test"), _, _, _, _, _, _, _) =>
+    case step: WorkflowStep.Sbt if step.commands == List("test") =>
       WorkflowStep.Sbt(
-        List("coverage", "test", "test/coverageReport"),
+        commands = List("coverage", "test", "test/coverageReport"),
         name = Some("Test & Compute Coverage")
       )
     case step => step
