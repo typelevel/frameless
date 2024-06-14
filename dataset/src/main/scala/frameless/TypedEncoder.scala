@@ -758,5 +758,15 @@ object TypedEncoder {
     }
   }
 
+  /**
+   * In case a type `T` encoding is supported in derivation (as a struct field),
+   * then this allows to resolve the corresponding `TypedEncoder[T]`,
+   * so the field can be handled invidiually.
+   */
+  def usingFieldEncoder[T](
+      implicit
+      fieldEncoder: shapeless.Lazy[RecordFieldEncoder[T]]
+    ): TypedEncoder[T] = fieldEncoder.value.toTypedEncoder
+
   object injections extends InjectionEnum
 }
