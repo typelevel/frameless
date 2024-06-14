@@ -244,7 +244,10 @@ lazy val datasetSettings =
       )
     },
     coverageExcludedPackages := "org.apache.spark.sql.reflection",
-    libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude ("org.apache.hadoop", "hadoop-commons")
+    libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude (
+      "org.apache.hadoop",
+      "hadoop-commons"
+    )
   )
 
 lazy val refinedSettings =
