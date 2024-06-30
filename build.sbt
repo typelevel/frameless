@@ -190,7 +190,7 @@ lazy val docs = project
       "org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.3.0"
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.3.1"
   )
   .dependsOn(dataset, cats, ml)
 
