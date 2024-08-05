@@ -159,9 +159,9 @@
 </span><span class="comment">// +---+---+
 // |  i|  j|
 // +---+---+
-// |100|  E|
-// | 10|  W|
 // |  1|  Q|
+// | 10|  W|
+// |100|  E|
 // +---+---+
 //</span></code></pre>
         <p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
@@ -252,7 +252,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">x</span><span>).</span><span class="identifier">show</span><span>()
 </span><span class="comment">// error: value x is not a member of repl.MdocSession.MdocApp0.Foo
 // ds.filter(_.i == 10).map(_.x).show()
-//                          ^^^</span></code></pre>
+//                            ^</span></code></pre>
         <p>Unfortunately, this syntax does not allow Spark to optimize the code.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">ds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span> == </span><span class="number-literal">10</span><span>).</span><span class="identifier">map</span><span>(</span><span class="identifier">_</span><span>.</span><span class="identifier">i</span><span>).</span><span class="identifier">explain</span><span>()
 </span><span class="comment">// == Physical Plan ==
@@ -295,9 +295,7 @@
 //</span></code></pre>
         <p>And the compiler is our friend.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;x</span><span>))
-</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;x&quot;)] of type A in repl.MdocSession.MdocApp0.Foo
-// fds.filter(fds(&#39;i) === 10).select(fds(&#39;x))
-//                                      ^</span></code></pre>
+</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;x&quot;)] of type A in repl.MdocSession.MdocApp0.Foo</span></code></pre>
         
         <h2 id="differences-in-encoders" class="section"><a class="anchor-link left" href="#differences-in-encoders"><i class="icofont-laika link">&#xef71;</i></a>Differences in Encoders</h2>
         <p>Encoders in Spark&#39;s <code>Datasets</code> are partially type-safe. If you try to create a <code>Dataset</code> using  a type that is not 
@@ -305,9 +303,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">class</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>)</span></code></pre>
         <p><code>Bar</code> is neither a case class nor a <code>Product</code>, so the following correctly gives a compilation error in Spark:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">spark</span><span>.</span><span class="identifier">createDataset</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="keyword">new</span><span> </span><span class="type-name">Bar</span><span>(</span><span class="number-literal">1</span><span>)))
-</span><span class="comment">// error: Unable to find encoder for type repl.MdocSession.MdocApp0.Bar. An implicit Encoder[repl.MdocSession.MdocApp0.Bar] is needed to store repl.MdocSession.MdocApp0.Bar instances in a Dataset. Primitive types (Int, String, etc) and Product types (case classes) are supported by importing spark.implicits._  Support for serializing other types will be added in future releases.
-// spark.createDataset(Seq(new Bar(1)))
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Unable to find encoder for type repl.MdocSession.MdocApp0.Bar. An implicit Encoder[repl.MdocSession.MdocApp0.Bar] is needed to store repl.MdocSession.MdocApp0.Bar instances in a Dataset. Primitive types (Int, String, etc) and Product types (case classes) are supported by importing spark.implicits._  Support for serializing other types will be added in future releases.</span></code></pre>
         <p>However, the compile type guards implemented in Spark are not sufficient to detect non encodable members. 
         For example, using the following case class leads to a runtime failure:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">MyDate</span><span>(</span><span class="identifier">jday</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)</span></code></pre>
@@ -344,9 +340,7 @@
   </span><span class="identifier">cal</span><span>.</span><span class="identifier">setTime</span><span>(</span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Date</span><span>(</span><span class="type-name">System</span><span>.</span><span class="identifier">currentTimeMillis</span><span>))
   </span><span class="identifier">cal</span><span>
 }))
-</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.MyDate]
-// TypedDataset.create(Seq(MyDate {
-// ^</span></code></pre>
+</span><span class="comment">// error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.MyDate]</span></code></pre>
         
         <h2 id="aggregate-vs-projected-columns" class="section"><a class="anchor-link left" href="#aggregate-vs-projected-columns"><i class="icofont-laika link">&#xef71;</i></a>Aggregate vs Projected columns</h2>
         <p>Spark&#39;s <code>Dataset</code> do not distinguish between columns created from aggregate operations, 
@@ -418,9 +412,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)))
 </span><span class="comment">// error: polymorphic expression cannot be instantiated to expected type;
 //  found   : [Out]frameless.TypedAggregate[repl.MdocSession.MdocApp0.Foo,Out]
-//  required: frameless.TypedColumn[repl.MdocSession.MdocApp0.Foo,?]
-// fds.select(fsum(fds(&#39;i)))
-//            ^^^^^^^^^^^^^</span></code></pre>
+//  required: frameless.TypedColumn[repl.MdocSession.MdocApp0.Foo,?]</span></code></pre>
         <p>As the error suggests, we expected a <code>TypedColumn</code> but we got a <code>TypedAggregate</code> instead. </p>
         <p>Here is how you apply an aggregation method in Frameless: </p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">agg</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>))+</span><span class="number-literal">22</span><span>).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()

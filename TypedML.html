@@ -176,7 +176,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">assembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@588acb29
+</span><span class="comment">// assembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@53d997de
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">trainingDataWithFeatures</span><span> = </span><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -190,47 +190,37 @@
   </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>
 )</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">WrongHouseFeatures</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(Double, Boolean, Double, org.apache.spark.ml.linalg.Vector),repl.MdocSession.MdocApp0.WrongHouseFeatures]
-// assembler.transform(trainingData).as[WrongHouseFeatures]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(Double, Boolean, Double, org.apache.spark.ml.linalg.Vector),repl.MdocSession.MdocApp0.WrongHouseFeatures]</span></code></pre>
         <p>Moreover, <code>TypedVectorAssembler[Features]</code> will compile only if <code>Features</code> contains exclusively fields of type Numeric or Boolean:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">hasGarden</span><span>: </span><span class="type-name">Boolean</span><span>, </span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>)</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">WrongFeatures</span><span>]
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongFeatures is a valid input type. Input type must only contain fields of numeric or boolean types.
-// TypedVectorAssembler[WrongFeatures]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongFeatures is a valid input type. Input type must only contain fields of numeric or boolean types.</span></code></pre>
         <p>The subsequent call <code>assembler.transform(trainingData)</code> compiles only if <code>trainingData</code> contains all fields (names and types)
         of <code>Features</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongHouseData</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>) </span><span class="comment">// hasGarden is missing
 </span><span class="keyword">val</span><span> </span><span class="identifier">wrongTrainingData</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">WrongHouseData</span><span>(</span><span class="number-literal">20</span><span>, </span><span class="number-literal">100000</span><span>)))
 </span><span class="comment">// wrongTrainingData: TypedDataset[WrongHouseData] = [squareFeet: double, price: double]</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">assembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">wrongTrainingData</span><span>)
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongHouseData can be projected to repl.MdocSession.MdocApp0.Features. Perhaps not all member names and types of repl.MdocSession.MdocApp0.Features are the same in repl.MdocSession.MdocApp0.WrongHouseData?
-// assembler.transform(wrongTrainingData)
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongHouseData can be projected to repl.MdocSession.MdocApp0.Features. Perhaps not all member names and types of repl.MdocSession.MdocApp0.Features are the same in repl.MdocSession.MdocApp0.WrongHouseData?</span></code></pre>
         <p>Then, we train the model. To train a Random Forest, one needs to feed it with features (what we predict from) and
         with a label (what we predict). In our example, <code>price</code> is the label, <code>features</code> are the features:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestRegressor</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@4f2ed960
+</span><span class="comment">// rf: TypedRandomForestRegressor[RFInputs] = frameless.ml.regression.TypedRandomForestRegressor@425dd28c
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">trainingDataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@5b8cb513</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestRegressor.Outputs, org.apache.spark.ml.regression.RandomForestRegressionModel] = frameless.ml.TypedEstimator$$anon$1@642656a2</span></code></pre>
         <p><code>TypedRandomForestRegressor[RFInputs]</code> compiles only if <code>RFInputs</code>
         contains only one field of type Double (the label) and one field of type Vector (the features):</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">WrongRFInputs</span><span>(</span><span class="identifier">labelOfWrongType</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="type-name">TypedRandomForestRegressor</span><span>[</span><span class="type-name">WrongRFInputs</span><span>]
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongRFInputs is a valid input type. Input type must only contain a field of type Double (the label) and a field of type org.apache.spark.ml.linalg.Vector (the features).
-// TypedRandomForestRegressor[WrongRFInputs]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.WrongRFInputs is a valid input type. Input type must only contain a field of type Double (the label) and a field of type org.apache.spark.ml.linalg.Vector (the features).</span></code></pre>
         <p>The subsequent <code>rf.fit(trainingDataWithFeatures)</code> call compiles only if <code>trainingDataWithFeatures</code> contains the same fields
         (names and types) as RFInputs.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">wrongTrainingDataWithFeatures</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">HouseData</span><span>(</span><span class="number-literal">20</span><span>, </span><span class="boolean-literal">false</span><span>, </span><span class="number-literal">100000</span><span>))) </span><span class="comment">// features are missing
 // wrongTrainingDataWithFeatures: TypedDataset[HouseData] = [squareFeet: double, hasGarden: boolean ... 1 more field]</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">wrongTrainingDataWithFeatures</span><span>) 
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?
-// rf.fit(wrongTrainingDataWithFeatures) 
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?</span></code></pre>
         
         <h3 id="prediction-1" class="section"><a class="anchor-link left" href="#prediction-1"><i class="icofont-laika link">&#xef71;</i></a>Prediction</h3>
         <p>We now want to predict <code>price</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
@@ -256,9 +246,7 @@
         <p><code>model.transform(testDataWithFeatures)</code> will only compile if <code>testDataWithFeatures</code> contains a field <code>price</code> of type Double
         and a field <code>features</code> of type Vector:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">model</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">testData</span><span>)
-</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?
-// val model = rf.fit(indexedData).run()
-//     ^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that repl.MdocSession.MdocApp0.HouseData can be projected to repl.MdocSession.MdocApp0.RFInputs. Perhaps not all member names and types of repl.MdocSession.MdocApp0.RFInputs are the same in repl.MdocSession.MdocApp0.HouseData?</span></code></pre>
         
         <h2 id="example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier" class="section"><a class="anchor-link left" href="#example-2-predict-a-categorical-value-using-a-typedrandomforestclassifier"><i class="icofont-laika link">&#xef71;</i></a>Example 2: predict a categorical value using a <code>TypedRandomForestClassifier</code></h2>
         <p>In this example, we want to predict in which city a house is located depending on its price and its square footage. We use a
@@ -281,7 +269,7 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">Features</span><span>(</span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">vectorAssembler</span><span> = </span><span class="type-name">TypedVectorAssembler</span><span>[</span><span class="type-name">Features</span><span>]
-</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@3bea11c9
+</span><span class="comment">// vectorAssembler: TypedVectorAssembler[Features] = frameless.ml.feature.TypedVectorAssembler@10b7aa3a
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeatures</span><span>(</span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">dataWithFeatures</span><span> = </span><span class="identifier">vectorAssembler</span><span>.</span><span class="identifier">transform</span><span>(</span><span class="identifier">trainingData</span><span>).</span><span class="identifier">as</span><span>[</span><span class="type-name">HouseDataWithFeatures</span><span>]
@@ -289,11 +277,11 @@
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">StringIndexerInput</span><span>(</span><span class="identifier">city</span><span>: </span><span class="type-name">String</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexer</span><span> = </span><span class="type-name">TypedStringIndexer</span><span>[</span><span class="type-name">StringIndexerInput</span><span>]
-</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@30dcf392
+</span><span class="comment">// indexer: TypedStringIndexer[StringIndexerInput] = frameless.ml.feature.TypedStringIndexer@51128989
 </span><span class="identifier">indexer</span><span>.</span><span class="identifier">estimator</span><span>.</span><span class="identifier">setHandleInvalid</span><span>(</span><span class="string-literal">&quot;keep&quot;</span><span>)
-</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_98650f190b89
+</span><span class="comment">// res12: org.apache.spark.ml.feature.StringIndexer = strIdx_25da8b79d891
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexerModel</span><span> = </span><span class="identifier">indexer</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">dataWithFeatures</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@479af9cf
+</span><span class="comment">// indexerModel: AppendTransformer[StringIndexerInput, TypedStringIndexer.Outputs, org.apache.spark.ml.feature.StringIndexerModel] = frameless.ml.TypedEstimator$$anon$1@4697934c
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseDataWithFeaturesAndIndex</span><span>(
   </span><span class="identifier">squareFeet</span><span>: </span><span class="type-name">Double</span><span>,
@@ -307,10 +295,10 @@
         <p>Then, we train the model:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">RFInputs</span><span>(</span><span class="identifier">cityIndexed</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>)
 </span><span class="keyword">val</span><span> </span><span class="identifier">rf</span><span> = </span><span class="type-name">TypedRandomForestClassifier</span><span>[</span><span class="type-name">RFInputs</span><span>]
-</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@19df8a47
+</span><span class="comment">// rf: TypedRandomForestClassifier[RFInputs] = frameless.ml.classification.TypedRandomForestClassifier@1e5f1c8d
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">model</span><span> = </span><span class="identifier">rf</span><span>.</span><span class="identifier">fit</span><span>(</span><span class="identifier">indexedData</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@7250a4ec</span></code></pre>
+</span><span class="comment">// model: AppendTransformer[RFInputs, TypedRandomForestClassifier.Outputs, org.apache.spark.ml.classification.RandomForestClassificationModel] = frameless.ml.TypedEstimator$$anon$1@57f6be72</span></code></pre>
         
         <h3 id="prediction-2" class="section"><a class="anchor-link left" href="#prediction-2"><i class="icofont-laika link">&#xef71;</i></a>Prediction</h3>
         <p>We now want to predict <code>city</code> for <code>testData</code> using the previously trained model. Like the Spark ML API,
@@ -342,7 +330,7 @@
         <pre><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">IndexToStringInput</span><span>(</span><span class="identifier">predictedCityIndexed</span><span>: </span><span class="type-name">Double</span><span>)
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">indexToString</span><span> = </span><span class="type-name">TypedIndexToString</span><span>[</span><span class="type-name">IndexToStringInput</span><span>](</span><span class="identifier">indexerModel</span><span>.</span><span class="identifier">transformer</span><span>.</span><span class="identifier">labels</span><span>)
-</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@25478957
+</span><span class="comment">// indexToString: TypedIndexToString[IndexToStringInput] = frameless.ml.feature.TypedIndexToString@63c2c371
 </span><span>
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">HouseCityPrediction</span><span>(
   </span><span class="identifier">features</span><span>: </span><span class="type-name">Vector</span><span>,

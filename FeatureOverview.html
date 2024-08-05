@@ -191,9 +191,7 @@
 </span><span class="comment">// cities: TypedDataset[String] = [value: string]</span></code></pre>
         <p>This is completely type-safe, for instance suppose we misspell <code>city</code> as <code>citi</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;citi</span><span>))
-</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;citi&quot;)] of type A in repl.MdocSession.MdocApp0.Apartment
-// aptTypedDs.select(aptTypedDs(&#39;citi))
-//                             ^</span></code></pre>
+</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;citi&quot;)] of type A in repl.MdocSession.MdocApp0.Apartment</span></code></pre>
         <p>This gets raised at compile time, whereas with the standard <code>Dataset</code> API the error appears at runtime (enjoy the stack trace):</p>
         <pre><code class="nohighlight"><span class="identifier">aptDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;citi</span><span>)
 </span><span class="comment">// org.apache.spark.sql.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `citi` cannot be resolved. Did you mean one of the following? [`city`, `price`, `surface`, `bedrooms`].;
@@ -259,7 +257,7 @@
 //   (u: Double)(implicit n: frameless.CatalystNumeric[Double])frameless.TypedColumn[repl.MdocSession.MdocApp0.Apartment,Double] &lt;and&gt;
 //   [Out, TT, W](other: frameless.TypedColumn[TT,Double])(implicit n: frameless.CatalystDivisible[Double,Out], implicit e: frameless.TypedEncoder[Out], implicit w: frameless.With[repl.MdocSession.MdocApp0.Apartment,TT]{type Out = W})frameless.TypedColumn[W,Out]
 //  cannot be applied to (frameless.TypedColumn[repl.MdocSession.MdocApp0.Apartment,Int])
-// val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs(&#39;price) / aptTypedDs(&#39;surface).cast[Double])
+// val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs(&#39;price) / aptTypedDs(&#39;surface))
 //                                            ^^^^^^^^^^^^^^^^^^^^</span></code></pre>
         <p>As the error suggests, we can&#39;t divide a <code>TypedColumn</code> of <code>Double</code> by <code>Int.</code>
         For safety, in Frameless only math operations between same types is allowed:</p>
@@ -277,9 +275,7 @@
         <p>Looks like it worked, but that <code>cast</code> seems unsafe right? Actually it is safe.
         Let&#39;s try to cast a <code>TypedColumn</code> of <code>String</code> to <code>Double</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>).</span><span class="identifier">cast</span><span>[</span><span class="type-name">Double</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter c: frameless.CatalystCast[String,Double]
-// val updated = aptTypedDs.select(aptTypedDs(&#39;city), aptTypedDs(&#39;surface) + 2).as[UpdatedSurface]
-//               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: could not find implicit value for parameter c: frameless.CatalystCast[String,Double]</span></code></pre>
         <p>The compile-time error tells us that to perform the cast, an evidence
         (in the form of <code>CatalystCast[String, Double]</code>) must be available.
         Since casting from <code>String</code> to <code>Double</code> is not allowed, this results
@@ -351,9 +347,7 @@
         <p>Next we try to cast a <code>(String, String)</code> to an <code>UpdatedSurface</code> (which has types <code>String</code>, <code>Int</code>).
         The cast is not valid and the expression does not compile:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">as</span><span>[</span><span class="type-name">UpdatedSurface</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(String, String),UpdatedSurface]
-// aptTypedDs.select(aptTypedDs(&#39;city), aptTypedDs(&#39;city)).as[UpdatedSurface]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(String, String),UpdatedSurface]</span></code></pre>
         
         <h3 id="advanced-topics-with-select" class="section"><a class="anchor-link left" href="#advanced-topics-with-select"><i class="icofont-laika link">&#xef71;</i></a>Advanced topics with <code>select()</code></h3>
         <p>When you <code>select()</code> a single column that has type <code>A</code>, the resulting type is <code>TypedDataset[A]</code> and 
@@ -435,15 +429,11 @@
         <p>Say we make a typo in a field name:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">PriceInfo2</span><span>(</span><span class="identifier">ratio</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">pricEE</span><span>: </span><span class="type-name">Double</span><span>)</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptWithRatio</span><span>.</span><span class="identifier">project</span><span>[</span><span class="type-name">PriceInfo2</span><span>]
-</span><span class="comment">// error: Cannot prove that ApartmentDetails can be projected to PriceInfo2. Perhaps not all member names and types of PriceInfo2 are the same in ApartmentDetails?
-// aptWithRatio.project[PriceInfo2]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that ApartmentDetails can be projected to PriceInfo2. Perhaps not all member names and types of PriceInfo2 are the same in ApartmentDetails?</span></code></pre>
         <p>Say we make a mistake in the corresponding type:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">PriceInfo3</span><span>(</span><span class="identifier">ratio</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">price</span><span>: </span><span class="type-name">Double</span><span>) </span><span class="comment">// ratio should be Double</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptWithRatio</span><span>.</span><span class="identifier">project</span><span>[</span><span class="type-name">PriceInfo3</span><span>]
-</span><span class="comment">// error: Cannot prove that ApartmentDetails can be projected to PriceInfo3. Perhaps not all member names and types of PriceInfo3 are the same in ApartmentDetails?
-// aptWithRatio.project[PriceInfo3]
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+</span><span class="comment">// error: Cannot prove that ApartmentDetails can be projected to PriceInfo3. Perhaps not all member names and types of PriceInfo3 are the same in ApartmentDetails?</span></code></pre>
         
         <h3 id="union-of-typeddatasets" class="section"><a class="anchor-link left" href="#union-of-typeddatasets"><i class="icofont-laika link">&#xef71;</i></a>Union of TypedDatasets</h3>
         <p>Lets create a projection of our original dataset with a subset of the fields.</p>
@@ -474,9 +464,7 @@
         <p>The other way around will not compile, since <code>aptTypedDs2</code> has only a subset of the fields. </p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">union</span><span>(</span><span class="identifier">aptTypedDs2</span><span>).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>
 </span><span class="comment">// error: Cannot prove that ApartmentShortInfo can be projected to repl.MdocSession.MdocApp0.Apartment. Perhaps not all member names and types of repl.MdocSession.MdocApp0.Apartment are the same in ApartmentShortInfo?
-// Error occurred in an application involving default arguments.
-// aptTypedDs.union(aptTypedDs2).show().run
-// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+// Error occurred in an application involving default arguments.</span></code></pre>
         <p>Finally, as with <code>project</code>, <code>union</code> will align fields that have same names/types,
         so fields do not have to be in the same order. </p>
         
@@ -608,14 +596,10 @@
 //  required: frameless.AbstractTypedColumn[?T,?C[?A]]
 // 
 // Error occurred in an application involving default arguments.
-//    arrayContains(t(&#39;_1), &quot;abc&quot;)
-//    ^^^^^^^^^^^^^
 // error: type mismatch;
 //  found   : frameless.TypedColumn[(String, List[String]),String]
 //  required: frameless.AbstractTypedColumn[T,C[A]]
 // Error occurred in an application involving default arguments.
-//    arrayContains(t(&#39;_1), &quot;abc&quot;)
-//                  ^^^^^^
 // error: type mismatch;
 //  found   : String(&quot;abc&quot;)
 //  required: A
@@ -623,9 +607,7 @@
 //    arrayContains(t(&#39;_1), &quot;abc&quot;)
 //                          ^^^^^
 // error: Cannot do collection operations on columns of type C.
-// Error occurred in an application involving default arguments.
-//    arrayContains(t(&#39;_1), &quot;abc&quot;)
-//                 ^</span></code></pre>
+// Error occurred in an application involving default arguments.</span></code></pre>
         <p>Flattening columns in Spark is done with the <code>explode()</code> method. Unlike vanilla Spark, 
         in Frameless <code>explode()</code> is part of <code>TypedDataset</code> and not a function of a column. 
         This provides additional safety since more than one <code>explode()</code> applied in a single 
@@ -653,9 +635,7 @@
   </span><span class="identifier">t2</span><span>.</span><span class="identifier">dataset</span><span>.</span><span class="identifier">toDF</span><span>().</span><span class="identifier">select</span><span>(</span><span class="identifier">sparkExplode</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;_2&quot;</span><span>), </span><span class="identifier">sparkExplode</span><span>(</span><span class="identifier">$</span><span class="string-literal">&quot;_2&quot;</span><span>))
 }
 </span><span class="comment">// error: Unit does not take parameters
-// Error occurred in an application involving default arguments.
-// flattened.show(4).run()
-// ^^^^^^^^^^^^^</span></code></pre>
+// Error occurred in an application involving default arguments.</span></code></pre>
         
         <h3 id="collecting-data-to-the-driver" class="section"><a class="anchor-link left" href="#collecting-data-to-the-driver"><i class="icofont-laika link">&#xef71;</i></a>Collecting data to the driver</h3>
         <p>In Frameless all Spark actions (such as <code>collect()</code>) are safe.</p>
@@ -688,8 +668,8 @@
 </span><span class="comment">// +----+-------+--------+--------+
 // |city|surface|   price|bedrooms|
 // +----+-------+--------+--------+
-// |Lyon|     45|133000.0|       1|
 // |Lyon|     83|200000.0|       2|
+// |Lyon|     45|133000.0|       1|
 // +----+-------+--------+--------+
 // only showing top 2 rows
 //</span></code></pre>
@@ -716,7 +696,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14169/0x0000000803d23840@498340e2
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14212/0x0000000803cbd840@7e444eaf
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
@@ -750,9 +730,7 @@
         <p>Again if we try to aggregate a column that can&#39;t be aggregated, we get a compilation error</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">agg</span><span>(</span><span class="identifier">avg</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)))
 </span><span class="comment">// error: Cannot compute average of type String.
-// Error occurred in an application involving default arguments.
-// aptTypedDs.groupBy(aptTypedDs(&#39;city)).agg(avg(aptTypedDs(&#39;city)))
-//                                              ^</span></code></pre>
+// Error occurred in an application involving default arguments.</span></code></pre>
         <p>Next, we combine <code>select</code> and <code>groupBy</code> to calculate the average price/surface ratio per city:</p>
         <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
