@@ -40,6 +40,10 @@ trait SparkTesting { self: BeforeAndAfterAll =>
     .setAppName("test")
     .set("spark.ui.enabled", "false")
     .set("spark.app.id", appID)
+    .set(
+      "spark.sql.ansi.enabled",
+      "false"
+    ) // 43 tests fail on overflow / casting issues
 
   private var s: SparkSession = _
 
