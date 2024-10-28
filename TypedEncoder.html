@@ -170,8 +170,6 @@
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="identifier">now</span><span>, </span><span class="identifier">now</span><span>)))
 </span><span class="comment">// error: ds is already defined as value ds
-// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
-//     ^^
 // error: ambiguous reference to overloaded definition,
 // both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
 // and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
@@ -206,7 +204,7 @@
 </span><span class="comment">// ds: TypedDataset[Foo] = [i: int, b: struct&lt;d: double, s: string&gt;]
 </span><span>
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">collect</span><span>()
-</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@2a8ad4b6</span></code></pre>
+</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@3d23d9cf</span></code></pre>
         <p>But any non-encodable in the case class hierarchy will be detected at compile time:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">BarDate</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">t</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">FooDate</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">BarDate</span><span>)</span></code></pre>
