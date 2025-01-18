@@ -1,4 +1,4 @@
-val sbtTypelevelVersion = "0.7.4"
+val sbtTypelevelVersion = "0.7.6"
 
 addSbtPlugin("org.typelevel" % "sbt-typelevel-ci-release" % sbtTypelevelVersion)
 
