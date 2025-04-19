@@ -1,24 +1,25 @@
 val sparkVersion = "3.5.5"
 val spark34Version = "3.4.4"
 val spark33Version = "3.3.4"
-val catsCoreVersion = "2.12.0"
-val catsEffectVersion = "3.5.7"
+val catsCoreVersion = "2.13.0"
+val catsEffectVersion = "3.6.1"
 val catsMtlVersion = "1.5.0"
 val scalatest = "3.2.19"
 val scalatestplus = "3.1.0.0-RC2"
-val shapeless = "2.3.12"
+val shapeless = "2.3.13"
 val scalacheck = "1.18.1"
 val scalacheckEffect = "1.0.4"
-val refinedVersion = "0.11.2"
+val refinedVersion = "0.11.3"
 val nakedFSVersion = "0.1.0"
 
-val Scala212 = "2.12.19"
-val Scala213 = "2.13.14"
+val Scala212 = "2.12.20"
+val Scala213 = "2.13.16"
 
 ThisBuild / tlBaseVersion := "0.16"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
 ThisBuild / scalaVersion := Scala212
+ThisBuild / coverageScalacPluginVersion := "2.3.0"
 
 lazy val root = project
   .in(file("."))
@@ -244,7 +245,10 @@ lazy val datasetSettings =
       )
     },
     coverageExcludedPackages := "org.apache.spark.sql.reflection",
-    libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude ("org.apache.hadoop", "hadoop-commons")
+    libraryDependencies += "com.globalmentor" % "hadoop-bare-naked-local-fs" % nakedFSVersion % Test exclude (
+      "org.apache.hadoop",
+      "hadoop-commons"
+    )
   )
 
 lazy val refinedSettings =
