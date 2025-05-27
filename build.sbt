@@ -325,7 +325,7 @@ lazy val framelessSettings = Seq(
    * [error] (update) found version conflict(s) in library dependencies; some are suspected to be binary incompatible:
    * [error]
    * [error] 	* org.scala-lang.modules:scala-xml_2.12:2.3.0 (early-semver) is selected over 1.0.6
-   * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.1.0)
+   * [error] 	    +- org.scoverage:scalac-scoverage-reporter_2.12:2.0.7 (depends on 2.4.0)
    * [error] 	    +- org.scala-lang:scala-compiler:2.12.16              (depends on 1.0.6)
    */
   libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
