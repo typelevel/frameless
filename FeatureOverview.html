@@ -668,8 +668,8 @@
 </span><span class="comment">// +----+-------+--------+--------+
 // |city|surface|   price|bedrooms|
 // +----+-------+--------+--------+
-// |Lyon|     83|200000.0|       2|
 // |Lyon|     45|133000.0|       1|
+// |Lyon|     83|200000.0|       2|
 // +----+-------+--------+--------+
 // only showing top 2 rows
 //</span></code></pre>
@@ -696,7 +696,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14313/0x0000000803d06840@68d9fe7e
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$14236/0x0000000803d08840@6827df27
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
