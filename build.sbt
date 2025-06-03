@@ -1,4 +1,4 @@
-val sparkVersion = "3.5.5"
+val sparkVersion = "3.5.6"
 val spark34Version = "3.4.4"
 val spark33Version = "3.3.4"
 val catsCoreVersion = "2.13.0"
