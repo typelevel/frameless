@@ -114,7 +114,7 @@ object RefinedTypesTests {
 
   import frameless.refined._ // implicit instances for refined
 
-  implicit val encoderA: TypedEncoder[A] = TypedEncoder.usingDerivation
+  implicit val encoderA: TypedEncoder[A] = TypedEncoder.deriveForGeneric
 
-  implicit val encoderB: TypedEncoder[B] = TypedEncoder.usingDerivation
+  implicit val encoderB: TypedEncoder[B] = TypedEncoder.deriveForGeneric
 }
