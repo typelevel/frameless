@@ -172,7 +172,7 @@ type TimeSeries = Map[Int,Int]
 type UserName = String
 ```
 
-Example: Using the implicit full-our-join operator
+Example: Using the implicit full-outer-join operator
 
 ```scala mdoc
 import frameless.cats.outer._
