@@ -165,7 +165,7 @@ lazy val `ml-spark34` = project
   .settings(spark34Settings)
   .dependsOn(
     core % "test->test;compile->compile",
-    `dataset-spark33` % "test->test;compile->compile;provided->provided"
+    `dataset-spark34` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val `ml-spark33` = project
@@ -313,7 +313,28 @@ lazy val framelessSettings = Seq(
     "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % Test,
     "org.scalacheck" %% "scalacheck" % scalacheck % Test
   ),
-  Test / javaOptions ++= Seq("-Xmx1G", "-ea"),
+  Test / javaOptions ++= {
+    val baseOptions = Seq("-Xmx1G", "-ea")
+    val java17Options =
+      if (sys.props("java.specification.version").toDouble >= 17.0) {
+        Seq(
+          "--add-opens=java.base/java.lang=ALL-UNNAMED",
+          "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+          "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+          "--add-opens=java.base/java.io=ALL-UNNAMED",
+          "--add-opens=java.base/java.net=ALL-UNNAMED",
+          "--add-opens=java.base/java.nio=ALL-UNNAMED",
+          "--add-opens=java.base/java.util=ALL-UNNAMED",
+          "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+          "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+          "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+          "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+          "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+          "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
+        )
+      } else Seq.empty
+    baseOptions ++ java17Options
+  },
   Test / fork := true,
   Test / parallelExecution := false,
   mimaPreviousArtifacts ~= {
