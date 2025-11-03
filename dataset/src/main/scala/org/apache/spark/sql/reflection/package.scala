@@ -70,15 +70,15 @@ package object reflection {
 
   private def dataTypeFor(tpe: `Type`): DataType = cleanUpReflectionObjects {
     tpe.dealias match {
-      case t if isSubtype(t, definitions.NullTpe)      => NullType
-      case t if isSubtype(t, definitions.IntTpe)       => IntegerType
-      case t if isSubtype(t, definitions.LongTpe)      => LongType
-      case t if isSubtype(t, definitions.DoubleTpe)    => DoubleType
-      case t if isSubtype(t, definitions.FloatTpe)     => FloatType
-      case t if isSubtype(t, definitions.ShortTpe)     => ShortType
-      case t if isSubtype(t, definitions.ByteTpe)      => ByteType
-      case t if isSubtype(t, definitions.BooleanTpe)   => BooleanType
-      case t if isSubtype(t, localTypeOf[Array[Byte]]) => BinaryType
+      case t if isSubtype(t, definitions.NullTpe)           => NullType
+      case t if isSubtype(t, definitions.IntTpe)            => IntegerType
+      case t if isSubtype(t, definitions.LongTpe)           => LongType
+      case t if isSubtype(t, definitions.DoubleTpe)         => DoubleType
+      case t if isSubtype(t, definitions.FloatTpe)          => FloatType
+      case t if isSubtype(t, definitions.ShortTpe)          => ShortType
+      case t if isSubtype(t, definitions.ByteTpe)           => ByteType
+      case t if isSubtype(t, definitions.BooleanTpe)        => BooleanType
+      case t if isSubtype(t, localTypeOf[Array[Byte]])      => BinaryType
       case t if isSubtype(t, localTypeOf[CalendarInterval]) =>
         CalendarIntervalType
       case t if isSubtype(t, localTypeOf[Decimal]) => DecimalType.SYSTEM_DEFAULT
