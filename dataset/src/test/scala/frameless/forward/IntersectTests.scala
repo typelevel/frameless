@@ -6,10 +6,14 @@ import math.Ordering
 
 class IntersectTests extends TypedDatasetSuite {
   test("intersect") {
-    def prop[A: TypedEncoder : Ordering](data1: Vector[A], data2: Vector[A]): Prop = {
+    def prop[A: TypedEncoder: Ordering](
+        data1: Vector[A],
+        data2: Vector[A]
+      ): Prop = {
       val dataset1 = TypedDataset.create(data1)
       val dataset2 = TypedDataset.create(data2)
-      val datasetIntersect = dataset1.intersect(dataset2).collect().run().toVector
+      val datasetIntersect =
+        dataset1.intersect(dataset2).collect().run().toVector
 
       // Vector `intersect` is the multiset intersection, while Spark throws away duplicates.
       val dataIntersect = data1.intersect(data2).distinct
