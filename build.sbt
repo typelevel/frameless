@@ -241,7 +241,14 @@ lazy val datasetSettings =
         mc("frameless.functions.FramelessLit"),
         mc(f"frameless.functions.FramelessLit$$"),
         dmm("frameless.functions.package.litAggr"),
-        dmm("org.apache.spark.sql.FramelessInternals.column")
+        dmm("org.apache.spark.sql.FramelessInternals.column"),
+        dmm("frameless.TypedEncoder.collectionEncoder"),
+        dmm("frameless.TypedEncoder.setEncoder"),
+        dmm("frameless.functions.FramelessUdf.evalCode"),
+        dmm("frameless.functions.FramelessUdf.copy"),
+        dmm("frameless.functions.FramelessUdf.this"),
+        dmm("frameless.functions.FramelessUdf.apply"),
+        imt("frameless.functions.FramelessUdf.apply")
       )
     },
     coverageExcludedPackages := "org.apache.spark.sql.reflection",
