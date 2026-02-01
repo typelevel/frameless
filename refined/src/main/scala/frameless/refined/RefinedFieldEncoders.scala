@@ -4,7 +4,10 @@ import scala.reflect.ClassTag
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects.{
-  Invoke, NewInstance, UnwrapOption, WrapOption
+  Invoke,
+  NewInstance,
+  UnwrapOption,
+  WrapOption
 }
 import org.apache.spark.sql.types._
 
@@ -13,15 +16,16 @@ import eu.timepit.refined.api.RefType
 import frameless.{ TypedEncoder, RecordFieldEncoder }
 
 private[refined] trait RefinedFieldEncoders {
+
   /**
    * @tparam T the refined type (e.g. `String`)
    */
   implicit def optionRefined[F[_, _], T, R](
-    implicit
+      implicit
       i0: RefType[F],
       i1: TypedEncoder[T],
-      i2: ClassTag[F[T, R]],
-  ): RecordFieldEncoder[Option[F[T, R]]] =
+      i2: ClassTag[F[T, R]]
+    ): RecordFieldEncoder[Option[F[T, R]]] =
     RecordFieldEncoder[Option[F[T, R]]](new TypedEncoder[Option[F[T, R]]] {
       def nullable = true
 
@@ -54,11 +58,11 @@ private[refined] trait RefinedFieldEncoders {
    * @tparam T the refined type (e.g. `String`)
    */
   implicit def refined[F[_, _], T, R](
-    implicit
+      implicit
       i0: RefType[F],
       i1: TypedEncoder[T],
-      i2: ClassTag[F[T, R]],
-  ): RecordFieldEncoder[F[T, R]] =
+      i2: ClassTag[F[T, R]]
+    ): RecordFieldEncoder[F[T, R]] =
     RecordFieldEncoder[F[T, R]](new TypedEncoder[F[T, R]] {
       def nullable = i1.nullable
 
@@ -76,4 +80,3 @@ private[refined] trait RefinedFieldEncoders {
       override def toString = s"refined[${i2.runtimeClass.getName}]"
     })
 }
-
