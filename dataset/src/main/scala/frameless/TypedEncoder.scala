@@ -727,7 +727,7 @@ object TypedEncoder {
     }
 
   /** Encodes things as records if there is no Injection defined */
-  implicit def usingDerivation[F, G <: HList, H <: HList](
+  implicit def deriveForGeneric[F, G <: HList, H <: HList](
       implicit
       i0: LabelledGeneric.Aux[F, G],
       i1: DropUnitValues.Aux[G, H],
@@ -735,7 +735,15 @@ object TypedEncoder {
       i3: Lazy[RecordEncoderFields[H]],
       i4: Lazy[NewInstanceExprs[G]],
       i5: ClassTag[F]
-    ): TypedEncoder[F] = new RecordEncoder[F, G, H]
+    ): TypedEncoder[F] = RecordEncoder.ForGeneric[F, G, H]()
+
+  implicit def deriveForTypedRow[G <: HList, H <: HList](
+      implicit
+      i1: DropUnitValues.Aux[G, H],
+      i2: IsHCons[H],
+      i3: Lazy[RecordEncoderFields[H]],
+      i4: Lazy[NewInstanceExprs[G]]
+    ): TypedEncoder[TypedRow[G]] = RecordEncoder.ForTypedRow[G, H]()
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[
