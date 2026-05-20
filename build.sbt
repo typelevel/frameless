@@ -248,7 +248,14 @@ lazy val docs = project
       "org.typelevel" % "kind-projector" % "0.13.4" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.3.2"
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.3.2",
+    // mdoc executes Spark code via `Compile / runMain`; on JDK 17 (the site CI job) Spark
+    // needs the module --add-opens flags, so fork the run and pass them through. Forking
+    // changes the working directory, so pin it to the repo root where the docs read their
+    // relative data files (e.g. docs/iris.data).
+    Compile / run / fork := true,
+    Compile / run / javaOptions ++= sparkJava17Options,
+    Compile / run / baseDirectory := (LocalRootProject / baseDirectory).value
   )
   .dependsOn(dataset, cats, ml)
 
@@ -361,6 +368,27 @@ lazy val scalacOptionSettings = Def.setting {
   baseScalacOptions(scalaVersion.value)
 }
 
+// JVM flags Spark needs on JDK 17+ (the module system blocks its reflective access
+// to java.base internals otherwise). Empty on JDK 8/11. Reused by tests and the docs run.
+lazy val sparkJava17Options: Seq[String] =
+  if (sys.props("java.specification.version").toDouble >= 17.0) {
+    Seq(
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.base/java.net=ALL-UNNAMED",
+      "--add-opens=java.base/java.nio=ALL-UNNAMED",
+      "--add-opens=java.base/java.util=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+      "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+      "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
+    )
+  } else Seq.empty
+
 lazy val framelessSettings = Seq(
   scalacOptions ++= scalacOptionSettings.value,
   Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oDF"),
@@ -370,28 +398,7 @@ lazy val framelessSettings = Seq(
     "org.scalatestplus" %% "scalatestplus-scalacheck" % scalatestplus % Test,
     "org.scalacheck" %% "scalacheck" % scalacheck % Test
   ),
-  Test / javaOptions ++= {
-    val baseOptions = Seq("-Xmx1G", "-ea")
-    val java17Options =
-      if (sys.props("java.specification.version").toDouble >= 17.0) {
-        Seq(
-          "--add-opens=java.base/java.lang=ALL-UNNAMED",
-          "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
-          "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-          "--add-opens=java.base/java.io=ALL-UNNAMED",
-          "--add-opens=java.base/java.net=ALL-UNNAMED",
-          "--add-opens=java.base/java.nio=ALL-UNNAMED",
-          "--add-opens=java.base/java.util=ALL-UNNAMED",
-          "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-          "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
-          "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-          "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
-          "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
-          "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED"
-        )
-      } else Seq.empty
-    baseOptions ++ java17Options
-  },
+  Test / javaOptions ++= Seq("-Xmx1G", "-ea") ++ sparkJava17Options,
   Test / fork := true,
   Test / parallelExecution := false,
   mimaPreviousArtifacts ~= {
