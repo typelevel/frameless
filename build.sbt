@@ -305,7 +305,13 @@ lazy val datasetSettings =
         mc("frameless.functions.FramelessLit"),
         mc(f"frameless.functions.FramelessLit$$"),
         dmm("frameless.functions.package.litAggr"),
-        dmm("org.apache.spark.sql.FramelessInternals.column")
+        dmm("org.apache.spark.sql.FramelessInternals.column"),
+        // FramelessInternals is internal plumbing (Spark-version compat seam), not part of
+        // the intended public API. Spark 4 required reworking it: `column` is now the
+        // Expression->Column bridge and `mkDataset` derives the session from the source
+        // Dataset instead of taking a SQLContext.
+        imt("org.apache.spark.sql.FramelessInternals.column"),
+        imt("org.apache.spark.sql.FramelessInternals.mkDataset")
       )
     },
     coverageExcludedPackages := "org.apache.spark.sql.reflection",
