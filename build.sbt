@@ -514,11 +514,11 @@ ThisBuild / githubWorkflowBuildMatrixExclusions ++=
   } ++ spark4Roots.map { project =>
     MatrixExclude(Map("scala" -> "2.12", "project" -> project))
   } ++
-  // Pin each Spark line to its JDK: 3.x on JDK 8, 4.x on JDK 17.
-  spark3Roots.map { project =>
-    MatrixExclude(Map("java" -> spark4Java.render, "project" -> project))
-  } ++ spark4Roots.map { project =>
-    MatrixExclude(Map("java" -> spark3Java.render, "project" -> project))
-  }
+    // Pin each Spark line to its JDK: 3.x on JDK 8, 4.x on JDK 17.
+    spark3Roots.map { project =>
+      MatrixExclude(Map("java" -> spark4Java.render, "project" -> project))
+    } ++ spark4Roots.map { project =>
+      MatrixExclude(Map("java" -> spark3Java.render, "project" -> project))
+    }
 
 ThisBuild / githubWorkflowEnv += "SBT_OPTS" -> "-Xms1g -Xmx4g"

@@ -2,14 +2,19 @@ package org.apache.spark.sql
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
-import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
+import org.apache.spark.sql.catalyst.expressions.{ Alias, CreateStruct }
+import org.apache.spark.sql.catalyst.expressions.{ Expression, NamedExpression }
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.encoders.AgnosticEncoders.JavaBeanEncoder
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
-import org.apache.spark.sql.classic.{Dataset => ClassicDataset, SparkSession => ClassicSparkSession, ExpressionUtils, ColumnNodeToExpressionConverter}
+import org.apache.spark.sql.catalyst.plans.logical.{ LogicalPlan, Project }
+import org.apache.spark.sql.classic.{
+  Dataset => ClassicDataset,
+  SparkSession => ClassicSparkSession,
+  ExpressionUtils,
+  ColumnNodeToExpressionConverter
+}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.types.ObjectType
@@ -25,7 +30,11 @@ import scala.reflect.ClassTag
  * own bridge between the two.
  */
 object FramelessInternals {
-  def objectTypeFor[A](implicit classTag: ClassTag[A]): ObjectType = ObjectType(classTag.runtimeClass)
+
+  def objectTypeFor[A](
+      implicit
+      classTag: ClassTag[A]
+    ): ObjectType = ObjectType(classTag.runtimeClass)
 
   private def classic(ds: Dataset[_]): ClassicDataset[_] =
     ds.asInstanceOf[ClassicDataset[_]]
@@ -53,7 +62,8 @@ object FramelessInternals {
    * disambiguation markers via `Expression.transform`, both of which require a real, traversable
    * expression tree - so convert the column's node eagerly instead.
    */
-  def expr(column: Column): Expression = ColumnNodeToExpressionConverter(column.node)
+  def expr(column: Column): Expression =
+    ColumnNodeToExpressionConverter(column.node)
 
   def logicalPlan(ds: Dataset[_]): LogicalPlan = classic(ds).logicalPlan
 
@@ -65,22 +75,37 @@ object FramelessInternals {
   def getConf(ds: Dataset[_], key: String, default: String): String =
     classic(ds).sparkSession.conf.get(key, default)
 
-  def joinPlan(ds: Dataset[_], plan: LogicalPlan, leftPlan: LogicalPlan, rightPlan: LogicalPlan): LogicalPlan = {
+  def joinPlan(
+      ds: Dataset[_],
+      plan: LogicalPlan,
+      leftPlan: LogicalPlan,
+      rightPlan: LogicalPlan
+    ): LogicalPlan = {
     val joined = executePlan(ds, plan)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
 
-    Project(List(
-      Alias(CreateStruct(leftOutput), "_1")(),
-      Alias(CreateStruct(rightOutput), "_2")()
-    ), joined.analyzed)
+    Project(
+      List(
+        Alias(CreateStruct(leftOutput), "_1")(),
+        Alias(CreateStruct(rightOutput), "_2")()
+      ),
+      joined.analyzed
+    )
   }
 
-  def mkDataset[T](source: Dataset[_], plan: LogicalPlan, encoder: Encoder[T]): Dataset[T] =
+  def mkDataset[T](
+      source: Dataset[_],
+      plan: LogicalPlan,
+      encoder: Encoder[T]
+    ): Dataset[T] =
     new ClassicDataset[T](classic(source).sparkSession, plan, encoder)
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
-    ClassicDataset.ofRows(sparkSession.asInstanceOf[ClassicSparkSession], logicalPlan)
+    ClassicDataset.ofRows(
+      sparkSession.asInstanceOf[ClassicSparkSession],
+      logicalPlan
+    )
 
   /**
    * Builds an [[ExpressionEncoder]] from frameless' own serializer/deserializer expressions.
@@ -91,34 +116,53 @@ object FramelessInternals {
    * carrying the right `ClassTag` is therefore a correct, metadata-only stand-in.
    */
   def expressionEncoder[T](
-    objSerializer: Expression,
-    objDeserializer: Expression,
-    classTag: ClassTag[T]
-  ): ExpressionEncoder[T] =
-    new ExpressionEncoder[T](JavaBeanEncoder(classTag, Nil), objSerializer, objDeserializer)
+      objSerializer: Expression,
+      objDeserializer: Expression,
+      classTag: ClassTag[T]
+    ): ExpressionEncoder[T] =
+    new ExpressionEncoder[T](
+      JavaBeanEncoder(classTag, Nil),
+      objSerializer,
+      objDeserializer
+    )
 
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
-  type UserDefinedType[A >: Null] =  org.apache.spark.sql.types.UserDefinedType[A]
+  type UserDefinedType[A >: Null] =
+    org.apache.spark.sql.types.UserDefinedType[A]
 
   // below only tested in SelfJoinTests.colLeft and colRight are equivalent to col outside of joins
   //  - via files (codegen) forces doGenCode eval.
   /** Expression to tag columns from the left hand side of join expression. */
-  case class DisambiguateLeft[T](tagged: Expression) extends Expression with NonSQLExpression {
+  case class DisambiguateLeft[T](tagged: Expression)
+      extends Expression
+      with NonSQLExpression {
     def eval(input: InternalRow): Any = tagged.eval(input)
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
-    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
+
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+      tagged.genCode(ctx)
+
+    protected def withNewChildrenInternal(
+        newChildren: IndexedSeq[Expression]
+      ): Expression = copy(newChildren.head)
   }
 
   /** Expression to tag columns from the right hand side of join expression. */
-  case class DisambiguateRight[T](tagged: Expression) extends Expression with NonSQLExpression {
+  case class DisambiguateRight[T](tagged: Expression)
+      extends Expression
+      with NonSQLExpression {
     def eval(input: InternalRow): Any = tagged.eval(input)
     def nullable: Boolean = false
     def children: Seq[Expression] = tagged :: Nil
     def dataType: DataType = tagged.dataType
-    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = tagged.genCode(ctx)
-    protected def withNewChildrenInternal(newChildren: IndexedSeq[Expression]): Expression = copy(newChildren.head)
+
+    protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+      tagged.genCode(ctx)
+
+    protected def withNewChildrenInternal(
+        newChildren: IndexedSeq[Expression]
+      ): Expression = copy(newChildren.head)
   }
 }

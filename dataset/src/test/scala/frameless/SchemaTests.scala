@@ -2,7 +2,7 @@ package frameless
 
 import frameless.functions.aggregate._
 import frameless.functions._
-import org.apache.spark.sql.types.{Metadata, StructType}
+import org.apache.spark.sql.types.{ Metadata, StructType }
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.matchers.should.Matchers
@@ -12,10 +12,17 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
   def structToNonNullable(struct: StructType): StructType = {
     // Spark 4 attaches metadata to aggregate output columns; clear it (and nullability)
     // so comparisons consider only field names and types. No-op on Spark 3.x.
-    StructType(struct.fields.map( f => f.copy(nullable = false, metadata = Metadata.empty)))
+    StructType(
+      struct.fields.map(f =>
+        f.copy(nullable = false, metadata = Metadata.empty)
+      )
+    )
   }
 
-  def prop[A](dataset: TypedDataset[A], ignoreNullable: Boolean = false): Prop = {
+  def prop[A](
+      dataset: TypedDataset[A],
+      ignoreNullable: Boolean = false
+    ): Prop = {
     val schema = dataset.dataset.schema
 
     Prop.all(
@@ -26,7 +33,9 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
       if (!ignoreNullable)
         TypedExpressionEncoder.targetStructType(dataset.encoder) ?= schema
       else
-        structToNonNullable(TypedExpressionEncoder.targetStructType(dataset.encoder))  ?= structToNonNullable(schema)
+        structToNonNullable(
+          TypedExpressionEncoder.targetStructType(dataset.encoder)
+        ) ?= structToNonNullable(schema)
     )
   }
 
