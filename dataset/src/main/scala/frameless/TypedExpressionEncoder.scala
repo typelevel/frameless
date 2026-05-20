@@ -1,6 +1,7 @@
 package frameless
 
-import org.apache.spark.sql.{ Encoder, FramelessInternals }
+import org.apache.spark.sql.Encoder
+import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
 import org.apache.spark.sql.catalyst.expressions.{
   BoundReference,
