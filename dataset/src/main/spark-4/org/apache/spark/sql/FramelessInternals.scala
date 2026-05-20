@@ -51,11 +51,11 @@ object FramelessInternals {
       }
   }
 
-  /** Wraps a Catalyst [[Expression]] into a [[Column]] (Spark 4 bridge). */
+  /** Wraps a Catalyst `Expression` into a `Column` (Spark 4 bridge). */
   def column(e: Expression): Column = ExpressionUtils.column(e)
 
   /**
-   * Extracts the Catalyst [[Expression]] from a [[Column]].
+   * Extracts the Catalyst `Expression` from a `Column`.
    *
    * `ExpressionUtils.expression` would return a lazy `ColumnNodeExpression` wrapper, which is
    * `Unevaluable` and exposes no children. frameless builds join plans by hand and rewrites
@@ -108,7 +108,7 @@ object FramelessInternals {
     )
 
   /**
-   * Builds an [[ExpressionEncoder]] from frameless' own serializer/deserializer expressions.
+   * Builds an `ExpressionEncoder` from frameless' own serializer/deserializer expressions.
    *
    * Spark 4's `ExpressionEncoder` takes a leading `AgnosticEncoder` (SPARK-49025), but it is
    * only read for its `clsTag` and an Option-wrapping check - the serializer, deserializer and

@@ -33,7 +33,7 @@ object FramelessInternals {
       }
   }
 
-  /** Wraps a Catalyst [[Expression]] into a [[Column]]. */
+  /** Wraps a Catalyst `Expression` into a `Column`. */
   def column(e: Expression): Column = new Column(e)
 
   def expr(column: Column): Expression = column.expr
@@ -77,7 +77,7 @@ object FramelessInternals {
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
     Dataset.ofRows(sparkSession, logicalPlan)
 
-  /** Builds an [[ExpressionEncoder]] from frameless' own serializer/deserializer expressions. */
+  /** Builds an `ExpressionEncoder` from frameless' own serializer/deserializer expressions. */
   def expressionEncoder[T](
       objSerializer: Expression,
       objDeserializer: Expression,
