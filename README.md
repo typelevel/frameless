@@ -27,6 +27,7 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 
 | Frameless | Spark                       | Cats     | Cats-Effect | Scala       |
 |-----------|-----------------------------|----------|-------------|-------------|
+| 0.17.0    | 4.0.2† / 3.5.8 / 3.4.4 / 3.3.4 | 2.x   | 3.x         | 2.12 / 2.13 |
 | 0.16.0    | 3.5.0 / 3.4.0 / 3.3.0       | 2.x      | 3.x         | 2.12 / 2.13 |
 | 0.15.0    | 3.4.0 / 3.3.0 / 3.2.2       | 2.x      | 3.x         | 2.12 / 2.13 |
 | 0.14.1    | 3.4.0 / 3.3.0 / 3.2.2       | 2.x      | 3.x         | 2.12 / 2.13 |
@@ -46,6 +47,8 @@ The compatible versions of [Spark](http://spark.apache.org/) and
 
 _\* 0.11.0 has broken Spark 3.1.2 and 3.0.1 artifacts published._
 
+_† The Spark 4.0.x artifacts (`-spark40`) are published for **Scala 2.13 only** and require **JDK 17+**, since Spark 4 dropped Scala 2.12 and JDK 8/11. The default (unsuffixed) artifacts still target Spark 3.5._
+
 Starting 0.11 we introduced Spark cross published artifacts:
 
 * By default, frameless artifacts depend on the most recent Spark version
@@ -53,9 +56,10 @@ Starting 0.11 we introduced Spark cross published artifacts:
 
 Artifact names examples:
 
-* `frameless-dataset` (the latest Spark dependency)
+* `frameless-dataset` (the default Spark 3.5.x dependency)
+* `frameless-dataset-spark40` (Spark 4.0.x dependency; Scala 2.13 + JDK 17 only)
+* `frameless-dataset-spark34` (Spark 3.4.x dependency)
 * `frameless-dataset-spark33` (Spark 3.3.x dependency)
-* `frameless-dataset-spark32` (Spark 3.2.x dependency)
 
 Versions 0.5.x and 0.6.x have identical features. The first is compatible with Spark 2.2.1 and the second with 2.3.0.
 

@@ -4,6 +4,7 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
 import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
 import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
@@ -22,12 +23,20 @@ object FramelessInternals {
     }
   }
 
+  /** Wraps a Catalyst [[Expression]] into a [[Column]]. */
+  def column(e: Expression): Column = new Column(e)
+
   def expr(column: Column): Expression = column.expr
 
   def logicalPlan(ds: Dataset[_]): LogicalPlan = ds.logicalPlan
 
   def executePlan(ds: Dataset[_], plan: LogicalPlan): QueryExecution =
     ds.sparkSession.sessionState.executePlan(plan)
+
+  def sqlContext(ds: Dataset[_]): SQLContext = ds.sqlContext
+
+  def getConf(ds: Dataset[_], key: String, default: String): String =
+    ds.sqlContext.getConf(key, default)
 
   def joinPlan(ds: Dataset[_], plan: LogicalPlan, leftPlan: LogicalPlan, rightPlan: LogicalPlan): LogicalPlan = {
     val joined = executePlan(ds, plan)
@@ -40,11 +49,19 @@ object FramelessInternals {
     ), joined.analyzed)
   }
 
-  def mkDataset[T](sqlContext: SQLContext, plan: LogicalPlan, encoder: Encoder[T]): Dataset[T] =
-    new Dataset(sqlContext, plan, encoder)
+  def mkDataset[T](source: Dataset[_], plan: LogicalPlan, encoder: Encoder[T]): Dataset[T] =
+    new Dataset(source.sparkSession, plan, encoder)
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
     Dataset.ofRows(sparkSession, logicalPlan)
+
+  /** Builds an [[ExpressionEncoder]] from frameless' own serializer/deserializer expressions. */
+  def expressionEncoder[T](
+    objSerializer: Expression,
+    objDeserializer: Expression,
+    classTag: ClassTag[T]
+  ): ExpressionEncoder[T] =
+    new ExpressionEncoder[T](objSerializer, objDeserializer, classTag)
 
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
   type UserDefinedType[A >: Null] =  org.apache.spark.sql.types.UserDefinedType[A]

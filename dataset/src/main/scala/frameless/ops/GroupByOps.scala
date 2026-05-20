@@ -144,7 +144,7 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
     i7: TypedEncoder[Out1],
     i8: ToTraversable.Aux[TC, List, UntypedExpression[T]]
   ): TypedDataset[Out1] = {
-    def expr(c: UntypedExpression[T]): Column = new Column(c.expr)
+    def expr(c: UntypedExpression[T]): Column = FramelessInternals.column(c.expr)
 
     val groupByExprs = groupedBy.toList[UntypedExpression[T]].map(expr)
     val aggregates =
@@ -191,7 +191,7 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
       )(TypedExpressionEncoder[KT], TypedExpressionEncoder[T], TypedExpressionEncoder[U])
 
       val groupedAndFlatMapped = FramelessInternals.mkDataset(
-        self.dataset.sqlContext,
+        self.dataset,
         mapGroups,
         TypedExpressionEncoder[U]
       )
@@ -201,7 +201,7 @@ private[ops] abstract class AggregatingOps[T, TK <: HList, K <: HList, KT]
   }
 
   private def retainGroupColumns: Boolean = {
-    self.dataset.sqlContext.getConf("spark.sql.retainGroupColumns", "true").toBoolean
+    FramelessInternals.getConf(self.dataset, "spark.sql.retainGroupColumns", "true").toBoolean
   }
 
   def pivot[P: CatalystPivotable](pivotColumn: TypedColumn[T, P]): PivotNotValues[T, TK, P] =
@@ -243,7 +243,7 @@ final case class Pivot[T, GroupedColumns <: HList, PivotType, Values <: HList](
             case x :: xs => f(x) :: mapAny(xs)(f)
           }
 
-        val aggCols: Seq[Column] = mapAny(aggrColumns)(x => new Column(x.asInstanceOf[TypedAggregate[_,_]].expr))
+        val aggCols: Seq[Column] = mapAny(aggrColumns)(x => FramelessInternals.column(x.asInstanceOf[TypedAggregate[_,_]].expr))
         val tmp = ds.dataset.toDF()
           .groupBy(mapAny(groupedBy)(_.asInstanceOf[TypedColumn[_, _]].untyped): _*)
           .pivot(pivotedBy.untyped.toString, mapAny(values)(identity))

@@ -13,7 +13,7 @@ private[frameless] object TypedColumnMacroImpl {
     def buildExpression(path: List[String]): c.Expr[TypedColumn[T, U]] = {
       val columnName = path.mkString(".")
 
-      c.Expr[TypedColumn[T, U]](q"new _root_.frameless.TypedColumn[$t, $u]((org.apache.spark.sql.functions.col($columnName)).expr)")
+      c.Expr[TypedColumn[T, U]](q"new _root_.frameless.TypedColumn[$t, $u](_root_.org.apache.spark.sql.FramelessInternals.expr(org.apache.spark.sql.functions.col($columnName)))")
     }
 
     def abort(msg: String) = c.abort(c.enclosingPosition, msg)
@@ -66,7 +66,7 @@ private[frameless] object TypedColumnMacroImpl {
               expectedRoot.forall(_ == root) && check(t, tail)) => {
               val colPath = tail.mkString(".")
 
-              c.Expr[TypedColumn[T, U]](q"new _root_.frameless.TypedColumn[$t, $u]((org.apache.spark.sql.functions.col($colPath)).expr)")
+              c.Expr[TypedColumn[T, U]](q"new _root_.frameless.TypedColumn[$t, $u](_root_.org.apache.spark.sql.FramelessInternals.expr(org.apache.spark.sql.functions.col($colPath)))")
             }
 
             case _ =>

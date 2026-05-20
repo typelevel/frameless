@@ -8,7 +8,7 @@ class SQLContextTests extends TypedDatasetSuite {
     def prop[A: TypedEncoder](data: Vector[A]): Prop = {
       val dataset = TypedDataset.create[A](data)
 
-      dataset.sqlContext =? dataset.dataset.sqlContext
+      dataset.sqlContext =? org.apache.spark.sql.FramelessInternals.sqlContext(dataset.dataset)
     }
 
     check(forAll(prop[Int] _))

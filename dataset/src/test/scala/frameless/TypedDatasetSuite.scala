@@ -33,6 +33,11 @@ trait SparkTesting { self: BeforeAndAfterAll =>
     .setAppName("test")
     .set("spark.ui.enabled", "false")
     .set("spark.app.id", appID)
+    // Spark 4 enables ANSI SQL mode by default, which makes the property-based
+    // generators (extreme numeric values, malformed date strings) raise overflow /
+    // cast errors instead of the wrap-around / null semantics these tests assert.
+    // No-op on Spark 3.x, where ANSI is already disabled by default.
+    .set("spark.sql.ansi.enabled", "false")
 
   private var s: SparkSession = _
 

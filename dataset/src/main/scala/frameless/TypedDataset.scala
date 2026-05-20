@@ -109,7 +109,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       val underlyingColumns = columns.toList[UntypedExpression[T]]
       val cols: Seq[Column] = for {
         (c, i) <- columns.toList[UntypedExpression[T]].zipWithIndex
-      } yield new Column(c.expr).as(s"_${i+1}")
+      } yield FramelessInternals.column(c.expr).as(s"_${i+1}")
 
       // Workaround to SPARK-20346. One alternative is to allow the result to be Vector(null) for empty DataFrames.
       // Another one would be to return an Option.
@@ -635,7 +635,8 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
   /** Computes the cartesian project of `this` `Dataset` with the `other` `Dataset` */
   def joinCross[U](other: TypedDataset[U])
     (implicit e: TypedEncoder[(T, U)]): TypedDataset[(T, U)] =
-      new TypedDataset(self.dataset.joinWith(other.dataset, new Column(Literal(true)), "cross"))
+      new TypedDataset(self.dataset.joinWith(other.dataset, FramelessInternals.column(Literal(true)), "cross")
+        .as[(T, U)](TypedExpressionEncoder[(T, U)]))
 
   /** Computes the full outer join of `this` `Dataset` with the `other` `Dataset`,
     * returning a `Tuple2` for each pair where condition evaluates to true.
@@ -656,7 +657,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
       val rightPlan = logicalPlan(other.dataset)
       val join = disambiguate(Join(leftPlan, rightPlan, Inner, Some(condition.expr), JoinHint.NONE))
       val joinedPlan = joinPlan(dataset, join, leftPlan, rightPlan)
-      val joinedDs = mkDataset(dataset.sqlContext, joinedPlan, TypedExpressionEncoder[(T, U)])
+      val joinedDs = mkDataset(dataset, joinedPlan, TypedExpressionEncoder[(T, U)])
 
       TypedDataset.create[(T, U)](joinedDs)
     }
@@ -938,7 +939,7 @@ class TypedDataset[T] protected[frameless](val dataset: Dataset[T])(implicit val
         i3: TypedEncoder[Out]
       ): TypedDataset[Out] = {
         val base = dataset.toDF()
-          .select(columns.toList[UntypedExpression[T]].map(c => new Column(c.expr)):_*)
+          .select(columns.toList[UntypedExpression[T]].map(c => FramelessInternals.column(c.expr)):_*)
         val selected = base.as[Out](TypedExpressionEncoder[Out])
 
         TypedDataset.create[Out](selected)

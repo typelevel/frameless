@@ -1,8 +1,7 @@
 package frameless
 
-import org.apache.spark.sql.Encoder
+import org.apache.spark.sql.{Encoder, FramelessInternals}
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If}
 import org.apache.spark.sql.types.StructType
 
@@ -39,10 +38,10 @@ object TypedExpressionEncoder {
       }
     }
 
-    new ExpressionEncoder[T](
+    FramelessInternals.expressionEncoder[T](
       objSerializer = serializer,
       objDeserializer = encoder.fromCatalyst(out),
-      clsTag = encoder.classTag
+      classTag = encoder.classTag
     )
   }
 }
