@@ -166,7 +166,7 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">typedDs</span><span>.</span><span class="identifier">count</span><span>[</span><span class="type-name">Action</span><span>]()
 } </span><span class="keyword">yield</span><span> (</span><span class="identifier">sample</span><span>, </span><span class="identifier">count</span><span>)
 </span><span class="comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$Lambda$12793/0x0000000802651840@266155a4
+//   run = cats.data.Kleisli$$Lambda$3342/0x00007f2724f3f590@708bf4ea
 // )</span></code></pre>
         <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
         run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
@@ -174,7 +174,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">cats</span><span>.</span><span class="identifier">effect</span><span>.</span><span class="identifier">unsafe</span><span>.</span><span class="identifier">implicits</span><span>.</span><span class="identifier">global</span><span>
 
 </span><span class="identifier">result</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
-</span><span class="comment">// res5: (Seq[(Int, String)], Long) = (WrappedArray((1, &quot;string&quot;)), 2L)</span></code></pre>
+</span><span class="comment">// res5: (Seq[(Int, String)], Long) = (ArraySeq((1, &quot;string&quot;)), 2L)</span></code></pre>
         
         <h3 id="convenience-methods-for-modifying-spark-thread-local-variables" class="section"><a class="anchor-link left" href="#convenience-methods-for-modifying-spark-thread-local-variables"><i class="icofont-laika link">&#xef71;</i></a>Convenience methods for modifying Spark thread-local variables</h3>
         <p>The <code>frameless.cats.implicits._</code> import also provides some syntax enrichments for any monad
@@ -193,12 +193,12 @@
        }
 } </span><span class="keyword">yield</span><span> </span><span class="identifier">r</span><span>
 </span><span class="comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   cats.data.Kleisli$$$Lambda$14295/0x0000000803e4a040@3daf6637
+//   run = cats.data.Kleisli$$$Lambda$4785/0x00007f272527f528@746da103
 // )
 </span><span>
 </span><span class="identifier">resultWithDescription</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
 </span><span class="comment">// Description: fancy cats
-// res6: (Seq[(Int, String)], Long) = (WrappedArray((1, &quot;string&quot;)), 2L)</span></code></pre>
+// res6: (Seq[(Int, String)], Long) = (ArraySeq((1, &quot;string&quot;)), 2L)</span></code></pre>
         
         <h2 id="using-algebraic-typeclasses-from-cats-with-rdds" class="section"><a class="anchor-link left" href="#using-algebraic-typeclasses-from-cats-with-rdds"><i class="icofont-laika link">&#xef71;</i></a>Using algebraic typeclasses from Cats with RDDs</h2>
         <p>Data aggregation is one of the most important operations when working with Spark (and data in general).
@@ -247,9 +247,9 @@
 </span><span class="comment">// totalPerUser: RDD[(User, TransactionCount)] = ShuffledRDD[15] at reduceByKey at implicits.scala:42
 </span><span>
 </span><span class="identifier">totalPerUser</span><span>.</span><span class="identifier">collectAsMap</span><span>
-</span><span class="comment">// res16: collection.Map[User, TransactionCount] = Map(
-//   &quot;Bob&quot; -&gt; 32,
+</span><span class="comment">// res16: collection.Map[User, TransactionCount] = HashMap(
 //   &quot;Joe&quot; -&gt; 3,
+//   &quot;Bob&quot; -&gt; 32,
 //   &quot;Anna&quot; -&gt; 100
 // )</span></code></pre>
         <p>The same example would work for more complex keys.</p>
@@ -264,9 +264,9 @@
 </span><span class="comment">// overalTasksPerUser: RDD[(String, SortedMap[String, Int])] = ShuffledRDD[17] at reduceByKey at implicits.scala:42
 </span><span>
 </span><span class="identifier">overalTasksPerUser</span><span>.</span><span class="identifier">collectAsMap</span><span>
-</span><span class="comment">// res17: collection.Map[String, SortedMap[String, Int]] = Map(
-//   &quot;Bob&quot; -&gt; Map(&quot;task1&quot; -&gt; 20, &quot;task2&quot; -&gt; 1),
-//   &quot;Joe&quot; -&gt; Map(&quot;task1&quot; -&gt; 1, &quot;task2&quot; -&gt; 3, &quot;task3&quot; -&gt; 4)
+</span><span class="comment">// res17: collection.Map[String, SortedMap[String, Int]] = HashMap(
+//   &quot;Joe&quot; -&gt; TreeMap(&quot;task1&quot; -&gt; 1, &quot;task2&quot; -&gt; 3, &quot;task3&quot; -&gt; 4),
+//   &quot;Bob&quot; -&gt; TreeMap(&quot;task1&quot; -&gt; 20, &quot;task2&quot; -&gt; 1)
 // )</span></code></pre>
         
         <h4 id="joins" class="section"><a class="anchor-link left" href="#joins"><i class="icofont-laika link">&#xef71;</i></a>Joins</h4>

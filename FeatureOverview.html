@@ -191,7 +191,10 @@
 </span><span class="comment">// cities: TypedDataset[String] = [value: string]</span></code></pre>
         <p>This is completely type-safe, for instance suppose we misspell <code>city</code> as <code>citi</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;citi</span><span>))
-</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;citi&quot;)] of type A in repl.MdocSession.MdocApp0.Apartment</span></code></pre>
+</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;citi&quot;)] of type A in repl.MdocSession.MdocApp0.Apartment
+// warning: symbol literal is deprecated; use Symbol(&quot;citi&quot;) instead [quickfixable]
+// aptTypedDs.select(aptTypedDs(&#39;citi))
+//                              ^^^^^</span></code></pre>
         <p>This gets raised at compile time, whereas with the standard <code>Dataset</code> API the error appears at runtime (enjoy the stack trace):</p>
         <pre><code class="nohighlight"><span class="identifier">aptDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="symbol-literal">&#39;citi</span><span>)
 </span><span class="comment">// org.apache.spark.sql.AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column or function parameter with name `citi` cannot be resolved. Did you mean one of the following? [`city`, `price`, `surface`, `bedrooms`].;
@@ -205,7 +208,7 @@
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:297)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:297)
-// 	at scala.collection.immutable.Stream.foreach(Stream.scala:533)
+// 	at scala.collection.immutable.List.foreach(List.scala:323)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:297)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2$adapted(CheckAnalysis.scala:215)
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
@@ -252,19 +255,25 @@
         In the above example, <code>show()</code> is lazy. It requires to apply <code>run()</code> for the <code>show</code> job to materialize.
         A more detailed explanation of <code>Job</code> is given <a href="Job.html">here</a>.</p>
         <p>Next we compute the price by surface unit:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">priceBySurfaceUnit</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;price</span><span>) / </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>))
-</span><span class="comment">// error: overloaded method value / with alternatives:
-//   (u: Double)(implicit n: frameless.CatalystNumeric[Double])frameless.TypedColumn[repl.MdocSession.MdocApp0.Apartment,Double] &lt;and&gt;
-//   [Out, TT, W](other: frameless.TypedColumn[TT,Double])(implicit n: frameless.CatalystDivisible[Double,Out], implicit e: frameless.TypedEncoder[Out], implicit w: frameless.With[repl.MdocSession.MdocApp0.Apartment,TT]{type Out = W})frameless.TypedColumn[W,Out]
+        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">priceBySurfaceUnit</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;price</span><span>) / </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>))
+</span><span class="comment">// error: overloaded method / with alternatives:
+//   (u: Double)(implicit n: frameless.CatalystNumeric[Double]): frameless.TypedColumn[repl.MdocSession.MdocApp0.Apartment,Double] &lt;and&gt;
+//   [Out, TT, W](other: frameless.TypedColumn[TT,Double])(implicit n: frameless.CatalystDivisible[Double,Out], e: frameless.TypedEncoder[Out], w: frameless.With[repl.MdocSession.MdocApp0.Apartment,TT]{type Out = W}): frameless.TypedColumn[W,Out]
 //  cannot be applied to (frameless.TypedColumn[repl.MdocSession.MdocApp0.Apartment,Int])
 // val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs(&#39;price) / aptTypedDs(&#39;surface))
-//                                            ^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+//                                            ^^^^^^^^^^^^^^^^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;price&quot;) instead [quickfixable]
+// val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs(&#39;price) / aptTypedDs(&#39;surface))
+//                                                       ^^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;surface&quot;) instead [quickfixable]
+// val priceBySurfaceUnit = aptTypedDs.select(aptTypedDs(&#39;price) / aptTypedDs(&#39;surface))
+//                                                                            ^^^^^^^^</span></code></pre>
         <p>As the error suggests, we can&#39;t divide a <code>TypedColumn</code> of <code>Double</code> by <code>Int.</code>
         For safety, in Frameless only math operations between same types is allowed:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">priceBySurfaceUnit</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;price</span><span>) / </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>).</span><span class="identifier">cast</span><span>[</span><span class="type-name">Double</span><span>])
 </span><span class="comment">// priceBySurfaceUnit: TypedDataset[Double] = [value: double]
 </span><span class="identifier">priceBySurfaceUnit</span><span>.</span><span class="identifier">collect</span><span>().</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res5: Seq[Double] = WrappedArray(
+</span><span class="comment">// res5: Seq[Double] = ArraySeq(
 //   6000.0,
 //   4500.0,
 //   10000.0,
@@ -275,7 +284,10 @@
         <p>Looks like it worked, but that <code>cast</code> seems unsafe right? Actually it is safe.
         Let&#39;s try to cast a <code>TypedColumn</code> of <code>String</code> to <code>Double</code>:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>).</span><span class="identifier">cast</span><span>[</span><span class="type-name">Double</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter c: frameless.CatalystCast[String,Double]</span></code></pre>
+</span><span class="comment">// error: could not find implicit value for parameter c: frameless.CatalystCast[String,Double]
+// warning: symbol literal is deprecated; use Symbol(&quot;city&quot;) instead [quickfixable]
+// aptTypedDs(&#39;city).cast[Double]
+//            ^^^^^</span></code></pre>
         <p>The compile-time error tells us that to perform the cast, an evidence
         (in the form of <code>CatalystCast[String, Double]</code>) must be available.
         Since casting from <code>String</code> to <code>Double</code> is not allowed, this results
@@ -304,18 +316,24 @@
 //</span></code></pre>
         <p>Unfortunately the syntax used above with <code>select()</code> will not work here:</p>
         <pre><code class="nohighlight"><span class="identifier">aptTypedDsOpt</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDsOpt</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>) * </span><span class="number-literal">10</span><span>, </span><span class="identifier">aptTypedDsOpt</span><span>(</span><span class="symbol-literal">&#39;surface</span><span>) + </span><span class="number-literal">2</span><span>).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
-</span><span class="comment">// error: overloaded method value * with alternatives:
-//   (u: Option[Int])(implicit n: frameless.CatalystNumeric[Option[Int]])frameless.TypedColumn[ApartmentOpt,Option[Int]] &lt;and&gt;
-//   [TT, W](other: frameless.TypedColumn[TT,Option[Int]])(implicit n: frameless.CatalystNumeric[Option[Int]], implicit w: frameless.With[ApartmentOpt,TT]{type Out = W}, implicit t: scala.reflect.ClassTag[Option[Int]])frameless.TypedColumn[W,Option[Int]]
+</span><span class="comment">// error: overloaded method * with alternatives:
+//   (u: Option[Int])(implicit n: frameless.CatalystNumeric[Option[Int]]): frameless.TypedColumn[ApartmentOpt,Option[Int]] &lt;and&gt;
+//   [TT, W](other: frameless.TypedColumn[TT,Option[Int]])(implicit n: frameless.CatalystNumeric[Option[Int]], w: frameless.With[ApartmentOpt,TT]{type Out = W}, t: scala.reflect.ClassTag[Option[Int]]): frameless.TypedColumn[W,Option[Int]]
 //  cannot be applied to (Int)
 // aptTypedDsOpt.select(aptTypedDsOpt(&#39;surface) * 10, aptTypedDsOpt(&#39;surface) + 2).show().run()
 //                      ^^^^^^^^^^^^^^^^^^^^^^^^^
-// error: overloaded method value + with alternatives:
-//   (u: Option[Int])(implicit n: frameless.CatalystNumeric[Option[Int]])frameless.TypedColumn[ApartmentOpt,Option[Int]] &lt;and&gt;
-//   [TT, W](other: frameless.TypedColumn[TT,Option[Int]])(implicit n: frameless.CatalystNumeric[Option[Int]], implicit w: frameless.With[ApartmentOpt,TT]{type Out = W})frameless.TypedColumn[W,Option[Int]]
+// error: overloaded method + with alternatives:
+//   (u: Option[Int])(implicit n: frameless.CatalystNumeric[Option[Int]]): frameless.TypedColumn[ApartmentOpt,Option[Int]] &lt;and&gt;
+//   [TT, W](other: frameless.TypedColumn[TT,Option[Int]])(implicit n: frameless.CatalystNumeric[Option[Int]], w: frameless.With[ApartmentOpt,TT]{type Out = W}): frameless.TypedColumn[W,Option[Int]]
 //  cannot be applied to (Int)
 // aptTypedDsOpt.select(aptTypedDsOpt(&#39;surface) * 10, aptTypedDsOpt(&#39;surface) + 2).show().run()
-//                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^</span></code></pre>
+//                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;surface&quot;) instead [quickfixable]
+// aptTypedDsOpt.select(aptTypedDsOpt(&#39;surface) * 10, aptTypedDsOpt(&#39;surface) + 2).show().run()
+//                                    ^^^^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;surface&quot;) instead [quickfixable]
+// aptTypedDsOpt.select(aptTypedDsOpt(&#39;surface) * 10, aptTypedDsOpt(&#39;surface) + 2).show().run()
+//                                                                  ^^^^^^^^</span></code></pre>
         <p>This is because we cannot multiple an <code>Option</code> with an <code>Int</code>. In Scala, <code>Option</code> has a <code>map()</code> method to help address
         exactly this (e.g., <code>Some(10).map(c =&gt; c * 2)</code>). Frameless follows a similar convention. By applying the <code>opt</code> method on 
         any <code>Option[X]</code> column you can then use <code>map()</code> to provide a function that works with the unwrapped type <code>X</code>. 
@@ -346,8 +364,19 @@
 //</span></code></pre>
         <p>Next we try to cast a <code>(String, String)</code> to an <code>UpdatedSurface</code> (which has types <code>String</code>, <code>Int</code>).
         The cast is not valid and the expression does not compile:</p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">as</span><span>[</span><span class="type-name">UpdatedSurface</span><span>]
-</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(String, String),UpdatedSurface]</span></code></pre>
+        <pre><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>), </span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">as</span><span>[</span><span class="type-name">UpdatedSurface</span><span>]
+</span><span class="comment">// error: could not find implicit value for parameter as: frameless.ops.As[(String, String),UpdatedSurface]
+// warning: symbol literal is deprecated; use Symbol(&quot;city&quot;) instead [quickfixable]
+// aptTypedDs.select(aptTypedDs(&#39;city), aptTypedDs(&#39;city)).as[UpdatedSurface]
+//                              ^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;city&quot;) instead [quickfixable]
+// aptTypedDs.select(aptTypedDs(&#39;city), aptTypedDs(&#39;city)).as[UpdatedSurface]
+//                                                 ^^^^^
+// warning: Auto-application to `()` is deprecated. Supply the empty argument list `()` explicitly to invoke method as,
+// or remove the empty argument list from its definition (Java-defined methods are exempt).
+// In Scala 3, an unapplied method like this will be eta-expanded into a function. [quickfixable]
+// aptTypedDs.select(aptTypedDs(&#39;city), aptTypedDs(&#39;city)).as[UpdatedSurface]
+//                                                           ^</span></code></pre>
         
         <h3 id="advanced-topics-with-select" class="section"><a class="anchor-link left" href="#advanced-topics-with-select"><i class="icofont-laika link">&#xef71;</i></a>Advanced topics with <code>select()</code></h3>
         <p>When you <code>select()</code> a single column that has type <code>A</code>, the resulting type is <code>TypedDataset[A]</code> and 
@@ -589,12 +618,13 @@
         <pre><code class="nohighlight"><span class="identifier">t</span><span>.</span><span class="identifier">withColumnTupled</span><span>(
    </span><span class="identifier">arrayContains</span><span>(</span><span class="identifier">t</span><span>(&#39;</span><span class="identifier">_1</span><span>), </span><span class="string-literal">&quot;abc&quot;</span><span>)
 )
-</span><span class="comment">// error: no type parameters for method arrayContains: (column: frameless.AbstractTypedColumn[T,C[A]], value: A)(implicit evidence$1: frameless.CatalystCollection[C])column.ThisType[T,Boolean] exist so that it can be applied to arguments (frameless.TypedColumn[(String, List[String]),String], String)
+</span><span class="comment">// error: no type parameters for method arrayContains: (column: frameless.AbstractTypedColumn[T,C[A]], value: A)(implicit evidence$1: frameless.CatalystCollection[C]): column.ThisType[T,Boolean] exist so that it can be applied to arguments (frameless.TypedColumn[(String, List[String]),String], String)
 //  --- because ---
 // argument expression&#39;s type is not compatible with formal parameter type;
 //  found   : frameless.TypedColumn[(String, List[String]),String]
 //  required: frameless.AbstractTypedColumn[?T,?C[?A]]
-// 
+// Note: String &lt;: ?C[?A], but class AbstractTypedColumn is invariant in type U.
+// You may wish to define U as +U instead. (SLS 4.5)
 // Error occurred in an application involving default arguments.
 // error: type mismatch;
 //  found   : frameless.TypedColumn[(String, List[String]),String]
@@ -607,7 +637,10 @@
 //    arrayContains(t(&#39;_1), &quot;abc&quot;)
 //                          ^^^^^
 // error: Cannot do collection operations on columns of type C.
-// Error occurred in an application involving default arguments.</span></code></pre>
+// Error occurred in an application involving default arguments.
+// warning: symbol literal is deprecated; use Symbol(&quot;_1&quot;) instead [quickfixable]
+//    arrayContains(t(&#39;_1), &quot;abc&quot;)
+//                    ^^^</span></code></pre>
         <p>Flattening columns in Spark is done with the <code>explode()</code> method. Unlike vanilla Spark, 
         in Frameless <code>explode()</code> is part of <code>TypedDataset</code> and not a function of a column. 
         This provides additional safety since more than one <code>explode()</code> applied in a single 
@@ -641,25 +674,27 @@
         <p>In Frameless all Spark actions (such as <code>collect()</code>) are safe.</p>
         <p>Take the first element from a dataset (if the dataset is empty return <code>None</code>).</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityBeds</span><span>.</span><span class="identifier">headOption</span><span>.</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res30: Option[CityBeds] = Some(CityBeds(&quot;Paris&quot;, 2))</span></code></pre>
+</span><span class="comment">// res30: Option[CityBeds] = Some(
+//   value = CityBeds(city = &quot;Paris&quot;, bedrooms = 2)
+// )</span></code></pre>
         <p>Take the first <code>n</code> elements.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityBeds</span><span>.</span><span class="identifier">take</span><span>(</span><span class="number-literal">2</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res31: Seq[CityBeds] = WrappedArray(
-//   CityBeds(&quot;Paris&quot;, 2),
-//   CityBeds(&quot;Paris&quot;, 3)
+</span><span class="comment">// res31: Seq[CityBeds] = ArraySeq(
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 2),
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 3)
 // )</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityBeds</span><span>.</span><span class="identifier">head</span><span>(</span><span class="number-literal">3</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res32: Seq[CityBeds] = WrappedArray(
-//   CityBeds(&quot;Paris&quot;, 2),
-//   CityBeds(&quot;Paris&quot;, 3),
-//   CityBeds(&quot;Paris&quot;, 1)
+</span><span class="comment">// res32: Seq[CityBeds] = ArraySeq(
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 2),
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 3),
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 1)
 // )</span></code></pre>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">cityBeds</span><span>.</span><span class="identifier">limit</span><span>(</span><span class="number-literal">4</span><span>).</span><span class="identifier">collect</span><span>().</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res33: Seq[CityBeds] = WrappedArray(
-//   CityBeds(&quot;Paris&quot;, 2),
-//   CityBeds(&quot;Paris&quot;, 3),
-//   CityBeds(&quot;Paris&quot;, 1),
-//   CityBeds(&quot;Lyon&quot;, 2)
+</span><span class="comment">// res33: Seq[CityBeds] = ArraySeq(
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 2),
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 3),
+//   CityBeds(city = &quot;Paris&quot;, bedrooms = 1),
+//   CityBeds(city = &quot;Lyon&quot;, bedrooms = 2)
 // )</span></code></pre>
         
         <h2 id="sorting-columns" class="section"><a class="anchor-link left" href="#sorting-columns"><i class="icofont-laika link">&#xef71;</i></a>Sorting columns</h2>
@@ -696,7 +731,7 @@
 </span><span class="comment">// priceModifier: (String, Double) =&gt; Double = &lt;function2&gt;
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">udf</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">makeUDF</span><span>(</span><span class="identifier">priceModifier</span><span>)
-</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$15368/0x00000008042a5840@70002c6a
+</span><span class="comment">// udf: (frameless.TypedColumn[Apartment, String], frameless.TypedColumn[Apartment, Double]) =&gt; frameless.TypedColumn[Apartment, Double] = frameless.functions.Udf$$Lambda$5832/0x00007f27254e2d88@7dd645d8
 </span><span>
 </span><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
@@ -722,7 +757,7 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">priceByCity</span><span> = </span><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">agg</span><span>(</span><span class="identifier">avg</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;price</span><span>)))
 </span><span class="comment">// priceByCity: TypedDataset[(String, Double)] = [_1: string, _2: double]
 </span><span class="identifier">priceByCity</span><span>.</span><span class="identifier">collect</span><span>().</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res37: Seq[(String, Double)] = WrappedArray(
+</span><span class="comment">// res37: Seq[(String, Double)] = ArraySeq(
 //   (&quot;Paris&quot;, 333333.3333333333),
 //   (&quot;Lyon&quot;, 166500.0),
 //   (&quot;Nice&quot;, 325000.0)
@@ -730,7 +765,13 @@
         <p>Again if we try to aggregate a column that can&#39;t be aggregated, we get a compilation error</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">aptTypedDs</span><span>.</span><span class="identifier">groupBy</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)).</span><span class="identifier">agg</span><span>(</span><span class="identifier">avg</span><span>(</span><span class="identifier">aptTypedDs</span><span>(</span><span class="symbol-literal">&#39;city</span><span>)))
 </span><span class="comment">// error: Cannot compute average of type String.
-// Error occurred in an application involving default arguments.</span></code></pre>
+// Error occurred in an application involving default arguments.
+// warning: symbol literal is deprecated; use Symbol(&quot;city&quot;) instead [quickfixable]
+// aptTypedDs.groupBy(aptTypedDs(&#39;city)).agg(avg(aptTypedDs(&#39;city)))
+//                               ^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;city&quot;) instead [quickfixable]
+// aptTypedDs.groupBy(aptTypedDs(&#39;city)).agg(avg(aptTypedDs(&#39;city)))
+//                                                          ^^^^^</span></code></pre>
         <p>Next, we combine <code>select</code> and <code>groupBy</code> to calculate the average price/surface ratio per city:</p>
         <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">aptds</span><span> = </span><span class="identifier">aptTypedDs</span><span> </span><span class="comment">// For shorter expressions
 // aptds: TypedDataset[Apartment] = [city: string, surface: int ... 2 more fields]
@@ -830,7 +871,7 @@
 </span><span class="comment">// +-----------------+------------------+----------+-------------------+
 // |         avgPrice|        avgSurface|minSurface|          allCities|
 // +-----------------+------------------+----------+-------------------+
-// |276333.3333333333|62.833333333333336|        25|[Paris, Nice, Lyon]|
+// |276333.3333333333|62.833333333333336|        25|[Lyon, Paris, Nice]|
 // +-----------------+------------------+----------+-------------------+
 //</span></code></pre>
         <p>You may apply any <code>TypedColumn</code> operation to a <code>TypedAggregate</code> column as well.</p>

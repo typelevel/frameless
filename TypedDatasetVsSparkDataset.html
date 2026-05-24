@@ -159,9 +159,9 @@
 </span><span class="comment">// +---+---+
 // |  i|  j|
 // +---+---+
+// | 10|  W|
 // |100|  E|
 // |  1|  Q|
-// | 10|  W|
 // +---+---+
 //</span></code></pre>
         <p>The value <code>ds</code> holds the content of the <code>initialDs</code> read from a parquet file.
@@ -207,7 +207,7 @@
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5(CheckAnalysis.scala:297)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$5$adapted(CheckAnalysis.scala:297)
-// 	at scala.collection.immutable.Stream.foreach(Stream.scala:533)
+// 	at scala.collection.immutable.List.foreach(List.scala:323)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:297)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2$adapted(CheckAnalysis.scala:215)
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
@@ -295,7 +295,13 @@
 //</span></code></pre>
         <p>And the compiler is our friend.</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">filter</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>) === </span><span class="number-literal">10</span><span>).</span><span class="identifier">select</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;x</span><span>))
-</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;x&quot;)] of type A in repl.MdocSession.MdocApp0.Foo</span></code></pre>
+</span><span class="comment">// error: No column Symbol with shapeless.tag.Tagged[String(&quot;x&quot;)] of type A in repl.MdocSession.MdocApp0.Foo
+// warning: symbol literal is deprecated; use Symbol(&quot;i&quot;) instead [quickfixable]
+// fds.filter(fds(&#39;i) === 10).select(fds(&#39;x))
+//                ^^
+// warning: symbol literal is deprecated; use Symbol(&quot;x&quot;) instead [quickfixable]
+// fds.filter(fds(&#39;i) === 10).select(fds(&#39;x))
+//                                       ^^</span></code></pre>
         
         <h2 id="differences-in-encoders" class="section"><a class="anchor-link left" href="#differences-in-encoders"><i class="icofont-laika link">&#xef71;</i></a>Differences in Encoders</h2>
         <p>Encoders in Spark&#39;s <code>Datasets</code> are partially type-safe. If you try to create a <code>Dataset</code> using  a type that is not 
@@ -318,7 +324,8 @@
 // 	at org.apache.spark.sql.errors.ExecutionErrors$.cannotFindEncoderForTypeError(ExecutionErrors.scala:218)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:400)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$3(ScalaReflection.scala:394)
-// 	at scala.collection.immutable.List.map(List.scala:293)
+// 	at scala.collection.immutable.List.map(List.scala:236)
+// 	at scala.collection.immutable.List.map(List.scala:79)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:382)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$1(ScalaReflection.scala:247)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
@@ -356,27 +363,17 @@
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:474)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:490)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:490)
-// 	at scala.collection.Iterator.foreach(Iterator.scala:943)
-// 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
-// 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
-// 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
-// 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
-// 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+// 	at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:490)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19(CheckAnalysis.scala:490)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$19$adapted(CheckAnalysis.scala:490)
-// 	at scala.collection.Iterator.foreach(Iterator.scala:943)
-// 	at scala.collection.Iterator.foreach$(Iterator.scala:943)
-// 	at scala.collection.AbstractIterator.foreach(Iterator.scala:1431)
-// 	at scala.collection.IterableLike.foreach(IterableLike.scala:74)
-// 	at scala.collection.IterableLike.foreach$(IterableLike.scala:73)
-// 	at scala.collection.AbstractIterable.foreach(Iterable.scala:56)
+// 	at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.checkValidAggregateExpression$1(CheckAnalysis.scala:490)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22(CheckAnalysis.scala:522)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$22$adapted(CheckAnalysis.scala:522)
-// 	at scala.collection.mutable.ResizableArray.foreach(ResizableArray.scala:62)
-// 	at scala.collection.mutable.ResizableArray.foreach$(ResizableArray.scala:55)
-// 	at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:49)
+// 	at scala.collection.IterableOnceOps.foreach(IterableOnce.scala:630)
+// 	at scala.collection.IterableOnceOps.foreach$(IterableOnce.scala:628)
+// 	at scala.collection.AbstractIterable.foreach(Iterable.scala:936)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2(CheckAnalysis.scala:522)
 // 	at org.apache.spark.sql.catalyst.analysis.CheckAnalysis.$anonfun$checkAnalysis0$2$adapted(CheckAnalysis.scala:215)
 // 	at org.apache.spark.sql.catalyst.trees.TreeNode.foreachUp(TreeNode.scala:244)
@@ -412,7 +409,10 @@
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">select</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>)))
 </span><span class="comment">// error: polymorphic expression cannot be instantiated to expected type;
 //  found   : [Out]frameless.TypedAggregate[repl.MdocSession.MdocApp0.Foo,Out]
-//  required: frameless.TypedColumn[repl.MdocSession.MdocApp0.Foo,?]</span></code></pre>
+//  required: frameless.TypedColumn[repl.MdocSession.MdocApp0.Foo,?]
+// warning: symbol literal is deprecated; use Symbol(&quot;i&quot;) instead [quickfixable]
+// fds.select(fsum(fds(&#39;i)))
+//                     ^^</span></code></pre>
         <p>As the error suggests, we expected a <code>TypedColumn</code> but we got a <code>TypedAggregate</code> instead. </p>
         <p>Here is how you apply an aggregation method in Frameless: </p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="identifier">fds</span><span>.</span><span class="identifier">agg</span><span>(</span><span class="identifier">fsum</span><span>(</span><span class="identifier">fds</span><span>(</span><span class="symbol-literal">&#39;i</span><span>))+</span><span class="number-literal">22</span><span>).</span><span class="identifier">show</span><span>().</span><span class="identifier">run</span><span>()
@@ -429,7 +429,13 @@
 //  found   : [A]frameless.TypedColumn[repl.MdocSession.MdocApp0.Foo,A]
 //  required: frameless.TypedAggregate[repl.MdocSession.MdocApp0.Foo,?]
 // fds.agg(fsum(fds(&#39;i)), fds(&#39;i)).show().run()
-//                        ^^^^^^^</span></code></pre>
+//                        ^^^^^^^
+// warning: symbol literal is deprecated; use Symbol(&quot;i&quot;) instead [quickfixable]
+// fds.agg(fsum(fds(&#39;i)), fds(&#39;i)).show().run()
+//                  ^^
+// warning: symbol literal is deprecated; use Symbol(&quot;i&quot;) instead [quickfixable]
+// fds.agg(fsum(fds(&#39;i)), fds(&#39;i)).show().run()
+//                            ^^</span></code></pre>
 
         
 <hr class="footer-rule"/>

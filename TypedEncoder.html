@@ -145,7 +145,8 @@
 // 	at org.apache.spark.sql.errors.ExecutionErrors$.cannotFindEncoderForTypeError(ExecutionErrors.scala:218)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:400)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$3(ScalaReflection.scala:394)
-// 	at scala.collection.immutable.List.map(List.scala:293)
+// 	at scala.collection.immutable.List.map(List.scala:236)
+// 	at scala.collection.immutable.List.map(List.scala:79)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.encoderFor(ScalaReflection.scala:382)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.$anonfun$encoderFor$1(ScalaReflection.scala:247)
 // 	at scala.reflect.internal.tpe.TypeConstraints$UndoLog.undo(TypeConstraints.scala:73)
@@ -166,35 +167,15 @@
         <p>Frameless introduces a new type class called <code>TypeEncoder</code> to solve these issues. <code>TypeEncoder</code>s are passed around as implicit parameters to every Frameless method to ensure that the data being manipulated is <code>Encoder</code>. It uses a standard implicit resolution coupled with shapeless&#39; type class derivation mechanism to ensure every that compiling code manipulates encodable data. For example, the <code>java.util.Calendar</code> example won&#39;t compile with Frameless:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="type-name">TypedDataset</span><span>
 </span><span class="keyword">import</span><span> </span><span class="identifier">frameless</span><span>.</span><span class="identifier">syntax</span><span>.</span><span class="identifier">_</span></code></pre>
-        <pre><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">now</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
+        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">def</span><span> </span><span class="declaration-name">now</span><span> = </span><span class="keyword">new</span><span> </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">GregorianCalendar</span><span>()
 
 </span><span class="keyword">val</span><span> </span><span class="identifier">ds</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">DateRange</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">create</span><span>(</span><span class="type-name">Seq</span><span>(</span><span class="type-name">DateRange</span><span>(</span><span class="identifier">now</span><span>, </span><span class="identifier">now</span><span>)))
 </span><span class="comment">// error: ds is already defined as value ds
 // val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
 //     ^^
-// error: ambiguous reference to overloaded definition,
-// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// match expected type java.util.Calendar
-// error: ambiguous reference to overloaded definition,
-// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// match expected type java.util.Calendar
-// error: ambiguous reference to overloaded definition,
-// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// match expected type java.util.Calendar
-// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
-//                                                                     ^^^
-// error: ambiguous reference to overloaded definition,
-// both method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// and  method now in object MdocApp0 of type =&gt; java.util.GregorianCalendar
-// match expected type java.util.Calendar
-// val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
-//                                                                          ^^^
 // error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.DateRange]
 // val ds: TypedDataset[DateRange] = TypedDataset.create(Seq(DateRange(now, now)))
-//                                                      ^
+//                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // error: method now is defined twice;
 //   the conflicting method now was defined at line 11:5</span></code></pre>
         <p>Type class derivation takes care of recursively constructing (and proving the existence of) <code>TypeEncoder</code>s for case classes. The following works as expected:</p>
@@ -206,7 +187,7 @@
 </span><span class="comment">// ds: TypedDataset[Foo] = [i: int, b: struct&lt;d: double, s: string&gt;]
 </span><span>
 </span><span class="identifier">ds</span><span>.</span><span class="identifier">collect</span><span>()
-</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@dfe2029</span></code></pre>
+</span><span class="comment">// res3: frameless.Job[Seq[Foo]] = frameless.Job$$anon$4@232380e0</span></code></pre>
         <p>But any non-encodable in the case class hierarchy will be detected at compile time:</p>
         <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">BarDate</span><span>(</span><span class="identifier">d</span><span>: </span><span class="type-name">Double</span><span>, </span><span class="identifier">s</span><span>: </span><span class="type-name">String</span><span>, </span><span class="identifier">t</span><span>: </span><span class="identifier">java</span><span>.</span><span class="identifier">util</span><span>.</span><span class="type-name">Calendar</span><span>)
 </span><span class="keyword">case</span><span> </span><span class="keyword">class</span><span> </span><span class="type-name">FooDate</span><span>(</span><span class="identifier">i</span><span>: </span><span class="type-name">Int</span><span>, </span><span class="identifier">b</span><span>: </span><span class="type-name">BarDate</span><span>)</span></code></pre>
@@ -216,7 +197,7 @@
 // error: ds is already defined as value ds
 // error: could not find implicit value for parameter encoder: frameless.TypedEncoder[repl.MdocSession.MdocApp0.FooDate]
 // val ds: TypedDataset[FooDate] = TypedDataset.create(
-//                                                    ^</span></code></pre>
+//                                 ^</span></code></pre>
         <p>It should be noted that once derived, reflection-based <code>Encoder</code>s and implicitly derived <code>TypeEncoder</code>s have identical performance.
         The derivation mechanism is different, but the objects generated to encode and decode JVM objects in Spark&#39;s internal representation behave the same at runtime.</p>
 

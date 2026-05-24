@@ -186,13 +186,7 @@
 // 	at org.apache.spark.sql.errors.QueryExecutionErrors$.expressionDecodingError(QueryExecutionErrors.scala:1406)
 // 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$Deserializer.apply(ExpressionEncoder.scala:191)
 // 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$Deserializer.apply(ExpressionEncoder.scala:179)
-// 	at scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:286)
-// 	at scala.collection.IndexedSeqOptimized.foreach(IndexedSeqOptimized.scala:36)
-// 	at scala.collection.IndexedSeqOptimized.foreach$(IndexedSeqOptimized.scala:33)
-// 	at scala.collection.mutable.ArrayOps$ofRef.foreach(ArrayOps.scala:198)
-// 	at scala.collection.TraversableLike.map(TraversableLike.scala:286)
-// 	at scala.collection.TraversableLike.map$(TraversableLike.scala:279)
-// 	at scala.collection.mutable.ArrayOps$ofRef.map(ArrayOps.scala:198)
+// 	at scala.collection.ArrayOps$.map$extension(ArrayOps.scala:936)
 // 	at org.apache.spark.sql.Dataset.collectFromPlan(Dataset.scala:4333)
 // 	at org.apache.spark.sql.Dataset.$anonfun$collect$1(Dataset.scala:3575)
 // 	at org.apache.spark.sql.Dataset.$anonfun$withAction$2(Dataset.scala:4323)
@@ -205,25 +199,25 @@
 // 	at org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:66)
 // 	at org.apache.spark.sql.Dataset.withAction(Dataset.scala:4321)
 // 	at org.apache.spark.sql.Dataset.collect(Dataset.scala:3575)
-// 	at frameless.TypedDataset.$anonfun$collect$1(TypedDataset.scala:333)
+// 	at frameless.TypedDataset.$anonfun$collect$1(TypedDataset.scala:411)
 // 	at frameless.Job$$anon$4.run(Job.scala:38)
 // 	at repl.MdocSession$MdocApp0$$anonfun$13.apply(WorkingWithCsvParquetJson.md:85)
 // 	at repl.MdocSession$MdocApp0$$anonfun$13.apply(WorkingWithCsvParquetJson.md:85)
 // Caused by: scala.ScalaReflectionException: &lt;none&gt; is not a term
 // 	at scala.reflect.api.Symbols$SymbolApi.asTerm(Symbols.scala:211)
 // 	at scala.reflect.api.Symbols$SymbolApi.asTerm$(Symbols.scala:211)
-// 	at scala.reflect.internal.Symbols$SymbolContextApiImpl.asTerm(Symbols.scala:100)
+// 	at scala.reflect.internal.Symbols$SymbolContextApiImpl.asTerm(Symbols.scala:101)
 // 	at org.apache.spark.sql.catalyst.ScalaReflection$.findConstructor(ScalaReflection.scala:177)
 // 	at org.apache.spark.sql.catalyst.expressions.objects.NewInstance.$anonfun$constructor$1(objects.scala:567)
 // 	at org.apache.spark.sql.catalyst.expressions.objects.NewInstance.$anonfun$constructor$5(objects.scala:578)
-// 	at scala.Option.getOrElse(Option.scala:189)
+// 	at scala.Option.getOrElse(Option.scala:201)
 // 	at org.apache.spark.sql.catalyst.expressions.objects.NewInstance.constructor$lzycompute(objects.scala:577)
 // 	at org.apache.spark.sql.catalyst.expressions.objects.NewInstance.constructor(objects.scala:564)
 // 	at org.apache.spark.sql.catalyst.expressions.objects.NewInstance.eval(objects.scala:600)
 // 	at org.apache.spark.sql.catalyst.expressions.InterpretedSafeProjection.apply(InterpretedSafeProjection.scala:115)
 // 	at org.apache.spark.sql.catalyst.expressions.InterpretedSafeProjection.apply(InterpretedSafeProjection.scala:32)
 // 	at org.apache.spark.sql.catalyst.encoders.ExpressionEncoder$Deserializer.apply(ExpressionEncoder.scala:188)
-// 	... 24 more</span></code></pre>
+// 	... 18 more</span></code></pre>
         
         <h3 id="dealing-with-csv-files-with-multiple-columns" class="section"><a class="anchor-link left" href="#dealing-with-csv-files-with-multiple-columns"><i class="icofont-laika link">&#xef71;</i></a>Dealing with CSV files with multiple columns</h3>
         <p>When the dataset has many columns, it is impractical to define a case class that contains many columns we don&#39;t need. 
@@ -239,9 +233,9 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">data</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">createUnsafe</span><span>[</span><span class="type-name">IrisLight</span><span>](</span><span class="identifier">projectedDf</span><span>)
 </span><span class="comment">// data: TypedDataset[IrisLight] = [kind: string, sLength: double]
 </span><span class="identifier">data</span><span>.</span><span class="identifier">take</span><span>(</span><span class="number-literal">2</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res5: Seq[IrisLight] = WrappedArray(
-//   IrisLight(&quot;Iris-setosa&quot;, 3.5),
-//   IrisLight(&quot;Iris-setosa&quot;, 3.0)
+</span><span class="comment">// res5: Seq[IrisLight] = ArraySeq(
+//   IrisLight(kind = &quot;Iris-setosa&quot;, sLength = 3.5),
+//   IrisLight(kind = &quot;Iris-setosa&quot;, sLength = 3.0)
 // )</span></code></pre>
         
         <h2 id="working-with-parquet" class="section"><a class="anchor-link left" href="#working-with-parquet"><i class="icofont-laika link">&#xef71;</i></a>Working with Parquet</h2>
@@ -258,12 +252,24 @@
 //</span></code></pre>
         <p>So as long as we use a type (case class) that reflects the same number, type, and order of the fields 
         from the data everything works as expected. </p>
-        <pre class="keep-together pdf epub"><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">data</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">Iris</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">createUnsafe</span><span>[</span><span class="type-name">Iris</span><span>](</span><span class="identifier">testDataParquet</span><span>)
+        <pre><code class="nohighlight"><span class="keyword">val</span><span> </span><span class="identifier">data</span><span>: </span><span class="type-name">TypedDataset</span><span>[</span><span class="type-name">Iris</span><span>] = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">createUnsafe</span><span>[</span><span class="type-name">Iris</span><span>](</span><span class="identifier">testDataParquet</span><span>)
 </span><span class="comment">// data: TypedDataset[Iris] = [sLength: double, sWidth: double ... 3 more fields]
 </span><span class="identifier">data</span><span>.</span><span class="identifier">take</span><span>(</span><span class="number-literal">2</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res10: Seq[Iris] = WrappedArray(
-//   Iris(5.1, 3.5, 1.4, 0.2, &quot;Iris-setosa&quot;),
-//   Iris(4.9, 3.0, 1.4, 0.2, &quot;Iris-setosa&quot;)
+</span><span class="comment">// res10: Seq[Iris] = ArraySeq(
+//   Iris(
+//     sLength = 5.1,
+//     sWidth = 3.5,
+//     pLength = 1.4,
+//     pWidth = 0.2,
+//     kind = &quot;Iris-setosa&quot;
+//   ),
+//   Iris(
+//     sLength = 4.9,
+//     sWidth = 3.0,
+//     pLength = 1.4,
+//     pWidth = 0.2,
+//     kind = &quot;Iris-setosa&quot;
+//   )
 // )</span></code></pre>
         
         <h3 id="dealing-with-parquet-files-with-multiple-columns" class="section"><a class="anchor-link left" href="#dealing-with-parquet-files-with-multiple-columns"><i class="icofont-laika link">&#xef71;</i></a>Dealing with Parquet files with multiple columns</h3>
@@ -276,9 +282,9 @@
 </span><span class="keyword">val</span><span> </span><span class="identifier">data</span><span> = </span><span class="type-name">TypedDataset</span><span>.</span><span class="identifier">createUnsafe</span><span>[</span><span class="type-name">IrisLight</span><span>](</span><span class="identifier">projectedDf</span><span>)
 </span><span class="comment">// data: TypedDataset[IrisLight] = [kind: string, sLength: double]
 </span><span class="identifier">data</span><span>.</span><span class="identifier">take</span><span>(</span><span class="number-literal">2</span><span>).</span><span class="identifier">run</span><span>()
-</span><span class="comment">// res11: Seq[IrisLight] = WrappedArray(
-//   IrisLight(&quot;Iris-setosa&quot;, 5.1),
-//   IrisLight(&quot;Iris-setosa&quot;, 4.9)
+</span><span class="comment">// res11: Seq[IrisLight] = ArraySeq(
+//   IrisLight(kind = &quot;Iris-setosa&quot;, sLength = 5.1),
+//   IrisLight(kind = &quot;Iris-setosa&quot;, sLength = 4.9)
 // )</span></code></pre>
 
         
