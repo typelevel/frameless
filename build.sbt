@@ -1,7 +1,6 @@
 val sparkVersion = "3.5.8"
 val spark40Version = "4.0.2"
 val spark34Version = "3.4.4"
-val spark33Version = "3.3.4"
 val catsCoreVersion = "2.13.0"
 val catsEffectVersion = "3.7.0"
 val catsMtlVersion = "1.6.0"
@@ -16,10 +15,10 @@ val nakedFSVersion = "0.1.0"
 val Scala212 = "2.12.20"
 val Scala213 = "2.13.18"
 
-ThisBuild / tlBaseVersion := "0.16"
+ThisBuild / tlBaseVersion := "0.17"
 
 ThisBuild / crossScalaVersions := Seq(Scala213, Scala212)
-ThisBuild / scalaVersion := Scala212
+ThisBuild / scalaVersion := Scala213
 ThisBuild / coverageScalacPluginVersion := "2.3.0"
 
 lazy val root = project
@@ -30,7 +29,6 @@ lazy val root = project
     `root-spark40`,
     `root-spark35`,
     `root-spark34`,
-    `root-spark33`,
     docs
   )
 
@@ -62,17 +60,6 @@ lazy val `root-spark34` = project
     `ml-spark34`
   )
 
-lazy val `root-spark33` = project
-  .in(file(".spark33"))
-  .enablePlugins(NoPublishPlugin)
-  .aggregate(
-    core,
-    `cats-spark33`,
-    `dataset-spark33`,
-    `refined-spark33`,
-    `ml-spark33`
-  )
-
 lazy val core =
   project.settings(name := "frameless-core").settings(framelessSettings)
 
@@ -97,15 +84,6 @@ lazy val `cats-spark40` = project
   .settings(spark40Settings)
   .dependsOn(
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
-  )
-
-lazy val `cats-spark33` = project
-  .settings(name := "frameless-cats-spark33")
-  .settings(sourceDirectory := (cats / sourceDirectory).value)
-  .settings(catsSettings)
-  .settings(spark33Settings)
-  .dependsOn(
-    `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val dataset = project
@@ -148,20 +126,6 @@ lazy val `dataset-spark40` = project
   .settings(spark40Settings)
   .dependsOn(core % "test->test;compile->compile")
 
-lazy val `dataset-spark33` = project
-  .settings(name := "frameless-dataset-spark33")
-  .settings(sourceDirectory := (dataset / sourceDirectory).value)
-  .settings(
-    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-3"
-  )
-  .settings(
-    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-3.3+"
-  )
-  .settings(datasetSettings)
-  .settings(sparkDependencies(spark33Version))
-  .settings(spark33Settings)
-  .dependsOn(core % "test->test;compile->compile")
-
 lazy val refined = project
   .settings(name := "frameless-refined")
   .settings(refinedSettings)
@@ -183,15 +147,6 @@ lazy val `refined-spark40` = project
   .settings(spark40Settings)
   .dependsOn(
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
-  )
-
-lazy val `refined-spark33` = project
-  .settings(name := "frameless-refined-spark33")
-  .settings(sourceDirectory := (refined / sourceDirectory).value)
-  .settings(refinedSettings)
-  .settings(spark33Settings)
-  .dependsOn(
-    `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val ml = project
@@ -223,17 +178,6 @@ lazy val `ml-spark40` = project
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
-  )
-
-lazy val `ml-spark33` = project
-  .settings(name := "frameless-ml-spark33")
-  .settings(sourceDirectory := (ml / sourceDirectory).value)
-  .settings(mlSettings)
-  .settings(sparkMlDependencies(spark33Version))
-  .settings(spark33Settings)
-  .dependsOn(
-    core % "test->test;compile->compile",
-    `dataset-spark33` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val docs = project
@@ -441,16 +385,6 @@ lazy val spark34Settings = Seq[Setting[_]](
   )
 )
 
-lazy val spark33Settings = Seq[Setting[_]](
-  tlVersionIntroduced := Map("2.12" -> "0.13.0", "2.13" -> "0.13.0"),
-  mimaPreviousArtifacts := Set(
-    organization.value %% moduleName.value
-      .split("-")
-      .dropRight(1)
-      .mkString("-") % "0.14.0"
-  )
-)
-
 lazy val consoleSettings = Seq(
   Compile / console / scalacOptions ~= {
     _.filterNot("-Ywarn-unused-import" == _)
@@ -506,8 +440,8 @@ ThisBuild / developers := List(
 ThisBuild / tlCiReleaseBranches := Seq("master")
 ThisBuild / tlSitePublishBranch := Some("master")
 
-// Spark 3.x roots: 3.3/3.4 build on 2.12 only, 3.5 builds on both 2.12 and 2.13.
-val spark3Roots = List("root-spark33", "root-spark34", "root-spark35")
+// Spark 3.x roots: 3.4 builds on 2.12 only, 3.5 builds on both 2.12 and 2.13.
+val spark3Roots = List("root-spark34", "root-spark35")
 // Spark 4.x roots: Scala 2.13 only (Spark 4 dropped 2.12).
 val spark4Roots = List("root-spark40")
 val roots = spark3Roots ++ spark4Roots

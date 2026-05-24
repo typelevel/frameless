@@ -32,16 +32,12 @@ jobs:
         os: [ubuntu-22.04]
         scala: [2.13, 2.12]
         java: [temurin@8, temurin@17]
-        project: [root-spark33, root-spark34, root-spark35, root-spark40]
+        project: [root-spark34, root-spark35, root-spark40]
         exclude:
-          - scala: 2.13
-            project: root-spark33
           - scala: 2.13
             project: root-spark34
           - scala: 2.12
             project: root-spark40
-          - java: temurin@17
-            project: root-spark33
           - java: temurin@17
             project: root-spark34
           - java: temurin@17
@@ -221,7 +217,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: root-spark33_2.13 root-spark33_2.12 docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark35_2.13 root-spark35_2.12 root-spark40_2.13
+          modules-ignore: docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark35_2.13 root-spark35_2.12 root-spark40_2.13
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   site:
