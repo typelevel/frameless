@@ -31,13 +31,19 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         scala: [2.13, 2.12]
-        java: [temurin@8]
-        project: [root-spark33, root-spark34, root-spark35]
+        java: [temurin@8, temurin@17]
+        project: [root-spark34, root-spark35, root-spark40]
         exclude:
           - scala: 2.13
-            project: root-spark33
-          - scala: 2.13
             project: root-spark34
+          - scala: 2.12
+            project: root-spark40
+          - java: temurin@17
+            project: root-spark34
+          - java: temurin@17
+            project: root-spark35
+          - java: temurin@8
+            project: root-spark40
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -60,6 +66,19 @@ jobs:
 
       - name: sbt update
         if: matrix.java == 'temurin@8' && steps.setup-java-temurin-8.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Check that workflows are up to date
@@ -113,6 +132,19 @@ jobs:
 
       - name: sbt update
         if: matrix.java == 'temurin@8' && steps.setup-java-temurin-8.outputs.cache-hit == 'false'
+        run: sbt +update
+
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Import signing key
@@ -169,10 +201,23 @@ jobs:
         if: matrix.java == 'temurin@8' && steps.setup-java-temurin-8.outputs.cache-hit == 'false'
         run: sbt +update
 
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: sbt
+
+      - name: sbt update
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
+        run: sbt +update
+
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: root-spark33_2.13 root-spark33_2.12 docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark35_2.13 root-spark35_2.12
+          modules-ignore: docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark35_2.13 root-spark35_2.12 root-spark40_2.13
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   site:
@@ -180,7 +225,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        java: [temurin@11]
+        java: [temurin@17]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current branch (full)
@@ -204,17 +249,17 @@ jobs:
         if: matrix.java == 'temurin@8' && steps.setup-java-temurin-8.outputs.cache-hit == 'false'
         run: sbt +update
 
-      - name: Setup Java (temurin@11)
-        id: setup-java-temurin-11
-        if: matrix.java == 'temurin@11'
+      - name: Setup Java (temurin@17)
+        id: setup-java-temurin-17
+        if: matrix.java == 'temurin@17'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           cache: sbt
 
       - name: sbt update
-        if: matrix.java == 'temurin@11' && steps.setup-java-temurin-11.outputs.cache-hit == 'false'
+        if: matrix.java == 'temurin@17' && steps.setup-java-temurin-17.outputs.cache-hit == 'false'
         run: sbt +update
 
       - name: Generate site
