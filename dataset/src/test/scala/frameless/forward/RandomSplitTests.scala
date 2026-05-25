@@ -12,7 +12,7 @@ class RandomSplitTests extends TypedDatasetSuite with Matchers {
   val nonEmptyPositiveArray: Gen[Array[Double]] = Gen.nonEmptyListOf(Gen.posNum[Double]).map(_.toArray)
 
   test("randomSplit(weight, seed)") {
-    def prop[A: TypedEncoder : Arbitrary] = forAll(vectorGen[A], nonEmptyPositiveArray, arbitrary[Long]) {
+    def prop[A: TypedEncoder: Arbitrary] = forAll(vectorGen[A], nonEmptyPositiveArray, arbitrary[Long]) {
       (data: Vector[A], weights: Array[Double], seed: Long) =>
         val dataset = TypedDataset.create(data)
 
@@ -25,7 +25,7 @@ class RandomSplitTests extends TypedDatasetSuite with Matchers {
   }
 
   test("randomSplitAsList(weight, seed)") {
-    def prop[A: TypedEncoder : Arbitrary] = forAll(vectorGen[A], nonEmptyPositiveArray, arbitrary[Long]) {
+    def prop[A: TypedEncoder: Arbitrary] = forAll(vectorGen[A], nonEmptyPositiveArray, arbitrary[Long]) {
       (data: Vector[A], weights: Array[Double], seed: Long) =>
         val dataset = TypedDataset.create(data)
 

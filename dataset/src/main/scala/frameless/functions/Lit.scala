@@ -6,10 +6,10 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, NonSQLExpression}
 import org.apache.spark.sql.types.DataType
 
 private[frameless] case class Lit[T <: AnyVal](
-    dataType: DataType,
-    nullable: Boolean,
-    show: () => String,
-    catalystExpr: Expression // must be a generated Expression from a literal TypedEncoder's toCatalyst function
+  dataType: DataType,
+  nullable: Boolean,
+  show: () => String,
+  catalystExpr: Expression // must be a generated Expression from a literal TypedEncoder's toCatalyst function
 ) extends Expression with NonSQLExpression {
   override def toString: String = s"FramelessLit(${show()})"
 
@@ -52,7 +52,7 @@ private[frameless] case class Lit[T <: AnyVal](
   }
 
   def eval(input: InternalRow): Any = codegen(input)
-  
+
   def children: Seq[Expression] = Nil
 
   protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = catalystExpr.genCode(ctx)

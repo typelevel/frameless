@@ -12,8 +12,8 @@ object CatalystRound {
   private[this] def of[In, Out]: CatalystRound[In, Out] = theInstance.asInstanceOf[CatalystRound[In, Out]]
 
   implicit val framelessBigDecimal: CatalystRound[BigDecimal, java.math.BigDecimal] = of[BigDecimal, java.math.BigDecimal]
-  implicit val framelessDouble    : CatalystRound[Double, Long]                     = of[Double, Long]
-  implicit val framelessInt       : CatalystRound[Int, Long]                        = of[Int, Long]
-  implicit val framelessLong      : CatalystRound[Long, Long]                       = of[Long, Long]
-  implicit val framelessShort     : CatalystRound[Short, Long]                      = of[Short, Long]
+  implicit val framelessDouble: CatalystRound[Double, Long] = of[Double, Long]
+  implicit val framelessInt: CatalystRound[Int, Long] = of[Int, Long]
+  implicit val framelessLong: CatalystRound[Long, Long] = of[Long, Long]
+  implicit val framelessShort: CatalystRound[Short, Long] = of[Short, Long]
 }

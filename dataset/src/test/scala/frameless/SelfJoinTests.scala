@@ -2,7 +2,7 @@ package frameless
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
-import org.apache.spark.sql.{ SparkSession, functions => sparkFunctions }
+import org.apache.spark.sql.{functions => sparkFunctions, SparkSession}
 
 class SelfJoinTests extends TypedDatasetSuite {
 
@@ -10,10 +10,10 @@ class SelfJoinTests extends TypedDatasetSuite {
   // [error] Join condition is missing or trivial.
   // [error] Use the CROSS JOIN syntax to allow cartesian products between these relations.
   def allowTrivialJoin[T](
-      body: => T
-    )(implicit
-      session: SparkSession
-    ): T = {
+    body: => T
+  )(implicit
+    session: SparkSession
+  ): T = {
     val crossJoin = "spark.sql.crossJoin.enabled"
     val oldSetting = session.conf.get(crossJoin)
     session.conf.set(crossJoin, "true")
@@ -23,10 +23,10 @@ class SelfJoinTests extends TypedDatasetSuite {
   }
 
   def allowAmbiguousJoin[T](
-      body: => T
-    )(implicit
-      session: SparkSession
-    ): T = {
+    body: => T
+  )(implicit
+    session: SparkSession
+  ): T = {
     val crossJoin = "spark.sql.analyzer.failAmbiguousSelfJoin"
     val oldSetting = session.conf.get(crossJoin)
     session.conf.set(crossJoin, "false")
@@ -37,9 +37,9 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("self join with colLeft/colRight disambiguation") {
     def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Ordering](
-        dx: List[X2[A, B]],
-        d: X2[A, B]
-      ): Prop = allowAmbiguousJoin {
+      dx: List[X2[A, B]],
+      d: X2[A, B]
+    ): Prop = allowAmbiguousJoin {
       val data = d :: dx
       val ds = TypedDataset.create(data)
 
@@ -65,9 +65,9 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("self join collects correct values via colLeft/colRight") {
     def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Ordering](
-        dx: List[X2[A, B]],
-        d: X2[A, B]
-      ): Prop = allowAmbiguousJoin {
+      dx: List[X2[A, B]],
+      d: X2[A, B]
+    ): Prop = allowAmbiguousJoin {
       val data = d :: dx
       val ds = TypedDataset.create(data)
 
@@ -96,9 +96,9 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("trivial self join") {
     def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Ordering](
-        dx: List[X2[A, B]],
-        d: X2[A, B]
-      ): Prop =
+      dx: List[X2[A, B]],
+      d: X2[A, B]
+    ): Prop =
       allowTrivialJoin {
         allowAmbiguousJoin {
 
@@ -125,10 +125,9 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("self join with unambiguous expression") {
     def prop[
-        A: TypedEncoder: CatalystNumeric: Ordering,
-        B: TypedEncoder: Ordering
-      ](data: List[X3[A, A, B]]
-      ): Prop = allowAmbiguousJoin {
+      A: TypedEncoder: CatalystNumeric: Ordering,
+      B: TypedEncoder: Ordering
+    ](data: List[X3[A, A, B]]): Prop = allowAmbiguousJoin {
       val ds = TypedDataset.create(data)
 
       val df1 = ds.dataset.alias("df1")
@@ -144,8 +143,10 @@ class SelfJoinTests extends TypedDatasetSuite {
 
       val typed = ds
         .joinInner(ds)(
-          (ds.colLeft('a) + ds.colLeft('b)) === (ds.colRight('a) + ds
-            .colRight('b))
+          (ds.colLeft('a) + ds.colLeft('b)) ===
+            (ds.colRight('a) +
+              ds
+                .colRight('b))
         )
         .count()
         .run()
@@ -160,10 +161,9 @@ class SelfJoinTests extends TypedDatasetSuite {
     "Do you want ambiguous self join? This is how you get ambiguous self join."
   ) {
     def prop[
-        A: TypedEncoder: CatalystNumeric: Ordering,
-        B: TypedEncoder: Ordering
-      ](data: List[X3[A, A, B]]
-      ): Prop =
+      A: TypedEncoder: CatalystNumeric: Ordering,
+      B: TypedEncoder: Ordering
+    ](data: List[X3[A, A, B]]): Prop =
       allowTrivialJoin {
         allowAmbiguousJoin {
           val ds = TypedDataset.create(data)
@@ -195,11 +195,11 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("colLeft and colRight are equivalent to col outside of joins") {
     def prop[A, B, C, D](
-        data: Vector[X4[A, B, C, D]]
-      )(implicit
-        ea: TypedEncoder[A],
-        ex4: TypedEncoder[X4[A, B, C, D]]
-      ): Prop = {
+      data: Vector[X4[A, B, C, D]]
+    )(implicit
+      ea: TypedEncoder[A],
+      ex4: TypedEncoder[X4[A, B, C, D]]
+    ): Prop = {
       val dataset = TypedDataset.create(data)
       val selectedCol =
         dataset.select(dataset.col[A]('a)).collect().run().toVector
@@ -219,11 +219,11 @@ class SelfJoinTests extends TypedDatasetSuite {
 
   test("colLeft and colRight are equivalent to col outside of joins - via files (codegen)") {
     def prop[A, B, C, D](
-        data: Vector[X4[A, B, C, D]]
-      )(implicit
-        ea: TypedEncoder[A],
-        ex4: TypedEncoder[X4[A, B, C, D]]
-      ): Prop = {
+      data: Vector[X4[A, B, C, D]]
+    )(implicit
+      ea: TypedEncoder[A],
+      ex4: TypedEncoder[X4[A, B, C, D]]
+    ): Prop = {
       TypedDataset
         .create(data)
         .write

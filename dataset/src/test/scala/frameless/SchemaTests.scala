@@ -2,7 +2,7 @@ package frameless
 
 import frameless.functions.aggregate._
 import frameless.functions._
-import org.apache.spark.sql.types.{ Metadata, StructType }
+import org.apache.spark.sql.types.{Metadata, StructType}
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import org.scalatest.matchers.should.Matchers
@@ -20,9 +20,9 @@ class SchemaTests extends TypedDatasetSuite with Matchers {
   }
 
   def prop[A](
-      dataset: TypedDataset[A],
-      ignoreNullable: Boolean = false
-    ): Prop = {
+    dataset: TypedDataset[A],
+    ignoreNullable: Boolean = false
+  ): Prop = {
     val schema = dataset.dataset.schema
 
     Prop.all(

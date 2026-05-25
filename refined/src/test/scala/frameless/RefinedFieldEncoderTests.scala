@@ -1,9 +1,7 @@
 package frameless
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{
-  IntegerType, ObjectType, StringType, StructField, StructType
-}
+import org.apache.spark.sql.types.{IntegerType, ObjectType, StringType, StructField, StructType}
 
 import org.scalatest.matchers.should.Matchers
 
@@ -42,7 +40,8 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
     // Check catalystRepr
     val expectedAStructType = StructType(Seq(
       StructField("a", IntegerType, false),
-      StructField("s", StringType, false)))
+      StructField("s", StringType, false)
+    ))
 
     encoderA.catalystRepr shouldBe expectedAStructType
 
@@ -73,7 +72,8 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
     // Check catalystRepr
     val expectedBStructType = StructType(Seq(
       StructField("a", IntegerType, false),
-      StructField("s", StringType, true)))
+      StructField("s", StringType, true)
+    ))
 
     encoderB.catalystRepr shouldBe expectedBStructType
 
@@ -81,7 +81,7 @@ class RefinedFieldEncoderTests extends TypedDatasetSuite with Matchers {
     val unsafeDs: TypedDataset[B] = {
       val rdd = sc.parallelize(Seq(
         Row(bs.a, bs.s.mkString),
-        Row(2, null.asInstanceOf[String]),
+        Row(2, null.asInstanceOf[String])
       ))
 
       val df = session.createDataFrame(rdd, expectedBStructType)

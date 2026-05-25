@@ -12,8 +12,8 @@ import org.apache.spark.ml.feature.IndexToString
   *
   * @see `TypedStringIndexer` for converting strings into indices
   */
-final class TypedIndexToString[Inputs] private[ml](indexToString: IndexToString, inputCol: String)
-  extends AppendTransformer[Inputs, TypedIndexToString.Outputs, IndexToString] {
+final class TypedIndexToString[Inputs] private[ml] (indexToString: IndexToString, inputCol: String)
+    extends AppendTransformer[Inputs, TypedIndexToString.Outputs, IndexToString] {
 
   val transformer: IndexToString =
     indexToString
@@ -25,8 +25,7 @@ final class TypedIndexToString[Inputs] private[ml](indexToString: IndexToString,
 object TypedIndexToString {
   case class Outputs(originalOutput: String)
 
-  def apply[Inputs](labels: Array[String])
-                    (implicit inputsChecker: UnaryInputsChecker[Inputs, Double]): TypedIndexToString[Inputs] = {
+  def apply[Inputs](labels: Array[String])(implicit inputsChecker: UnaryInputsChecker[Inputs, Double]): TypedIndexToString[Inputs] = {
     new TypedIndexToString[Inputs](new IndexToString().setLabels(labels), inputsChecker.inputCol)
   }
 }

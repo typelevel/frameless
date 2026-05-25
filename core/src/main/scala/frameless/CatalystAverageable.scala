@@ -19,8 +19,8 @@ object CatalystAverageable {
   private[this] def of[In, Out]: CatalystAverageable[In, Out] = theInstance.asInstanceOf[CatalystAverageable[In, Out]]
 
   implicit val framelessAverageableBigDecimal: CatalystAverageable[BigDecimal, BigDecimal] = of[BigDecimal, BigDecimal]
-  implicit val framelessAverageableDouble:     CatalystAverageable[Double, Double]         = of[Double, Double]
-  implicit val framelessAverageableLong:       CatalystAverageable[Long, Double]           = of[Long, Double]
-  implicit val framelessAverageableInt:        CatalystAverageable[Int, Double]            = of[Int, Double]
-  implicit val framelessAverageableShort:      CatalystAverageable[Short, Double]          = of[Short, Double]
+  implicit val framelessAverageableDouble: CatalystAverageable[Double, Double] = of[Double, Double]
+  implicit val framelessAverageableLong: CatalystAverageable[Long, Double] = of[Long, Double]
+  implicit val framelessAverageableInt: CatalystAverageable[Int, Double] = of[Int, Double]
+  implicit val framelessAverageableShort: CatalystAverageable[Short, Double] = of[Short, Double]
 }

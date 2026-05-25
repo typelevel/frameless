@@ -5,9 +5,9 @@ import scala.reflect.ClassTag
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.IsHCons
-import shapeless.ops.record.{ Keys, Values }
+import shapeless.ops.record.{Keys, Values}
 
-import org.apache.spark.sql.{ reflection => ScalaReflection }
+import org.apache.spark.sql.{reflection => ScalaReflection}
 import org.apache.spark.sql.catalyst.expressions.Literal
 
 package object functions extends Udf with UnaryFunctions {
@@ -22,11 +22,11 @@ package object functions extends Udf with UnaryFunctions {
    * apache/spark
    */
   def litAggr[A, T](
-      value: A
-    )(implicit
-      i0: TypedEncoder[A],
-      i1: Refute[IsValueClass[A]]
-    ): TypedAggregate[T, A] =
+    value: A
+  )(implicit
+    i0: TypedEncoder[A],
+    i1: Refute[IsValueClass[A]]
+  ): TypedAggregate[T, A] =
     new TypedAggregate[T, A](lit(value).expr)
 
   /**
@@ -39,10 +39,10 @@ package object functions extends Udf with UnaryFunctions {
    * @tparam T the row type
    */
   def lit[A, T](
-      value: A
-    )(implicit
-      encoder: TypedEncoder[A]
-    ): TypedColumn[T, A] = {
+    value: A
+  )(implicit
+    encoder: TypedEncoder[A]
+  ): TypedColumn[T, A] = {
 
     if (
       ScalaReflection.isNativeType(
@@ -74,26 +74,25 @@ package object functions extends Udf with UnaryFunctions {
    * @tparam T the row type
    */
   def litValue[
-      A: IsValueClass,
-      T,
-      G <: ::[_, HNil],
-      H <: ::[_ <: FieldType[_ <: Symbol, _], HNil],
-      K <: Symbol,
-      V,
-      KS <: ::[_ <: Symbol, HNil],
-      VS <: HList
-    ](value: A
-    )(implicit
-      i0: LabelledGeneric.Aux[A, G],
-      i1: DropUnitValues.Aux[G, H],
-      i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
-      i3: Keys.Aux[H, KS],
-      i4: Values.Aux[H, VS],
-      i5: IsHCons.Aux[KS, K, HNil],
-      i6: IsHCons.Aux[VS, V, HNil],
-      i7: TypedEncoder[V],
-      i8: ClassTag[A]
-    ): TypedColumn[T, A] = {
+    A: IsValueClass,
+    T,
+    G <: ::[_, HNil],
+    H <: ::[_ <: FieldType[_ <: Symbol, _], HNil],
+    K <: Symbol,
+    V,
+    KS <: ::[_ <: Symbol, HNil],
+    VS <: HList
+  ](value: A)(implicit
+    i0: LabelledGeneric.Aux[A, G],
+    i1: DropUnitValues.Aux[G, H],
+    i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
+    i3: Keys.Aux[H, KS],
+    i4: Values.Aux[H, VS],
+    i5: IsHCons.Aux[KS, K, HNil],
+    i6: IsHCons.Aux[VS, V, HNil],
+    i7: TypedEncoder[V],
+    i8: ClassTag[A]
+  ): TypedColumn[T, A] = {
     val expr = {
       val field: H = i1(i0.to(value))
       val v: V = i6.head(i4(field))
@@ -122,26 +121,25 @@ package object functions extends Udf with UnaryFunctions {
    * @tparam T the row type
    */
   def litValue[
-      A: IsValueClass,
-      T,
-      G <: ::[_, HNil],
-      H <: ::[_ <: FieldType[_ <: Symbol, _], HNil],
-      K <: Symbol,
-      V,
-      KS <: ::[_ <: Symbol, HNil],
-      VS <: HList
-    ](value: Option[A]
-    )(implicit
-      i0: LabelledGeneric.Aux[A, G],
-      i1: DropUnitValues.Aux[G, H],
-      i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
-      i3: Keys.Aux[H, KS],
-      i4: Values.Aux[H, VS],
-      i5: IsHCons.Aux[KS, K, HNil],
-      i6: IsHCons.Aux[VS, V, HNil],
-      i7: TypedEncoder[V],
-      i8: ClassTag[A]
-    ): TypedColumn[T, Option[A]] = {
+    A: IsValueClass,
+    T,
+    G <: ::[_, HNil],
+    H <: ::[_ <: FieldType[_ <: Symbol, _], HNil],
+    K <: Symbol,
+    V,
+    KS <: ::[_ <: Symbol, HNil],
+    VS <: HList
+  ](value: Option[A])(implicit
+    i0: LabelledGeneric.Aux[A, G],
+    i1: DropUnitValues.Aux[G, H],
+    i2: IsHCons.Aux[H, _ <: FieldType[K, V], HNil],
+    i3: Keys.Aux[H, KS],
+    i4: Values.Aux[H, VS],
+    i5: IsHCons.Aux[KS, K, HNil],
+    i6: IsHCons.Aux[VS, V, HNil],
+    i7: TypedEncoder[V],
+    i8: ClassTag[A]
+  ): TypedColumn[T, Option[A]] = {
     val expr = value match {
       case Some(some) => {
         val field: H = i1(i0.to(some))

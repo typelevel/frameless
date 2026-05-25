@@ -3,11 +3,7 @@ package frameless
 import org.apache.spark.sql.Encoder
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.catalyst.analysis.GetColumnByOrdinal
-import org.apache.spark.sql.catalyst.expressions.{
-  BoundReference,
-  CreateNamedStruct,
-  If
-}
+import org.apache.spark.sql.catalyst.expressions.{BoundReference, CreateNamedStruct, If}
 import org.apache.spark.sql.types.StructType
 
 object TypedExpressionEncoder {
@@ -28,9 +24,8 @@ object TypedExpressionEncoder {
     }
 
   def apply[T](
-      implicit
-      encoder: TypedEncoder[T]
-    ): Encoder[T] = {
+    implicit encoder: TypedEncoder[T]
+  ): Encoder[T] = {
     val in = BoundReference(0, encoder.jvmRepr, encoder.nullable)
 
     val (out, serializer) = encoder.toCatalyst(in) match {

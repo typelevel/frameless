@@ -8,8 +8,7 @@ import org.scalacheck.Prop._
 class CubeTests extends TypedDatasetSuite {
 
   test("cube('a).agg(count())") {
-    def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
-    (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, Out: TypedEncoder: Numeric](data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
@@ -24,8 +23,9 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cube('a, 'b).agg(count())") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
-    (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder, Out: TypedEncoder: Numeric](data: List[X2[A, B]])(implicit
+      summable: CatalystSummable[B, Out]
+    ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -41,8 +41,9 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cube('a).agg(sum('b)") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder, Out: TypedEncoder : Numeric]
-    (data: List[X2[A, B]])(implicit summable: CatalystSummable[B, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder, Out: TypedEncoder: Numeric](data: List[X2[A, B]])(implicit
+      summable: CatalystSummable[B, Out]
+    ): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
       val B = dataset.col[B]('b)
@@ -58,8 +59,7 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cube('a).mapGroups('a, sum('b))") {
-    def prop[A: TypedEncoder : Ordering, B: TypedEncoder : Numeric]
-    (data: List[X2[A, B]]): Prop = {
+    def prop[A: TypedEncoder: Ordering, B: TypedEncoder: Numeric](data: List[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 
@@ -76,11 +76,11 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a).agg(sum('b), sum('c)) to cube('a).agg(sum('a), sum('b), sum('a), sum('b), sum('a))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder,
-    C: TypedEncoder,
-    OutB: TypedEncoder : Numeric,
-    OutC: TypedEncoder : Numeric
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder,
+      C: TypedEncoder,
+      OutB: TypedEncoder: Numeric,
+      OutC: TypedEncoder: Numeric
     ](data: List[X3[A, B, C]])(
       implicit
       summableB: CatalystSummable[B, OutB],
@@ -138,12 +138,12 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a, 'b).agg(sum('c), sum('d))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder,
-    D: TypedEncoder,
-    OutC: TypedEncoder : Numeric,
-    OutD: TypedEncoder : Numeric
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder,
+      D: TypedEncoder,
+      OutC: TypedEncoder: Numeric,
+      OutD: TypedEncoder: Numeric
     ](data: List[X4[A, B, C, D]])(
       implicit
       summableC: CatalystSummable[C, OutC],
@@ -173,10 +173,10 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a, 'b).agg(sum('c)) to cube('a, 'b).agg(sum('c),sum('c),sum('c),sum('c),sum('c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder,
-    OutC: TypedEncoder: Numeric
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder,
+      OutC: TypedEncoder: Numeric
     ](data: List[X3[A, B, C]])(implicit summableC: CatalystSummable[C, OutC]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
@@ -224,7 +224,9 @@ class CubeTests extends TypedDatasetSuite {
 
       val sparkSumCCCC = dataset.dataset
         .cube("a", "b").sum("c", "c", "c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5)))
+        .map(row =>
+          (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5))
+        )
         .sortBy(_._2)
 
       val framelessSumCCCCC = dataset
@@ -235,14 +237,24 @@ class CubeTests extends TypedDatasetSuite {
 
       val sparkSumCCCCC = dataset.dataset
         .cube("a", "b").sum("c", "c", "c", "c", "c").collect().toVector
-        .map(row => (Option(row.getAs[A](0)), Option(row.getAs[B](1)), row.getAs[OutC](2), row.getAs[OutC](3), row.getAs[OutC](4), row.getAs[OutC](5), row.getAs[OutC](6)))
+        .map(row =>
+          (
+            Option(row.getAs[A](0)),
+            Option(row.getAs[B](1)),
+            row.getAs[OutC](2),
+            row.getAs[OutC](3),
+            row.getAs[OutC](4),
+            row.getAs[OutC](5),
+            row.getAs[OutC](6)
+          )
+        )
         .sortBy(_._2)
 
       (framelessSumC ?= sparkSumC) &&
-        (framelessSumCC ?= sparkSumCC) &&
-        (framelessSumCCC ?= sparkSumCCC) &&
-        (framelessSumCCCC ?= sparkSumCCCC) &&
-        (framelessSumCCCCC ?= sparkSumCCCCC)
+      (framelessSumCC ?= sparkSumCC) &&
+      (framelessSumCCC ?= sparkSumCCC) &&
+      (framelessSumCCCC ?= sparkSumCCCC) &&
+      (framelessSumCCCCC ?= sparkSumCCCCC)
     }
 
     check(forAll(prop[String, Long, Double, Double] _))
@@ -250,9 +262,9 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a, 'b).mapGroups('a, 'b, sum('c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder : Numeric
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Numeric
     ](data: List[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
@@ -275,8 +287,8 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a).mapGroups(('a, toVector(('a, 'b))") {
     def prop[
-    A: TypedEncoder: Ordering,
-    B: TypedEncoder: Ordering,
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
@@ -298,8 +310,8 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a).flatMapGroups(('a, toVector(('a, 'b))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering
     ](data: Vector[X2[A, B]]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
@@ -325,9 +337,9 @@ class CubeTests extends TypedDatasetSuite {
 
   test("cube('a, 'b).flatMapGroups((('a,'b) toVector((('a,'b), 'c))") {
     def prop[
-    A: TypedEncoder : Ordering,
-    B: TypedEncoder : Ordering,
-    C: TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](data: Vector[X3[A, B, C]]): Prop = {
       val dataset = TypedDataset.create(data)
       val cA = dataset.col[A]('a)
@@ -353,8 +365,7 @@ class CubeTests extends TypedDatasetSuite {
   }
 
   test("cubeMany('a).agg(sum('b))") {
-    def prop[A: TypedEncoder : Ordering, Out: TypedEncoder : Numeric]
-    (data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
+    def prop[A: TypedEncoder: Ordering, Out: TypedEncoder: Numeric](data: List[X1[A]])(implicit summable: CatalystSummable[A, Out]): Prop = {
       val dataset = TypedDataset.create(data)
       val A = dataset.col[A]('a)
 

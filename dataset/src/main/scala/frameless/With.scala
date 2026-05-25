@@ -15,7 +15,7 @@ object With extends LowPrioWith {
   implicit def combine[A, B]: Aux[A, B, A with B] = of[A, B, A with B]
 }
 
-private[frameless] sealed trait LowPrioWith {
+sealed private[frameless] trait LowPrioWith {
   type Aux[A, B, W] = With[A, B] { type Out = W }
 
   protected[this] val theInstance = new With[Any, Any] {}

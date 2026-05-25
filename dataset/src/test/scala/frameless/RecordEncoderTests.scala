@@ -1,6 +1,6 @@
 package frameless
 
-import org.apache.spark.sql.{Row, functions => F}
+import org.apache.spark.sql.{functions => F, Row}
 import org.apache.spark.sql.types.{
   ArrayType,
   BinaryType,
@@ -95,7 +95,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     encoder.jvmRepr shouldBe ObjectType(classOf[Name])
 
     encoder.catalystRepr shouldBe StructType(
-      Seq(StructField("value", StringType, false)))
+      Seq(StructField("value", StringType, false))
+    )
 
     val sqlContext = session.sqlContext
     import sqlContext.implicits._
@@ -111,7 +112,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     illTyped(
       // As `Person` is not a Value class
-      "val _: RecordFieldEncoder[Person] = RecordFieldEncoder.valueClass")
+      "val _: RecordFieldEncoder[Person] = RecordFieldEncoder.valueClass"
+    )
 
     val fieldEncoder: RecordFieldEncoder[Name] = RecordFieldEncoder.valueClass
 
@@ -125,7 +127,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expectedPersonStructType = StructType(Seq(
       StructField("name", StringType, false),
-      StructField("age", IntegerType, false)))
+      StructField("age", IntegerType, false)
+    ))
 
     encoder.catalystRepr shouldBe expectedPersonStructType
 
@@ -140,7 +143,9 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     }
 
     val expected = Seq(
-      Person(new Name("Foo"), 2), Person(new Name("Bar"), 3))
+      Person(new Name("Foo"), 2),
+      Person(new Name("Bar"), 3)
+    )
 
     unsafeDs.collect.run() shouldBe expected
 
@@ -160,7 +165,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     illTyped( // As `Person` is not a Value class
       """val _: RecordFieldEncoder[Option[Person]] =
-           RecordFieldEncoder.optionValueClass""")
+           RecordFieldEncoder.optionValueClass"""
+    )
 
     val fieldEncoder: RecordFieldEncoder[Option[Name]] =
       RecordFieldEncoder.optionValueClass
@@ -177,7 +183,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expectedPersonStructType = StructType(Seq(
       StructField("id", LongType, false),
-      StructField("name", StringType, true)))
+      StructField("name", StringType, true)
+    ))
 
     encoder.catalystRepr shouldBe expectedPersonStructType
 
@@ -194,7 +201,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     ds1.collect.run() shouldBe Seq(
       User(1L, None),
-      User(2L, Some(new Name("Foo"))))
+      User(2L, Some(new Name("Foo")))
+    )
 
     val ds2: TypedDataset[User] = {
       val sqlContext = session.sqlContext
@@ -208,7 +216,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
       val df2 = df1.withColumn(
         "jsonValue",
-        F.from_json(df1.col("value"), expectedPersonStructType)).
+        F.from_json(df1.col("value"), expectedPersonStructType)
+      ).
         select("jsonValue.id", "jsonValue.name")
 
       TypedDataset.createUnsafe[User](df2)
@@ -217,7 +226,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val expected = Seq(
       User(3L, None),
       User(4L, Some(new Name("Lorem"))),
-      User(5L, None))
+      User(5L, None)
+    )
 
     ds2.collect.run() shouldBe expected
 
@@ -233,10 +243,16 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     encoder.jvmRepr shouldBe ObjectType(classOf[D])
 
     val expectedStructType = StructType(Seq(
-      StructField("m", MapType(
-        keyType = StringType,
-        valueType = IntegerType,
-        valueContainsNull = false), false)))
+      StructField(
+        "m",
+        MapType(
+          keyType = StringType,
+          valueType = IntegerType,
+          valueContainsNull = false
+        ),
+        false
+      )
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -246,18 +262,20 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val ds1 = TypedDataset.createUnsafe[D] {
       val df = Seq(
         """{"m":{"pizza":1,"sushi":2}}""",
-        """{"m":{"red":3,"blue":4}}""",
+        """{"m":{"red":3,"blue":4}}"""
       ).toDF
 
       df.withColumn(
         "jsonValue",
-        F.from_json(df.col("value"), expectedStructType)).
+        F.from_json(df.col("value"), expectedStructType)
+      ).
         select("jsonValue.*")
     }
 
     val expected = Seq(
       D(m = Map("pizza" -> 1, "sushi" -> 2)),
-      D(m = Map("red" -> 3, "blue" -> 4)))
+      D(m = Map("red" -> 3, "blue" -> 4))
+    )
 
     ds1.collect.run() shouldBe expected
 
@@ -277,10 +295,16 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expectedStudentStructType = StructType(Seq(
       StructField("name", StringType, false),
-      StructField("grades", MapType(
-        keyType = StringType,
-        valueType = DecimalType.SYSTEM_DEFAULT,
-        valueContainsNull = false), false)))
+      StructField(
+        "grades",
+        MapType(
+          keyType = StringType,
+          valueType = DecimalType.SYSTEM_DEFAULT,
+          valueContainsNull = false
+        ),
+        false
+      )
+    ))
 
     encoder.catalystRepr shouldBe expectedStudentStructType
 
@@ -290,43 +314,58 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val ds1 = TypedDataset.createUnsafe[Student] {
       val df = Seq(
         """{"name":"Foo","grades":{"math":1,"physics":"23.4"}}""",
-        """{"name":"Bar","grades":{"biology":18.5,"geography":4}}""",
+        """{"name":"Bar","grades":{"biology":18.5,"geography":4}}"""
       ).toDF
 
       df.withColumn(
         "jsonValue",
-        F.from_json(df.col("value"), expectedStudentStructType)).
+        F.from_json(df.col("value"), expectedStudentStructType)
+      ).
         select("jsonValue.*")
     }
 
     val expected = Seq(
-      Student(name = "Foo", grades = Map(
-        new Subject("math") -> new Grade(BigDecimal(1)),
-        new Subject("physics") -> new Grade(BigDecimal(23.4D)))),
-      Student(name = "Bar", grades = Map(
-        new Subject("biology") -> new Grade(BigDecimal(18.5)),
-        new Subject("geography") -> new Grade(BigDecimal(4L)))))
+      Student(
+        name = "Foo",
+        grades = Map(
+          new Subject("math") -> new Grade(BigDecimal(1)),
+          new Subject("physics") -> new Grade(BigDecimal(23.4D))
+        )
+      ),
+      Student(
+        name = "Bar",
+        grades = Map(
+          new Subject("biology") -> new Grade(BigDecimal(18.5)),
+          new Subject("geography") -> new Grade(BigDecimal(4L))
+        )
+      )
+    )
 
     ds1.collect.run() shouldBe expected
 
     val grades = Map[Subject, Grade](
-      new Subject("any") -> new Grade(BigDecimal(Long.MaxValue) + 1L))
+      new Subject("any") -> new Grade(BigDecimal(Long.MaxValue) + 1L)
+    )
 
     val ds2 = ds1.withColumnReplaced('grades, functions.lit(grades))
 
     ds2.collect.run() shouldBe Seq(
-      Student("Foo", grades), Student("Bar", grades))
+      Student("Foo", grades),
+      Student("Bar", grades)
+    )
   }
 
   test("Encode binary array") {
     val encoder = TypedEncoder[Tuple2[String, Array[Byte]]]
 
     encoder.jvmRepr shouldBe ObjectType(
-      classOf[Tuple2[String, Array[Byte]]])
+      classOf[Tuple2[String, Array[Byte]]]
+    )
 
     val expectedStructType = StructType(Seq(
       StructField("_1", StringType, false),
-      StructField("_2", BinaryType, false)))
+      StructField("_2", BinaryType, false)
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -359,11 +398,13 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val encoder = TypedEncoder[Tuple2[String, Array[Int]]]
 
     encoder.jvmRepr shouldBe ObjectType(
-      classOf[Tuple2[String, Array[Int]]])
+      classOf[Tuple2[String, Array[Int]]]
+    )
 
     val expectedStructType = StructType(Seq(
       StructField("_1", StringType, false),
-      StructField("_2", ArrayType(IntegerType, false), false)))
+      StructField("_2", ArrayType(IntegerType, false), false)
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -373,12 +414,13 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val ds1 = TypedDataset.createUnsafe[(String, Array[Int])] {
       val df = Seq(
         """{"_1":"Foo", "_2":[3, 4]}""",
-        """{"_1":"Bar", "_2":[5]}""",
+        """{"_1":"Bar", "_2":[5]}"""
       ).toDF
 
       df.withColumn(
         "jsonValue",
-        F.from_json(df.col("value"), expectedStructType)).
+        F.from_json(df.col("value"), expectedStructType)
+      ).
         select("jsonValue.*")
     }
 
@@ -403,11 +445,13 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val encoder = TypedEncoder[Tuple2[String, Array[Subject]]]
 
     encoder.jvmRepr shouldBe ObjectType(
-      classOf[Tuple2[String, Array[Subject]]])
+      classOf[Tuple2[String, Array[Subject]]]
+    )
 
     val expectedStructType = StructType(Seq(
       StructField("_1", StringType, false),
-      StructField("_2", ArrayType(StringType, false), false)))
+      StructField("_2", ArrayType(StringType, false), false)
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -417,18 +461,20 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     val ds1 = TypedDataset.createUnsafe[(String, Array[Subject])] {
       val df = Seq(
         """{"_1":"Foo", "_2":["math","physics"]}""",
-        """{"_1":"Bar", "_2":["biology","geography"]}""",
+        """{"_1":"Bar", "_2":["biology","geography"]}"""
       ).toDF
 
       df.withColumn(
         "jsonValue",
-        F.from_json(df.col("value"), expectedStructType)).
+        F.from_json(df.col("value"), expectedStructType)
+      ).
         select("jsonValue.*")
     }
 
     val expected = Seq(
       "Foo" -> Seq(new Subject("math"), new Subject("physics")),
-      "Bar" -> Seq(new Subject("biology"), new Subject("geography")))
+      "Bar" -> Seq(new Subject("biology"), new Subject("geography"))
+    )
 
     ds1.collect.run().map {
       case (_1, _2) => _1 -> _2.toSeq
@@ -451,8 +497,17 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
     encoder.jvmRepr shouldBe ObjectType(classOf[B])
 
     val expectedStructType = StructType(Seq(
-      StructField("a", ArrayType(StructType(Seq(
-        StructField("x", IntegerType, false))), false), false)))
+      StructField(
+        "a",
+        ArrayType(
+          StructType(Seq(
+            StructField("x", IntegerType, false)
+          )),
+          false
+        ),
+        false
+      )
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -491,7 +546,8 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
     val expectedStructType = StructType(Seq(
       StructField("_1", IntegerType, false),
-      StructField("_2", ArrayType(StringType, false), false)))
+      StructField("_2", ArrayType(StringType, false), false)
+    ))
 
     encoder.catalystRepr shouldBe expectedStructType
 
@@ -501,18 +557,20 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 
       val df = Seq(
         """{"_1":1, "_2":["foo", "bar"]}""",
-        """{"_1":2, "_2":["lorem"]}""",
+        """{"_1":2, "_2":["lorem"]}"""
       ).toDF
 
       df.withColumn(
         "jsonValue",
-        F.from_json(df.col("value"), expectedStructType)).
+        F.from_json(df.col("value"), expectedStructType)
+      ).
         select("jsonValue.*")
     }
 
     val expected = Seq(
       1 -> Seq(new Name("foo"), new Name("bar")),
-      2 -> Seq(new Name("lorem")))
+      2 -> Seq(new Name("lorem"))
+    )
 
     ds1.collect.run() shouldBe expected
   }
@@ -523,7 +581,13 @@ final class RecordEncoderTests extends TypedDatasetSuite with Matchers {
 case class UnitsOnly(a: Unit, b: Unit)
 
 case class TupleWithUnits(
-  u0: Unit, _1: Int, u1: Unit, u2: Unit, _2: String, u3: Unit)
+  u0: Unit,
+  _1: Int,
+  u1: Unit,
+  u2: Unit,
+  _2: String,
+  u3: Unit
+)
 
 object TupleWithUnits {
   def apply(_1: Int, _2: String): TupleWithUnits =

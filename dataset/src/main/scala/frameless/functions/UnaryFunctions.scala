@@ -1,16 +1,17 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.{Column, functions => sparkFunctions}
+import org.apache.spark.sql.{functions => sparkFunctions, Column}
 
 import scala.math.Ordering
 
 trait UnaryFunctions {
+
   /** Returns length of array
     *
     * apache/spark
     */
-  def size[T, A, V[_] : CatalystSizableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, Int] =
+  def size[T, A, V[_]: CatalystSizableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, Int] =
     new TypedColumn[T, Int](implicitly[CatalystSizableCollection[V]].sizeOp(column.untyped))
 
   /** Returns length of Map
@@ -25,7 +26,7 @@ trait UnaryFunctions {
     *
     * apache/spark
     */
-  def sortAscending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
+  def sortAscending[T, A: Ordering, V[_]: CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
     new TypedColumn[T, V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = true))(column.uencoder)
 
   /** Sorts the input array for the given column in descending order, according to
@@ -33,18 +34,20 @@ trait UnaryFunctions {
     *
     * apache/spark
     */
-  def sortDescending[T, A: Ordering, V[_] : CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
+  def sortDescending[T, A: Ordering, V[_]: CatalystSortableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, V[A]] =
     new TypedColumn[T, V[A]](implicitly[CatalystSortableCollection[V]].sortOp(column.untyped, sortAscending = false))(column.uencoder)
-
 
   /** Creates a new row for each element in the given collection. The column types
     * eligible for this operation are constrained by CatalystExplodableCollection.
     *
     * apache/spark
     */
-  @deprecated("Use explode() from the TypedDataset instead. This method will result in " +
-    "runtime error if applied to two columns in the same select statement.", "0.6.2")
-  def explode[T, A: TypedEncoder, V[_] : CatalystExplodableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, A] =
+  @deprecated(
+    "Use explode() from the TypedDataset instead. This method will result in " +
+      "runtime error if applied to two columns in the same select statement.",
+    "0.6.2"
+  )
+  def explode[T, A: TypedEncoder, V[_]: CatalystExplodableCollection](column: TypedColumn[T, V[A]]): TypedColumn[T, A] =
     new TypedColumn[T, A](sparkFunctions.explode(column.untyped))
 }
 

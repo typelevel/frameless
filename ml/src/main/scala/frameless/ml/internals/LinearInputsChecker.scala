@@ -25,10 +25,11 @@ trait LinearInputsChecker[Inputs] {
 object LinearInputsChecker {
 
   implicit def checkLinearInputs[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol](
+    Inputs,
+    InputsRec <: HList,
+    LabelK <: Symbol,
+    FeaturesK <: Symbol
+  ](
     implicit
     i0: LabelledGeneric.Aux[Inputs, InputsRec],
     i1: Length.Aux[InputsRec, Nat._2],
@@ -45,11 +46,12 @@ object LinearInputsChecker {
   }
 
   implicit def checkLinearInputs2[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol,
-  WeightK <: Symbol](
+    Inputs,
+    InputsRec <: HList,
+    LabelK <: Symbol,
+    FeaturesK <: Symbol,
+    WeightK <: Symbol
+  ](
     implicit
     i0: LabelledGeneric.Aux[Inputs, InputsRec],
     i1: Length.Aux[InputsRec, Nat._3],

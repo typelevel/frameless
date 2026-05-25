@@ -14,7 +14,7 @@ import org.apache.spark.ml.clustering.{KMeans, KMeansModel}
 class TypedKMeans[Inputs] private[ml] (
   km: KMeans,
   featuresCol: String
-) extends TypedEstimator[Inputs,TypedKMeans.Output,KMeansModel] {
+) extends TypedEstimator[Inputs, TypedKMeans.Output, KMeansModel] {
   val estimator: KMeans =
     km
       .setFeaturesCol(featuresCol)
@@ -36,7 +36,7 @@ class TypedKMeans[Inputs] private[ml] (
 
 }
 
-object TypedKMeans{
+object TypedKMeans {
   case class Output(prediction: Int)
 
   def apply[Inputs](implicit inputsChecker: VectorInputsChecker[Inputs]): TypedKMeans[Inputs] = {

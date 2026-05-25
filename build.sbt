@@ -204,9 +204,9 @@ lazy val docs = project
   .dependsOn(dataset, cats, ml)
 
 def sparkDependencies(
-    sparkVersion: String,
-    scope: Configuration = Provided
-  ) = Seq(
+  sparkVersion: String,
+  scope: Configuration = Provided
+) = Seq(
   libraryDependencies ++= Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % scope,
     "org.apache.spark" %% "spark-sql" % sparkVersion % scope
@@ -378,10 +378,11 @@ lazy val spark40Settings = Seq[Setting[_]](
 lazy val spark34Settings = Seq[Setting[_]](
   tlVersionIntroduced := Map("2.12" -> "0.14.1", "2.13" -> "0.14.1"),
   mimaPreviousArtifacts := Set(
-    organization.value %% moduleName.value
-      .split("-")
-      .dropRight(1)
-      .mkString("-") % "0.14.1"
+    organization.value %%
+      moduleName.value
+        .split("-")
+        .dropRight(1)
+        .mkString("-") % "0.14.1"
   )
 )
 

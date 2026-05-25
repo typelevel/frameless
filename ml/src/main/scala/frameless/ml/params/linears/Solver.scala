@@ -16,10 +16,9 @@ package linears
   *    spark
   */
 
-sealed abstract class Solver private[ml](val sparkValue: String)
+sealed abstract class Solver private[ml] (val sparkValue: String)
 object Solver {
-  case object LBFGS   extends Solver("l-bfgs")
-  case object Auto    extends Solver("auto")
-  case object Normal  extends Solver("normal")
+  case object LBFGS extends Solver("l-bfgs")
+  case object Auto extends Solver("auto")
+  case object Normal extends Solver("normal")
 }
-

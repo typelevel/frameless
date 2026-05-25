@@ -23,11 +23,10 @@ object Repeat {
     type Out = L
   }
 
-  implicit def succ[L <: HList, Prev <: Nat, PrevOut <: HList, P <: HList]
-    (implicit
-      i0: Aux[L, Prev, PrevOut],
-      i1: Prepend.Aux[L, PrevOut, P]
-    ): Aux[L, Succ[Prev], P] = new Repeat[L, Succ[Prev]] {
-      type Out = P
-    }
+  implicit def succ[L <: HList, Prev <: Nat, PrevOut <: HList, P <: HList](implicit
+    i0: Aux[L, Prev, PrevOut],
+    i1: Prepend.Aux[L, PrevOut, P]
+  ): Aux[L, Succ[Prev], P] = new Repeat[L, Succ[Prev]] {
+    type Out = P
+  }
 }

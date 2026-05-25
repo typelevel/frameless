@@ -2,19 +2,14 @@ package org.apache.spark.sql
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{ Alias, CreateStruct }
-import org.apache.spark.sql.catalyst.expressions.{ Expression, NamedExpression }
+import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.encoders.AgnosticEncoders.JavaBeanEncoder
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.logical.{ LogicalPlan, Project }
-import org.apache.spark.sql.classic.{
-  Dataset => ClassicDataset,
-  SparkSession => ClassicSparkSession,
-  ExpressionUtils,
-  ColumnNodeToExpressionConverter
-}
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
+import org.apache.spark.sql.classic.{ColumnNodeToExpressionConverter, Dataset => ClassicDataset, ExpressionUtils, SparkSession => ClassicSparkSession}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.types.ObjectType
@@ -32,9 +27,8 @@ import scala.reflect.ClassTag
 object FramelessInternals {
 
   def objectTypeFor[A](
-      implicit
-      classTag: ClassTag[A]
-    ): ObjectType = ObjectType(classTag.runtimeClass)
+    implicit classTag: ClassTag[A]
+  ): ObjectType = ObjectType(classTag.runtimeClass)
 
   private def classic(ds: Dataset[_]): ClassicDataset[_] =
     ds.asInstanceOf[ClassicDataset[_]]
@@ -76,11 +70,11 @@ object FramelessInternals {
     classic(ds).sparkSession.conf.get(key, default)
 
   def joinPlan(
-      ds: Dataset[_],
-      plan: LogicalPlan,
-      leftPlan: LogicalPlan,
-      rightPlan: LogicalPlan
-    ): LogicalPlan = {
+    ds: Dataset[_],
+    plan: LogicalPlan,
+    leftPlan: LogicalPlan,
+    rightPlan: LogicalPlan
+  ): LogicalPlan = {
     val joined = executePlan(ds, plan)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
@@ -95,10 +89,10 @@ object FramelessInternals {
   }
 
   def mkDataset[T](
-      source: Dataset[_],
-      plan: LogicalPlan,
-      encoder: Encoder[T]
-    ): Dataset[T] =
+    source: Dataset[_],
+    plan: LogicalPlan,
+    encoder: Encoder[T]
+  ): Dataset[T] =
     new ClassicDataset[T](classic(source).sparkSession, plan, encoder)
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
@@ -116,10 +110,10 @@ object FramelessInternals {
    * carrying the right `ClassTag` is therefore a correct, metadata-only stand-in.
    */
   def expressionEncoder[T](
-      objSerializer: Expression,
-      objDeserializer: Expression,
-      classTag: ClassTag[T]
-    ): ExpressionEncoder[T] =
+    objSerializer: Expression,
+    objDeserializer: Expression,
+    classTag: ClassTag[T]
+  ): ExpressionEncoder[T] =
     new ExpressionEncoder[T](
       JavaBeanEncoder(classTag, Nil),
       objSerializer,
@@ -145,8 +139,8 @@ object FramelessInternals {
       tagged.genCode(ctx)
 
     protected def withNewChildrenInternal(
-        newChildren: IndexedSeq[Expression]
-      ): Expression = copy(newChildren.head)
+      newChildren: IndexedSeq[Expression]
+    ): Expression = copy(newChildren.head)
   }
 
   /** Expression to tag columns from the right hand side of join expression. */
@@ -162,7 +156,7 @@ object FramelessInternals {
       tagged.genCode(ctx)
 
     protected def withNewChildrenInternal(
-        newChildren: IndexedSeq[Expression]
-      ): Expression = copy(newChildren.head)
+      newChildren: IndexedSeq[Expression]
+    ): Expression = copy(newChildren.head)
   }
 }

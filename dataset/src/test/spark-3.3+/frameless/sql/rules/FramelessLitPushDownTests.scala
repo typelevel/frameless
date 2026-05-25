@@ -3,7 +3,7 @@ package frameless.sql.rules
 import frameless._
 import frameless.functions.Lit
 import org.apache.spark.sql.catalyst.util.DateTimeUtils.microsToInstant
-import org.apache.spark.sql.sources.{ EqualTo, GreaterThanOrEqual, IsNotNull }
+import org.apache.spark.sql.sources.{EqualTo, GreaterThanOrEqual, IsNotNull}
 import org.apache.spark.sql.catalyst.expressions
 import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import java.time.Instant

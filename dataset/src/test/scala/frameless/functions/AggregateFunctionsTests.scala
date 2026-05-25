@@ -21,7 +21,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("sum") {
     case class Sum4Tests[A, B](sum: Seq[A] => B)
 
-    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder, Out: TypedEncoder: Numeric](xs: List[A])(
       implicit
       summable: CatalystSummable[A, Out],
       summer: Sum4Tests[A, Out]
@@ -33,7 +33,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       datasetSum match {
         case x :: Nil => approximatelyEqual(summer.sum(xs), x)
-        case other => falsified
+        case other    => falsified
       }
     }
 
@@ -61,7 +61,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("sumDistinct") {
     case class Sum4Tests[A, B](sum: Seq[A] => B)
 
-    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder, Out: TypedEncoder: Numeric](xs: List[A])(
       implicit
       summable: CatalystSummable[A, Out],
       summer: Sum4Tests[A, Out]
@@ -73,15 +73,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       datasetSum match {
         case x :: Nil => approximatelyEqual(summer.sum(xs), x)
-        case other => falsified
+        case other    => falsified
       }
     }
 
     // Replicate Spark's behaviour : Ints and Shorts are cast to Long
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Sum.scala#L37
     implicit def summerLong = Sum4Tests[Long, Long](_.toSet.sum)
-    implicit def summerInt = Sum4Tests[Int, Long]( x => x.toSet.map((_:Int).toLong).sum)
-    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_:Short).toLong).sum)
+    implicit def summerInt = Sum4Tests[Int, Long](x => x.toSet.map((_: Int).toLong).sum)
+    implicit def summerShort = Sum4Tests[Short, Long](x => x.toSet.map((_: Short).toLong).sum)
 
     check(forAll(prop[Long, Long] _))
     check(forAll(prop[Int, Long] _))
@@ -95,7 +95,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   test("avg") {
     case class Averager4Tests[A, B](avg: Seq[A] => B)
 
-    def prop[A: TypedEncoder, Out: TypedEncoder : Numeric](xs: List[A])(
+    def prop[A: TypedEncoder, Out: TypedEncoder: Numeric](xs: List[A])(
       implicit
       averageable: CatalystAverageable[A, Out],
       averager: Averager4Tests[A, Out]
@@ -107,21 +107,21 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
 
       if (datasetAvg.size > 2) falsified
       else xs match {
-        case Nil => datasetAvg ?= Vector()
+        case Nil    => datasetAvg ?= Vector()
         case _ :: _ => datasetAvg.headOption match {
-          case Some(x) => approximatelyEqual(averager.avg(xs), x)
-          case None => falsified
-        }
+            case Some(x) => approximatelyEqual(averager.avg(xs), x)
+            case None    => falsified
+          }
       }
     }
 
     // Replicate Spark's behaviour : If the datatype isn't BigDecimal cast type to Double
     // https://github.com/apache/spark/blob/7eb2ca8/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/aggregate/Average.scala#L50
-    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum/as.size)
-    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum/as.size)
-    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum/as.size)
-    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum/as.size)
+    implicit def averageDecimal = Averager4Tests[BigDecimal, BigDecimal](as => as.sum / as.size)
+    implicit def averageDouble = Averager4Tests[Double, Double](as => as.sum / as.size)
+    implicit def averageLong = Averager4Tests[Long, Double](as => as.map(_.toDouble).sum / as.size)
+    implicit def averageInt = Averager4Tests[Int, Double](as => as.map(_.toDouble).sum / as.size)
+    implicit def averageShort = Averager4Tests[Short, Double](as => as.map(_.toDouble).sum / as.size)
 
     /* under 3.4 an oddity was detected:
     Falsified after 2 successful property evaluations.
@@ -141,7 +141,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("stddev and variance") {
-    def prop[A: TypedEncoder : CatalystVariance : Numeric](xs: List[A]): Prop = {
+    def prop[A: TypedEncoder: CatalystVariance: Numeric](xs: List[A]): Prop = {
       val numeric = implicitly[Numeric[A]]
       val dataset = TypedDataset.create(xs.map(X1(_)))
       val A = dataset.col[A]('a)
@@ -225,7 +225,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       val A = dataset.col[Long]('a)
       val datasetMax = dataset.agg(max(A) * 2).collect().run().headOption
 
-      datasetMax ?= (if(xs.isEmpty) None else Some(xs.max * 2))
+      datasetMax ?= (if (xs.isEmpty) None else Some(xs.max * 2))
     }
 
     check(forAll(prop _))
@@ -336,7 +336,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("collectList") {
-    def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
+    def prop[A: TypedEncoder: Ordering](xs: List[X2[A, A]]): Prop = {
       val tds = TypedDataset.create(xs)
       val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectList(tds('b))).collect().run()
 
@@ -350,7 +350,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
   }
 
   test("collectSet") {
-    def prop[A: TypedEncoder : Ordering](xs: List[X2[A, A]]): Prop = {
+    def prop[A: TypedEncoder: Ordering](xs: List[X2[A, A]]): Prop = {
       val tds = TypedDataset.create(xs)
       val tdsRes: Seq[(A, Vector[A])] = tds.groupBy(tds('a)).agg(collectSet(tds('b))).collect().run()
 
@@ -379,19 +379,15 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     check(forAll(prop[BigDecimal] _))
   }
 
-
-  def bivariatePropTemplate[A: TypedEncoder, B: TypedEncoder]
-  (
+  def bivariatePropTemplate[A: TypedEncoder, B: TypedEncoder](
     xs: List[X3[Int, A, B]]
-  )
-  (
+  )(
     framelessFun: (TypedColumn[X3[Int, A, B], A], TypedColumn[X3[Int, A, B], B]) => TypedAggregate[X3[Int, A, B], Option[Double]],
     sparkFun: (Column, Column) => Column
-  )
-  (
+  )(
     implicit
     encEv: Encoder[(Int, A, B)],
-    encEv2: Encoder[(Int,Option[Double])],
+    encEv2: Encoder[(Int, Option[Double])],
     evCanBeDoubleA: CatalystCast[A, Double],
     evCanBeDoubleB: CatalystCast[B, Double]
   ): Prop = {
@@ -407,34 +403,29 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     val compBivar = cDF
       .groupBy(cDF("_1"))
       .agg(sparkFun(cDF("_2"), cDF("_3")))
-      .map(
-        row => {
-          val grp = row.getInt(0)
-          (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
-        }
-      )
+      .map(row => {
+        val grp = row.getInt(0)
+        (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
+      })
 
     // Should be the same
     tdBivar.toMap ?= compBivar.collect().toMap
   }
 
-  def univariatePropTemplate[A: TypedEncoder]
-  (
+  def univariatePropTemplate[A: TypedEncoder](
     xs: List[X2[Int, A]]
-  )
-  (
+  )(
     framelessFun: (TypedColumn[X2[Int, A], A]) => TypedAggregate[X2[Int, A], Option[Double]],
     sparkFun: (Column) => Column
-  )
-  (
+  )(
     implicit
     encEv: Encoder[(Int, A)],
-    encEv2: Encoder[(Int,Option[Double])],
+    encEv2: Encoder[(Int, Option[Double])],
     evCanBeDoubleA: CatalystCast[A, Double]
   ): Prop = {
 
     val tds = TypedDataset.create(xs)
-    //typed implementation of univariate stats function
+    // typed implementation of univariate stats function
     val tdUnivar = tds.groupBy(tds('a)).agg(framelessFun(tds('b))).deserialized.map(kv =>
       (kv._1, kv._2.flatMap(DoubleBehaviourUtils.nanNullHandler))
     ).collect().run()
@@ -444,12 +435,10 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
     val compUnivar = cDF
       .groupBy(cDF("_1"))
       .agg(sparkFun(cDF("_2")))
-      .map(
-        row => {
-          val grp = row.getInt(0)
-          (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
-        }
-      )
+      .map(row => {
+        val grp = row.getInt(0)
+        (grp, DoubleBehaviourUtils.nanNullHandler(row.get(1)))
+      })
 
     // Should be the same
     tdUnivar.toMap ?= compUnivar.collect().toMap
@@ -464,7 +453,7 @@ class AggregateFunctionsTests extends TypedDatasetSuite {
       encEv: Encoder[(Int, A, B)],
       evCanBeDoubleA: CatalystCast[A, Double],
       evCanBeDoubleB: CatalystCast[B, Double]
-    ): Prop = bivariatePropTemplate(xs)(corr[A,B,X3[Int, A, B]],org.apache.spark.sql.functions.corr)
+    ): Prop = bivariatePropTemplate(xs)(corr[A, B, X3[Int, A, B]], org.apache.spark.sql.functions.corr)
 
     check(forAll(prop[Double, Double] _))
     check(forAll(prop[Double, Int] _))

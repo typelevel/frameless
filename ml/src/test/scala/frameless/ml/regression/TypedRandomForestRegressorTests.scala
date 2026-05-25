@@ -64,13 +64,13 @@ class TypedRandomForestRegressorTests extends FramelessMlSuite with Matchers {
       val model = rf.fit(ds).run()
 
       model.transformer.getNumTrees == 10 &&
-        model.transformer.getMaxBins == 100 &&
-        model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
-        model.transformer.getMaxDepth == 10 &&
-        model.transformer.getMaxMemoryInMB == 100 &&
-        model.transformer.getMinInfoGain == 0.1D &&
-        model.transformer.getMinInstancesPerNode == 2 &&
-        model.transformer.getSubsamplingRate == 0.9D
+      model.transformer.getMaxBins == 100 &&
+      model.transformer.getFeatureSubsetStrategy == featureSubsetStrategy.sparkValue &&
+      model.transformer.getMaxDepth == 10 &&
+      model.transformer.getMaxMemoryInMB == 100 &&
+      model.transformer.getMinInfoGain == 0.1D &&
+      model.transformer.getMinInstancesPerNode == 2 &&
+      model.transformer.getSubsamplingRate == 0.9D
     }
 
     check(prop)

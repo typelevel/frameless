@@ -12,9 +12,9 @@ object CatalystBitShift {
   private[this] val theInstance = new CatalystBitShift[Any, Any] {}
   private[this] def of[In, Out]: CatalystBitShift[In, Out] = theInstance.asInstanceOf[CatalystBitShift[In, Out]]
 
-  implicit val framelessBitShiftBigDecimal: CatalystBitShift[BigDecimal, Int]     = of[BigDecimal, Int]
-  implicit val framelessBitShiftDouble    : CatalystBitShift[Byte, Int]           = of[Byte, Int]
-  implicit val framelessBitShiftInt       : CatalystBitShift[Short, Int]          = of[Short, Int]
-  implicit val framelessBitShiftLong      : CatalystBitShift[Int, Int]            = of[Int, Int]
-  implicit val framelessBitShiftShort     : CatalystBitShift[Long, Long]          = of[Long, Long]
+  implicit val framelessBitShiftBigDecimal: CatalystBitShift[BigDecimal, Int] = of[BigDecimal, Int]
+  implicit val framelessBitShiftDouble: CatalystBitShift[Byte, Int] = of[Byte, Int]
+  implicit val framelessBitShiftInt: CatalystBitShift[Short, Int] = of[Short, Int]
+  implicit val framelessBitShiftLong: CatalystBitShift[Int, Int] = of[Int, Int]
+  implicit val framelessBitShiftShort: CatalystBitShift[Long, Long] = of[Long, Long]
 }

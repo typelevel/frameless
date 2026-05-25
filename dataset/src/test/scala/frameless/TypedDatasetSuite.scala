@@ -2,23 +2,24 @@ package frameless
 
 import com.globalmentor.apache.hadoop.fs.BareLocalFileSystem
 import org.apache.hadoop.fs.local.StreamingFS
-import org.apache.spark.{ SparkConf, SparkContext }
-import org.apache.spark.sql.{ SQLContext, SparkSession }
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.scalactic.anyvals.PosZInt
 import org.scalatest.BeforeAndAfterAll
 import org.scalatestplus.scalacheck.Checkers
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
 
-import scala.util.{ Properties, Try }
+import scala.util.{Properties, Try}
 import org.scalatest.funsuite.AnyFunSuite
 
 trait SparkTesting { self: BeforeAndAfterAll =>
 
-  val appID: String = new java.util.Date().toString + math
-    .floor(math.random * 10e4)
-    .toLong
-    .toString
+  val appID: String = new java.util.Date().toString +
+    math
+      .floor(math.random * 10e4)
+      .toLong
+      .toString
 
   /**
    * Allows bare naked to be used instead of winutils for testing / dev
@@ -93,11 +94,11 @@ class TypedDatasetSuite
   implicit val sparkDelay: SparkDelay[Job] = Job.framelessSparkDelayForJob
 
   def approximatelyEqual[A](
-      a: A,
-      b: A
-    )(implicit
-      numeric: Numeric[A]
-    ): Prop = {
+    a: A,
+    b: A
+  )(implicit
+    numeric: Numeric[A]
+  ): Prop = {
     val da = numeric.toDouble(a)
     val db = numeric.toDouble(b)
     val epsilon = 1e-6

@@ -1,12 +1,13 @@
 package frameless
 package functions
 
-import org.apache.spark.sql.{Column, functions => sparkFunctions}
+import org.apache.spark.sql.{functions => sparkFunctions, Column}
 
 import scala.annotation.nowarn
 import scala.util.matching.Regex
 
 trait NonAggregateFunctions {
+
   /** Non-Aggregate function: calculates the SHA-2 digest of a binary column and returns the value as a 40 character hex string
     *
     * apache/spark
@@ -27,15 +28,17 @@ trait NonAggregateFunctions {
     */
   def crc32[T](column: AbstractTypedColumn[T, Array[Byte]]): column.ThisType[T, Long] =
     column.typed(sparkFunctions.crc32(column.untyped))
+
   /**
     * Non-Aggregate function: returns the negated value of column.
     *
     * apache/spark
     */
-  def negate[A, B, T](column: AbstractTypedColumn[T,A])(
-    implicit i0: CatalystNumericWithJavaBigDecimal[A, B],
+  def negate[A, B, T](column: AbstractTypedColumn[T, A])(
+    implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
     i1: TypedEncoder[B]
-  ): column.ThisType[T,B] =
+  ): column.ThisType[T, B] =
     column.typed(sparkFunctions.negate(column.untyped))
 
   /**
@@ -43,7 +46,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def not[T](column: AbstractTypedColumn[T,Boolean]): column.ThisType[T,Boolean] =
+  def not[T](column: AbstractTypedColumn[T, Boolean]): column.ThisType[T, Boolean] =
     column.typed(sparkFunctions.not(column.untyped))
 
   /**
@@ -51,36 +54,34 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def conv[T](column: AbstractTypedColumn[T,String], fromBase: Int, toBase: Int): column.ThisType[T,String] =
-    column.typed(sparkFunctions.conv(column.untyped,fromBase,toBase))
+  def conv[T](column: AbstractTypedColumn[T, String], fromBase: Int, toBase: Int): column.ThisType[T, String] =
+    column.typed(sparkFunctions.conv(column.untyped, fromBase, toBase))
 
   /** Non-Aggregate function: Converts an angle measured in radians to an approximately equivalent angle measured in degrees.
     *
     * apache/spark
     */
-  def degrees[A,T](column: AbstractTypedColumn[T,A]): column.ThisType[T,Double] =
+  def degrees[A, T](column: AbstractTypedColumn[T, A]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.degrees(column.untyped))
 
   /** Non-Aggregate function: returns the ceiling of a numeric column
     *
     * apache/spark
     */
-  def ceil[A, B, T](column: AbstractTypedColumn[T, A])
-    (implicit
-      i0: CatalystRound[A, B],
-      i1: TypedEncoder[B]
-    ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.ceil(column.untyped))(i1)
+  def ceil[A, B, T](column: AbstractTypedColumn[T, A])(implicit
+    i0: CatalystRound[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.ceil(column.untyped))(i1)
 
   /** Non-Aggregate function: returns the floor of a numeric column
     *
     * apache/spark
     */
-  def floor[A, B, T](column: AbstractTypedColumn[T, A])
-   (implicit
+  def floor[A, B, T](column: AbstractTypedColumn[T, A])(implicit
     i0: CatalystRound[A, B],
     i1: TypedEncoder[B]
-   ): column.ThisType[T, B] =
+  ): column.ThisType[T, B] =
     column.typed(sparkFunctions.floor(column.untyped))(i1)
 
   /** Non-Aggregate function: unsigned shift the the given value numBits right. If given long, will return long else it will return an integer.
@@ -88,47 +89,43 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   @nowarn // supress sparkFunctions.shiftRightUnsigned call which is used to maintain Spark 3.1.x backwards compat
-  def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
-    ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.shiftRightUnsigned(column.untyped, numBits))
+  def shiftRightUnsigned[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)(implicit
+    i0: CatalystBitShift[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.shiftRightUnsigned(column.untyped, numBits))
 
   /** Non-Aggregate function: shift the the given value numBits right. If given long, will return long else it will return an integer.
     *
     * apache/spark
     */
   @nowarn // supress sparkFunctions.shiftReft call which is used to maintain Spark 3.1.x backwards compat
-  def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
-    ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.shiftRight(column.untyped, numBits))
+  def shiftRight[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)(implicit
+    i0: CatalystBitShift[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.shiftRight(column.untyped, numBits))
 
   /** Non-Aggregate function: shift the the given value numBits left. If given long, will return long else it will return an integer.
     *
     * apache/spark
     */
   @nowarn // supress sparkFunctions.shiftLeft call which is used to maintain Spark 3.1.x backwards compat
-  def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)
-    (implicit
-      i0: CatalystBitShift[A, B],
-      i1: TypedEncoder[B]
-    ): column.ThisType[T, B] =
+  def shiftLeft[A, B, T](column: AbstractTypedColumn[T, A], numBits: Int)(implicit
+    i0: CatalystBitShift[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
     column.typed(sparkFunctions.shiftLeft(column.untyped, numBits))
-  
+
   /** Non-Aggregate function: returns the absolute value of a numeric column
     *
     * apache/spark
     */
-  def abs[A, B, T](column: AbstractTypedColumn[T, A])
-    (implicit
-     i0: CatalystNumericWithJavaBigDecimal[A, B],
-     i1: TypedEncoder[B]
-    ): column.ThisType[T, B] =
-      column.typed(sparkFunctions.abs(column.untyped))(i1)
+  def abs[A, B, T](column: AbstractTypedColumn[T, A])(implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
+  ): column.ThisType[T, B] =
+    column.typed(sparkFunctions.abs(column.untyped))(i1)
 
   /** Non-Aggregate function: Computes the cosine of the given value.
     *
@@ -136,9 +133,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def cos[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.cos(column.cast[Double].untyped))
+  def cos[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.cos(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the hyperbolic cosine of the given value.
     *
@@ -146,9 +142,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def cosh[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.cosh(column.cast[Double].untyped))
+  def cosh[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.cosh(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the signum of the given value.
     *
@@ -156,8 +151,7 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def signum[A, T](column: AbstractTypedColumn[T, A])
-                  (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+  def signum[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.signum(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the sine of the given value.
@@ -166,9 +160,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def sin[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.sin(column.cast[Double].untyped))
+  def sin[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.sin(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the hyperbolic sine of the given value.
     *
@@ -176,9 +169,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def sinh[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.sinh(column.cast[Double].untyped))
+  def sinh[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.sinh(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the tangent of the given column.
     *
@@ -186,9 +178,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def tan[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.tan(column.cast[Double].untyped))
+  def tan[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.tan(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Computes the hyperbolic tangent of the given value.
     *
@@ -196,9 +187,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def tanh[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.tanh(column.cast[Double].untyped))
+  def tanh[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.tanh(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the acos of a numeric column
     *
@@ -206,9 +196,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def acos[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.acos(column.cast[Double].untyped))
+  def acos[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.acos(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns true if value is contained with in the array in the specified column
     *
@@ -223,9 +212,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def atan[A, T](column: AbstractTypedColumn[T,A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.atan(column.cast[Double].untyped))
+  def atan[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.atan(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the asin of a numeric column
     *
@@ -233,9 +221,8 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def asin[A, T](column: AbstractTypedColumn[T, A])
-    (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
-      column.typed(sparkFunctions.asin(column.cast[Double].untyped))
+  def asin[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+    column.typed(sparkFunctions.asin(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the angle theta from the conversion of rectangular coordinates (x, y) to
     * polar coordinates (r, theta).
@@ -244,12 +231,11 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def atan2[A, B, T](l: TypedColumn[T, A], r: TypedColumn[T, B])
-    (implicit
-      i0: CatalystCast[A, Double],
-      i1: CatalystCast[B, Double]
-    ): TypedColumn[T, Double] =
-      r.typed(sparkFunctions.atan2(l.cast[Double].untyped, r.cast[Double].untyped))
+  def atan2[A, B, T](l: TypedColumn[T, A], r: TypedColumn[T, B])(implicit
+    i0: CatalystCast[A, Double],
+    i1: CatalystCast[B, Double]
+  ): TypedColumn[T, Double] =
+    r.typed(sparkFunctions.atan2(l.cast[Double].untyped, r.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the angle theta from the conversion of rectangular coordinates (x, y) to
     * polar coordinates (r, theta).
@@ -258,51 +244,43 @@ trait NonAggregateFunctions {
     *   [[https://github.com/apache/spark/blob/4a3c09601ba69f7d49d1946bb6f20f5cfe453031/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/mathExpressions.scala#L67]]
     * apache/spark
     */
-  def atan2[A, B, T](l: TypedAggregate[T, A], r: TypedAggregate[T, B])
-    (implicit
-      i0: CatalystCast[A, Double],
-      i1: CatalystCast[B, Double]
-    ): TypedAggregate[T, Double] =
-      r.typed(sparkFunctions.atan2(l.cast[Double].untyped, r.cast[Double].untyped))
+  def atan2[A, B, T](l: TypedAggregate[T, A], r: TypedAggregate[T, B])(implicit
+    i0: CatalystCast[A, Double],
+    i1: CatalystCast[B, Double]
+  ): TypedAggregate[T, Double] =
+    r.typed(sparkFunctions.atan2(l.cast[Double].untyped, r.cast[Double].untyped))
 
-  def atan2[B, T](l: Double, r: TypedColumn[T, B])
-    (implicit i0: CatalystCast[B, Double]): TypedColumn[T, Double] =
-      atan2(r.lit(l), r)
+  def atan2[B, T](l: Double, r: TypedColumn[T, B])(implicit i0: CatalystCast[B, Double]): TypedColumn[T, Double] =
+    atan2(r.lit(l), r)
 
-  def atan2[A, T](l: TypedColumn[T, A], r: Double)
-    (implicit i0: CatalystCast[A, Double]): TypedColumn[T, Double] =
-      atan2(l, l.lit(r))
+  def atan2[A, T](l: TypedColumn[T, A], r: Double)(implicit i0: CatalystCast[A, Double]): TypedColumn[T, Double] =
+    atan2(l, l.lit(r))
 
-  def atan2[B, T](l: Double, r: TypedAggregate[T, B])
-    (implicit i0: CatalystCast[B, Double]): TypedAggregate[T, Double] =
-      atan2(r.lit(l), r)
+  def atan2[B, T](l: Double, r: TypedAggregate[T, B])(implicit i0: CatalystCast[B, Double]): TypedAggregate[T, Double] =
+    atan2(r.lit(l), r)
 
-  def atan2[A, T](l: TypedAggregate[T, A], r: Double)
-    (implicit i0: CatalystCast[A, Double]): TypedAggregate[T, Double] =
-      atan2(l, l.lit(r))
+  def atan2[A, T](l: TypedAggregate[T, A], r: Double)(implicit i0: CatalystCast[A, Double]): TypedAggregate[T, Double] =
+    atan2(l, l.lit(r))
 
   /** Non-Aggregate function: returns the square root value of a numeric column.
     *
     * apache/spark
     */
-  def sqrt[A, T](column: AbstractTypedColumn[T, A])
-                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+  def sqrt[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.sqrt(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the cubic root value of a numeric column.
     *
     * apache/spark
     */
-  def cbrt[A, T](column: AbstractTypedColumn[T, A])
-                (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+  def cbrt[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.cbrt(column.cast[Double].untyped))
 
   /** Non-Aggregate function: returns the exponential value of a numeric column.
     *
     * apache/spark
     */
-  def exp[A, T](column: AbstractTypedColumn[T, A])
-               (implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
+  def exp[A, T](column: AbstractTypedColumn[T, A])(implicit i0: CatalystCast[A, Double]): column.ThisType[T, Double] =
     column.typed(sparkFunctions.exp(column.cast[Double].untyped))
 
   /** Non-Aggregate function: Returns the value of the column `e` rounded to 0 decimal places with HALF_UP round mode.
@@ -310,7 +288,9 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   def round[A, B, T](column: AbstractTypedColumn[T, A])(
-    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+    implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.round(column.untyped))(i1)
 
@@ -320,7 +300,9 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   def round[A, B, T](column: AbstractTypedColumn[T, A], scale: Int)(
-    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+    implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.round(column.untyped, scale))(i1)
 
@@ -330,7 +312,9 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   def bround[A, B, T](column: AbstractTypedColumn[T, A])(
-    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+    implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.bround(column.untyped))(i1)
 
@@ -340,7 +324,9 @@ trait NonAggregateFunctions {
     * apache/spark
     */
   def bround[A, B, T](column: AbstractTypedColumn[T, A], scale: Int)(
-    implicit i0: CatalystNumericWithJavaBigDecimal[A, B], i1: TypedEncoder[B]
+    implicit
+    i0: CatalystNumericWithJavaBigDecimal[A, B],
+    i1: TypedEncoder[B]
   ): column.ThisType[T, B] =
     column.typed(sparkFunctions.bround(column.untyped, scale))(i1)
 
@@ -393,7 +379,6 @@ trait NonAggregateFunctions {
     implicit i0: CatalystCast[A, Double]
   ): column.ThisType[T, Double] =
     column.typed(sparkFunctions.log10(column.untyped))
-
 
   /**
     * Computes `sqrt(a^2^ + b^2^)` without intermediate overflow or underflow.
@@ -465,7 +450,6 @@ trait NonAggregateFunctions {
   ): column.ThisType[T, A] =
     column.typed(sparkFunctions.pmod(column.untyped, column2.untyped))
 
-
   /** Non-Aggregate function: Returns the string representation of the binary value of the given long
     * column. For example, bin("12") returns "1100".
     *
@@ -480,7 +464,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def md5[T, A](column: AbstractTypedColumn[T, A])(implicit  i0: TypedEncoder[A]): column.ThisType[T, String] =
+  def md5[T, A](column: AbstractTypedColumn[T, A])(implicit i0: TypedEncoder[A]): column.ThisType[T, String] =
     column.typed(sparkFunctions.md5(column.untyped))
 
   /**
@@ -488,7 +472,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def factorial[T](column: AbstractTypedColumn[T, Long])(implicit  i0: TypedEncoder[Long]): column.ThisType[T, Long] =
+  def factorial[T](column: AbstractTypedColumn[T, Long])(implicit i0: TypedEncoder[Long]): column.ThisType[T, Long] =
     column.typed(sparkFunctions.factorial(column.untyped))
 
   /** Non-Aggregate function: Computes bitwise NOT.
@@ -541,7 +525,6 @@ trait NonAggregateFunctions {
   //////////////////////////////////////////////////////////////////////////////////////////////
   // String functions
   //////////////////////////////////////////////////////////////////////////////////////////////
-
 
   /** Non-Aggregate function: takes the first letter of a string column and returns the ascii int value in a new column
     *
@@ -615,7 +598,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  //TODO: Also for binary
+  // TODO: Also for binary
   def length[T](str: AbstractTypedColumn[T, String]): str.ThisType[T, Int] =
     str.typed(sparkFunctions.length(str.untyped))
 
@@ -645,9 +628,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def lpad[T](str: AbstractTypedColumn[T, String],
-              len: Int,
-              pad: String): str.ThisType[T, String] =
+  def lpad[T](str: AbstractTypedColumn[T, String], len: Int, pad: String): str.ThisType[T, String] =
     str.typed(sparkFunctions.lpad(str.untyped, len, pad))
 
   /** Non-Aggregate function: Trim the spaces from left end for the specified string value.
@@ -661,11 +642,8 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  def regexpReplace[T](str: AbstractTypedColumn[T, String],
-                       pattern: Regex,
-                       replacement: String): str.ThisType[T, String] =
+  def regexpReplace[T](str: AbstractTypedColumn[T, String], pattern: Regex, replacement: String): str.ThisType[T, String] =
     str.typed(sparkFunctions.regexp_replace(str.untyped, pattern.regex, replacement))
-
 
   /** Non-Aggregate function: Reverses the string column and returns it as a new string column.
     *
@@ -693,7 +671,7 @@ trait NonAggregateFunctions {
     *
     * apache/spark
     */
-  //TODO: Also for byte array
+  // TODO: Also for byte array
   def substring[T](str: AbstractTypedColumn[T, String], pos: Int, len: Int): str.ThisType[T, String] =
     str.typed(sparkFunctions.substring(str.untyped, pos, len))
 

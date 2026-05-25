@@ -13,8 +13,8 @@ import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
   *
   * @see `TypedIndexToString` for the inverse transformation
   */
-final class TypedStringIndexer[Inputs] private[ml](stringIndexer: StringIndexer, inputCol: String)
-  extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
+final class TypedStringIndexer[Inputs] private[ml] (stringIndexer: StringIndexer, inputCol: String)
+    extends TypedEstimator[Inputs, TypedStringIndexer.Outputs, StringIndexerModel] {
 
   val estimator: StringIndexer = stringIndexer
     .setInputCol(inputCol)

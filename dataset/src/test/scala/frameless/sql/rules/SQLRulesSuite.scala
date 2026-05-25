@@ -34,7 +34,7 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
       val optimizedPlan = ds.queryExecution.optimizedPlan.collect { case logical.Filter(condition, _) => condition }.flatMap(_.toList)
 
       // check the optimized plan
-      optimizedPlan.collectFirst(planShouldNotContain) should be (empty)
+      optimizedPlan.collectFirst(planShouldNotContain) should be(empty)
 
       // compare filters
       actualPushDownFilters shouldBe expectedPushDownFilters
@@ -53,7 +53,7 @@ trait SQLRulesSuite extends TypedDatasetSuite with Matchers { self =>
       if (sparkPlan.children.isEmpty) // assume it's AQE
         sparkPlan match {
           case aq: AdaptiveSparkPlanExec => aq.initialPlan
-          case _ => sparkPlan
+          case _                         => sparkPlan
         }
       else
         sparkPlan

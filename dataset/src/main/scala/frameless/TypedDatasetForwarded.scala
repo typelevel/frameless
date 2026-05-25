@@ -6,13 +6,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.streaming.DataStreamWriter
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{
-  DataFrame,
-  DataFrameWriter,
-  FramelessInternals,
-  SQLContext,
-  SparkSession
-}
+import org.apache.spark.sql.{DataFrame, DataFrameWriter, FramelessInternals, SQLContext, SparkSession}
 import org.apache.spark.storage.StorageLevel
 
 import scala.util.Random
@@ -177,10 +171,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
    * apache/spark
    */
   def sample(
-      withReplacement: Boolean,
-      fraction: Double,
-      seed: Long = Random.nextLong()
-    ): TypedDataset[T] =
+    withReplacement: Boolean,
+    fraction: Double,
+    seed: Long = Random.nextLong()
+  ): TypedDataset[T] =
     TypedDataset.create(dataset.sample(withReplacement, fraction, seed))
 
   /**
@@ -266,9 +260,9 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
    * apache/spark
    */
   def randomSplitAsList(
-      weights: Array[Double],
-      seed: Long
-    ): util.List[TypedDataset[T]] = {
+    weights: Array[Double],
+    seed: Long
+  ): util.List[TypedDataset[T]] = {
     val values = randomSplit(weights, seed)
     java.util.Arrays.asList(values: _*)
   }
@@ -301,8 +295,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
    * apache/spark
    */
   def persist(
-      newLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK
-    ): TypedDataset[T] =
+    newLevel: StorageLevel = StorageLevel.MEMORY_AND_DISK
+  ): TypedDataset[T] =
     TypedDataset.create(dataset.persist(newLevel))
 
   /**
@@ -327,8 +321,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
     "0.4.0"
   )
   def mapPartitions[U: TypedEncoder](
-      func: Iterator[T] => Iterator[U]
-    ): TypedDataset[U] =
+    func: Iterator[T] => Iterator[U]
+  ): TypedDataset[U] =
     deserialized.mapPartitions(func)
 
   @deprecated(
@@ -393,8 +387,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
      * apache/spark
      */
     def mapPartitions[U: TypedEncoder](
-        func: Iterator[T] => Iterator[U]
-      ): TypedDataset[U] =
+      func: Iterator[T] => Iterator[U]
+    ): TypedDataset[U] =
       TypedDataset.create(
         self.dataset.mapPartitions(func)(TypedExpressionEncoder[U])
       )
@@ -406,8 +400,8 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
      * apache/spark
      */
     def flatMap[U: TypedEncoder](
-        func: T => TraversableOnce[U]
-      ): TypedDataset[U] =
+      func: T => TraversableOnce[U]
+    ): TypedDataset[U] =
       TypedDataset.create(self.dataset.flatMap(func)(TypedExpressionEncoder[U]))
 
     /**
@@ -425,10 +419,10 @@ trait TypedDatasetForwarded[T] { self: TypedDataset[T] =>
      * Differs from `Dataset#reduce` by wrapping its result into an `Option` and an effect-suspending `F`.
      */
     def reduceOption[F[_]](
-        func: (T, T) => T
-      )(implicit
-        F: SparkDelay[F]
-      ): F[Option[T]] =
+      func: (T, T) => T
+    )(implicit
+      F: SparkDelay[F]
+    ): F[Option[T]] =
       F.delay {
         try {
           Option(self.dataset.reduce(func))

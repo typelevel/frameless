@@ -31,12 +31,18 @@ class PivotTest extends TypedDatasetSuite {
         .agg(sparkFunctions.sum("c"), sparkFunctions.first("d")).collect().toVector
 
       (frameless.map(_._1) ?= spark.map(x => x.getAs[String](0))).&&(
-        frameless.map(_._2) ?= spark.map(x => Option(x.getAs[Long](1)))).&&(
-        frameless.map(_._3) ?= spark.map(x => Option(x.getAs[Boolean](2)))).&&(
-        frameless.map(_._4) ?= spark.map(x => Option(x.getAs[Long](3)))).&&(
-        frameless.map(_._5) ?= spark.map(x => Option(x.getAs[Boolean](4)))).&&(
-        frameless.map(_._6) ?= spark.map(x => Option(x.getAs[Long](5)))).&&(
-        frameless.map(_._7) ?= spark.map(x => Option(x.getAs[Boolean](6))))
+        frameless.map(_._2) ?= spark.map(x => Option(x.getAs[Long](1)))
+      ).&&(
+        frameless.map(_._3) ?= spark.map(x => Option(x.getAs[Boolean](2)))
+      ).&&(
+        frameless.map(_._4) ?= spark.map(x => Option(x.getAs[Long](3)))
+      ).&&(
+        frameless.map(_._5) ?= spark.map(x => Option(x.getAs[Boolean](4)))
+      ).&&(
+        frameless.map(_._6) ?= spark.map(x => Option(x.getAs[Long](5)))
+      ).&&(
+        frameless.map(_._7) ?= spark.map(x => Option(x.getAs[Boolean](6)))
+      )
     }
 
     check(forAll(withCustomGenX4)(prop))

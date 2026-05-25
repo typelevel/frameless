@@ -13,7 +13,8 @@ final class ColumnViaLambdaTests extends TypedDatasetSuite with Matchers {
   def ds = {
     TypedDataset.create(Seq(
       MyClass1(1, "2", MyClass2(3L, MyClass3(7.0D)), Some(MyClass4(true))),
-      MyClass1(4, "5", MyClass2(6L, MyClass3(8.0D)), None)))
+      MyClass1(4, "5", MyClass2(6L, MyClass3(8.0D)), None)
+    ))
   }
 
   test("col(_.a)") {

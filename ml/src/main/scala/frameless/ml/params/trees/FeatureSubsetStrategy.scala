@@ -2,6 +2,7 @@ package frameless
 package ml
 package params
 package trees
+
 /**
   * The number of features to consider for splits at each tree node.
   * Supported options:
@@ -27,7 +28,7 @@ package trees
   * @see <a href="http://www.stat.berkeley.edu/~breiman/Using_random_forests_V3.1.pdf">
   * Breiman manual for random forests</a>
   */
-sealed abstract class FeatureSubsetStrategy private[ml](val sparkValue: String)
+sealed abstract class FeatureSubsetStrategy private[ml] (val sparkValue: String)
 object FeatureSubsetStrategy {
   case object Auto extends FeatureSubsetStrategy("auto")
   case object All extends FeatureSubsetStrategy("all")

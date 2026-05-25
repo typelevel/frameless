@@ -9,7 +9,7 @@ import org.apache.spark.sql.FramelessInternals.UserDefinedType
 class UdtEncodedClass(val a: Int, val b: Array[Double]) {
   override def equals(other: Any): Boolean = other match {
     case that: UdtEncodedClass => a == that.a && java.util.Arrays.equals(b, that.b)
-    case _ => false
+    case _                     => false
   }
 
   override def hashCode(): Int = {

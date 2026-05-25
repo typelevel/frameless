@@ -11,7 +11,7 @@ import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForest
   * learning algorithm for regression.
   * It supports both continuous and categorical features.
   */
-final class TypedRandomForestRegressor[Inputs] private[ml](
+final class TypedRandomForestRegressor[Inputs] private[ml] (
   rf: RandomForestRegressor,
   labelCol: String,
   featuresCol: String
@@ -40,8 +40,10 @@ final class TypedRandomForestRegressor[Inputs] private[ml](
 object TypedRandomForestRegressor {
   case class Outputs(prediction: Double)
 
-  def apply[Inputs](implicit inputsChecker: TreesInputsChecker[Inputs])
-  : TypedRandomForestRegressor[Inputs] = {
+  def apply[Inputs](implicit
+    inputsChecker: TreesInputsChecker[Inputs]
+  )
+    : TypedRandomForestRegressor[Inputs] = {
     new TypedRandomForestRegressor(new RandomForestRegressor(), inputsChecker.labelCol, inputsChecker.featuresCol)
   }
 }

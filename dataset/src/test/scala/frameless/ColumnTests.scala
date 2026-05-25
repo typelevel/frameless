@@ -3,15 +3,15 @@ package frameless
 import java.util.Date
 import java.math.BigInteger
 
-import java.time.{ Instant, LocalDate, Period, Duration }
+import java.time.{Duration, Instant, LocalDate, Period}
 import java.time.temporal.ChronoUnit
 
-import java.sql.{ Date => SqlDate, Timestamp }
+import java.sql.{Date => SqlDate, Timestamp}
 
 import scala.math.Ordering.Implicits._
 import scala.util.Try
 
-import org.scalacheck.{ Arbitrary, Gen, Prop }, Arbitrary.arbitrary, Prop._
+import org.scalacheck.{Arbitrary, Gen, Prop}, Arbitrary.arbitrary, Prop._
 
 import org.scalatest.matchers.should.Matchers
 
@@ -29,7 +29,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
     OrderingImplicits.arbInstant.arbitrary.map(Date from _)
   }
 
-  private implicit object OrderingImplicits {
+  implicit private object OrderingImplicits {
     implicit val sqlDateOrdering: Ordering[SQLDate] = Ordering.by(_.days)
 
     implicit val sqlTimestmapOrdering: Ordering[SQLTimestamp] =
@@ -104,10 +104,10 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   test("between") {
     import OrderingImplicits._
     def prop[A: TypedEncoder: CatalystOrdered: Ordering](
-        a: A,
-        b: A,
-        c: A
-      ): Prop = {
+      a: A,
+      b: A,
+      c: A
+    ): Prop = {
       val dataset = TypedDataset.create(X3(a, b, c) :: Nil)
       val A = dataset.col('a)
       val B = dataset.col('b)
@@ -537,7 +537,7 @@ final class ColumnTests extends TypedDatasetSuite with Matchers {
   }
 
   test("reference Value class so can join on") {
-    import RecordEncoderTests.{ Name, Person }
+    import RecordEncoderTests.{Name, Person}
 
     val bar = new Name("bar")
 

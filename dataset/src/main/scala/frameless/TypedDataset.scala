@@ -4,32 +4,15 @@ import java.util
 import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{
-  Column,
-  DataFrame,
-  Dataset,
-  FramelessInternals,
-  SparkSession
-}
-import org.apache.spark.sql.catalyst.expressions.{
-  Attribute,
-  AttributeReference,
-  Literal
-}
-import org.apache.spark.sql.catalyst.plans.logical.{ Join, JoinHint }
+import org.apache.spark.sql.{Column, DataFrame, Dataset, FramelessInternals, SparkSession}
+import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
+import org.apache.spark.sql.catalyst.plans.logical.{Join, JoinHint}
 import org.apache.spark.sql.catalyst.plans.Inner
 import org.apache.spark.sql.types.StructType
 import shapeless._
 import shapeless.labelled.FieldType
-import shapeless.ops.hlist.{
-  Diff,
-  IsHCons,
-  Mapper,
-  Prepend,
-  ToTraversable,
-  Tupler
-}
-import shapeless.ops.record.{ Keys, Modifier, Remover, Values }
+import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
+import shapeless.ops.record.{Keys, Modifier, Remover, Values}
 
 import scala.language.experimental.macros
 
@@ -44,12 +27,11 @@ import scala.language.experimental.macros
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 class TypedDataset[T] protected[frameless] (
-    val dataset: Dataset[T]
-  )(implicit
-    val encoder: TypedEncoder[T])
+  val dataset: Dataset[T]
+)(implicit val encoder: TypedEncoder[T])
     extends TypedDatasetForwarded[T] { self =>
 
-  private implicit val spark: SparkSession = dataset.sparkSession
+  implicit private val spark: SparkSession = dataset.sparkSession
 
   /**
    * Aggregates on the entire Dataset without groups.
@@ -80,9 +62,9 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def agg[A, B](
-      ca: TypedAggregate[T, A],
-      cb: TypedAggregate[T, B]
-    ): TypedDataset[(A, B)] = {
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B]
+  ): TypedDataset[(A, B)] = {
     implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
     aggMany(ca, cb)
   }
@@ -93,10 +75,10 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def agg[A, B, C](
-      ca: TypedAggregate[T, A],
-      cb: TypedAggregate[T, B],
-      cc: TypedAggregate[T, C]
-    ): TypedDataset[(A, B, C)] = {
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C]
+  ): TypedDataset[(A, B, C)] = {
     implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
     aggMany(ca, cb, cc)
   }
@@ -107,11 +89,11 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def agg[A, B, C, D](
-      ca: TypedAggregate[T, A],
-      cb: TypedAggregate[T, B],
-      cc: TypedAggregate[T, C],
-      cd: TypedAggregate[T, D]
-    ): TypedDataset[(A, B, C, D)] = {
+    ca: TypedAggregate[T, A],
+    cb: TypedAggregate[T, B],
+    cc: TypedAggregate[T, C],
+    cd: TypedAggregate[T, D]
+  ): TypedDataset[(A, B, C, D)] = {
     implicit val (ea, eb, ec, ed) =
       (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
     aggMany(ca, cb, cc, cd)
@@ -125,13 +107,13 @@ class TypedDataset[T] protected[frameless] (
   object aggMany extends ProductArgs {
 
     def applyProduct[U <: HList, Out0 <: HList, Out](
-        columns: U
-      )(implicit
-        i0: AggregateTypes.Aux[T, U, Out0],
-        i1: ToTraversable.Aux[U, List, UntypedExpression[T]],
-        i2: Tupler.Aux[Out0, Out],
-        i3: TypedEncoder[Out]
-      ): TypedDataset[Out] = {
+      columns: U
+    )(implicit
+      i0: AggregateTypes.Aux[T, U, Out0],
+      i1: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      i2: Tupler.Aux[Out0, Out],
+      i3: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
 
       val underlyingColumns = columns.toList[UntypedExpression[T]]
       val cols: Seq[Column] = for {
@@ -159,9 +141,9 @@ class TypedDataset[T] protected[frameless] (
 
   /** Returns a new [[TypedDataset]] where each record has been mapped on to the specified type. */
   def as[U](
-    )(implicit
-      as: As[T, U]
-    ): TypedDataset[U] = {
+  )(implicit
+    as: As[T, U]
+  ): TypedDataset[U] = {
     implicit val uencoder = as.encoder
     TypedDataset.create(dataset.as[U](TypedExpressionEncoder[U]))
   }
@@ -177,10 +159,10 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def checkpoint[F[_]](
-      eager: Boolean
-    )(implicit
-      F: SparkDelay[F]
-    ): F[TypedDataset[T]] =
+    eager: Boolean
+  )(implicit
+    F: SparkDelay[F]
+  ): F[TypedDataset[T]] =
     F.delay(TypedDataset.create[T](dataset.checkpoint(eager)))
 
   /**
@@ -200,9 +182,8 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def project[U](
-      implicit
-      projector: SmartProject[T, U]
-    ): TypedDataset[U] = projector.apply(this)
+    implicit projector: SmartProject[T, U]
+  ): TypedDataset[U] = projector.apply(this)
 
   /**
    * Returns a new [[TypedDataset]] that contains the elements of both this and the `other` [[TypedDataset]]
@@ -234,10 +215,10 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def union[U: TypedEncoder](
-      other: TypedDataset[U]
-    )(implicit
-      projector: SmartProject[U, T]
-    ): TypedDataset[T] =
+    other: TypedDataset[U]
+  )(implicit
+    projector: SmartProject[U, T]
+  ): TypedDataset[T] =
     TypedDataset.create(dataset.union(other.project[T].dataset))
 
   /**
@@ -259,9 +240,9 @@ class TypedDataset[T] protected[frameless] (
    * Differs from `Dataset#count` by wrapping its result into an effect-suspending `F[_]`.
    */
   def count[F[_]](
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Long] =
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Long] =
     F.delay(dataset.count())
 
   /**
@@ -274,11 +255,11 @@ class TypedDataset[T] protected[frameless] (
    * It is statically checked that column with such name exists and has type `A`.
    */
   def apply[A](
-      column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] = col(column)
+    column: Witness.Lt[Symbol]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A],
+    i1: TypedEncoder[A]
+  ): TypedColumn[T, A] = col(column)
 
   /**
    * Returns `TypedColumn` of type `A` given its name.
@@ -290,11 +271,11 @@ class TypedDataset[T] protected[frameless] (
    * It is statically checked that column with such name exists and has type `A`.
    */
   def col[A](
-      column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] =
+    column: Witness.Lt[Symbol]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A],
+    i1: TypedEncoder[A]
+  ): TypedColumn[T, A] =
     new TypedColumn[T, A](
       dataset(column.value.name).as[A](TypedExpressionEncoder[A])
     )
@@ -341,9 +322,8 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def asJoinColValue(
-      implicit
-      i0: IsValueClass[T]
-    ): TypedColumn[T, T] = {
+    implicit i0: IsValueClass[T]
+  ): TypedColumn[T, T] = {
     import _root_.frameless.syntax._
 
     dataset.col("value").typedColumn
@@ -352,12 +332,12 @@ class TypedDataset[T] protected[frameless] (
   object colMany extends SingletonProductArgs {
 
     def applyProduct[U <: HList, Out](
-        columns: U
-      )(implicit
-        i0: TypedColumn.ExistsMany[T, U, Out],
-        i1: TypedEncoder[Out],
-        i2: ToTraversable.Aux[U, List, Symbol]
-      ): TypedColumn[T, Out] = {
+      columns: U
+    )(implicit
+      i0: TypedColumn.ExistsMany[T, U, Out],
+      i1: TypedEncoder[Out],
+      i2: ToTraversable.Aux[U, List, Symbol]
+    ): TypedColumn[T, Out] = {
       val names = columns.toList[Symbol].map(_.name)
       val colExpr = FramelessInternals.resolveExpr(dataset, names)
       new TypedColumn[T, Out](colExpr)
@@ -372,11 +352,11 @@ class TypedDataset[T] protected[frameless] (
    * String based aliases, which is obviously unsafe.
    */
   def colRight[A](
-      column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] =
+    column: Witness.Lt[Symbol]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A],
+    i1: TypedEncoder[A]
+  ): TypedColumn[T, A] =
     new TypedColumn[T, A](
       FramelessInternals.DisambiguateRight(col(column).expr)
     )
@@ -389,11 +369,11 @@ class TypedDataset[T] protected[frameless] (
    * String based aliases, which is obviously unsafe.
    */
   def colLeft[A](
-      column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, A],
-      i1: TypedEncoder[A]
-    ): TypedColumn[T, A] =
+    column: Witness.Lt[Symbol]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A],
+    i1: TypedEncoder[A]
+  ): TypedColumn[T, A] =
     new TypedColumn[T, A](FramelessInternals.DisambiguateLeft(col(column).expr))
 
   /**
@@ -405,9 +385,9 @@ class TypedDataset[T] protected[frameless] (
    * Differs from `Dataset#collect` by wrapping its result into an effect-suspending `F[_]`.
    */
   def collect[F[_]](
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Seq[T]] =
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Seq[T]] =
     F.delay(dataset.collect().toSeq)
 
   /**
@@ -416,9 +396,9 @@ class TypedDataset[T] protected[frameless] (
    * Differs from `Dataset#first` by wrapping its result into an `Option` and an effect-suspending `F[_]`.
    */
   def firstOption[F[_]](
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Option[T]] =
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Option[T]] =
     F.delay {
       try {
         Option(dataset.first())
@@ -438,10 +418,10 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def take[F[_]](
-      num: Int
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Seq[T]] =
+    num: Int
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Seq[T]] =
     F.delay(dataset.take(num).toSeq)
 
   /**
@@ -458,27 +438,27 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def toLocalIterator[F[_]](
-    )(implicit
-      F: SparkDelay[F]
-    ): F[util.Iterator[T]] =
+  )(implicit
+    F: SparkDelay[F]
+  ): F[util.Iterator[T]] =
     F.delay(dataset.toLocalIterator())
 
   /**
    * Alias for firstOption().
    */
   def headOption[F[_]](
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Option[T]] = firstOption()
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Option[T]] = firstOption()
 
   /**
    * Alias for take().
    */
   def head[F[_]](
-      num: Int
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Seq[T]] = take(num)
+    num: Int
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Seq[T]] = take(num)
 
   // $COVERAGE-OFF$
   /**
@@ -520,11 +500,11 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def show[F[_]](
-      numRows: Int = 20,
-      truncate: Boolean = true
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Unit] =
+    numRows: Int = 20,
+    truncate: Boolean = true
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Unit] =
     F.delay(dataset.show(numRows, truncate))
 
   /**
@@ -547,10 +527,10 @@ class TypedDataset[T] protected[frameless] (
    * Differs from `Dataset#foreach` by wrapping its result into an effect-suspending `F[_]`.
    */
   def foreach[F[_]](
-      func: T => Unit
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Unit] =
+    func: T => Unit
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Unit] =
     F.delay(dataset.foreach(func))
 
   /**
@@ -559,10 +539,10 @@ class TypedDataset[T] protected[frameless] (
    * Differs from `Dataset#foreachPartition` by wrapping its result into an effect-suspending `F[_]`.
    */
   def foreachPartition[F[_]](
-      func: Iterator[T] => Unit
-    )(implicit
-      F: SparkDelay[F]
-    ): F[Unit] =
+    func: Iterator[T] => Unit
+  )(implicit
+    F: SparkDelay[F]
+  ): F[Unit] =
     F.delay(dataset.foreachPartition(func))
 
   /**
@@ -575,8 +555,8 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def cube[K1](
-      c1: TypedColumn[T, K1]
-    ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
+    c1: TypedColumn[T, K1]
+  ): Cube1Ops[K1, T] = new Cube1Ops[K1, T](this, c1)
 
   /**
    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
@@ -588,9 +568,9 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def cube[K1, K2](
-      c1: TypedColumn[T, K1],
-      c2: TypedColumn[T, K2]
-    ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Cube2Ops[K1, K2, T] = new Cube2Ops[K1, K2, T](this, c1, c2)
 
   /**
    * Create a multi-dimensional cube for the current [[TypedDataset]] using the specified columns,
@@ -628,12 +608,12 @@ class TypedDataset[T] protected[frameless] (
   object cubeMany extends ProductArgs {
 
     def applyProduct[TK <: HList, K <: HList, KT](
-        groupedBy: TK
-      )(implicit
-        i0: ColumnTypes.Aux[T, TK, K],
-        i1: Tupler.Aux[K, KT],
-        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
-      ): CubeManyOps[T, TK, K, KT] =
+      groupedBy: TK
+    )(implicit
+      i0: ColumnTypes.Aux[T, TK, K],
+      i1: Tupler.Aux[K, KT],
+      i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+    ): CubeManyOps[T, TK, K, KT] =
       new CubeManyOps[T, TK, K, KT](self, groupedBy)
   }
 
@@ -644,8 +624,8 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def groupBy[K1](
-      c1: TypedColumn[T, K1]
-    ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
+    c1: TypedColumn[T, K1]
+  ): GroupedBy1Ops[K1, T] = new GroupedBy1Ops[K1, T](this, c1)
 
   /**
    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
@@ -654,9 +634,9 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def groupBy[K1, K2](
-      c1: TypedColumn[T, K1],
-      c2: TypedColumn[T, K2]
-    ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): GroupedBy2Ops[K1, K2, T] = new GroupedBy2Ops[K1, K2, T](this, c1, c2)
 
   /**
    * Groups the [[TypedDataset]] using the specified columns, so that we can run aggregation on them.
@@ -686,12 +666,12 @@ class TypedDataset[T] protected[frameless] (
   object groupByMany extends ProductArgs {
 
     def applyProduct[TK <: HList, K <: HList, KT](
-        groupedBy: TK
-      )(implicit
-        i0: ColumnTypes.Aux[T, TK, K],
-        i1: Tupler.Aux[K, KT],
-        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
-      ): GroupedByManyOps[T, TK, K, KT] =
+      groupedBy: TK
+    )(implicit
+      i0: ColumnTypes.Aux[T, TK, K],
+      i1: Tupler.Aux[K, KT],
+      i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+    ): GroupedByManyOps[T, TK, K, KT] =
       new GroupedByManyOps[T, TK, K, KT](self, groupedBy)
   }
 
@@ -705,8 +685,8 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def rollup[K1](
-      c1: TypedColumn[T, K1]
-    ): Rollup1Ops[K1, T] = new Rollup1Ops[K1, T](this, c1)
+    c1: TypedColumn[T, K1]
+  ): Rollup1Ops[K1, T] = new Rollup1Ops[K1, T](this, c1)
 
   /**
    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
@@ -718,9 +698,9 @@ class TypedDataset[T] protected[frameless] (
    * apache/spark
    */
   def rollup[K1, K2](
-      c1: TypedColumn[T, K1],
-      c2: TypedColumn[T, K2]
-    ): Rollup2Ops[K1, K2, T] = new Rollup2Ops[K1, K2, T](this, c1, c2)
+    c1: TypedColumn[T, K1],
+    c2: TypedColumn[T, K2]
+  ): Rollup2Ops[K1, K2, T] = new Rollup2Ops[K1, K2, T](this, c1, c2)
 
   /**
    * Create a multi-dimensional rollup for the current [[TypedDataset]] using the specified columns,
@@ -756,21 +736,21 @@ class TypedDataset[T] protected[frameless] (
   object rollupMany extends ProductArgs {
 
     def applyProduct[TK <: HList, K <: HList, KT](
-        groupedBy: TK
-      )(implicit
-        i0: ColumnTypes.Aux[T, TK, K],
-        i1: Tupler.Aux[K, KT],
-        i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
-      ): RollupManyOps[T, TK, K, KT] =
+      groupedBy: TK
+    )(implicit
+      i0: ColumnTypes.Aux[T, TK, K],
+      i1: Tupler.Aux[K, KT],
+      i2: ToTraversable.Aux[TK, List, UntypedExpression[T]]
+    ): RollupManyOps[T, TK, K, KT] =
       new RollupManyOps[T, TK, K, KT](self, groupedBy)
   }
 
   /** Computes the cartesian project of `this` `Dataset` with the `other` `Dataset` */
   def joinCross[U](
-      other: TypedDataset[U]
-    )(implicit
-      e: TypedEncoder[(T, U)]
-    ): TypedDataset[(T, U)] =
+    other: TypedDataset[U]
+  )(implicit
+    e: TypedEncoder[(T, U)]
+  ): TypedDataset[(T, U)] =
     new TypedDataset(
       self.dataset
         .joinWith(
@@ -786,11 +766,10 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinFull[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    )(implicit
-      e: TypedEncoder[(Option[T], Option[U])]
-    ): TypedDataset[(Option[T], Option[U])] =
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean])(implicit
+    e: TypedEncoder[(Option[T], Option[U])]
+  ): TypedDataset[(Option[T], Option[U])] =
     new TypedDataset(
       self.dataset
         .joinWith(other.dataset, condition.untyped, "full")
@@ -804,11 +783,10 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinInner[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    )(implicit
-      e: TypedEncoder[(T, U)]
-    ): TypedDataset[(T, U)] = {
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean])(implicit
+    e: TypedEncoder[(T, U)]
+  ): TypedDataset[(T, U)] = {
     import FramelessInternals._
 
     val leftPlan = logicalPlan(dataset)
@@ -828,11 +806,10 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinLeft[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    )(implicit
-      e: TypedEncoder[(T, Option[U])]
-    ): TypedDataset[(T, Option[U])] =
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean])(implicit
+    e: TypedEncoder[(T, Option[U])]
+  ): TypedDataset[(T, Option[U])] =
     new TypedDataset(
       self.dataset
         .joinWith(other.dataset, condition.untyped, "left_outer")
@@ -844,9 +821,8 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinLeftSemi[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    ): TypedDataset[T] =
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean]): TypedDataset[T] =
     new TypedDataset(
       self.dataset
         .join(other.dataset, condition.untyped, "leftsemi")
@@ -858,9 +834,8 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinLeftAnti[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    ): TypedDataset[T] =
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean]): TypedDataset[T] =
     new TypedDataset(
       self.dataset
         .join(other.dataset, condition.untyped, "leftanti")
@@ -872,11 +847,10 @@ class TypedDataset[T] protected[frameless] (
    * returning a `Tuple2` for each pair where condition evaluates to true.
    */
   def joinRight[U](
-      other: TypedDataset[U]
-    )(condition: TypedColumn[T with U, Boolean]
-    )(implicit
-      e: TypedEncoder[(Option[T], U)]
-    ): TypedDataset[(Option[T], U)] =
+    other: TypedDataset[U]
+  )(condition: TypedColumn[T with U, Boolean])(implicit
+    e: TypedEncoder[(Option[T], U)]
+  ): TypedDataset[(Option[T], U)] =
     new TypedDataset(
       self.dataset
         .joinWith(other.dataset, condition.untyped, "right_outer")
@@ -907,16 +881,16 @@ class TypedDataset[T] protected[frameless] (
    * Takes a function from A => R and converts it to a UDF for TypedColumn[T, A] => TypedColumn[T, R].
    */
   def makeUDF[A: TypedEncoder, R: TypedEncoder](
-      f: A => R
-    ): TypedColumn[T, A] => TypedColumn[T, R] = functions.udf(f)
+    f: A => R
+  ): TypedColumn[T, A] => TypedColumn[T, R] = functions.udf(f)
 
   /**
    * Takes a function from (A1, A2) => R and converts it to a UDF for
    * (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R].
    */
   def makeUDF[A1: TypedEncoder, A2: TypedEncoder, R: TypedEncoder](
-      f: (A1, A2) => R
-    ): (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] =
+    f: (A1, A2) => R
+  ): (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] =
     functions.udf(f)
 
   /**
@@ -924,12 +898,11 @@ class TypedDataset[T] protected[frameless] (
    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R].
    */
   def makeUDF[
-      A1: TypedEncoder,
-      A2: TypedEncoder,
-      A3: TypedEncoder,
-      R: TypedEncoder
-    ](f: (A1, A2, A3) => R
-    ): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] =
+    A1: TypedEncoder,
+    A2: TypedEncoder,
+    A3: TypedEncoder,
+    R: TypedEncoder
+  ](f: (A1, A2, A3) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] =
     functions.udf(f)
 
   /**
@@ -937,38 +910,36 @@ class TypedDataset[T] protected[frameless] (
    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R].
    */
   def makeUDF[
-      A1: TypedEncoder,
-      A2: TypedEncoder,
-      A3: TypedEncoder,
-      A4: TypedEncoder,
-      R: TypedEncoder
-    ](f: (A1, A2, A3, A4) => R
-    ): (
-      TypedColumn[T, A1],
-      TypedColumn[T, A2],
-      TypedColumn[T, A3],
-      TypedColumn[T, A4]
-    ) => TypedColumn[T, R] = functions.udf(f)
+    A1: TypedEncoder,
+    A2: TypedEncoder,
+    A3: TypedEncoder,
+    A4: TypedEncoder,
+    R: TypedEncoder
+  ](f: (A1, A2, A3, A4) => R): (
+    TypedColumn[T, A1],
+    TypedColumn[T, A2],
+    TypedColumn[T, A3],
+    TypedColumn[T, A4]
+  ) => TypedColumn[T, R] = functions.udf(f)
 
   /**
    * Takes a function from (A1, A2, A3, A4, A5) => R and converts it to a UDF for
    * (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R].
    */
   def makeUDF[
-      A1: TypedEncoder,
-      A2: TypedEncoder,
-      A3: TypedEncoder,
-      A4: TypedEncoder,
-      A5: TypedEncoder,
-      R: TypedEncoder
-    ](f: (A1, A2, A3, A4, A5) => R
-    ): (
-      TypedColumn[T, A1],
-      TypedColumn[T, A2],
-      TypedColumn[T, A3],
-      TypedColumn[T, A4],
-      TypedColumn[T, A5]
-    ) => TypedColumn[T, R] = functions.udf(f)
+    A1: TypedEncoder,
+    A2: TypedEncoder,
+    A3: TypedEncoder,
+    A4: TypedEncoder,
+    A5: TypedEncoder,
+    R: TypedEncoder
+  ](f: (A1, A2, A3, A4, A5) => R): (
+    TypedColumn[T, A1],
+    TypedColumn[T, A2],
+    TypedColumn[T, A3],
+    TypedColumn[T, A4],
+    TypedColumn[T, A5]
+  ) => TypedColumn[T, R] = functions.udf(f)
 
   /**
    * Type-safe projection from type T to Tuple1[A]
@@ -977,8 +948,8 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A](
-      ca: TypedColumn[T, A]
-    ): TypedDataset[A] = {
+    ca: TypedColumn[T, A]
+  ): TypedDataset[A] = {
     implicit val ea = ca.uencoder
 
     val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
@@ -1005,9 +976,9 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B]
-    ): TypedDataset[(A, B)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B]
+  ): TypedDataset[(A, B)] = {
     implicit val (ea, eb) = (ca.uencoder, cb.uencoder)
     selectMany(ca, cb)
   }
@@ -1019,10 +990,10 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C]
-    ): TypedDataset[(A, B, C)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C]
+  ): TypedDataset[(A, B, C)] = {
     implicit val (ea, eb, ec) = (ca.uencoder, cb.uencoder, cc.uencoder)
     selectMany(ca, cb, cc)
   }
@@ -1034,11 +1005,11 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D]
-    ): TypedDataset[(A, B, C, D)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D]
+  ): TypedDataset[(A, B, C, D)] = {
     implicit val (ea, eb, ec, ed) =
       (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder)
     selectMany(ca, cb, cc, cd)
@@ -1051,12 +1022,12 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E]
-    ): TypedDataset[(A, B, C, D, E)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E]
+  ): TypedDataset[(A, B, C, D, E)] = {
     implicit val (ea, eb, ec, ed, ee) =
       (ca.uencoder, cb.uencoder, cc.uencoder, cd.uencoder, ce.uencoder)
 
@@ -1070,13 +1041,13 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E, F](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E],
-      cf: TypedColumn[T, F]
-    ): TypedDataset[(A, B, C, D, E, F)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F]
+  ): TypedDataset[(A, B, C, D, E, F)] = {
     implicit val (ea, eb, ec, ed, ee, ef) =
       (
         ca.uencoder,
@@ -1097,14 +1068,14 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E, F, G](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E],
-      cf: TypedColumn[T, F],
-      cg: TypedColumn[T, G]
-    ): TypedDataset[(A, B, C, D, E, F, G)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G]
+  ): TypedDataset[(A, B, C, D, E, F, G)] = {
     implicit val (ea, eb, ec, ed, ee, ef, eg) =
       (
         ca.uencoder,
@@ -1126,15 +1097,15 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E, F, G, H](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E],
-      cf: TypedColumn[T, F],
-      cg: TypedColumn[T, G],
-      ch: TypedColumn[T, H]
-    ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H]
+  ): TypedDataset[(A, B, C, D, E, F, G, H)] = {
     implicit val (ea, eb, ec, ed, ee, ef, eg, eh) =
       (
         ca.uencoder,
@@ -1157,16 +1128,16 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E, F, G, H, I](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E],
-      cf: TypedColumn[T, F],
-      cg: TypedColumn[T, G],
-      ch: TypedColumn[T, H],
-      ci: TypedColumn[T, I]
-    ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I)] = {
     implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei) =
       (
         ca.uencoder,
@@ -1190,17 +1161,17 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def select[A, B, C, D, E, F, G, H, I, J](
-      ca: TypedColumn[T, A],
-      cb: TypedColumn[T, B],
-      cc: TypedColumn[T, C],
-      cd: TypedColumn[T, D],
-      ce: TypedColumn[T, E],
-      cf: TypedColumn[T, F],
-      cg: TypedColumn[T, G],
-      ch: TypedColumn[T, H],
-      ci: TypedColumn[T, I],
-      cj: TypedColumn[T, J]
-    ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
+    ca: TypedColumn[T, A],
+    cb: TypedColumn[T, B],
+    cc: TypedColumn[T, C],
+    cd: TypedColumn[T, D],
+    ce: TypedColumn[T, E],
+    cf: TypedColumn[T, F],
+    cg: TypedColumn[T, G],
+    ch: TypedColumn[T, H],
+    ci: TypedColumn[T, I],
+    cj: TypedColumn[T, J]
+  ): TypedDataset[(A, B, C, D, E, F, G, H, I, J)] = {
     implicit val (ea, eb, ec, ed, ee, ef, eg, eh, ei, ej) =
       (
         ca.uencoder,
@@ -1220,13 +1191,13 @@ class TypedDataset[T] protected[frameless] (
   object selectMany extends ProductArgs {
 
     def applyProduct[U <: HList, Out0 <: HList, Out](
-        columns: U
-      )(implicit
-        i0: ColumnTypes.Aux[T, U, Out0],
-        i1: ToTraversable.Aux[U, List, UntypedExpression[T]],
-        i2: Tupler.Aux[Out0, Out],
-        i3: TypedEncoder[Out]
-      ): TypedDataset[Out] = {
+      columns: U
+    )(implicit
+      i0: ColumnTypes.Aux[T, U, Out0],
+      i1: ToTraversable.Aux[U, List, UntypedExpression[T]],
+      i2: Tupler.Aux[Out0, Out],
+      i3: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
       val base = dataset
         .toDF()
         .select(
@@ -1242,25 +1213,22 @@ class TypedDataset[T] protected[frameless] (
 
   /** Sort each partition in the dataset using the columns selected. */
   def sortWithinPartitions[A: CatalystOrdered](
-      ca: SortedTypedColumn[T, A]
-    ): TypedDataset[T] =
+    ca: SortedTypedColumn[T, A]
+  ): TypedDataset[T] =
     sortWithinPartitionsMany(ca)
 
   /** Sort each partition in the dataset using the columns selected. */
   def sortWithinPartitions[A: CatalystOrdered, B: CatalystOrdered](
-      ca: SortedTypedColumn[T, A],
-      cb: SortedTypedColumn[T, B]
-    ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb)
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B]
+  ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb)
 
   /** Sort each partition in the dataset using the columns selected. */
   def sortWithinPartitions[
-      A: CatalystOrdered,
-      B: CatalystOrdered,
-      C: CatalystOrdered
-    ](ca: SortedTypedColumn[T, A],
-      cb: SortedTypedColumn[T, B],
-      cc: SortedTypedColumn[T, C]
-    ): TypedDataset[T] = sortWithinPartitionsMany(ca, cb, cc)
+    A: CatalystOrdered,
+    B: CatalystOrdered,
+    C: CatalystOrdered
+  ](ca: SortedTypedColumn[T, A], cb: SortedTypedColumn[T, B], cc: SortedTypedColumn[T, C]): TypedDataset[T] = sortWithinPartitionsMany(ca, cb, cc)
 
   /**
    * Sort each partition in the dataset by the given column expressions
@@ -1272,11 +1240,11 @@ class TypedDataset[T] protected[frameless] (
   object sortWithinPartitionsMany extends ProductArgs {
 
     def applyProduct[U <: HList, O <: HList](
-        columns: U
-      )(implicit
-        i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
-        i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
-      ): TypedDataset[T] = {
+      columns: U
+    )(implicit
+      i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
+      i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
+    ): TypedDataset[T] = {
       val sorted = dataset
         .toDF()
         .sortWithinPartitions(
@@ -1290,22 +1258,22 @@ class TypedDataset[T] protected[frameless] (
 
   /** Orders the TypedDataset using the column selected. */
   def orderBy[A: CatalystOrdered](
-      ca: SortedTypedColumn[T, A]
-    ): TypedDataset[T] =
+    ca: SortedTypedColumn[T, A]
+  ): TypedDataset[T] =
     orderByMany(ca)
 
   /** Orders the TypedDataset using the columns selected. */
   def orderBy[A: CatalystOrdered, B: CatalystOrdered](
-      ca: SortedTypedColumn[T, A],
-      cb: SortedTypedColumn[T, B]
-    ): TypedDataset[T] = orderByMany(ca, cb)
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B]
+  ): TypedDataset[T] = orderByMany(ca, cb)
 
   /** Orders the TypedDataset using the columns selected. */
   def orderBy[A: CatalystOrdered, B: CatalystOrdered, C: CatalystOrdered](
-      ca: SortedTypedColumn[T, A],
-      cb: SortedTypedColumn[T, B],
-      cc: SortedTypedColumn[T, C]
-    ): TypedDataset[T] = orderByMany(ca, cb, cc)
+    ca: SortedTypedColumn[T, A],
+    cb: SortedTypedColumn[T, B],
+    cc: SortedTypedColumn[T, C]
+  ): TypedDataset[T] = orderByMany(ca, cb, cc)
 
   /**
    * Sort the dataset by any number of column expressions.
@@ -1317,11 +1285,11 @@ class TypedDataset[T] protected[frameless] (
   object orderByMany extends ProductArgs {
 
     def applyProduct[U <: HList, O <: HList](
-        columns: U
-      )(implicit
-        i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
-        i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
-      ): TypedDataset[T] = {
+      columns: U
+    )(implicit
+      i0: Mapper.Aux[SortedTypedColumn.defaultAscendingPoly.type, U, O],
+      i1: ToTraversable.Aux[O, List, SortedTypedColumn[T, _]]
+    ): TypedDataset[T] = {
       val sorted = dataset
         .toDF()
         .orderBy(i0(columns).toList[SortedTypedColumn[T, _]].map(_.untyped): _*)
@@ -1354,19 +1322,18 @@ class TypedDataset[T] protected[frameless] (
    * @return
    */
   def dropTupled[
-      Out,
-      TRep <: HList,
-      Removed <: HList,
-      ValuesFromRemoved <: HList,
-      V
-    ](column: Witness.Lt[Symbol]
-    )(implicit
-      i0: LabelledGeneric.Aux[T, TRep],
-      i1: Remover.Aux[TRep, column.T, (V, Removed)],
-      i2: Values.Aux[Removed, ValuesFromRemoved],
-      i3: Tupler.Aux[ValuesFromRemoved, Out],
-      i4: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
+    Out,
+    TRep <: HList,
+    Removed <: HList,
+    ValuesFromRemoved <: HList,
+    V
+  ](column: Witness.Lt[Symbol])(implicit
+    i0: LabelledGeneric.Aux[T, TRep],
+    i1: Remover.Aux[TRep, column.T, (V, Removed)],
+    i2: Values.Aux[Removed, ValuesFromRemoved],
+    i3: Tupler.Aux[ValuesFromRemoved, Out],
+    i4: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
     val dropped = dataset
       .toDF()
       .drop(column.value.name)
@@ -1391,9 +1358,8 @@ class TypedDataset[T] protected[frameless] (
    * @see [[frameless.TypedDataset#project]]
    */
   def drop[U](
-      implicit
-      projector: SmartProject[T, U]
-    ): TypedDataset[U] = project[U]
+    implicit projector: SmartProject[T, U]
+  ): TypedDataset[U] = project[U]
 
   /**
    * Prepends a new column to the Dataset.
@@ -1405,13 +1371,13 @@ class TypedDataset[T] protected[frameless] (
    * }}}
    */
   def withColumnTupled[A: TypedEncoder, H <: HList, FH <: HList, Out](
-      ca: TypedColumn[T, A]
-    )(implicit
-      i0: Generic.Aux[T, H],
-      i1: Prepend.Aux[H, A :: HNil, FH],
-      i2: Tupler.Aux[FH, Out],
-      i3: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
+    ca: TypedColumn[T, A]
+  )(implicit
+    i0: Generic.Aux[T, H],
+    i1: Prepend.Aux[H, A :: HNil, FH],
+    i2: Tupler.Aux[FH, Out],
+    i3: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
     // Giving a random name to the new column (the proper name will be given by the Tuple-based encoder)
     val selected = dataset
       .toDF()
@@ -1433,11 +1399,11 @@ class TypedDataset[T] protected[frameless] (
    * @param i0 Evidence that a column with the correct type and name exists
    */
   def withColumnReplaced[A](
-      column: Witness.Lt[Symbol],
-      replacement: TypedColumn[T, A]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, A]
-    ): TypedDataset[T] = {
+    column: Witness.Lt[Symbol],
+    replacement: TypedColumn[T, A]
+  )(implicit
+    i0: TypedColumn.Exists[T, column.T, A]
+  ): TypedDataset[T] = {
     val updated = dataset
       .toDF()
       .withColumn(column.value.name, replacement.untyped)
@@ -1485,27 +1451,26 @@ class TypedDataset[T] protected[frameless] (
   class WithColumnApply[U] {
 
     def apply[
-        A,
-        TRep <: HList,
-        URep <: HList,
-        UKeys <: HList,
-        NewFields <: HList,
-        NewKeys <: HList,
-        NewKey <: Symbol
-      ](ca: TypedColumn[T, A]
-      )(implicit
-        i0: TypedEncoder[U],
-        i1: TypedEncoder[A],
-        i2: LabelledGeneric.Aux[T, TRep],
-        i3: LabelledGeneric.Aux[U, URep],
-        i4: Diff.Aux[TRep, URep, HNil],
-        i5: Diff.Aux[URep, TRep, NewFields],
-        i6: Keys.Aux[NewFields, NewKeys],
-        i7: IsHCons.Aux[NewKeys, NewKey, HNil],
-        i8: IsHCons.Aux[NewFields, FieldType[NewKey, A], HNil],
-        i9: Keys.Aux[URep, UKeys],
-        iA: ToTraversable.Aux[UKeys, Seq, Symbol]
-      ): TypedDataset[U] = {
+      A,
+      TRep <: HList,
+      URep <: HList,
+      UKeys <: HList,
+      NewFields <: HList,
+      NewKeys <: HList,
+      NewKey <: Symbol
+    ](ca: TypedColumn[T, A])(implicit
+      i0: TypedEncoder[U],
+      i1: TypedEncoder[A],
+      i2: LabelledGeneric.Aux[T, TRep],
+      i3: LabelledGeneric.Aux[U, URep],
+      i4: Diff.Aux[TRep, URep, HNil],
+      i5: Diff.Aux[URep, TRep, NewFields],
+      i6: Keys.Aux[NewFields, NewKeys],
+      i7: IsHCons.Aux[NewKeys, NewKey, HNil],
+      i8: IsHCons.Aux[NewFields, FieldType[NewKey, A], HNil],
+      i9: Keys.Aux[URep, UKeys],
+      iA: ToTraversable.Aux[UKeys, Seq, Symbol]
+    ): TypedDataset[U] = {
       val newColumnName =
         i7.head(i6()).name
 
@@ -1535,24 +1500,23 @@ class TypedDataset[T] protected[frameless] (
    * @param column the column we wish to explode
    */
   def explode[
-      A,
-      TRep <: HList,
-      V[_],
-      OutMod <: HList,
-      OutModValues <: HList,
-      Out
-    ](column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, V[A]],
-      i1: TypedEncoder[A],
-      i2: CatalystExplodableCollection[V],
-      i3: LabelledGeneric.Aux[T, TRep],
-      i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
-      i5: Values.Aux[OutMod, OutModValues],
-      i6: Tupler.Aux[OutModValues, Out],
-      i7: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
-    import org.apache.spark.sql.functions.{ explode => sparkExplode }
+    A,
+    TRep <: HList,
+    V[_],
+    OutMod <: HList,
+    OutModValues <: HList,
+    Out
+  ](column: Witness.Lt[Symbol])(implicit
+    i0: TypedColumn.Exists[T, column.T, V[A]],
+    i1: TypedEncoder[A],
+    i2: CatalystExplodableCollection[V],
+    i3: LabelledGeneric.Aux[T, TRep],
+    i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+    i5: Values.Aux[OutMod, OutModValues],
+    i6: Tupler.Aux[OutModValues, Out],
+    i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    import org.apache.spark.sql.functions.{explode => sparkExplode}
     val df = dataset.toDF()
 
     val trans =
@@ -1576,29 +1540,24 @@ class TypedDataset[T] protected[frameless] (
    * @param column the column we wish to explode
    */
   def explodeMap[
-      A,
-      B,
-      V[_, _],
-      TRep <: HList,
-      OutMod <: HList,
-      OutModValues <: HList,
-      Out
-    ](column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, V[A, B]],
-      i1: TypedEncoder[A],
-      i2: TypedEncoder[B],
-      i3: LabelledGeneric.Aux[T, TRep],
-      i4: Modifier.Aux[TRep, column.T, V[A, B], (A, B), OutMod],
-      i5: Values.Aux[OutMod, OutModValues],
-      i6: Tupler.Aux[OutModValues, Out],
-      i7: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
-    import org.apache.spark.sql.functions.{
-      explode => sparkExplode,
-      struct => sparkStruct,
-      col => sparkCol
-    }
+    A,
+    B,
+    V[_, _],
+    TRep <: HList,
+    OutMod <: HList,
+    OutModValues <: HList,
+    Out
+  ](column: Witness.Lt[Symbol])(implicit
+    i0: TypedColumn.Exists[T, column.T, V[A, B]],
+    i1: TypedEncoder[A],
+    i2: TypedEncoder[B],
+    i3: LabelledGeneric.Aux[T, TRep],
+    i4: Modifier.Aux[TRep, column.T, V[A, B], (A, B), OutMod],
+    i5: Values.Aux[OutMod, OutModValues],
+    i6: Tupler.Aux[OutModValues, Out],
+    i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
+    import org.apache.spark.sql.functions.{explode => sparkExplode, struct => sparkStruct, col => sparkCol}
     val df = dataset.toDF()
 
     // select all columns, all original columns and [key, value] columns appeared after the map explode
@@ -1648,23 +1607,22 @@ class TypedDataset[T] protected[frameless] (
    * @param column the column we wish to flatten
    */
   def flattenOption[
-      A,
-      TRep <: HList,
-      V[_],
-      OutMod <: HList,
-      OutModValues <: HList,
-      Out
-    ](column: Witness.Lt[Symbol]
-    )(implicit
-      i0: TypedColumn.Exists[T, column.T, V[A]],
-      i1: TypedEncoder[A],
-      i2: V[A] =:= Option[A],
-      i3: LabelledGeneric.Aux[T, TRep],
-      i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
-      i5: Values.Aux[OutMod, OutModValues],
-      i6: Tupler.Aux[OutModValues, Out],
-      i7: TypedEncoder[Out]
-    ): TypedDataset[Out] = {
+    A,
+    TRep <: HList,
+    V[_],
+    OutMod <: HList,
+    OutModValues <: HList,
+    Out
+  ](column: Witness.Lt[Symbol])(implicit
+    i0: TypedColumn.Exists[T, column.T, V[A]],
+    i1: TypedEncoder[A],
+    i2: V[A] =:= Option[A],
+    i3: LabelledGeneric.Aux[T, TRep],
+    i4: Modifier.Aux[TRep, column.T, V[A], A, OutMod],
+    i5: Values.Aux[OutMod, OutModValues],
+    i6: Tupler.Aux[OutModValues, Out],
+    i7: TypedEncoder[Out]
+  ): TypedDataset[Out] = {
     val df = dataset.toDF()
     val trans = df
       .filter(df(column.value.name).isNotNull)
@@ -1677,22 +1635,22 @@ class TypedDataset[T] protected[frameless] (
 object TypedDataset {
 
   def create[A](
-      data: Seq[A]
-    )(implicit
-      encoder: TypedEncoder[A],
-      sqlContext: SparkSession
-    ): TypedDataset[A] = {
+    data: Seq[A]
+  )(implicit
+    encoder: TypedEncoder[A],
+    sqlContext: SparkSession
+  ): TypedDataset[A] = {
     val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
 
     TypedDataset.create[A](dataset)
   }
 
   def create[A](
-      data: RDD[A]
-    )(implicit
-      encoder: TypedEncoder[A],
-      sqlContext: SparkSession
-    ): TypedDataset[A] = {
+    data: RDD[A]
+  )(implicit
+    encoder: TypedEncoder[A],
+    sqlContext: SparkSession
+  ): TypedDataset[A] = {
     val dataset = sqlContext.createDataset(data)(TypedExpressionEncoder[A])
 
     TypedDataset.create[A](dataset)

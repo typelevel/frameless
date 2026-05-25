@@ -12,7 +12,7 @@ trait FramelessSyntax {
     def typed: TypedDataset[T] = TypedDataset.create[T](self)
   }
 
-  implicit class DataframeSyntax(self: DataFrame){
+  implicit class DataframeSyntax(self: DataFrame) {
     def unsafeTyped[T: TypedEncoder]: TypedDataset[T] = TypedDataset.createUnsafe(self)
   }
 }
