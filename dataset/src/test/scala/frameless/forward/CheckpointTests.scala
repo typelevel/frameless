@@ -1,8 +1,7 @@
 package frameless
 
 import org.scalacheck.Prop
-import org.scalacheck.Prop.{forAll, _}
-
+import org.scalacheck.Prop.{ forAll, _ }
 
 class CheckpointTests extends TypedDatasetSuite {
   test("checkpoint") {

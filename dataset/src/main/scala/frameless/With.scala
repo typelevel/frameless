@@ -1,14 +1,15 @@
 package frameless
 
-/** Compute the intersection of two types:
-  *
-  * - With[A, A] = A
-  * - With[A, B] = A with B (when A != B)
-  *
-  * This type function is needed to prevent IDEs from infering large types
-  * with shape `A with A with ... with A`. These types could be confusing for
-  * both end users and IDE's type checkers.
-  */
+/**
+ * Compute the intersection of two types:
+ *
+ * - With[A, A] = A
+ * - With[A, B] = A with B (when A != B)
+ *
+ * This type function is needed to prevent IDEs from infering large types
+ * with shape `A with A with ... with A`. These types could be confusing for
+ * both end users and IDE's type checkers.
+ */
 trait With[A, B] { type Out }
 
 object With extends LowPrioWith {

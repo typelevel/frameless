@@ -3,10 +3,17 @@ package frameless.sql.rules
 import frameless._
 import frameless.sql._
 import frameless.functions.Lit
-import org.apache.spark.sql.catalyst.util.DateTimeUtils.{currentTimestamp, microsToInstant}
-import org.apache.spark.sql.sources.{Filter, IsNotNull}
+import org.apache.spark.sql.catalyst.util.DateTimeUtils.{
+  currentTimestamp,
+  microsToInstant
+}
+import org.apache.spark.sql.sources.{ Filter, IsNotNull }
 import org.apache.spark.sql.catalyst.expressions
-import org.apache.spark.sql.catalyst.expressions.{Cast, Expression, GenericRowWithSchema}
+import org.apache.spark.sql.catalyst.expressions.{
+  Cast,
+  Expression,
+  GenericRowWithSchema
+}
 import java.time.Instant
 
 import org.apache.spark.sql.catalyst.plans.logical
@@ -45,7 +52,10 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
   test("struct push-down") {
     type Payload = X4[Int, Int, Int, Int]
     val expectedStructure = X1(X4(1, 2, 3, 4))
-    val expected = new GenericRowWithSchema(Array(1, 2, 3, 4), TypedExpressionEncoder[Payload].schema)
+    val expected = new GenericRowWithSchema(
+      Array(1, 2, 3, 4),
+      TypedExpressionEncoder[Payload].schema
+    )
     val expectedPushDownFilters = List(IsNotNull("a"))
 
     predicatePushDownTest[Payload](
@@ -58,16 +68,18 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
   }
 
   override def predicatePushDownTest[A: TypedEncoder: CatalystOrdered](
-    expected: X1[A],
-    expectedPushDownFilters: List[Filter],
-    planShouldContain: PartialFunction[Expression, Expression],
-    op: TypedColumn[X1[A], A] => TypedColumn[X1[A], Boolean]
-  ): Assertion = {
+      expected: X1[A],
+      expectedPushDownFilters: List[Filter],
+      planShouldContain: PartialFunction[Expression, Expression],
+      op: TypedColumn[X1[A], A] => TypedColumn[X1[A], Boolean]
+    ): Assertion = {
     withDataset(expected) { dataset =>
       val ds = dataset.filter(op(dataset('a)))
       val actualPushDownFilters = pushDownFilters(ds)
 
-      val optimizedPlan = ds.queryExecution.optimizedPlan.collect { case logical.Filter(condition, _) => condition }.flatMap(_.toList)
+      val optimizedPlan = ds.queryExecution.optimizedPlan.collect {
+        case logical.Filter(condition, _) => condition
+      }.flatMap(_.toList)
 
       // check the optimized plan
       optimizedPlan.collectFirst(planShouldContain) should not be (empty)

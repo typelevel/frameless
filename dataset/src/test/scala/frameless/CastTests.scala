@@ -1,14 +1,16 @@
 package frameless
 
-import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.{ Arbitrary, Gen, Prop }
 import org.scalacheck.Prop._
 
 class CastTests extends TypedDatasetSuite {
 
-  def prop[A: TypedEncoder, B: TypedEncoder](f: A => B)(a: A)(
-    implicit
-    cast: CatalystCast[A, B]
-  ): Prop = {
+  def prop[A: TypedEncoder, B: TypedEncoder](
+      f: A => B
+    )(a: A
+    )(implicit
+      cast: CatalystCast[A, B]
+    ): Prop = {
     val df = TypedDataset.create(X1(a) :: Nil)
     val got = df.select(df.col('a).cast[B]).collect().run()
 
@@ -100,9 +102,11 @@ class CastTests extends TypedDatasetSuite {
     check(prop[Short, Boolean](_ != 0) _)
 
     // booleanToNumeric
-    check(prop[Boolean, BigDecimal](x => if (x) BigDecimal(1) else BigDecimal(0)) _)
+    check(
+      prop[Boolean, BigDecimal](x => if (x) BigDecimal(1) else BigDecimal(0)) _
+    )
     check(prop[Boolean, Byte](x => if (x) 1 else 0) _)
-    check(prop[Boolean, Double](x => if (x) 1.0f else 0.0f) _)
+    check(prop[Boolean, Double](x => if (x) 1.0F else 0.0F) _)
     check(prop[Boolean, Int](x => if (x) 1 else 0) _)
     check(prop[Boolean, Long](x => if (x) 1L else 0L) _)
     check(prop[Boolean, Short](x => if (x) 1 else 0) _)

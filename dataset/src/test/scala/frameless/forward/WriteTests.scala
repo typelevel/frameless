@@ -3,7 +3,7 @@ package frameless
 import java.util.UUID
 
 import org.scalacheck.Prop._
-import org.scalacheck.{Arbitrary, Gen, Prop}
+import org.scalacheck.{ Arbitrary, Gen, Prop }
 
 class WriteTests extends TypedDatasetSuite {
 
@@ -30,12 +30,19 @@ class WriteTests extends TypedDatasetSuite {
       val input = TypedDataset.create(data)
       input.write.csv(filePath)
 
-      val dataset = TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).csv(filePath))
+      val dataset = TypedDataset.createUnsafe(
+        sqlContext.read.schema(input.schema).csv(filePath)
+      )
 
-      dataset.collect().run().groupBy(identity) ?= input.collect().run().groupBy(identity)
+      dataset.collect().run().groupBy(identity) ?= input
+        .collect()
+        .run()
+        .groupBy(identity)
     }
 
-    check(forAll(Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty)))(prop[String]))
+    check(
+      forAll(Gen.listOf(Gen.alphaNumStr.suchThat(_.nonEmpty)))(prop[String])
+    )
     check(forAll(prop[Int] _))
   }
 
@@ -45,9 +52,14 @@ class WriteTests extends TypedDatasetSuite {
       val input = TypedDataset.create(data)
       input.write.parquet(filePath)
 
-      val dataset = TypedDataset.createUnsafe(sqlContext.read.schema(input.schema).parquet(filePath))
+      val dataset = TypedDataset.createUnsafe(
+        sqlContext.read.schema(input.schema).parquet(filePath)
+      )
 
-      dataset.collect().run().groupBy(identity) ?= input.collect().run().groupBy(identity)
+      dataset.collect().run().groupBy(identity) ?= input
+        .collect()
+        .run()
+        .groupBy(identity)
     }
 
     check(forAll(Gen.listOf(genWriteExample))(prop[WriteExample]))
@@ -56,4 +68,9 @@ class WriteTests extends TypedDatasetSuite {
 
 case class Nested(i: Double, v: String)
 case class OptionFieldsOnly(o1: Option[Int], o2: Option[Nested])
-case class WriteExample(i: Int, s: String, on: Option[Nested], ooo: Option[OptionFieldsOnly])
+
+case class WriteExample(
+    i: Int,
+    s: String,
+    on: Option[Nested],
+    ooo: Option[OptionFieldsOnly])

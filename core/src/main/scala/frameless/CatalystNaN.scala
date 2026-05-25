@@ -8,9 +8,10 @@ trait CatalystNaN[A]
 
 object CatalystNaN {
   private[this] val theInstance = new CatalystNaN[Any] {}
-  private[this] def of[A]: CatalystNaN[A] = theInstance.asInstanceOf[CatalystNaN[A]]
 
-  implicit val framelessFloatNaN     : CatalystNaN[Float]      = of[Float]
-  implicit val framelessDoubleNaN    : CatalystNaN[Double]     = of[Double]
+  private[this] def of[A]: CatalystNaN[A] =
+    theInstance.asInstanceOf[CatalystNaN[A]]
+
+  implicit val framelessFloatNaN: CatalystNaN[Float] = of[Float]
+  implicit val framelessDoubleNaN: CatalystNaN[Double] = of[Double]
 }
-

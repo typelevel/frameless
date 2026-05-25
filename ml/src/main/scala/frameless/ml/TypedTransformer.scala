@@ -3,31 +3,34 @@ package ml
 
 import frameless.ops.SmartProject
 import org.apache.spark.ml.Transformer
-import shapeless.{Generic, HList}
-import shapeless.ops.hlist.{Prepend, Tupler}
+import shapeless.{ Generic, HList }
+import shapeless.ops.hlist.{ Prepend, Tupler }
 
 /**
-  * A TypedTransformer transforms one TypedDataset into another.
-  */
+ * A TypedTransformer transforms one TypedDataset into another.
+ */
 sealed trait TypedTransformer
 
 /**
-  * An AppendTransformer `transform` method takes as input a TypedDataset containing `Inputs` and
-  * return a TypedDataset with `Outputs` columns appended to the input TypedDataset.
-  */
-trait AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer] extends TypedTransformer {
+ * An AppendTransformer `transform` method takes as input a TypedDataset containing `Inputs` and
+ * return a TypedDataset with `Outputs` columns appended to the input TypedDataset.
+ */
+trait AppendTransformer[Inputs, Outputs, InnerTransformer <: Transformer]
+    extends TypedTransformer {
   val transformer: InnerTransformer
 
-  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out](ds: TypedDataset[T])(
-    implicit
-    i0: SmartProject[T, Inputs],
-    i1: Generic.Aux[T, TVals],
-    i2: Generic.Aux[Outputs, OutputsVals],
-    i3: Prepend.Aux[TVals, OutputsVals, OutVals],
-    i4: Tupler.Aux[OutVals, Out],
-    i5: TypedEncoder[Out]
-  ): TypedDataset[Out] = {
-    val transformed = transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
+  def transform[T, TVals <: HList, OutputsVals <: HList, OutVals <: HList, Out](
+      ds: TypedDataset[T]
+    )(implicit
+      i0: SmartProject[T, Inputs],
+      i1: Generic.Aux[T, TVals],
+      i2: Generic.Aux[Outputs, OutputsVals],
+      i3: Prepend.Aux[TVals, OutputsVals, OutVals],
+      i4: Tupler.Aux[OutVals, Out],
+      i5: TypedEncoder[Out]
+    ): TypedDataset[Out] = {
+    val transformed =
+      transformer.transform(ds.dataset).as[Out](TypedExpressionEncoder[Out])
     TypedDataset.create[Out](transformed)
   }
 

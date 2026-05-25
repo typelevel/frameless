@@ -10,23 +10,54 @@ import shapeless.test.illTyped
 class TypedVectorAssemblerTests extends FramelessMlSuite {
 
   test(".transform() returns a correct TypedTransformer") {
-    def prop[A: TypedEncoder: Arbitrary] = forAll { x5: X5[Int, Long, Double, Boolean, A] =>
-      val assembler = TypedVectorAssembler[X4[Int, Long, Double, Boolean]]
-      val ds = TypedDataset.create(Seq(x5))
-      val ds2 = assembler.transform(ds).as[X6[Int, Long, Double, Boolean, A, Vector]]()
+    def prop[A: TypedEncoder: Arbitrary] =
+      forAll { x5: X5[Int, Long, Double, Boolean, A] =>
+        val assembler = TypedVectorAssembler[X4[Int, Long, Double, Boolean]]
+        val ds = TypedDataset.create(Seq(x5))
+        val ds2 = assembler
+          .transform(ds)
+          .as[X6[Int, Long, Double, Boolean, A, Vector]]()
 
-      ds2.collect().run() ==
-        Seq(X6(x5.a, x5.b, x5.c, x5.d, x5.e, Vectors.dense(x5.a.toDouble, x5.b.toDouble, x5.c, if (x5.d) 1D else 0D)))
-    }
+        ds2.collect().run() ==
+          Seq(
+            X6(
+              x5.a,
+              x5.b,
+              x5.c,
+              x5.d,
+              x5.e,
+              Vectors
+                .dense(x5.a.toDouble, x5.b.toDouble, x5.c, if (x5.d) 1D else 0D)
+            )
+          )
+      }
 
-    def prop2[A: TypedEncoder: Arbitrary] = forAll { x5: X5[Boolean, BigDecimal, Byte, Short, A] =>
-      val assembler = TypedVectorAssembler[X4[Boolean, BigDecimal, Byte, Short]]
-      val ds = TypedDataset.create(Seq(x5))
-      val ds2 = assembler.transform(ds).as[X6[Boolean, BigDecimal, Byte, Short, A, Vector]]()
+    def prop2[A: TypedEncoder: Arbitrary] =
+      forAll { x5: X5[Boolean, BigDecimal, Byte, Short, A] =>
+        val assembler =
+          TypedVectorAssembler[X4[Boolean, BigDecimal, Byte, Short]]
+        val ds = TypedDataset.create(Seq(x5))
+        val ds2 = assembler
+          .transform(ds)
+          .as[X6[Boolean, BigDecimal, Byte, Short, A, Vector]]()
 
-      ds2.collect().run() ==
-        Seq(X6(x5.a, x5.b, x5.c, x5.d, x5.e, Vectors.dense(if (x5.a) 1D else 0D, x5.b.toDouble, x5.c.toDouble, x5.d.toDouble)))
-    }
+        ds2.collect().run() ==
+          Seq(
+            X6(
+              x5.a,
+              x5.b,
+              x5.c,
+              x5.d,
+              x5.e,
+              Vectors.dense(
+                if (x5.a) 1D else 0D,
+                x5.b.toDouble,
+                x5.c.toDouble,
+                x5.d.toDouble
+              )
+            )
+          )
+      }
 
     check(prop[String])
     check(prop[Double])
