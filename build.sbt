@@ -192,7 +192,7 @@ lazy val docs = project
       "org.typelevel" % "kind-projector" % "0.13.4" cross CrossVersion.full
     ),
     scalacOptions += "-Ydelambdafy:inline",
-    libraryDependencies += "org.typelevel" %% "mouse" % "1.3.2",
+    libraryDependencies += "org.typelevel" %% "mouse" % "1.4.0",
     // mdoc executes Spark code via `Compile / runMain`; on JDK 17 (the site CI job) Spark
     // needs the module --add-opens flags, so fork the run and pass them through. Forking
     // changes the working directory, so pin it to the repo root where the docs read their
