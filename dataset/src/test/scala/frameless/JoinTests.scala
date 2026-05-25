@@ -7,9 +7,9 @@ import org.scalacheck.Prop._
 class JoinTests extends TypedDatasetSuite {
   test("ab.joinCross(ac)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -27,7 +27,8 @@ class JoinTests extends TypedDatasetSuite {
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
         StructField("_1", leftDs.schema, nullable = false),
-        StructField("_2", rightDs.schema, nullable = false)))
+        StructField("_2", rightDs.schema, nullable = false)
+      ))
 
       (joined.sorted ?= joinedData) && equalSchemas
     }
@@ -37,9 +38,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinFull(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -49,25 +50,28 @@ class JoinTests extends TypedDatasetSuite {
       val joinedData = joinedDs.collect().run().toVector.sorted
 
       val rightKeys = right.map(_.a).toSet
-      val leftKeys  = left.map(_.a).toSet
+      val leftKeys = left.map(_.a).toSet
       val joined = {
         for {
           ab <- left
           ac <- right if ac.a == ab.a
         } yield (Some(ab), Some(ac))
-      }.toVector ++ {
-        for {
-          ab <- left if !rightKeys.contains(ab.a)
-        } yield (Some(ab), None)
-      }.toVector ++ {
-        for {
-          ac <- right if !leftKeys.contains(ac.a)
-        } yield (None, Some(ac))
-      }.toVector
+      }.toVector ++
+        {
+          for {
+            ab <- left if !rightKeys.contains(ab.a)
+          } yield (Some(ab), None)
+        }.toVector ++
+        {
+          for {
+            ac <- right if !leftKeys.contains(ac.a)
+          } yield (None, Some(ac))
+        }.toVector
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
         StructField("_1", leftDs.schema, nullable = true),
-        StructField("_2", rightDs.schema, nullable = true)))
+        StructField("_2", rightDs.schema, nullable = true)
+      ))
 
       (joined.sorted ?= joinedData) && equalSchemas
     }
@@ -77,9 +81,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinInner(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -97,7 +101,8 @@ class JoinTests extends TypedDatasetSuite {
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
         StructField("_1", leftDs.schema, nullable = false),
-        StructField("_2", rightDs.schema, nullable = false)))
+        StructField("_2", rightDs.schema, nullable = false)
+      ))
 
       (joined.sorted ?= joinedData) && equalSchemas
     }
@@ -107,9 +112,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinLeft(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -124,15 +129,17 @@ class JoinTests extends TypedDatasetSuite {
           ab <- left
           ac <- right if ac.a == ab.a
         } yield (ab, Some(ac))
-      }.toVector ++ {
-        for {
-          ab <- left if !rightKeys.contains(ab.a)
-        } yield (ab, None)
-      }.toVector
+      }.toVector ++
+        {
+          for {
+            ab <- left if !rightKeys.contains(ab.a)
+          } yield (ab, None)
+        }.toVector
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
         StructField("_1", leftDs.schema, nullable = false),
-        StructField("_2", rightDs.schema, nullable = true)))
+        StructField("_2", rightDs.schema, nullable = true)
+      ))
 
       (joined.sorted ?= joinedData) && (joinedData.map(_._1).toSet ?= left.toSet) && equalSchemas
     }
@@ -142,9 +149,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinLeftAnti(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -170,9 +177,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinLeftSemi(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -198,9 +205,9 @@ class JoinTests extends TypedDatasetSuite {
 
   test("ab.joinRight(ac)(ab.a == ac.a)") {
     def prop[
-      A : TypedEncoder : Ordering,
-      B : TypedEncoder : Ordering,
-      C : TypedEncoder : Ordering
+      A: TypedEncoder: Ordering,
+      B: TypedEncoder: Ordering,
+      C: TypedEncoder: Ordering
     ](left: List[X2[A, B]], right: List[X2[A, C]]): Prop = {
       val leftDs = TypedDataset.create(left)
       val rightDs = TypedDataset.create(right)
@@ -215,15 +222,17 @@ class JoinTests extends TypedDatasetSuite {
           ab <- left
           ac <- right if ac.a == ab.a
         } yield (Some(ab), ac)
-      }.toVector ++ {
-        for {
-          ac <- right if !leftKeys.contains(ac.a)
-        } yield (None, ac)
-      }.toVector
+      }.toVector ++
+        {
+          for {
+            ac <- right if !leftKeys.contains(ac.a)
+          } yield (None, ac)
+        }.toVector
 
       val equalSchemas = joinedDs.schema ?= StructType(Seq(
         StructField("_1", leftDs.schema, nullable = true),
-        StructField("_2", rightDs.schema, nullable = false)))
+        StructField("_2", rightDs.schema, nullable = false)
+      ))
 
       (joined.sorted ?= joinedData) && (joinedData.map(_._2).toSet ?= right.toSet) && equalSchemas
     }

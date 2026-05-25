@@ -19,8 +19,7 @@ trait Udf {
     *
     * apache/spark
     */
-  def udf[T, A, R: TypedEncoder](f: A => R):
-    TypedColumn[T, A] => TypedColumn[T, R] = {
+  def udf[T, A, R: TypedEncoder](f: A => R): TypedColumn[T, A] => TypedColumn[T, R] = {
     u =>
       val scalaUdf = FramelessUdf(f, List(u), TypedEncoder[R])
       new TypedColumn[T, R](scalaUdf)
@@ -31,48 +30,46 @@ trait Udf {
     *
     * apache/spark
     */
-  def udf[T, A1, A2, R: TypedEncoder](f: (A1,A2) => R):
-    (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] = {
+  def udf[T, A1, A2, R: TypedEncoder](f: (A1, A2) => R): (TypedColumn[T, A1], TypedColumn[T, A2]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
       new TypedColumn[T, R](scalaUdf)
-    }
+  }
 
   /** Defines a user-defined function of 3 arguments as user-defined function (UDF).
     * The data types are automatically inferred based on the function's signature.
     *
     * apache/spark
     */
-  def udf[T, A1, A2, A3, R: TypedEncoder](f: (A1,A2,A3) => R):
-  (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] = {
+  def udf[T, A1, A2, A3, R: TypedEncoder](f: (A1, A2, A3) => R): (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
       new TypedColumn[T, R](scalaUdf)
-    }
+  }
 
   /** Defines a user-defined function of 4 arguments as user-defined function (UDF).
     * The data types are automatically inferred based on the function's signature.
     *
     * apache/spark
     */
-  def udf[T, A1, A2, A3, A4, R: TypedEncoder](f: (A1,A2,A3,A4) => R):
-    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = {
+  def udf[T, A1, A2, A3, A4, R: TypedEncoder](f: (A1, A2, A3, A4) => R)
+    : (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
       new TypedColumn[T, R](scalaUdf)
-    }
+  }
 
   /** Defines a user-defined function of 5 arguments as user-defined function (UDF).
     * The data types are automatically inferred based on the function's signature.
     *
     * apache/spark
     */
-  def udf[T, A1, A2, A3, A4, A5, R: TypedEncoder](f: (A1,A2,A3,A4,A5) => R):
-    (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = {
+  def udf[T, A1, A2, A3, A4, A5, R: TypedEncoder](f: (A1, A2, A3, A4, A5) => R)
+    : (TypedColumn[T, A1], TypedColumn[T, A2], TypedColumn[T, A3], TypedColumn[T, A4], TypedColumn[T, A5]) => TypedColumn[T, R] = {
     case us =>
       val scalaUdf = FramelessUdf(f, us.toList[UntypedExpression[T]], TypedEncoder[R])
       new TypedColumn[T, R](scalaUdf)
-    }
+  }
 }
 
 /**
@@ -118,7 +115,8 @@ case class FramelessUdf[T, R](
     """
 
     val code = CodeFormatter.stripOverlappingComments(
-      new CodeAndComment(codeBody, ctx.getPlaceHolderToComments()))
+      new CodeAndComment(codeBody, ctx.getPlaceHolderToComments())
+    )
 
     val (clazz, _) = CodeGenerator.compile(code)
     val codegen = clazz.generate(ctx.references.toArray).asInstanceOf[InternalRow => AnyRef]
@@ -139,9 +137,13 @@ case class FramelessUdf[T, R](
     val framelessUdfClassName = classOf[FramelessUdf[_, _]].getName
     val funcClassName = s"scala.Function${children.size}"
     val funcExpressionIdx = ctx.references.size - 1
-    val funcTerm = ctx.addMutableState(funcClassName, ctx.freshName("udf"),
-      v => s"$v = ($funcClassName)((($framelessUdfClassName)references" +
-        s"[$funcExpressionIdx]).function());")
+    val funcTerm = ctx.addMutableState(
+      funcClassName,
+      ctx.freshName("udf"),
+      v =>
+        s"$v = ($funcClassName)((($framelessUdfClassName)references" +
+          s"[$funcExpressionIdx]).function());"
+    )
 
     val (argsCode, funcArguments) = encoders.zip(children).map {
       case (encoder, child) =>
@@ -161,7 +163,8 @@ case class FramelessUdf[T, R](
 
     val resultEval = rencoder.toCatalyst(internalExpr).genCode(ctx)
 
-    ev.copy(code = code"""
+    ev.copy(
+      code = code"""
       ${argsCode.mkString("\n")}
 
       $internalTerm =
@@ -179,17 +182,17 @@ case class FramelessUdf[T, R](
 }
 
 case class Spark2_4_LambdaVariable(
-                           value: String,
-                           isNull: String,
-                           dataType: DataType,
-                           nullable: Boolean = true) extends LeafExpression with NonSQLExpression {
+  value: String,
+  isNull: String,
+  dataType: DataType,
+  nullable: Boolean = true
+) extends LeafExpression with NonSQLExpression {
 
   private val accessor: (InternalRow, Int) => Any = InternalRow.getAccessor(dataType)
 
   // Interpreted execution of `LambdaVariable` always get the 0-index element from input row.
   override def eval(input: InternalRow): Any = {
-    assert(input.numFields == 1,
-      "The input row of interpreted LambdaVariable should have only 1 field.")
+    assert(input.numFields == 1, "The input row of interpreted LambdaVariable should have only 1 field.")
     if (nullable && input.isNullAt(0)) {
       null
     } else {

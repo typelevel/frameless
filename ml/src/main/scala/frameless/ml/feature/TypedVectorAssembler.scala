@@ -13,8 +13,8 @@ import scala.annotation.implicitNotFound
 /**
   * A feature transformer that merges multiple columns into a vector column.
   */
-final class TypedVectorAssembler[Inputs] private[ml](vectorAssembler: VectorAssembler, inputCols: Array[String])
-  extends AppendTransformer[Inputs, TypedVectorAssembler.Output, VectorAssembler] {
+final class TypedVectorAssembler[Inputs] private[ml] (vectorAssembler: VectorAssembler, inputCols: Array[String])
+    extends AppendTransformer[Inputs, TypedVectorAssembler.Output, VectorAssembler] {
 
   val transformer: VectorAssembler = vectorAssembler
     .setInputCols(inputCols)
@@ -57,7 +57,8 @@ private[ml] object TypedVectorAssemblerInputsValueChecker {
     new TypedVectorAssemblerInputsValueChecker[HNil] {}
 
   implicit def hlistCheckInputsValueNumeric[H, T <: HList](
-    implicit ch: CatalystNumeric[H],
+    implicit
+    ch: CatalystNumeric[H],
     tt: TypedVectorAssemblerInputsValueChecker[T]
   ): TypedVectorAssemblerInputsValueChecker[H :: T] = new TypedVectorAssemblerInputsValueChecker[H :: T] {}
 
@@ -65,5 +66,3 @@ private[ml] object TypedVectorAssemblerInputsValueChecker {
     implicit tt: TypedVectorAssemblerInputsValueChecker[T]
   ): TypedVectorAssemblerInputsValueChecker[Boolean :: T] = new TypedVectorAssemblerInputsValueChecker[Boolean :: T] {}
 }
-
-

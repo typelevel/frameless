@@ -11,7 +11,7 @@ package kmeans
   * Default: k-means||.
   */
 
-sealed abstract class KMeansInitMode private[ml](val sparkValue: String)
+sealed abstract class KMeansInitMode private[ml] (val sparkValue: String)
 
 object KMeansInitMode {
   case object Random extends KMeansInitMode("random")

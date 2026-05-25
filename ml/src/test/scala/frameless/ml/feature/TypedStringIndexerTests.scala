@@ -11,7 +11,7 @@ import org.scalatest.matchers.must.Matchers
 class TypedStringIndexerTests extends FramelessMlSuite with Matchers {
 
   test(".fit() returns a correct TypedTransformer") {
-    def prop[A: TypedEncoder : Arbitrary] = forAll { x2: X2[String, A] =>
+    def prop[A: TypedEncoder: Arbitrary] = forAll { x2: X2[String, A] =>
       val indexer = TypedStringIndexer[X1[String]]
       val ds = TypedDataset.create(Seq(x2))
       val model = indexer.fit(ds).run()

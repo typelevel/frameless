@@ -6,7 +6,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class JobTests extends AnyFreeSpec with BeforeAndAfterAll with SparkTesting with ScalaCheckDrivenPropertyChecks with Matchers {
 
   "map" - {
@@ -45,9 +44,9 @@ class JobTests extends AnyFreeSpec with BeforeAndAfterAll with SparkTesting with
 
   "properties" - {
     "read back" in forAll {
-      (k:String, v: String) =>
+      (k: String, v: String) =>
         val scopedKey = "frameless.tests." + k
-        Job(1).withLocalProperty(scopedKey,v).run()
+        Job(1).withLocalProperty(scopedKey, v).run()
         sc.getLocalProperty(scopedKey) shouldBe v
     }
   }

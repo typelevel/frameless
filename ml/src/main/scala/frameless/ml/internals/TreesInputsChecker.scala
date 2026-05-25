@@ -24,10 +24,11 @@ trait TreesInputsChecker[Inputs] {
 object TreesInputsChecker {
 
   implicit def checkTreesInputs[
-  Inputs,
-  InputsRec <: HList,
-  LabelK <: Symbol,
-  FeaturesK <: Symbol](
+    Inputs,
+    InputsRec <: HList,
+    LabelK <: Symbol,
+    FeaturesK <: Symbol
+  ](
     implicit
     i0: LabelledGeneric.Aux[Inputs, InputsRec],
     i1: Length.Aux[InputsRec, Nat._2],

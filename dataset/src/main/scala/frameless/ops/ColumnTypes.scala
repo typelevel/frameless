@@ -17,12 +17,12 @@ trait ColumnTypes[T, U <: HList] {
 }
 
 object ColumnTypes {
-  type Aux[T, U <: HList, Out0 <: HList] = ColumnTypes[T, U] {type Out = Out0}
+  type Aux[T, U <: HList, Out0 <: HList] = ColumnTypes[T, U] { type Out = Out0 }
 
   implicit def deriveHNil[T]: ColumnTypes.Aux[T, HNil, HNil] = new ColumnTypes[T, HNil] { type Out = HNil }
 
   implicit def deriveCons[T, H, TT <: HList, V <: HList](
     implicit tail: ColumnTypes.Aux[T, TT, V]
   ): ColumnTypes.Aux[T, TypedColumn[T, H] :: TT, H :: V] =
-    new ColumnTypes[T, TypedColumn[T, H] :: TT] {type Out = H :: V}
+    new ColumnTypes[T, TypedColumn[T, H] :: TT] { type Out = H :: V }
 }

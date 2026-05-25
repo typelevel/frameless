@@ -17,12 +17,12 @@ trait AggregateTypes[V, U <: HList] {
 }
 
 object AggregateTypes {
-  type Aux[V, U <: HList, Out0 <: HList] = AggregateTypes[V, U] {type Out = Out0}
+  type Aux[V, U <: HList, Out0 <: HList] = AggregateTypes[V, U] { type Out = Out0 }
 
   implicit def deriveHNil[T]: AggregateTypes.Aux[T, HNil, HNil] = new AggregateTypes[T, HNil] { type Out = HNil }
 
   implicit def deriveCons1[T, H, TT <: HList, V <: HList](
     implicit tail: AggregateTypes.Aux[T, TT, V]
   ): AggregateTypes.Aux[T, TypedAggregate[T, H] :: TT, H :: V] =
-    new AggregateTypes[T, TypedAggregate[T, H] :: TT] {type Out = H :: V}
+    new AggregateTypes[T, TypedAggregate[T, H] :: TT] { type Out = H :: V }
 }

@@ -5,7 +5,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop._
 import shapeless.test.illTyped
 
-
 case class Foo(i: Int, j: Int, x: String)
 case class Bar(i: Int, x: String)
 case class InvalidFooProjectionType(i: Int, x: Boolean)

@@ -22,19 +22,19 @@ import org.apache.spark.ml.clustering.{BisectingKMeans, BisectingKMeansModel}
 class TypedBisectingKMeans[Inputs] private[ml] (
   bkm: BisectingKMeans,
   featuresCol: String
-) extends TypedEstimator[Inputs,TypedBisectingKMeans.Output, BisectingKMeansModel]{
+) extends TypedEstimator[Inputs, TypedBisectingKMeans.Output, BisectingKMeansModel] {
   val estimator: BisectingKMeans =
     bkm
-    .setFeaturesCol(featuresCol)
-    .setPredictionCol(AppendTransformer.tempColumnName)
-  
+      .setFeaturesCol(featuresCol)
+      .setPredictionCol(AppendTransformer.tempColumnName)
+
   def setK(value: Int): TypedBisectingKMeans[Inputs] = copy(bkm.setK(value))
-  
+
   def setMaxIter(value: Int): TypedBisectingKMeans[Inputs] = copy(bkm.setMaxIter(value))
 
   def setMinDivisibleClusterSize(value: Double): TypedBisectingKMeans[Inputs] =
     copy(bkm.setMinDivisibleClusterSize(value))
-  
+
   def setSeed(value: Long): TypedBisectingKMeans[Inputs] = copy(bkm.setSeed(value))
 
   private def copy(newBkm: BisectingKMeans): TypedBisectingKMeans[Inputs] =

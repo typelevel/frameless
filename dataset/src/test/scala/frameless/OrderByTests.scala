@@ -7,19 +7,20 @@ import org.apache.spark.sql.Column
 import org.scalatest.matchers.should.Matchers
 
 class OrderByTests extends TypedDatasetSuite with Matchers {
-  def sortings[A : CatalystOrdered, T]: Seq[(TypedColumn[T, A] => SortedTypedColumn[T, A], Column => Column)] = Seq(
+  def sortings[A: CatalystOrdered, T]: Seq[(TypedColumn[T, A] => SortedTypedColumn[T, A], Column => Column)] = Seq(
     (_.desc, _.desc),
     (_.asc, _.asc),
-    (t => t, t => t) //default ascending
+    (t => t, t => t) // default ascending
   )
 
   test("single column non nullable orderBy") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
         ds.dataset.orderBy(untyp(ds.dataset.col("a"))).collect().toVector.?=(
-          ds.orderBy(typ(ds('a))).collect().run().toVector)
+          ds.orderBy(typ(ds('a))).collect().run().toVector
+        )
       }.reduce(_ && _)
     }
 
@@ -36,12 +37,13 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("single column non nullable partition sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
         ds.dataset.sortWithinPartitions(untyp(ds.dataset.col("a"))).collect().toVector.?=(
-          ds.sortWithinPartitions(typ(ds('a))).collect().run().toVector)
+          ds.sortWithinPartitions(typ(ds('a))).collect().run().toVector
+        )
       }.reduce(_ && _)
     }
 
@@ -58,7 +60,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("two columns non nullable orderBy") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A,B]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered, B: TypedEncoder: CatalystOrdered](data: Vector[X2[A, B]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X2[A, B]].reverse.zip(sortings[B, X2[A, B]]).map { case ((typA, untypA), (typB, untypB)) =>
@@ -75,7 +77,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("two columns non nullable partition sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A,B]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered, B: TypedEncoder: CatalystOrdered](data: Vector[X2[A, B]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X2[A, B]].reverse.zip(sortings[B, X2[A, B]]).map { case ((typA, untypA), (typB, untypB)) =>
@@ -92,7 +94,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("three columns non nullable orderBy") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X3[A,B,A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered, B: TypedEncoder: CatalystOrdered](data: Vector[X3[A, B, A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X3[A, B, A]].reverse
@@ -115,7 +117,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("three columns non nullable partition sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X3[A,B,A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered, B: TypedEncoder: CatalystOrdered](data: Vector[X3[A, B, A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X3[A, B, A]].reverse
@@ -138,13 +140,15 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("sort support for mixed default and explicit ordering") {
-    def prop[A: TypedEncoder : CatalystOrdered, B: TypedEncoder : CatalystOrdered](data: Vector[X2[A, B]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered, B: TypedEncoder: CatalystOrdered](data: Vector[X2[A, B]]): Prop = {
       val ds = TypedDataset.create(data)
 
       ds.dataset.orderBy(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
-        ds.orderByMany(ds('a), ds('b).desc).collect().run().toVector) &&
+        ds.orderByMany(ds('a), ds('b).desc).collect().run().toVector
+      ) &&
       ds.dataset.sortWithinPartitions(ds.dataset.col("a"), ds.dataset.col("b").desc).collect().toVector.?=(
-        ds.sortWithinPartitionsMany(ds('a), ds('b).desc).collect().run().toVector)
+        ds.sortWithinPartitionsMany(ds('a), ds('b).desc).collect().run().toVector
+      )
     }
 
     check(forAll(prop[SQLDate, Long] _))
@@ -162,13 +166,13 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   test("derives a CatalystOrdered for case classes when all fields are comparable") {
     type T[A, B] = X3[Int, Boolean, X2[A, B]]
     def prop[
-      A: TypedEncoder : CatalystOrdered,
-      B: TypedEncoder : CatalystOrdered
+      A: TypedEncoder: CatalystOrdered,
+      B: TypedEncoder: CatalystOrdered
     ](data: Vector[T[A, B]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[X2[A, B], T[A, B]].map { case (typX2, untypX2) =>
-        val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("c"))).collect().toVector
+        val vanilla = ds.dataset.orderBy(untypX2(ds.dataset.col("c"))).collect().toVector
         val frameless = ds.orderBy(typX2(ds('c))).collect().run.toVector
         vanilla ?= frameless
       }.reduce(_ && _)
@@ -183,13 +187,13 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   test("derives a CatalystOrdered for tuples when all fields are comparable") {
     type T[A, B] = X2[Int, (A, B)]
     def prop[
-      A: TypedEncoder : CatalystOrdered,
-      B: TypedEncoder : CatalystOrdered
+      A: TypedEncoder: CatalystOrdered,
+      B: TypedEncoder: CatalystOrdered
     ](data: Vector[T[A, B]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[(A, B), T[A, B]].map { case (typX2, untypX2) =>
-        val vanilla   = ds.dataset.orderBy(untypX2(ds.dataset.col("b"))).collect().toVector
+        val vanilla = ds.dataset.orderBy(untypX2(ds.dataset.col("b"))).collect().toVector
         val frameless = ds.orderBy(typX2(ds('b))).collect().run.toVector
         vanilla ?= frameless
       }.reduce(_ && _)

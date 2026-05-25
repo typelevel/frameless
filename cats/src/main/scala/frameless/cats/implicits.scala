@@ -66,9 +66,9 @@ object outer {
       def combine(lhs: RDD[(K, V)], rhs: RDD[(K, V)]): RDD[(K, V)] =
         lhs.fullOuterJoin(rhs).mapValues {
           case (Some(x), Some(y)) => x |+| y
-          case (None, Some(y)) => y
-          case (Some(x), None) => x
-          case (None, None) => m.empty
+          case (None, Some(y))    => y
+          case (Some(x), None)    => x
+          case (None, None)       => m.empty
         }
     }
 }

@@ -13,7 +13,7 @@ import org.apache.spark.ml.linalg.Vector
   * It supports both binary and multiclass labels, as well as both continuous and categorical
   * features.
   */
-final class TypedRandomForestClassifier[Inputs] private[ml](
+final class TypedRandomForestClassifier[Inputs] private[ml] (
   rf: RandomForestClassifier,
   labelCol: String,
   featuresCol: String
@@ -48,4 +48,3 @@ object TypedRandomForestClassifier {
     new TypedRandomForestClassifier(new RandomForestClassifier(), inputsChecker.labelCol, inputsChecker.featuresCol)
   }
 }
-

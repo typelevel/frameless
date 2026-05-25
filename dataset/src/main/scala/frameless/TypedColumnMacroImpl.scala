@@ -5,9 +5,8 @@ import scala.reflect.macros.whitebox
 private[frameless] object TypedColumnMacroImpl {
 
   def applyImpl[T: c.WeakTypeTag, U: c.WeakTypeTag](
-      c: whitebox.Context
-    )(x: c.Tree
-    ): c.Expr[TypedColumn[T, U]] = {
+    c: whitebox.Context
+  )(x: c.Tree): c.Expr[TypedColumn[T, U]] = {
     import c.universe._
 
     val t = c.weakTypeOf[T]
@@ -71,7 +70,7 @@ private[frameless] object TypedColumnMacroImpl {
 
             path(select, List.empty) match {
               case root :: tail
-                  if (expectedRoot.forall(_ == root) && check(t, tail)) => {
+                  if expectedRoot.forall(_ == root) && check(t, tail) => {
                 val colPath = tail.mkString(".")
 
                 c.Expr[TypedColumn[T, U]](

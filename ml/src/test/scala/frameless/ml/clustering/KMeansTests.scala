@@ -30,7 +30,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
     val dense = Vectors.dense(dubs)
     vect match {
       case _: SparseVector => dense.toSparse
-      case _ => dense
+      case _               => dense
     }
   }
 
@@ -46,7 +46,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       pDs.select(pDs.col('a)).collect().run().toList == Seq(x1.a, x1a.a)
     }
 
-    def prop3[A: TypedEncoder : Arbitrary] = forAll { x2: X2[Vector, A] =>
+    def prop3[A: TypedEncoder: Arbitrary] = forAll { x2: X2[Vector, A] =>
       val x2a = x2.copy(a = newRowWithSameDimension(x2.a))
       val km = TypedKMeans[X1[Vector]]
       val ds = TypedDataset.create(Seq(x2, x2a))
@@ -56,7 +56,7 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       pDs.select(pDs.col('a), pDs.col('b)).collect().run().toList == Seq((x2.a, x2.b), (x2a.a, x2a.b))
     }
 
-    tolerantRun( _.isInstanceOf[ArrayIndexOutOfBoundsException] ) {
+    tolerantRun(_.isInstanceOf[ArrayIndexOutOfBoundsException]) {
       check(prop)
       check(prop3[Double])
     }
@@ -76,11 +76,11 @@ class KMeansTests extends FramelessMlSuite with Matchers {
       val model = rf.fit(ds).run()
 
       model.transformer.getInitMode == KMeansInitMode.Random.sparkValue &&
-        model.transformer.getInitSteps == 2 &&
-        model.transformer.getK == 10 &&
-        model.transformer.getMaxIter == 15 &&
-        model.transformer.getSeed == 123223L &&
-        model.transformer.getTol == 12D
+      model.transformer.getInitSteps == 2 &&
+      model.transformer.getK == 10 &&
+      model.transformer.getMaxIter == 15 &&
+      model.transformer.getSeed == 123223L &&
+      model.transformer.getTol == 12D
     }
 
     check(prop)

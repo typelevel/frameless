@@ -32,7 +32,8 @@ object Generators {
     val genRatio = Gen.choose(0D, 1D).suchThat(_ > 0D).map(FeatureSubsetStrategy.Ratio)
     val genNumberOfFeatures = Gen.choose(1, Int.MaxValue).map(FeatureSubsetStrategy.NumberOfFeatures)
 
-    Gen.oneOf(Gen.const(FeatureSubsetStrategy.All),
+    Gen.oneOf(
+      Gen.const(FeatureSubsetStrategy.All),
       Gen.const(FeatureSubsetStrategy.All),
       Gen.const(FeatureSubsetStrategy.Log2),
       Gen.const(FeatureSubsetStrategy.OneThird),
@@ -43,7 +44,7 @@ object Generators {
   }
 
   implicit val arbLossStrategy: Arbitrary[LossStrategy] = Arbitrary {
-      Gen.const(LossStrategy.SquaredError)
+    Gen.const(LossStrategy.SquaredError)
   }
 
   implicit val arbSolver: Arbitrary[Solver] = Arbitrary {

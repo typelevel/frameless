@@ -4,11 +4,10 @@ import org.scalacheck.Prop
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Prop._
 
-
 class FlattenTests extends TypedDatasetSuite {
   test("simple flatten test") {
-    val ds: TypedDataset[(Int,Option[Int])] = TypedDataset.create(Seq((1,Option(1))))
-    ds.flattenOption('_2): TypedDataset[(Int,Int)]
+    val ds: TypedDataset[(Int, Option[Int])] = TypedDataset.create(Seq((1, Option(1))))
+    ds.flattenOption('_2): TypedDataset[(Int, Int)]
   }
 
   test("different Optional types") {

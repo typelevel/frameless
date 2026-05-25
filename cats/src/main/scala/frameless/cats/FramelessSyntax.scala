@@ -13,8 +13,8 @@ trait FramelessSyntax extends frameless.FramelessSyntax {
     def withLocalProperty(key: String, value: String): F[A] =
       for {
         session <- ask
-        _       <- delay(session.sparkContext.setLocalProperty(key, value))
-        a       <- fa
+        _ <- delay(session.sparkContext.setLocalProperty(key, value))
+        a <- fa
       } yield a
 
     def withGroupId(groupId: String): F[A] = withLocalProperty("spark.jobGroup.id", groupId)

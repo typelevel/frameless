@@ -13,8 +13,8 @@ object DoubleBehaviourUtils {
   private val nanHandler: Double => Option[Double] = value => if (!value.equals(Double.NaN)) Option(value) else None
   // Making sure that null => None and does not result in 0.0d because of row.getAs[Double]'s use of .asInstanceOf
   val nanNullHandler: Any => Option[Double] = {
-    case null => None
+    case null      => None
     case d: Double => nanHandler(d)
-    case _ => ???
+    case _         => ???
   }
 }

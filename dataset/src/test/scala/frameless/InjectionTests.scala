@@ -30,8 +30,8 @@ object Food {
     Injection(
       {
         case Burger => 0
-        case Pasta => 1
-        case Rice => 2
+        case Pasta  => 1
+        case Rice   => 2
       },
       {
         case 0 => Burger

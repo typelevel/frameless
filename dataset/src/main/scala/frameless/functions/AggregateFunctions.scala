@@ -9,6 +9,7 @@ import frameless.syntax._
 import scala.annotation.nowarn
 
 trait AggregateFunctions {
+
   /** Aggregate function: returns the number of items in a group.
     *
     * apache/spark
@@ -147,7 +148,7 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def stddevSamp[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double] ): TypedAggregate[T, Option[Double]] = {
+  def stddevSamp[A, T](column: TypedColumn[T, A])(implicit ev: CatalystCast[A, Double]): TypedAggregate[T, Option[Double]] = {
     new TypedAggregate[T, Option[Double]](
       sparkFunctions.stddev_samp(column.cast[Double].untyped)
     )
@@ -203,15 +204,14 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
-    (implicit
-      i0: CatalystCast[A, Double],
-      i1: CatalystCast[B, Double]
-    ): TypedAggregate[T, Option[Double]] = {
-      new TypedAggregate[T, Option[Double]](
-        sparkFunctions.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
-      )
-    }
+  def corr[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(implicit
+    i0: CatalystCast[A, Double],
+    i1: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    new TypedAggregate[T, Option[Double]](
+      sparkFunctions.corr(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
 
   /**
     * Aggregate function: returns the covariance of two collumns.
@@ -221,15 +221,14 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
-    (implicit
-      i0: CatalystCast[A, Double],
-      i1: CatalystCast[B, Double]
-    ): TypedAggregate[T, Option[Double]] = {
-      new TypedAggregate[T, Option[Double]](
-        sparkFunctions.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
-      )
-    }
+  def covarPop[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(implicit
+    i0: CatalystCast[A, Double],
+    i1: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    new TypedAggregate[T, Option[Double]](
+      sparkFunctions.covar_pop(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
 
   /**
     * Aggregate function: returns the covariance of two columns.
@@ -239,16 +238,14 @@ trait AggregateFunctions {
     *
     *       apache/spark
     */
-  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])
-    (implicit
-      i0: CatalystCast[A, Double],
-      i1: CatalystCast[B, Double]
-    ): TypedAggregate[T, Option[Double]] = {
-      new TypedAggregate[T, Option[Double]](
-        sparkFunctions.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
-      )
-    }
-
+  def covarSamp[A, B, T](column1: TypedColumn[T, A], column2: TypedColumn[T, B])(implicit
+    i0: CatalystCast[A, Double],
+    i1: CatalystCast[B, Double]
+  ): TypedAggregate[T, Option[Double]] = {
+    new TypedAggregate[T, Option[Double]](
+      sparkFunctions.covar_samp(column1.cast[Double].untyped, column2.cast[Double].untyped)
+    )
+  }
 
   /**
     * Aggregate function: returns the kurtosis of a column.

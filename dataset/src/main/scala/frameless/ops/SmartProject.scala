@@ -11,6 +11,7 @@ import scala.annotation.implicitNotFound
 case class SmartProject[T: TypedEncoder, U: TypedEncoder](apply: TypedDataset[T] => TypedDataset[U])
 
 object SmartProject {
+
   /**
     * Proofs that there is a type-safe projection from a type T to another type U. It requires that:
     * (a) both T and U are Products for which a LabelledGeneric can be derived (e.g., case classes),
@@ -32,17 +33,16 @@ object SmartProject {
     * @tparam UKeys the keys of U as an HList
     * @return a projection if it exists
     */
-  implicit def deriveProduct[T: TypedEncoder, U: TypedEncoder, TRec <: HList, TProj <: HList, URec <: HList, UVals <: HList, UKeys <: HList]
-    (implicit
-      i0: LabelledGeneric.Aux[T, TRec],
-      i1: LabelledGeneric.Aux[U, URec],
-      i2: Keys.Aux[URec, UKeys],
-      i3: SelectAll.Aux[TRec, UKeys, TProj],
-      i4: Values.Aux[URec, UVals],
-      i5: UVals =:= TProj,
-      i6: ToTraversable.Aux[UKeys, Seq, Symbol]
-    ): SmartProject[T,U] = SmartProject[T, U]({ from =>
-      val names = implicitly[Keys.Aux[URec, UKeys]].apply().to[Seq].map(_.name).map(from.dataset.col)
-      TypedDataset.create(from.dataset.toDF().select(names: _*).as[U](TypedExpressionEncoder[U]))
-    })
+  implicit def deriveProduct[T: TypedEncoder, U: TypedEncoder, TRec <: HList, TProj <: HList, URec <: HList, UVals <: HList, UKeys <: HList](implicit
+    i0: LabelledGeneric.Aux[T, TRec],
+    i1: LabelledGeneric.Aux[U, URec],
+    i2: Keys.Aux[URec, UKeys],
+    i3: SelectAll.Aux[TRec, UKeys, TProj],
+    i4: Values.Aux[URec, UVals],
+    i5: UVals =:= TProj,
+    i6: ToTraversable.Aux[UKeys, Seq, Symbol]
+  ): SmartProject[T, U] = SmartProject[T, U] { from =>
+    val names = implicitly[Keys.Aux[URec, UKeys]].apply().to[Seq].map(_.name).map(from.dataset.col)
+    TypedDataset.create(from.dataset.toDF().select(names: _*).as[U](TypedExpressionEncoder[U]))
+  }
 }

@@ -25,7 +25,8 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       inputDataset.dataset.write.csv(filePath)
 
       val dataset = TypedDataset.createUnsafe(
-        implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).csv(filePath))
+        implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).csv(filePath)
+      )
 
       dataset.inputFiles sameElements dataset.dataset.inputFiles
     }
@@ -36,7 +37,8 @@ class InputFilesTests extends TypedDatasetSuite with Matchers {
       inputDataset.dataset.write.json(filePath)
 
       val dataset = TypedDataset.createUnsafe(
-        implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).json(filePath))
+        implicitly[SparkSession].sqlContext.read.schema(inputDataset.schema).json(filePath)
+      )
 
       dataset.inputFiles sameElements dataset.dataset.inputFiles
     }

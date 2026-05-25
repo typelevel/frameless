@@ -4,7 +4,7 @@ import java.math.BigInteger
 
 import java.util.Date
 
-import java.time.{ Duration, Instant, Period, LocalDate }
+import java.time.{Duration, Instant, LocalDate, Period}
 
 import java.sql.Timestamp
 
@@ -12,14 +12,10 @@ import scala.reflect.ClassTag
 
 import org.apache.spark.sql.FramelessInternals
 import org.apache.spark.sql.FramelessInternals.UserDefinedType
-import org.apache.spark.sql.{ reflection => ScalaReflection }
+import org.apache.spark.sql.{reflection => ScalaReflection}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.objects._
-import org.apache.spark.sql.catalyst.util.{
-  ArrayBasedMapData,
-  DateTimeUtils,
-  GenericArrayData
-}
+import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, DateTimeUtils, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
@@ -27,9 +23,8 @@ import shapeless._
 import shapeless.ops.hlist.IsHCons
 
 abstract class TypedEncoder[T](
-    implicit
-    val classTag: ClassTag[T])
-    extends Serializable {
+  implicit val classTag: ClassTag[T]
+) extends Serializable {
   def nullable: Boolean
 
   def jvmRepr: DataType
@@ -436,9 +431,8 @@ object TypedEncoder {
     TypedEncoder.usingInjection
 
   implicit def arrayEncoder[T: ClassTag](
-      implicit
-      i0: Lazy[RecordFieldEncoder[T]]
-    ): TypedEncoder[Array[T]] =
+    implicit i0: Lazy[RecordFieldEncoder[T]]
+  ): TypedEncoder[Array[T]] =
     new TypedEncoder[Array[T]] {
       private lazy val encodeT = i0.value.encoder
 
@@ -502,10 +496,10 @@ object TypedEncoder {
     }
 
   implicit def collectionEncoder[C[X] <: Seq[X], T](
-      implicit
-      i0: Lazy[RecordFieldEncoder[T]],
-      i1: ClassTag[C[T]]
-    ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
+    implicit
+    i0: Lazy[RecordFieldEncoder[T]],
+    i1: ClassTag[C[T]]
+  ): TypedEncoder[C[T]] = new TypedEncoder[C[T]] {
     private lazy val encodeT = i0.value.encoder
 
     def nullable: Boolean = false
@@ -544,10 +538,10 @@ object TypedEncoder {
    * @return a `TypedEncoder` instance for `Set[T]`.
    */
   implicit def setEncoder[T](
-      implicit
-      i1: shapeless.Lazy[RecordFieldEncoder[T]],
-      i2: ClassTag[Set[T]]
-    ): TypedEncoder[Set[T]] = {
+    implicit
+    i1: shapeless.Lazy[RecordFieldEncoder[T]],
+    i2: ClassTag[Set[T]]
+  ): TypedEncoder[Set[T]] = {
     implicit val inj: Injection[Set[T], Seq[T]] = Injection(_.toSeq, _.toSet)
 
     TypedEncoder.usingInjection
@@ -560,10 +554,10 @@ object TypedEncoder {
    * @param i1 the values encoder
    */
   implicit def mapEncoder[A: NotCatalystNullable, B](
-      implicit
-      i0: Lazy[RecordFieldEncoder[A]],
-      i1: Lazy[RecordFieldEncoder[B]]
-    ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
+    implicit
+    i0: Lazy[RecordFieldEncoder[A]],
+    i1: Lazy[RecordFieldEncoder[B]]
+  ): TypedEncoder[Map[A, B]] = new TypedEncoder[Map[A, B]] {
     def nullable: Boolean = false
 
     def jvmRepr: DataType = FramelessInternals.objectTypeFor[Map[A, B]]
@@ -626,9 +620,8 @@ object TypedEncoder {
   }
 
   implicit def optionEncoder[A](
-      implicit
-      underlying: TypedEncoder[A]
-    ): TypedEncoder[Option[A]] =
+    implicit underlying: TypedEncoder[A]
+  ): TypedEncoder[Option[A]] =
     new TypedEncoder[Option[A]] {
       def nullable: Boolean = true
 
@@ -706,10 +699,10 @@ object TypedEncoder {
 
   /** Encodes things using injection if there is one defined */
   implicit def usingInjection[A: ClassTag, B](
-      implicit
-      inj: Injection[A, B],
-      trb: TypedEncoder[B]
-    ): TypedEncoder[A] =
+    implicit
+    inj: Injection[A, B],
+    trb: TypedEncoder[B]
+  ): TypedEncoder[A] =
     new TypedEncoder[A] {
       def nullable: Boolean = trb.nullable
       def jvmRepr: DataType = FramelessInternals.objectTypeFor[A](classTag)
@@ -728,19 +721,19 @@ object TypedEncoder {
 
   /** Encodes things as records if there is no Injection defined */
   implicit def usingDerivation[F, G <: HList, H <: HList](
-      implicit
-      i0: LabelledGeneric.Aux[F, G],
-      i1: DropUnitValues.Aux[G, H],
-      i2: IsHCons[H],
-      i3: Lazy[RecordEncoderFields[H]],
-      i4: Lazy[NewInstanceExprs[G]],
-      i5: ClassTag[F]
-    ): TypedEncoder[F] = new RecordEncoder[F, G, H]
+    implicit
+    i0: LabelledGeneric.Aux[F, G],
+    i1: DropUnitValues.Aux[G, H],
+    i2: IsHCons[H],
+    i3: Lazy[RecordEncoderFields[H]],
+    i4: Lazy[NewInstanceExprs[G]],
+    i5: ClassTag[F]
+  ): TypedEncoder[F] = new RecordEncoder[F, G, H]
 
   /** Encodes things using a Spark SQL's User Defined Type (UDT) if there is one defined in implicit */
   implicit def usingUserDefinedType[
-      A >: Null: UserDefinedType: ClassTag
-    ]: TypedEncoder[A] = {
+    A >: Null: UserDefinedType: ClassTag
+  ]: TypedEncoder[A] = {
     val udt = implicitly[UserDefinedType[A]]
     val udtInstance =
       NewInstance(udt.getClass, Nil, dataType = ObjectType(udt.getClass))

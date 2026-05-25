@@ -49,7 +49,7 @@ class WriteStreamTests extends TypedDatasetSuite {
         .start()
       tester.processAllAvailable()
       val output = spark.table(s"testCsv_$uidNoHyphens").as[A]
-      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case  (k, arr) => (k, arr.toSeq) }
+      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case (k, arr) => (k, arr.toSeq) }
     }
 
     check(forAll(Gen.nonEmptyListOf(Gen.alphaNumStr.suchThat(_.nonEmpty)))(prop[String]))
@@ -79,7 +79,7 @@ class WriteStreamTests extends TypedDatasetSuite {
         .start()
       tester.processAllAvailable()
       val output = spark.table(s"testParquet_$uidNoHyphens").as[A]
-      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case  (k, arr) => (k, arr.toSeq) }
+      TypedDataset.create(data).collect().run().groupBy(identity) ?= output.collect().groupBy(identity).map { case (k, arr) => (k, arr.toSeq) }
     }
 
     check(forAll(Gen.nonEmptyListOf(genWriteExample))(prop[WriteExample]))

@@ -15,7 +15,7 @@ class LitTests extends TypedDatasetSuite with Matchers {
     val l: TypedColumn[Int, A] = lit(value)
 
     // filter forces whole codegen
-    val elems = df.deserialized.filter((_:Int) => true).select(l)
+    val elems = df.deserialized.filter((_: Int) => true).select(l)
       .collect()
       .run()
       .toVector
@@ -58,7 +58,8 @@ class LitTests extends TypedDatasetSuite with Matchers {
   test("support value class") {
     val initial = Seq(
       Q(name = new Name("Foo"), id = 1),
-      Q(name = new Name("Bar"), id = 2))
+      Q(name = new Name("Bar"), id = 2)
+    )
     val ds = TypedDataset.create(initial)
 
     ds.collect.run() shouldBe initial
@@ -72,7 +73,8 @@ class LitTests extends TypedDatasetSuite with Matchers {
   test("support optional value class") {
     val initial = Seq(
       R(name = "Foo", id = 1, alias = None),
-      R(name = "Bar", id = 2, alias = Some(new Name("Lorem"))))
+      R(name = "Bar", id = 2, alias = Some(new Name("Lorem")))
+    )
     val ds = TypedDataset.create(initial)
 
     ds.collect.run() shouldBe initial
@@ -82,7 +84,7 @@ class LitTests extends TypedDatasetSuite with Matchers {
     val lit = functions.litValue(someIpsum)
     val tds = ds.withColumnReplaced('alias, functions.litValue(someIpsum))
 
-    tds.queryExecution.toString() should include (lit.toString)
+    tds.queryExecution.toString() should include(lit.toString)
 
     tds.
       collect.run() shouldBe initial.map(_.copy(alias = someIpsum))
