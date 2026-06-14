@@ -166,7 +166,7 @@
   </span><span class="identifier">count</span><span> &lt;- </span><span class="identifier">typedDs</span><span>.</span><span class="identifier">count</span><span>[</span><span class="type-name">Action</span><span>]()
 } </span><span class="keyword">yield</span><span> (</span><span class="identifier">sample</span><span>, </span><span class="identifier">count</span><span>)
 </span><span class="comment">// result: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   run = cats.data.Kleisli$$Lambda$3341/0x00007f83dcf3ef10@8fce5a3
+//   run = cats.data.Kleisli$$Lambda$3342/0x00007f2564f3f798@508ef947
 // )</span></code></pre>
         <p>As with <code>Job</code>, note that nothing has been run yet. The effect has been properly suspended. To
         run our program, we must first supply the <code>SparkSession</code> to the <code>ReaderT</code> layer and then
@@ -193,7 +193,7 @@
        }
 } </span><span class="keyword">yield</span><span> </span><span class="identifier">r</span><span>
 </span><span class="comment">// resultWithDescription: Action[(Seq[(Int, String)], Long)] = Kleisli(
-//   run = cats.data.Kleisli$$$Lambda$4820/0x00007f83dd2c1540@58b1dc38
+//   run = cats.data.Kleisli$$$Lambda$4815/0x00007f25652a2b40@5677e11c
 // )
 </span><span>
 </span><span class="identifier">resultWithDescription</span><span>.</span><span class="identifier">run</span><span>(</span><span class="identifier">spark</span><span>).</span><span class="identifier">unsafeRunSync</span><span>()
