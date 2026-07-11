@@ -70,7 +70,7 @@ class FramelessLitPushDownTests extends SQLRulesSuite {
       val optimizedPlan = ds.queryExecution.optimizedPlan.collect { case logical.Filter(condition, _) => condition }.flatMap(_.toList)
 
       // check the optimized plan
-      optimizedPlan.collectFirst(planShouldContain) should not be (empty)
+      optimizedPlan.collectFirst(planShouldContain) should not be empty
 
       // compare filters
       actualPushDownFilters shouldBe expectedPushDownFilters
