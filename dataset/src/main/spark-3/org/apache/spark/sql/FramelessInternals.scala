@@ -2,12 +2,12 @@ package org.apache.spark.sql
 
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen._
-import org.apache.spark.sql.catalyst.expressions.{ Alias, CreateStruct }
-import org.apache.spark.sql.catalyst.expressions.{ Expression, NamedExpression }
+import org.apache.spark.sql.catalyst.expressions.{Alias, CreateStruct}
+import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.plans.logical.{ LogicalPlan, Project }
+import org.apache.spark.sql.catalyst.plans.logical.{LogicalPlan, Project}
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.types.ObjectType
@@ -16,9 +16,8 @@ import scala.reflect.ClassTag
 object FramelessInternals {
 
   def objectTypeFor[A](
-      implicit
-      classTag: ClassTag[A]
-    ): ObjectType = ObjectType(classTag.runtimeClass)
+    implicit classTag: ClassTag[A]
+  ): ObjectType = ObjectType(classTag.runtimeClass)
 
   def resolveExpr(ds: Dataset[_], colNames: Seq[String]): NamedExpression = {
     ds.toDF()
@@ -49,11 +48,11 @@ object FramelessInternals {
     ds.sqlContext.getConf(key, default)
 
   def joinPlan(
-      ds: Dataset[_],
-      plan: LogicalPlan,
-      leftPlan: LogicalPlan,
-      rightPlan: LogicalPlan
-    ): LogicalPlan = {
+    ds: Dataset[_],
+    plan: LogicalPlan,
+    leftPlan: LogicalPlan,
+    rightPlan: LogicalPlan
+  ): LogicalPlan = {
     val joined = executePlan(ds, plan)
     val leftOutput = joined.analyzed.output.take(leftPlan.output.length)
     val rightOutput = joined.analyzed.output.takeRight(rightPlan.output.length)
@@ -68,10 +67,10 @@ object FramelessInternals {
   }
 
   def mkDataset[T](
-      source: Dataset[_],
-      plan: LogicalPlan,
-      encoder: Encoder[T]
-    ): Dataset[T] =
+    source: Dataset[_],
+    plan: LogicalPlan,
+    encoder: Encoder[T]
+  ): Dataset[T] =
     new Dataset(source.sparkSession, plan, encoder)
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame =
@@ -79,10 +78,10 @@ object FramelessInternals {
 
   /** Builds an `ExpressionEncoder` from frameless' own serializer/deserializer expressions. */
   def expressionEncoder[T](
-      objSerializer: Expression,
-      objDeserializer: Expression,
-      classTag: ClassTag[T]
-    ): ExpressionEncoder[T] =
+    objSerializer: Expression,
+    objDeserializer: Expression,
+    classTag: ClassTag[T]
+  ): ExpressionEncoder[T] =
     new ExpressionEncoder[T](objSerializer, objDeserializer, classTag)
 
   // because org.apache.spark.sql.types.UserDefinedType is private[spark]
@@ -104,8 +103,8 @@ object FramelessInternals {
       tagged.genCode(ctx)
 
     protected def withNewChildrenInternal(
-        newChildren: IndexedSeq[Expression]
-      ): Expression = copy(newChildren.head)
+      newChildren: IndexedSeq[Expression]
+    ): Expression = copy(newChildren.head)
   }
 
   /** Expression to tag columns from the right hand side of join expression. */
@@ -121,7 +120,7 @@ object FramelessInternals {
       tagged.genCode(ctx)
 
     protected def withNewChildrenInternal(
-        newChildren: IndexedSeq[Expression]
-      ): Expression = copy(newChildren.head)
+      newChildren: IndexedSeq[Expression]
+    ): Expression = copy(newChildren.head)
   }
 }
