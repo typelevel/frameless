@@ -6,6 +6,6 @@ addSbtPlugin("org.typelevel" % "sbt-typelevel-site" % sbtTypelevelVersion)
 
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "2.4.4")
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.1")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.6.2")
 
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.7.0")
