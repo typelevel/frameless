@@ -138,9 +138,10 @@ class CreateTests extends TypedDatasetSuite with Matchers {
     def prop[A: Arbitrary: TypedEncoder, B: Arbitrary: TypedEncoder] = forAll {
       (a1: A, b1: B) =>
         {
+          val emptyDs = session.createDataset(Seq())(TypedExpressionEncoder[X2[A, B]])
           val ds = TypedDataset.create(
             Vector((b1, a1))
-          ).dataset.toDF("b", "a").as[X2[A, B]](TypedExpressionEncoder[X2[A, B]])
+          ).dataset.toDF("b", "a").to(emptyDs.schema).as[X2[A, B]](TypedExpressionEncoder[X2[A, B]])
           TypedDataset.create(ds).collect().run().head ?= X2(a1, b1)
 
         }
