@@ -1,4 +1,6 @@
 val sparkVersion = "3.5.9"
+val spark42Version = "4.2.0"
+val spark41Version = "4.1.3"
 val spark40Version = "4.0.4"
 val spark34Version = "3.4.4"
 val catsCoreVersion = "2.13.0"
@@ -26,6 +28,8 @@ lazy val root = project
   .enablePlugins(NoPublishPlugin)
   .settings(crossScalaVersions := Nil)
   .aggregate(
+    `root-spark42`,
+    `root-spark41`,
     `root-spark40`,
     `root-spark35`,
     `root-spark34`,
@@ -42,6 +46,30 @@ lazy val `root-spark40` = project
     `dataset-spark40`,
     `refined-spark40`,
     `ml-spark40`
+  )
+
+lazy val `root-spark41` = project
+  .in(file(".spark41"))
+  .enablePlugins(NoPublishPlugin)
+  .settings(crossScalaVersions := Seq(Scala213))
+  .aggregate(
+    core,
+    `cats-spark41`,
+    `dataset-spark41`,
+    `refined-spark41`,
+    `ml-spark41`
+  )
+
+lazy val `root-spark42` = project
+  .in(file(".spark42"))
+  .enablePlugins(NoPublishPlugin)
+  .settings(crossScalaVersions := Seq(Scala213))
+  .aggregate(
+    core,
+    `cats-spark42`,
+    `dataset-spark42`,
+    `refined-spark42`,
+    `ml-spark42`
   )
 
 lazy val `root-spark35` = project
@@ -86,6 +114,24 @@ lazy val `cats-spark40` = project
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
   )
 
+lazy val `cats-spark41` = project
+  .settings(name := "frameless-cats-spark41")
+  .settings(sourceDirectory := (cats / sourceDirectory).value)
+  .settings(catsSettings)
+  .settings(spark41Settings)
+  .dependsOn(
+    `dataset-spark41` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `cats-spark42` = project
+  .settings(name := "frameless-cats-spark42")
+  .settings(sourceDirectory := (cats / sourceDirectory).value)
+  .settings(catsSettings)
+  .settings(spark42Settings)
+  .dependsOn(
+    `dataset-spark42` % "test->test;compile->compile;provided->provided"
+  )
+
 lazy val dataset = project
   .settings(name := "frameless-dataset")
   .settings(
@@ -126,6 +172,34 @@ lazy val `dataset-spark40` = project
   .settings(spark40Settings)
   .dependsOn(core % "test->test;compile->compile")
 
+lazy val `dataset-spark41` = project
+  .settings(name := "frameless-dataset-spark41")
+  .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(
+    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-4"
+  )
+  .settings(
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-4.1+"
+  )
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark41Version))
+  .settings(spark41Settings)
+  .dependsOn(core % "test->test;compile->compile")
+
+lazy val `dataset-spark42` = project
+  .settings(name := "frameless-dataset-spark42")
+  .settings(sourceDirectory := (dataset / sourceDirectory).value)
+  .settings(
+    Compile / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "main" / "spark-4"
+  )
+  .settings(
+    Test / unmanagedSourceDirectories += (dataset / baseDirectory).value / "src" / "test" / "spark-4.1+"
+  )
+  .settings(datasetSettings)
+  .settings(sparkDependencies(spark42Version))
+  .settings(spark42Settings)
+  .dependsOn(core % "test->test;compile->compile")
+
 lazy val refined = project
   .settings(name := "frameless-refined")
   .settings(refinedSettings)
@@ -147,6 +221,24 @@ lazy val `refined-spark40` = project
   .settings(spark40Settings)
   .dependsOn(
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `refined-spark41` = project
+  .settings(name := "frameless-refined-spark41")
+  .settings(sourceDirectory := (refined / sourceDirectory).value)
+  .settings(refinedSettings)
+  .settings(spark41Settings)
+  .dependsOn(
+    `dataset-spark41` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `refined-spark42` = project
+  .settings(name := "frameless-refined-spark42")
+  .settings(sourceDirectory := (refined / sourceDirectory).value)
+  .settings(refinedSettings)
+  .settings(spark42Settings)
+  .dependsOn(
+    `dataset-spark42` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val ml = project
@@ -178,6 +270,28 @@ lazy val `ml-spark40` = project
   .dependsOn(
     core % "test->test;compile->compile",
     `dataset-spark40` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark41` = project
+  .settings(name := "frameless-ml-spark41")
+  .settings(sourceDirectory := (ml / sourceDirectory).value)
+  .settings(mlSettings)
+  .settings(sparkMlDependencies(spark41Version))
+  .settings(spark41Settings)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark41` % "test->test;compile->compile;provided->provided"
+  )
+
+lazy val `ml-spark42` = project
+  .settings(name := "frameless-ml-spark42")
+  .settings(sourceDirectory := (ml / sourceDirectory).value)
+  .settings(mlSettings)
+  .settings(sparkMlDependencies(spark41Version))
+  .settings(spark42Settings)
+  .dependsOn(
+    core % "test->test;compile->compile",
+    `dataset-spark42` % "test->test;compile->compile;provided->provided"
   )
 
 lazy val docs = project
@@ -366,6 +480,24 @@ lazy val framelessSettings = Seq(
   libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
 ) ++ consoleSettings
 
+lazy val spark42Settings = Seq[Setting[_]](
+  // Spark 4 dropped Scala 2.12 support; this module is 2.13-only.
+  crossScalaVersions := Seq(Scala213),
+  scalaVersion := Scala213,
+  tlVersionIntroduced := Map("2.13" -> "0.17.0"),
+  // Brand-new artifact: no previously published version to check binary compatibility against.
+  mimaPreviousArtifacts := Set.empty
+)
+
+lazy val spark41Settings = Seq[Setting[_]](
+  // Spark 4 dropped Scala 2.12 support; this module is 2.13-only.
+  crossScalaVersions := Seq(Scala213),
+  scalaVersion := Scala213,
+  tlVersionIntroduced := Map("2.13" -> "0.17.0"),
+  // Brand-new artifact: no previously published version to check binary compatibility against.
+  mimaPreviousArtifacts := Set.empty
+)
+
 lazy val spark40Settings = Seq[Setting[_]](
   // Spark 4 dropped Scala 2.12 support; this module is 2.13-only.
   crossScalaVersions := Seq(Scala213),
@@ -444,7 +576,7 @@ ThisBuild / tlSitePublishBranch := Some("master")
 // Spark 3.x roots: 3.4 builds on 2.12 only, 3.5 builds on both 2.12 and 2.13.
 val spark3Roots = List("root-spark34", "root-spark35")
 // Spark 4.x roots: Scala 2.13 only (Spark 4 dropped 2.12).
-val spark4Roots = List("root-spark40")
+val spark4Roots = List("root-spark40", "root-spark41", "root-spark42")
 val roots = spark3Roots ++ spark4Roots
 
 // Spark 3.x builds/tests on JDK 8; Spark 4 requires JDK 17+.
