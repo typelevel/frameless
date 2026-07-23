@@ -32,18 +32,26 @@ jobs:
         os: [ubuntu-22.04]
         scala: [2.13, 2.12]
         java: [temurin@8, temurin@17]
-        project: [root-spark34, root-spark35, root-spark40]
+        project: [root-spark34, root-spark35, root-spark40, root-spark41, root-spark42]
         exclude:
           - scala: 2.13
             project: root-spark34
           - scala: 2.12
             project: root-spark40
+          - scala: 2.12
+            project: root-spark41
+          - scala: 2.12
+            project: root-spark42
           - java: temurin@17
             project: root-spark34
           - java: temurin@17
             project: root-spark35
           - java: temurin@8
             project: root-spark40
+          - java: temurin@8
+            project: root-spark41
+          - java: temurin@8
+            project: root-spark42
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -217,7 +225,7 @@ jobs:
       - name: Submit Dependencies
         uses: scalacenter/sbt-dependency-submission@v2
         with:
-          modules-ignore: docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark35_2.13 root-spark35_2.12 root-spark40_2.13
+          modules-ignore: docs_2.13 docs_2.12 root-spark34_2.13 root-spark34_2.12 root-spark42_2.13 root-spark35_2.13 root-spark35_2.12 root-spark41_2.13 root-spark40_2.13
           configs-ignore: test scala-tool scala-doc-tool test-internal
 
   site:
