@@ -15,7 +15,7 @@ val refinedVersion = "0.11.4"
 val nakedFSVersion = "0.1.0"
 
 val Scala212 = "2.12.21"
-val Scala213 = "2.13.18"
+val Scala213 = "3.9.0"
 
 ThisBuild / tlBaseVersion := "0.17"
 
