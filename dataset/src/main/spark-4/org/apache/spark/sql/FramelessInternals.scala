@@ -69,6 +69,12 @@ object FramelessInternals {
   def getConf(ds: Dataset[_], key: String, default: String): String =
     classic(ds).sparkSession.conf.get(key, default)
 
+  def analysisException(message: String): AnalysisException =
+    new AnalysisException(
+      errorClass = "UNRESOLVED_COLUMN.WITHOUT_SUGGESTION",
+      messageParameters = Map("objectName" -> message)
+    )
+
   def joinPlan(
     ds: Dataset[_],
     plan: LogicalPlan,

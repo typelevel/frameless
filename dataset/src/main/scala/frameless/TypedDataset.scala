@@ -1,14 +1,17 @@
 package frameless
 
 import java.util
+
 import frameless.functions.CatalystExplodableCollection
 import frameless.ops._
+
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Column, DataFrame, Dataset, FramelessInternals, SparkSession}
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.{Join, JoinHint}
 import org.apache.spark.sql.catalyst.plans.Inner
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types._
+
 import shapeless._
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.{Diff, IsHCons, Mapper, Prepend, ToTraversable, Tupler}
@@ -944,7 +947,7 @@ class TypedDataset[T] protected[frameless] (
   /**
    * Type-safe projection from type T to Tuple1[A]
    * {{{
-   *   d.select( d('a), d('a)+d('b), ... )
+   * d.select( d('a), d('a)+d('b), ... )
    * }}}
    */
   def select[A](
@@ -955,14 +958,13 @@ class TypedDataset[T] protected[frameless] (
     val tuple1: TypedDataset[Tuple1[A]] = selectMany(ca)
 
     // now we need to unpack `Tuple1[A]` to `A`
-
-    TypedEncoder[A].catalystRepr match {
+    tuple1.dataset.schema.fields.head.dataType match {
       case StructType(_) =>
         // if column is struct, we use all its fields
-        val df =
+        TypedDataset.create(
           tuple1.dataset.selectExpr("_1.*").as[A](TypedExpressionEncoder[A])
+        )
 
-        TypedDataset.create(df)
       case other =>
         // for primitive types `Tuple1[A]` has the same schema as `A`
         TypedDataset.create(tuple1.dataset.as[A](TypedExpressionEncoder[A]))
@@ -1189,6 +1191,30 @@ class TypedDataset[T] protected[frameless] (
   }
 
   object selectMany extends ProductArgs {
+    private def sameShape(left: DataType, right: DataType): Boolean =
+      (left, right) match {
+        case (l: StructType, r: StructType) =>
+          l.fields.map(_.dataType).zip(r.fields.map(_.dataType)).forall {
+            case (lField, rField) => sameShape(lField, rField)
+          } && l.fields.size == r.fields.size
+
+        case (l: ArrayType, r: ArrayType) =>
+          sameShape(l.elementType, r.elementType)
+
+        case (l: MapType, r: MapType) =>
+          sameShape(l.keyType, r.keyType) &&
+          sameShape(l.valueType, r.valueType)
+
+        case (_: StructType, _) |
+            (_, _: StructType) |
+            (_: ArrayType, _) |
+            (_, _: ArrayType) |
+            (_: MapType, _) |
+            (_, _: MapType) =>
+          false
+
+        case _ => true
+      }
 
     def applyProduct[U <: HList, Out0 <: HList, Out](
       columns: U
@@ -1205,6 +1231,22 @@ class TypedDataset[T] protected[frameless] (
             .toList[UntypedExpression[T]]
             .map(c => FramelessInternals.column(c.expr)): _*
         )
+
+      val expectedSchema = TypedExpressionEncoder.targetStructType(i3)
+      val actualTypes = base.schema.fields.map(_.dataType)
+      val expectedTypes = expectedSchema.fields.map(_.dataType)
+
+      if (
+        actualTypes.size != expectedTypes.size ||
+        !actualTypes.zip(expectedTypes).forall {
+          case (actual, expected) => sameShape(actual, expected)
+        }
+      ) {
+        throw FramelessInternals.analysisException(
+          s"Cannot decode selected columns as ${i3.classTag.runtimeClass.getName}: found ${base.schema}, expected $expectedSchema"
+        )
+      }
+
       val selected = base.as[Out](TypedExpressionEncoder[Out])
 
       TypedDataset.create[Out](selected)

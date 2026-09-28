@@ -47,6 +47,9 @@ object FramelessInternals {
   def getConf(ds: Dataset[_], key: String, default: String): String =
     ds.sqlContext.getConf(key, default)
 
+  def analysisException(message: String): AnalysisException =
+    new AnalysisException(message)
+
   def joinPlan(
     ds: Dataset[_],
     plan: LogicalPlan,

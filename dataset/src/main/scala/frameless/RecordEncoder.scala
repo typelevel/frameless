@@ -184,7 +184,18 @@ final class RecordFieldEncoder[T](
   private[frameless] val jvmRepr: DataType,
   private[frameless] val fromCatalyst: Expression => Expression,
   private[frameless] val toCatalyst: Expression => Expression
-) extends Serializable
+) extends Serializable { self =>
+  private[frameless] def toTypedEncoder = new TypedEncoder[T]()(encoder.classTag) {
+    def nullable: Boolean = encoder.nullable
+
+    def jvmRepr: DataType = self.jvmRepr
+    def catalystRepr: DataType = encoder.catalystRepr
+
+    def fromCatalyst(path: Expression): Expression = self.fromCatalyst(path)
+
+    def toCatalyst(path: Expression): Expression = self.toCatalyst(path)
+  }
+}
 
 object RecordFieldEncoder extends RecordFieldEncoderLowPriority {
 
