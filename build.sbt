@@ -1,5 +1,5 @@
 val sparkVersion = "3.5.9"
-val spark42Version = "4.2.0"
+val spark42Version = "4.2.1"
 val spark41Version = "4.1.3"
 val spark40Version = "4.0.4"
 val spark34Version = "3.4.4"
