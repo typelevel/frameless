@@ -18,7 +18,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   )
 
   test("single column non nullable orderBy") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
@@ -41,7 +41,7 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   }
 
   test("single column non nullable partition sorting") {
-    def prop[A: TypedEncoder : CatalystOrdered](data: Vector[X1[A]]): Prop = {
+    def prop[A: TypedEncoder: CatalystOrdered](data: Vector[X1[A]]): Prop = {
       val ds = TypedDataset.create(data)
 
       sortings[A, X1[A]].map { case (typ, untyp) =>
