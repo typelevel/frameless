@@ -10,6 +10,10 @@ class OrderByTests extends TypedDatasetSuite with Matchers {
   def sortings[A: CatalystOrdered, T]: Seq[(TypedColumn[T, A] => SortedTypedColumn[T, A], Column => Column)] = Seq(
     (_.desc, _.desc),
     (_.asc, _.asc),
+    (_.desc_nulls_first, _.desc_nulls_first),
+    (_.desc_nulls_last, _.desc_nulls_last),
+    (_.asc_nulls_first, _.asc_nulls_first),
+    (_.asc_nulls_last, _.asc_nulls_last),
     (t => t, t => t) // default ascending
   )
 

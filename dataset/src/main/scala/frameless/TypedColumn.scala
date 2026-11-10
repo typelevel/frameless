@@ -605,6 +605,18 @@ abstract class AbstractTypedColumn[T, U](
   ): SortedTypedColumn[T, U] =
     new SortedTypedColumn[T, U](untyped.asc)
 
+  def asc_nulls_first(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](untyped.asc_nulls_first)
+
+  def asc_nulls_last(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](untyped.asc_nulls_last)
+
+  def desc_nulls_first(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](untyped.desc_nulls_first)
+
+  def desc_nulls_last(implicit catalystOrdered: CatalystOrdered[U]): SortedTypedColumn[T, U] =
+    new SortedTypedColumn[T, U](untyped.desc_nulls_last)
+
   /**
    * Bitwise AND this expression and another expression.
    * {{{
